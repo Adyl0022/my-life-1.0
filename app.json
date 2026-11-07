@@ -89,7 +89,16 @@
           "faceIDPermission": "Allow My Life to use Face ID to unlock the app."
         }
       ],
-      "./plugins/withReleaseSigning"
+      "./plugins/withReleaseSigning",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0a0f2c",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "backgroundColor": "#0a0f2c"
   }
