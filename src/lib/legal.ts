@@ -8,7 +8,7 @@ export const WHATS_NEW: Sec[] = [
   { h: 'Made to be calm', p: 'A glass look that changes with the time of day, and no ads.' },
 ];
 export const PRIVACY: Sec[] = [
-  { h: 'What we store', p: 'Your account (name, email and a password that we only keep in scrambled form), and what you enter yourself: notes, events, finance entries, records and habits. Stats about how long you use the app are kept on your device for 30 days.' },
+  { h: 'What we store', p: 'Your account (name, email and a password that we only keep in scrambled form), and what you enter yourself: notes, events, finance entries, records and habits. Stats about how long you use the app are kept on your device for 30 days. For security and to protect licences, the app owner can see how many devices are signed in to each account and when the account was last active. This does not include your notes, finances or other personal data, and we do not store IP addresses or device names.' },
   { h: 'Where it lives', p: 'Your data lives first on your phone, encrypted there. When you are signed in, a copy is also saved to your account on our server (Supabase, hosted in Singapore) so you can use it on other phones and get it back if you lose this one. Each account can only read its own data. Receipt photos stay on the phone and are not uploaded.' },
   { h: 'What we never do', p: 'We do not show ads, track you across other apps, sell your data or share it with anyone. The server stores your data so the app can sync it; it is not end-to-end encrypted, so the developer could technically access it, but does not read it.' },
   { h: 'Location', p: 'Prayer times use your location only to work out the times. It is not saved or sent anywhere except to the prayer-time service to look up your zone.' },
