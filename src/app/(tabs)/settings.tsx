@@ -60,6 +60,21 @@ function Glyph({ k }: { k: string }) {
 const Dot = ({ c = 'rgba(255,255,255,.14)', k }: { c?: string; k?: string }) => k && TILE[k]
   ? <LinearGradient colors={TILE[k]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}><Glyph k={k} /></LinearGradient>
   : <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: c, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' }} /></View>;
+// Admin only: how many devices are signed in to this account, and a button to sign out the others.
+function Devices() {
+  const [d, setD] = useState<{ count: number; last: string | null } | null>(null); const [busy, setB] = useState(false); const [done, setDone] = useState(false);
+  const load = () => { supabase.rpc('my_devices').then(({ data, error }) => { if (!error && data) setD(data as any); }, () => {}); };
+  React.useEffect(() => { load(); }, []);
+  if (!d) return null;
+  const out = async () => { setB(true); try { await supabase.auth.signOut({ scope: 'others' }); setDone(true); load(); } catch {} setB(false); };
+  return (
+    <Glass style={{ padding: 16 }}>
+      <Ttl t="Devices signed in" />
+      <Lbl t={d.count + (d.count === 1 ? ' device' : ' devices') + ' use your account' + (d.last ? '. Last active ' + new Date(d.last).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '')} />
+      <View style={{ flexDirection: 'row', marginTop: 12 }}><Btn t={busy ? 'Signing out…' : done ? 'Other devices signed out' : 'Sign out other devices'} onPress={out} /></View>
+    </Glass>
+  );
+}
 const Chev = () => <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>;
 const Sw = ({ on }: { on: boolean }) => (
   <LinearGradient colors={on ? G : ['rgba(255,255,255,.22)', 'rgba(255,255,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 26, borderRadius: 13, padding: 3 }}>
@@ -251,6 +266,7 @@ export default function Settings() {
                   <Chev />
                 </Glass>
               </Pressable> : null}
+              {isAdmin ? <Devices /> : null}
 
               <Pressable onPress={() => router.push('/export' as any)}>
                 <Glass style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>

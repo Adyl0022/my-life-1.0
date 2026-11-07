@@ -17,6 +17,7 @@ const GR = ['#f5c76b', '#5ee7b5'] as [string, string];   // gold to emerald: the
 const day = (s?: string | null) => s ? new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 type Ov = { users: number; active: number; codes_unused: number; codes_used: number; new_7d: number; income: number; income_month: number; sold_month: number; free_total: number };
 type U = { id: string; email: string; name?: string; created_at: string; last_sign_in_at?: string; active: boolean; confirmed: boolean };
+type Dv = { user_id: string; n: number; last_at: string };
 type Gr = { days: { d: string; n: number }[]; active7: number };
 type Fb = { id: number; email?: string; msg: string; created_at: string };
 type At = { email: string; tries: number; tries_24h: number; last_at: string };
@@ -56,7 +57,7 @@ export default function Admin() {
   const [ov, setOv] = useState<Ov | null>(null); const [users, setUsers] = useState<U[]>([]); const [codes, setCodes] = useState<C[]>([]);
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [note, setNote] = useState(''); const [cnt, setCnt] = useState('1');
   const [fresh, setFresh] = useState<string[]>([]); const [tab, setTab] = useState<'users' | 'codes' | 'inbox' | 'log'>('users');
-  const [gr, setGr] = useState<Gr | null>(null); const [fb, setFb] = useState<Fb[]>([]); const [att, setAtt] = useState<At[]>([]); const [ann, setAnn] = useState(''); const [tmp, setTmp] = useState<{ id: string; pw: string } | null>(null); const [annText, setAnnText] = useState('');
+  const [gr, setGr] = useState<Gr | null>(null); const [fb, setFb] = useState<Fb[]>([]); const [att, setAtt] = useState<At[]>([]); const [dv, setDv] = useState<Record<string, Dv>>({}); const [ann, setAnn] = useState(''); const [tmp, setTmp] = useState<{ id: string; pw: string } | null>(null); const [annText, setAnnText] = useState('');
   const [free, setFree] = useState(false); const [price, setPrice] = useState(''); const [method, setMethod] = useState('DuitNow');
   const [q, setQ] = useState(''); const [open, setOpen] = useState(''); const [ask, setAsk] = useState('');
   const [gate, setGate] = useState<'loading' | 'set' | 'enter' | 'open'>('loading'); const [pin, setPin] = useState(''); const [pin1, setPin1] = useState(''); const [gmsg, setGmsg] = useState('');
@@ -91,6 +92,7 @@ export default function Admin() {
     setBusy(false);
     if (!a.ok) { if (a.err === 'admin_locked') { setGate('enter'); setErr(''); } else setErr(a.err); return; }
     setOv(a.data); if (b.ok) setUsers(b.data); if (c.ok) setCodes(c.data);
+    const dd = await adminCall<Dv[]>('admin_devices'); if (dd.ok) { const m: Record<string, Dv> = {}; (dd.data || []).forEach((x) => { m[x.user_id] = x; }); setDv(m); }
     const [g, f, t, n] = await Promise.all([adminCall<Gr>('admin_growth'), adminCall<Fb[]>('admin_feedback'), adminCall<At[]>('admin_attempts'), adminCall<{ id: number; msg: string } | null>('get_announcement')]);
     if (g.ok) setGr(g.data); if (f.ok) setFb(f.data || []); if (t.ok) setAtt(t.data || []); if (n.ok) setAnn(n.data?.msg || '');
   }, []);
@@ -244,6 +246,7 @@ export default function Admin() {
                     </View>
                     <Text style={{ color: dim, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{u.email}</Text>
                     <Text style={{ color: dim, fontSize: 11.5, marginTop: 1 }}>{'Joined ' + day(u.created_at) + '  ·  Last sign in ' + day(u.last_sign_in_at)}</Text>
+                    {dv[u.id] ? <Text style={{ color: dv[u.id].n > 3 ? '#ffb86b' : dim, fontSize: 11.5, marginTop: 1 }}>{dv[u.id].n + (dv[u.id].n === 1 ? ' device' : ' devices') + ' signed in  ·  last active ' + day(dv[u.id].last_at)}</Text> : null}
                     {!u.confirmed ? <Text style={{ color: '#ffc46b', fontSize: 11.5, fontWeight: '700', marginTop: 2 }}>Email not confirmed</Text> : null}
                   </View>
                 </View>
@@ -252,6 +255,7 @@ export default function Admin() {
                     {u.active
                       ? <Pill t={ask === 'off' + u.id ? 'Tap again to remove access' : 'Remove access'} on={ask === 'off' + u.id} c="#ff8fa0" onPress={() => act('admin_set_license', { p_user: u.id, p_on: false }, 'off' + u.id)} />
                       : <Pill t={ask === 'on' + u.id ? 'Tap again to activate' : 'Activate without a code'} on={ask === 'on' + u.id} c="#5ee7b5" onPress={() => act('admin_set_license', { p_user: u.id, p_on: true }, 'on' + u.id)} />}
+                    {dv[u.id] ? <Pill t={ask === 'so' + u.id ? 'Tap again to sign out' : 'Sign out all devices'} on={ask === 'so' + u.id} c="#ffb86b" onPress={() => act('admin_signout_user', { p_user: u.id }, 'so' + u.id)} /> : null}
                     <Pill t={ask === 'pw' + u.id ? 'Tap again to reset' : 'Reset password'} on={ask === 'pw' + u.id} c="#8fb4ff" onPress={() => resetPw(u.id)} />
                     {!u.confirmed ? <Pill t={ask === 'cf' + u.id ? 'Tap again to confirm' : 'Confirm email'} on={ask === 'cf' + u.id} c="#ffc46b" onPress={() => act('admin_confirm_email', { p_user: u.id }, 'cf' + u.id)} /> : null}
                   </View>
