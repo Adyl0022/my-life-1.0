@@ -3,14 +3,16 @@ import { useEffect } from 'react';
 import { trackModule } from '../lib/modules';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
-import { Platform, View } from 'react-native';
+import { Platform, View, ActivityIndicator, Pressable, AppState } from 'react-native';
+import { useState } from 'react';
+import { Text } from '../components/Txt';
 import { usePrayer } from '../lib/prayer';
 import { useStored, encryptExisting } from '../lib/store';
 import { useLockWatcher } from '../lib/lock';
 import { LockScreen } from '../components/LockScreen';
 import { AuthScreen } from '../components/AuthScreen';
 import { useSession } from '../lib/auth';
-import { useLicense } from '../lib/license';
+import { useLicense, refreshLicense } from '../lib/license';
 import { ActivationScreen } from '../components/ActivationScreen';
 import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
@@ -47,10 +49,25 @@ function SyncRunner() {
   useEffect(() => { if (sess && lic.status === 'active') { startSync(); syncNow(); } }, [sess?.user?.id, lic.status]);
   return null;
 }
+// Shown while the account is being checked. It never stays silent: after a few seconds it offers a retry.
+function Checking() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setSlow(true), 6000); return () => clearTimeout(t); }, []);
+  return (
+    <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: '#0a0f2c', zIndex: 54, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+      <ActivityIndicator color="#8fe9e2" />
+      {slow ? <>
+        <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 13 }}>Taking longer than usual…</Text>
+        <Pressable onPress={() => { setSlow(false); refreshLicense(); setTimeout(() => setSlow(true), 6000); }} style={{ paddingVertical: 10, paddingHorizontal: 22, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.16)' }}><Text style={{ color: '#fff', fontWeight: '700' }}>Try again</Text></Pressable>
+      </> : null}
+    </View>
+  );
+}
+export { ErrorBoundary } from 'expo-router';
 function Tracker() { const p = usePathname(); useEffect(() => { trackModule(p); }, [p]); return null; }
 export default function Root() {
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: '#0a0f2c', zIndex: 54 }} /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
+  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }

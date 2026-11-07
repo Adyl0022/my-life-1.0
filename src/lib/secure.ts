@@ -16,7 +16,8 @@ function getKey(): Promise<Uint8Array | null> {
   if (Platform.OS === 'web') return Promise.resolve(null);
   if (!keyP) keyP = (async () => {
     try {
-      const have = await SecureStore.getItemAsync(KEY_NAME);
+      // The phone's keystore can be slow or stuck right after the app wakes up. Never wait on it forever.
+      const have = await Promise.race([SecureStore.getItemAsync(KEY_NAME), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('keystore timeout')), 6000))]);
       if (have) return fromHex(have);
       const k = Crypto.getRandomBytes(32);
       await SecureStore.setItemAsync(KEY_NAME, toHex(k));

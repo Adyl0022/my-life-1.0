@@ -1,9 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { seal, open } from './secure';
 
 export const DEFAULT_NAME = 'Adli Syahmi';
 const listeners = new Set<() => void>();
+// When the app comes back to the front, read everything again, so a read that failed while the phone was asleep is repaired.
+AppState.addEventListener('change', (st) => { if (st === 'active') listeners.forEach((f) => f()); });
 export async function getItem<T>(k: string, d: T): Promise<T> {
   try { const r = await AsyncStorage.getItem(k); return r == null ? d : (JSON.parse(await open(r)) as T); } catch (e) { return d; }
 }

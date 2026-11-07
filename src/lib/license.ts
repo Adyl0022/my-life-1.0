@@ -24,6 +24,11 @@ const save = (u: string, expires: string | null) => AsyncStorage.setItem(KEY, JS
 export async function refreshLicense() {
   const s = getSession(); if (!s) { uid = ''; set({ status: 'unknown', expires: null }); return; }
   const u = s.user.id;
+  // Safety net: the screen must never stay blank. If nothing answered in time, use the last answer saved on the phone.
+  const guard = setTimeout(async () => {
+    if (cur.status !== 'unknown' || uid !== u) return;
+    const c = await cached(u); set(c !== undefined && valid(c) ? { status: 'active', expires: c } : { status: 'locked', expires: null });
+  }, 12000);
   try {
     const q = supabase.from('licenses').select('expires_at').eq('user_id', u).maybeSingle();
     const { data, error } = await Promise.race([q, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))]) as any;
@@ -34,7 +39,7 @@ export async function refreshLicense() {
     const c = await cached(u);
     if (c === undefined) set(cur.status === 'active' ? cur : { status: 'locked', expires: null });
     else set(valid(c) ? { status: 'active', expires: c } : { status: 'locked', expires: c });
-  }
+  } finally { clearTimeout(guard); }
 }
 
 export async function redeemCode(code: string): Promise<{ ok: true } | { ok: false; err: string }> {
