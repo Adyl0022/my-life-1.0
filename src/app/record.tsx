@@ -44,6 +44,18 @@ const TIPS = [
   'Keep your phone mount and charger secure so they do not distract you while riding.', 'Check the horn, clutch and throttle cables for smooth movement.',
   'Before a long ride, check tyres, oil, chain and brakes, then rest every two hours.',
 ];
+const TIPS_GEN = TIPS.map((t) => ({
+  'Look at the engine oil level before your first ride of the day.': 'Check the engine oil level regularly, ideally before your first trip of the day.',
+  'Wipe and lube the chain every 500 to 800 km, or after riding in the rain.': 'Check the service interval in your owner\'s manual and note the next service date here.',
+  'Keep a small tool kit and a tyre repair kit under the seat.': 'Keep a small tool kit and a tyre repair kit or a good spare tyre with you.',
+  'Warm up for 30 to 60 seconds in the morning, then ride gently for the first few minutes.': 'Let the engine settle for 30 to 60 seconds in the morning, then drive gently for the first few minutes.',
+  'Cover it or park in the shade. Sun and rain age the seat, plastics and paint.': 'Park in the shade when you can. Sun and rain age the interior, plastics and paint.',
+  'Ride smoothly. Gentle throttle and early braking extend the life of the parts.': 'Drive smoothly. Gentle acceleration and early braking extend the life of the parts.',
+  'Clean the helmet visor and check the strap. Replace a helmet after any hard impact.': 'Keep the windscreen, mirrors and lights clean, and check that your seat belts work properly.',
+  'Keep your phone mount and charger secure so they do not distract you while riding.': 'Keep your phone mount and charger secure so they do not distract you while driving.',
+  'Check the horn, clutch and throttle cables for smooth movement.': 'Check the horn and the clutch, brake and accelerator pedals or cables for smooth movement.',
+  'Before a long ride, check tyres, oil, chain and brakes, then rest every two hours.': 'Before a long trip, check tyres, oil, coolant and brakes, then rest every two hours.',
+} as Record<string, string>)[t] || t);
 const STY: Record<string, [string, string, string]> = { warn: ['rgba(255,196,107,.16)', 'rgba(255,196,107,.4)', '#ffd593'], bad: ['rgba(255,143,171,.16)', 'rgba(255,143,171,.4)', '#ffb3c6'], good: ['rgba(94,231,181,.16)', 'rgba(94,231,181,.4)', '#7df0c6'], info: ['rgba(124,156,255,.18)', 'rgba(124,156,255,.45)', '#a9bcff'] };
 
 const RecArt = () => (
@@ -164,6 +176,7 @@ export default function Record() {
   const expTotal = d.exps.reduce((a, e) => a + e.amt, 0);
   // suggestions
   const word = catName.toLowerCase() === 'motorcycle' ? 'motorcycle' : 'vehicle';
+  const moto = /motor|bike|moped|scooter|skuter|kapcai/i.test(catName);
   const curKeyM = now.getFullYear() + '-' + pad(now.getMonth() + 1);
   const sg: { p: number; kind: string; title: string; text: string; tag: string; act?: 'odo' | 'exp'; actText?: string }[] = [];
   if (!sorted.length) sg.push({ p: 0, kind: 'info', title: 'Add your first odometer reading', text: 'With readings, My Record works out your distance for each month and year automatically.', tag: 'Start here', act: 'odo', actText: '+ Add reading' });
@@ -171,8 +184,8 @@ export default function Record() {
     if (!sorted.some((r) => r.date.slice(0, 7) === curKeyM)) sg.push({ p: 1, kind: 'warn', title: 'No reading yet this month', text: 'Last reading was ' + num(latest) + ' km on ' + fmtDate(sorted[sorted.length - 1].date) + '. Add today\'s odometer so this month\'s distance is accurate.', tag: 'Mileage', act: 'odo', actText: '+ Add reading' });
     if (curKmV != null && prevKmV != null && prevKmV > 0) {
       const pc = Math.round(((curKmV - prevKmV) / prevKmV) * 100);
-      if (pc >= 20) sg.push({ p: 2, kind: 'warn', title: 'You rode ' + pc + '% more than last month', text: 'More distance means more wear. Check tyre pressure, chain and brakes a little more often.', tag: 'Mileage' });
-      else if (pc <= -20) sg.push({ p: 3, kind: 'info', title: 'You rode ' + Math.abs(pc) + '% less than last month', text: 'A short ride now and then keeps the battery charged and the engine moving.', tag: 'Mileage' });
+      if (pc >= 20) sg.push({ p: 2, kind: 'warn', title: 'You ' + (moto ? 'rode ' : 'travelled ') + pc + '% more than last month', text: 'More distance means more wear. Check tyre pressure, ' + (moto ? 'chain' : 'fluids') + ' and brakes a little more often.', tag: 'Mileage' });
+      else if (pc <= -20) sg.push({ p: 3, kind: 'info', title: 'You ' + (moto ? 'rode ' : 'travelled ') + Math.abs(pc) + '% less than last month', text: 'A short ' + (moto ? 'ride' : 'drive') + ' now and then keeps the battery charged and the engine moving.', tag: 'Mileage' });
       else sg.push({ p: 5, kind: 'good', title: 'Your distance is steady', text: 'About the same as last month (' + num(curKmV) + ' km this month).', tag: 'Mileage' });
     }
   }
@@ -184,7 +197,7 @@ export default function Record() {
     if (rs.n < 0) sg.push({ p: 0.5, kind: 'bad', title: l + ' has expired', text: l + ' ' + rs.txt.toLowerCase() + '. Renew it as soon as you can.', tag: 'Renewal' });
     else if (rs.n <= 30) sg.push({ p: 1.5, kind: 'warn', title: l + ' expires soon', text: l + ': ' + rs.txt.toLowerCase() + '. Plan your renewal now.', tag: 'Renewal' });
   });
-  const sugg = sg.sort((x, y) => x.p - y.p).slice(0, 3).concat([{ p: 99, kind: 'good', title: 'Tip of the day', text: TIPS[(now.getDate() - 1) % 31], tag: 'Tip' }]);
+  const sugg = sg.sort((x, y) => x.p - y.p).slice(0, 3).concat([{ p: 99, kind: 'good', title: 'Tip of the day', text: (moto ? TIPS : TIPS_GEN)[(now.getDate() - 1) % 31], tag: 'Tip' }]);
 
   const nextId = () => st.nextId;
   const addReading = () => { const o = parseInt(rOdo, 10); if (!(o >= 0) || !rDate) return; upd((x) => ({ ...x, readings: [...x.readings, { id: nextId(), date: rDate, odo: o }] }), { nextId: st.nextId + 1 }); setROdo(''); };
