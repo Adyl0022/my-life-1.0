@@ -46,8 +46,15 @@ export async function clearMine(keepName: boolean) {
 export function useStored<T>(k: string, d: T): [T, (v: T) => void, boolean] {
   const [v, setV] = useState<T>(d); const [ok, setOk] = useState(false);
   useEffect(() => {
-    let alive = true;
-    const load = () => getItem<T>(k, d).then((x) => { if (alive) { setV(x); setOk(true); } });
+    let alive = true; let last: string | null | undefined; // last saved text we showed; undefined = nothing shown yet
+    // Every write in the app re-reads every screen's data. Only update the screen when this key's saved text really changed, so the first sync after install does not make everything re-render and blink.
+    const load = () => AsyncStorage.getItem(k).then(async (r) => {
+      if (!alive || r === last) return;
+      let x: T = d, good = true;
+      try { if (r != null) x = JSON.parse(await open(r)) as T; } catch (e) { good = false; }
+      if (!alive) return;
+      last = good ? r : undefined; setV(x); setOk(true);
+    }).catch(() => { if (alive) { last = undefined; setOk(true); } });
     load(); listeners.add(load);
     return () => { alive = false; listeners.delete(load); };
   }, [k]);
