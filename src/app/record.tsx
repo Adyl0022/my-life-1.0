@@ -98,7 +98,7 @@ export default function Record() {
   const router = useRouter();
   const [st, setSt] = useStored<Data>('ml_record', EMPTY);
   const [mPage, setMPage] = useState<number | null>(null); const [sPage, setSPage] = useState<number | null>(null); const [selYear, setSelYear] = useState<string | null>(null); const [allExp, setAllExp] = useState(false); const [yPage, setYPage] = useState<number | null>(null);
-  const [addingCat, setAddingCat] = useState(false); const [catIn, setCatIn] = useState(''); const [delAsk, setDelAsk] = useState(false);
+  const [addingCat, setAddingCat] = useState(false); const [catIn, setCatIn] = useState(''); const [delAsk, setDelAsk] = useState(false); const [renaming, setRenaming] = useState(false); const [renIn, setRenIn] = useState('');
   const t0 = todayStr();
   const [rDate, setRDate] = useState(t0); const [rOdo, setROdo] = useState(''); const [yDate, setYDate] = useState(t0); const [yOdo, setYOdo] = useState('');
   const [eDate, setEDate] = useState(t0); const [eName, setEName] = useState(''); const [eAmt, setEAmt] = useState('');
@@ -197,6 +197,7 @@ export default function Record() {
     setQuick(null);
   };
   const saveCat = () => { const n = catIn.trim(); if (!n || st.cats.includes(n)) { setAddingCat(false); return; } const c = [...st.cats, n]; setSt({ ...st, cats: c, sel: c.length - 1 }); setAddingCat(false); setCatIn(''); };
+  const doRename = () => { const n = renIn.trim().slice(0, 30); const old = st.cats[st.sel]; if (!n || n === old || st.cats.includes(n)) { setRenaming(false); return; } const dd = { ...st.data }; if (dd[old]) { dd[n] = dd[old]; delete dd[old]; } setSt({ ...st, cats: st.cats.map((c, i) => (i === st.sel ? n : c)), data: dd }); setRenaming(false); };
   const doDel = () => { if (st.sel < 1) return; const nm = st.cats[st.sel]; const dd = { ...st.data }; delete dd[nm]; setSt({ ...st, cats: st.cats.filter((_, i) => i !== st.sel), data: dd, sel: st.sel - 1 }); setDelAsk(false); };
   const qOk = !!quick && (quick.type === 'odo' ? parseInt(quick.odo, 10) >= 0 && !!quick.date : parseFloat(quick.amt.replace(',', '.')) > 0);
   const diffS = sCurV === 0 && sPrevV === 0 ? '-' : sd === 0 ? 'Same' : (sd > 0 ? '+' : '-') + 'RM ' + num(Math.abs(sd));
@@ -224,7 +225,7 @@ export default function Record() {
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 12 }}>
             {st.cats.map((n, i) => (
-              <Pressable key={n} onPress={() => { setSt({ ...st, sel: i }); setDelAsk(false); }}>
+              <Pressable key={n} onPress={() => { setSt({ ...st, sel: i }); setDelAsk(false); setRenaming(false); }}>
                 {i === st.sel ? <LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
                   : <View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '600' }}>{n}</Text></View>}
               </Pressable>
@@ -237,6 +238,15 @@ export default function Record() {
               <AddB t="Add" onPress={saveCat} />
             </View>
           ) : null}
+          {!renaming ? (
+            <Pressable onPress={() => { setRenaming(true); setRenIn(catName); setDelAsk(false); }} accessibilityLabel="Rename category" style={{ flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', gap: 6, marginTop: 10, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>Rename "{catName}"</Text></Pressable>
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
+              <Inp style={{ flex: 1 }} autoFocus value={renIn} onChangeText={setRenIn} placeholder="New name, e.g. Car" maxLength={30} onSubmitEditing={doRename} />
+              <AddB t="Save" onPress={doRename} />
+              <SBtn t="Cancel" onPress={() => setRenaming(false)} />
+            </View>
+          )}
           {st.sel > 0 ? (
             <View style={{ marginTop: 10 }}>
               {!delAsk ? (
