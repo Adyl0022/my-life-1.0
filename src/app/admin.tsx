@@ -57,7 +57,7 @@ export default function Admin() {
   const [ov, setOv] = useState<Ov | null>(null); const [users, setUsers] = useState<U[]>([]); const [codes, setCodes] = useState<C[]>([]);
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [note, setNote] = useState(''); const [cnt, setCnt] = useState('1');
   const [fresh, setFresh] = useState<string[]>([]); const [tab, setTab] = useState<'users' | 'codes' | 'inbox' | 'log'>('users');
-  const [gr, setGr] = useState<Gr | null>(null); const [fb, setFb] = useState<Fb[]>([]); const [att, setAtt] = useState<At[]>([]); const [dv, setDv] = useState<Record<string, Dv>>({}); const [ann, setAnn] = useState(''); const [tmp, setTmp] = useState<{ id: string; pw: string } | null>(null); const [annText, setAnnText] = useState('');
+  const [gr, setGr] = useState<Gr | null>(null); const [fb, setFb] = useState<Fb[]>([]); const [att, setAtt] = useState<At[]>([]); const [adm, setAdm] = useState<Record<string, boolean>>({}); const [dv, setDv] = useState<Record<string, Dv>>({}); const [ann, setAnn] = useState(''); const [tmp, setTmp] = useState<{ id: string; pw: string } | null>(null); const [annText, setAnnText] = useState('');
   const [free, setFree] = useState(false); const [price, setPrice] = useState(''); const [method, setMethod] = useState('DuitNow');
   const [q, setQ] = useState(''); const [open, setOpen] = useState(''); const [ask, setAsk] = useState('');
   const [gate, setGate] = useState<'loading' | 'set' | 'enter' | 'open'>('loading'); const [pin, setPin] = useState(''); const [pin1, setPin1] = useState(''); const [gmsg, setGmsg] = useState('');
@@ -92,6 +92,7 @@ export default function Admin() {
     setBusy(false);
     if (!a.ok) { if (a.err === 'admin_locked') { setGate('enter'); setErr(''); } else setErr(a.err); return; }
     setOv(a.data); if (b.ok) setUsers(b.data); if (c.ok) setCodes(c.data);
+    const aa = await adminCall<string[]>('admin_admins'); if (aa.ok) { const m: Record<string, boolean> = {}; (aa.data || []).forEach((x) => { m[x] = true; }); setAdm(m); }
     const dd = await adminCall<Dv[]>('admin_devices'); if (dd.ok) { const m: Record<string, Dv> = {}; (dd.data || []).forEach((x) => { m[x.user_id] = x; }); setDv(m); }
     const [g, f, t, n] = await Promise.all([adminCall<Gr>('admin_growth'), adminCall<Fb[]>('admin_feedback'), adminCall<At[]>('admin_attempts'), adminCall<{ id: number; msg: string } | null>('get_announcement')]);
     if (g.ok) setGr(g.data); if (f.ok) setFb(f.data || []); if (t.ok) setAtt(t.data || []); if (n.ok) setAnn(n.data?.msg || '');
@@ -234,7 +235,7 @@ export default function Admin() {
             </View>
             {tab === 'users' ? <View style={{ marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}><View style={{ flex: 1 }}><Inp value={q} onChangeText={setQ} placeholder="Search by name or email" autoCapitalize="none" /></View><Pill t="Export" on={false} onPress={exportUsers} /></View> : null}
             {tab === 'codes' ? <View style={{ marginTop: 12, flexDirection: 'row' }}><Pill t="Export all codes" on={false} onPress={exportCodes} /></View> : null}
-            {tab === 'users' ? users.filter((u) => !q.trim() || (u.email + ' ' + (u.name || '')).toLowerCase().includes(q.trim().toLowerCase())).map((u) => (
+            {tab === 'users' ? [...users].sort((a, b) => (adm[b.id] ? 1 : 0) - (adm[a.id] ? 1 : 0)).filter((u) => !q.trim() || (u.email + ' ' + (u.name || '')).toLowerCase().includes(q.trim().toLowerCase())).map((u) => (
               <Pressable key={u.id} onPress={() => { setOpen(open === u.id ? '' : u.id); setAsk(''); }} style={{ marginTop: 10, padding: 12, borderRadius: 18, backgroundColor: CARD, borderWidth: 1, borderColor: open === u.id ? 'rgba(245,199,107,.55)' : 'rgba(255,255,255,.09)', overflow: 'hidden', ...RAISED }}>
                 <Shine h={36} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -242,6 +243,7 @@ export default function Admin() {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Text style={{ flex: 1, color: W, fontWeight: '700' }} numberOfLines={1}>{u.name || u.email}</Text>
+                      {adm[u.id] ? <View style={{ paddingVertical: 2, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(245,199,107,.22)', borderWidth: 1, borderColor: 'rgba(245,199,107,.5)', marginRight: 6 }}><Text style={{ color: GOLD, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6 }}>ADMIN</Text></View> : null}
                       <View style={{ paddingVertical: 2, paddingHorizontal: 8, borderRadius: 999, backgroundColor: u.active ? 'rgba(94,231,181,.18)' : 'rgba(255,196,107,.18)' }}><Text style={{ color: u.active ? '#5ee7b5' : '#ffc46b', fontSize: 10.5, fontWeight: '800' }}>{u.active ? 'ACTIVE' : 'NOT ACTIVE'}</Text></View>
                     </View>
                     <Text style={{ color: dim, fontSize: 12, marginTop: 2 }} numberOfLines={1}>{u.email}</Text>
