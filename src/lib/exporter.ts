@@ -16,7 +16,7 @@ export const MODS = [
   { k: 'planner', name: 'Planner and Notes', sub: 'Events, tasks and notes', keys: ['ml_planner', 'ml_notes'] },
   { k: 'islamic', name: 'Islamic Hub', sub: 'Fasting log, Tasbih counts, bookmarks and reading progress', keys: ['ml_islamic', 'ml_tasbih', 'ml_puasa'] },
   { k: 'finance', name: 'My Finance', sub: 'Income, spending, savings goals and commitments', keys: ['ml_finance', 'ml_debts', 'ml_savings'] },
-  { k: 'record', name: 'My Record', sub: 'Motorcycle mileage, fuel and services', keys: ['ml_record'] },
+  { k: 'record', name: 'My Record', sub: 'Vehicle mileage, fuel and services', keys: ['ml_record'] },
   { k: 'habit', name: 'Habit and Health', sub: 'Mood, sleep, water and steps', keys: ['ml_habit'] },
   { k: 'usage', name: 'App usage history', sub: 'Time spent and opens from Stats', keys: ['ml_usage_v1'] },
 ];

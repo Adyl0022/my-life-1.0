@@ -1,7 +1,7 @@
 export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
   { h: 'Version 1.0.0', p: 'The first release of My Life, with everything you need for your day in one app.' },
-  { h: 'What you can do', p: '•  Plan tasks and events\n•  Prayer times, Quran and zikir\n•  Track money in Finance\n•  Keep motorcycle records\n•  Log habits, sleep and steps\n•  Ask the Assistant or use Search\n•  See progress in Stats and Insights' },
+  { h: 'What you can do', p: '•  Plan tasks and events\n•  Prayer times, Quran and zikir\n•  Track money in Finance\n•  Keep vehicle records (motorcycle, car and more)\n•  Log habits, sleep and steps\n•  Ask the Assistant or use Search\n•  See progress in Stats and Insights' },
   { h: 'Private by design', p: 'Your data lives on your phone and is encrypted there. When you are signed in, a private copy is backed up to your own account so you can use it on other devices. You can add an optional PIN or fingerprint lock.' },
   { h: 'Reminders', p: 'Alerts for prayer times, Planner events and daily zikir. Quiet hours mute them from 12 am to 5 am.' },
   { h: 'Your data, your control', p: 'Export your data to Excel, PDF or CSV, and back it up or restore it from a file whenever you like.' },
@@ -35,7 +35,7 @@ export const HOWTO: Sec[] = [
   { h: '1. Start on Home', p: 'The Dashboard shows your day: next prayer, tasks, spending and habits. Use the bottom bar to move between Home, Stats, Insights and Settings.' },
   { h: '2. Plan your days', p: 'Planner holds your tasks and events. Add an event and choose when to be reminded.' },
   { h: '3. Islamic Hub', p: 'Prayer times, Quran, zikir, fasting log and more. Allow location once so prayer times are right for where you are.' },
-  { h: '4. Money and motorcycle', p: 'My Finance tracks spending, income and commitments. My Record keeps mileage, service and fuel for your motorcycle.' },
+  { h: '4. Money and vehicles', p: 'My Finance tracks spending, income and commitments. My Record keeps mileage, service and fuel for your vehicles.' },
   { h: '5. Habit and Health', p: 'Log steps, sleep, mood and water. Your streaks and score show up in Stats and Insights.' },
   { h: '6. Ask the Assistant', p: 'Type things like "I spent RM10 on lunch". It answers from your own data and can save entries for you after you confirm.' },
   { h: '7. Keep it safe', p: 'Turn on App lock in Settings, Security. Save a backup now and then from Settings, Export.' },
