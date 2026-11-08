@@ -8,6 +8,7 @@ import { Blob } from './Bg';
 import { CodeBoxes } from './CodeBoxes';
 import { pwLevel, PW_TEXT } from '../lib/pwstrength';
 import { signIn, signUp, verifyCode, resendSignup, sendReset, setNewPassword } from '../lib/auth';
+import { INSET_TOP } from '../lib/layout';
 
 type Mode = 'in' | 'up' | 'verify' | 'forgot' | 'reset';
 const OK = /^[^\s@.]+(\.[^\s@.]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/;
@@ -190,7 +191,7 @@ export function AuthScreen() {
   const [kb, setKb] = useState(false);
   // Same starting height on sign in and register, a little lower on taller phones.
   const { height: winH } = useWindowDimensions();
-  const top = Math.max(40, Math.min(150, Math.round(winH * 0.135)));
+  const top = Math.max(40, Math.min(150, Math.round(winH * 0.135))) + (INSET_TOP > 0 ? 40 : 0); // iPhone web version only: a bit lower under the Dynamic Island
   useEffect(() => {
     const a = Keyboard.addListener('keyboardDidShow', () => setKb(true)); const b = Keyboard.addListener('keyboardDidHide', () => setKb(false));
     return () => { a.remove(); b.remove(); };

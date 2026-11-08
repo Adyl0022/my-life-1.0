@@ -8,11 +8,12 @@ import { Drift, Sky, Wallpaper, Logo, TEAL } from './AuthScreen';
 import { redeemCode } from '../lib/license';
 import { signOut } from '../lib/auth';
 import { SUPPORT_EMAIL, SUPPORT_EMAIL2 } from '../lib/legal';
+import { INSET_TOP } from '../lib/layout';
 
 export function ActivationScreen({ email, expired }: { email: string; expired: boolean }) {
   const [code, setCode] = useState(''); const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
   const { height: winH } = useWindowDimensions();
-  const top = Math.max(40, Math.min(150, Math.round(winH * 0.135)));
+  const top = Math.max(40, Math.min(150, Math.round(winH * 0.135))) + (INSET_TOP > 0 ? 40 : 0); // iPhone web version only: a bit lower under the Dynamic Island
   const enter = useRef(new Animated.Value(0)).current;
   useEffect(() => { Animated.timing(enter, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }, []);
   const go = async () => {
