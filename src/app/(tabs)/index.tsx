@@ -17,7 +17,9 @@ import { HData, HEMPTY, getDay, cupsGoal } from '../../lib/habit';
 import { THEMES, LINES, periodOf } from '../../lib/theme';
 import { TOP, INSET_TOP } from '../../lib/layout';
 // iPhone web version only: keep the small greeting lines crisp over the bright night moon (Android keeps its original look).
-const WEB_TXT = Platform.OS === 'web' ? { color: '#fff', fontWeight: '700' as const, textShadowColor: 'rgba(6,8,36,.65)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 } : null;
+// iPhone web only: richer card colours (the web blur film washed them out).
+const RICH = (c: string) => Platform.OS === 'web' ? c.replace(/,\s*(\.\d+)\)$/, (_m, a) => ', ' + Math.min(0.95, parseFloat(a) * 1.7).toFixed(2) + ')') : c;
+const WEB_TXT = Platform.OS === 'web' ? { color: '#fff', fontWeight: '700' as const, textShadowColor: 'rgba(0,0,20,.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 } : null;
 
 const HALO: Record<string, string> = { Planner: '124,156,255', Islamic: '52,211,153', Finance: '255,196,107', Record: '255,143,171', Habit: '183,148,255' };
 const Halo = ({ k }: { k: string }) => (
@@ -67,7 +69,7 @@ export default function Home() {
         <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: HEAD, paddingBottom: 104 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flex: 1 }}>
-              <Text style={[{ fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
+              <Text style={[{ fontSize: 12.5, fontWeight: '600', color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
               <Text style={{ marginTop: 5, fontSize: 21, fontWeight: '800', color: '#fff', letterSpacing: -0.3 }}>Hi {name},</Text>
               <Text style={[{ marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>{LINES[(now.getDate() - 1) % 31]}</Text>
             </View>
@@ -94,7 +96,7 @@ export default function Home() {
               <Pressable key={c.k} onPress={() => go(c.k)} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
                 <Halo k={c.k} />
                 <Glass style={{ flex: 1 }}>
-                  <LinearGradient colors={[c.c1, c.c2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+                  <LinearGradient colors={[RICH(c.c1), RICH(c.c2)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
                     {ARTS[c.k]()}
                   </LinearGradient>
                   <View style={{ height: 42, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -112,7 +114,7 @@ export default function Home() {
             <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
               <Halo k="Habit" />
               <Glass style={{ height: 132 }}>
-                <LinearGradient colors={['rgba(183,148,255,.55)', 'rgba(94,231,223,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+                <LinearGradient colors={[RICH('rgba(183,148,255,.55)'), RICH('rgba(94,231,223,.22)')]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
                 <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: 0, bottom: 0, width: '36%' }}>{HabitBanner()}</View>
                 <View style={{ flex: 1, width: '62%', paddingLeft: 20, paddingVertical: 16, justifyContent: 'space-between' }}>
                   <View>
