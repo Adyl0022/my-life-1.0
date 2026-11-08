@@ -1,6 +1,6 @@
 import React from 'react';
 import { PageIn } from '../../components/PageIn';
-import { View, ScrollView, Pressable, Animated, Easing } from 'react-native';
+import { View, Platform, ScrollView, Pressable, Animated, Easing } from 'react-native';
 import { Text } from '../../components/Txt';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -48,6 +48,7 @@ export default function Home() {
   const [force, setForce] = React.useState(-1);
   const insets = useSafeAreaInsets();
   const HEAD = insets.top > 0 ? insets.top + 30 : 56;
+  const UP = Platform.OS === 'web' ? 12 : 0; // web (iPhone) only: lift the header a little away from the cards
   const NAMES = ['Morning', 'Afternoon', 'Evening', 'Night'] as const;
   const period = force >= 0 ? NAMES[force] : periodOf(now);
   const t = THEMES[period];
@@ -62,7 +63,7 @@ export default function Home() {
       <Drift dur={15000} delay={3000}><LinearGradient colors={['rgba(255,255,255,.28)', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 150, top: 300, width: 88, height: 28, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }} /></Drift>
       <PageIn i={0}>
       <SafeAreaView edges={['left', 'right']} style={{ flex: 1 }}>
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: HEAD, paddingBottom: 104 }}>
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: HEAD - UP, paddingBottom: 104 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.88)' }}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
@@ -85,7 +86,7 @@ export default function Home() {
               <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '700', letterSpacing: 0.3 }}>{period}{force >= 0 ? '' : ' · auto'}</Text>
             </Pressable>
           </View>
-          <View style={{ flex: 1, gap: 10, marginTop: 10 }}>
+          <View style={{ flex: 1, gap: 10, marginTop: 10 + UP }}>
             {(() => { const L = CARDS.filter((c) => c.k !== 'Habit'); return [L.slice(0, 2), L.slice(2)]; })().map((row, ri) => (
               <View key={ri} style={{ flex: 1, flexDirection: 'row', gap: 10, minHeight: 100 }}>
             {row.map((c) => (
