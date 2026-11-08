@@ -98,8 +98,8 @@ export default function IslamicHub() {
               <Pressable key={x.key} onPress={() => go('/surah/' + x.key)}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
                   <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{x.num}</Text></View>
-                  <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>{x.title}{isl.bm[x.key] ? '  ★' : ''}</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{x.sub} · {x.place}</Text></View>
-                  <Text style={{ color: W, fontSize: 19 }}>{x.ar}</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>{x.title}{isl.bm[x.key] ? '  ★' : ''}</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{x.sub} · {x.place}</Text></View>
+                  <Text numberOfLines={1} style={{ color: W, fontSize: 19, flexShrink: 0 }}>{x.ar}</Text>
                 </View>
               </Pressable>
             ))}
