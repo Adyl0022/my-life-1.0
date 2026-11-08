@@ -1,9 +1,9 @@
 import { Stack, usePathname } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { trackModule } from '../lib/modules';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
-import { Platform, View, ActivityIndicator, Pressable, AppState, Animated, Easing } from 'react-native';
+import { Platform, View, ActivityIndicator, Pressable, AppState } from 'react-native';
 import { useState } from 'react';
 import { Text } from '../components/Txt';
 import { usePrayer } from '../lib/prayer';
@@ -18,28 +18,6 @@ import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
 import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles } from '../lib/adhan';
-
-
-// Web version only (iPhone home-screen app): the browser stack has no page transition, so slide pages in and out like the Android app.
-const TAB_PATHS = ['/', '/stats', '/insights', '/settings'];
-function WebSlide({ children }: { children: React.ReactNode }) {
-  const path = usePathname();
-  const prev = useRef(path);
-  const dx = useRef(new Animated.Value(0)).current;
-  const op = useRef(new Animated.Value(1)).current;
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    const p = prev.current; prev.current = path;
-    if (p === path || (TAB_PATHS.includes(p) && TAB_PATHS.includes(path))) return;
-    const fwd = !TAB_PATHS.includes(path);
-    setBusy(true); dx.setValue(fwd ? 56 : -36); op.setValue(0.2);
-    Animated.parallel([
-      Animated.timing(dx, { toValue: 0, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
-      Animated.timing(op, { toValue: 1, duration: 240, easing: Easing.out(Easing.quad), useNativeDriver: false }),
-    ]).start(() => setBusy(false));
-  }, [path]);
-  return <Animated.View style={busy ? { flex: 1, opacity: op, transform: [{ translateX: dx }] } : { flex: 1 }}>{children}</Animated.View>;
-}
 
 // Keeps prayer alerts scheduled after the user has opened Prayer Times once (never asks for location on first launch).
 function Runner() { usePrayer(); return null; }
@@ -91,5 +69,5 @@ export default function Root() {
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}>{Platform.OS === 'web' ? <WebSlide><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /></WebSlide> : <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} />}<LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
+  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }

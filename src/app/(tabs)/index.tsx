@@ -1,6 +1,6 @@
 import React from 'react';
 import { PageIn } from '../../components/PageIn';
-import { View, ScrollView, Pressable, Animated, Easing, Platform } from 'react-native';
+import { View, ScrollView, Pressable, Animated, Easing } from 'react-native';
 import { Text } from '../../components/Txt';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -15,11 +15,7 @@ import { useUsage } from '../../lib/usage';
 import { useName, useStored } from '../../lib/store';
 import { HData, HEMPTY, getDay, cupsGoal } from '../../lib/habit';
 import { THEMES, LINES, periodOf } from '../../lib/theme';
-import { TOP, INSET_TOP } from '../../lib/layout';
-// iPhone web version only: keep the small greeting lines crisp over the bright night moon (Android keeps its original look).
-// iPhone web only: richer card colours (the web blur film washed them out).
-const RICH = (c: string) => Platform.OS === 'web' ? c.replace(/,\s*(\.\d+)\)$/, (_m, a) => ', ' + Math.min(0.95, parseFloat(a) * 1.7).toFixed(2) + ')') : c;
-const WEB_TXT = Platform.OS === 'web' ? { color: '#fff', fontWeight: '700' as const, textShadowColor: 'rgba(0,0,20,.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 } : null;
+import { TOP } from '../../lib/layout';
 
 const HALO: Record<string, string> = { Planner: '124,156,255', Islamic: '52,211,153', Finance: '255,196,107', Record: '255,143,171', Habit: '183,148,255' };
 const Halo = ({ k }: { k: string }) => (
@@ -51,7 +47,7 @@ export default function Home() {
   const now = new Date();
   const [force, setForce] = React.useState(-1);
   const insets = useSafeAreaInsets();
-  const HEAD = insets.top > 0 ? insets.top + 30 : INSET_TOP > 0 ? INSET_TOP + 14 : 56;
+  const HEAD = insets.top > 0 ? insets.top + 30 : 56;
   const NAMES = ['Morning', 'Afternoon', 'Evening', 'Night'] as const;
   const period = force >= 0 ? NAMES[force] : periodOf(now);
   const t = THEMES[period];
@@ -69,14 +65,14 @@ export default function Home() {
         <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: HEAD, paddingBottom: 104 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flex: 1 }}>
-              <Text style={[{ fontSize: 12.5, fontWeight: '600', color: 'rgba(255,255,255,.88)' }, WEB_TXT, Platform.OS === 'web' ? { alignSelf: 'flex-start', backgroundColor: 'rgba(8,12,40,.55)', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8, overflow: 'hidden' } : null]}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.88)' }}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
               <Text style={{ marginTop: 5, fontSize: 21, fontWeight: '800', color: '#fff', letterSpacing: -0.3 }}>Hi {name},</Text>
-              <Text style={[{ marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>{LINES[(now.getDate() - 1) % 31]}</Text>
+              <Text style={{ marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,.88)' }}>{LINES[(now.getDate() - 1) % 31]}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
               <Pressable onPress={() => router.push('/assistant')} accessibilityLabel="Ask My Life assistant"><Orb size={42} /></Pressable>
               <Pressable onPress={() => router.push('/search')} accessibilityLabel="Search">
-              <Glass flat radius={14} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <Glass radius={14} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
                 <View><Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={11} cy={11} r={7} stroke="#fff" strokeWidth={1.8} fill="none" /><Path d="M20 20l-4-4" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" /></Svg></View>
               </Glass>
               </Pressable>
@@ -95,8 +91,8 @@ export default function Home() {
             {row.map((c) => (
               <Pressable key={c.k} onPress={() => go(c.k)} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
                 <Halo k={c.k} />
-                <Glass flat style={{ flex: 1 }}>
-                  <LinearGradient colors={[RICH(c.c1), RICH(c.c2)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+                <Glass style={{ flex: 1 }}>
+                  <LinearGradient colors={[c.c1, c.c2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
                     {ARTS[c.k]()}
                   </LinearGradient>
                   <View style={{ height: 42, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -113,8 +109,8 @@ export default function Home() {
             ))}
             <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
               <Halo k="Habit" />
-              <Glass flat style={{ height: 132 }}>
-                <LinearGradient colors={[RICH('rgba(183,148,255,.55)'), RICH('rgba(94,231,223,.22)')]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+              <Glass style={{ height: 132 }}>
+                <LinearGradient colors={['rgba(183,148,255,.55)', 'rgba(94,231,223,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
                 <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: 0, bottom: 0, width: '36%' }}>{HabitBanner()}</View>
                 <View style={{ flex: 1, width: '62%', paddingLeft: 20, paddingVertical: 16, justifyContent: 'space-between' }}>
                   <View>
@@ -134,7 +130,7 @@ export default function Home() {
               </Glass>
             </Pressable>
           </View>
-          <Glass flat style={{ marginTop: 12, height: 90, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 16 }}>
+          <Glass style={{ marginTop: 12, height: 90, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 16 }}>
             <View>
               <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>App Usage <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· 30 days</Text></Text>
               <View style={{ flexDirection: 'row', gap: 16, marginTop: 6 }}>
