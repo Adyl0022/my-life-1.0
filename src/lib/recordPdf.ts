@@ -50,7 +50,7 @@ export function buildRecordHtml(vehicle: string, d: any, latest: number, owner =
   const charts: Chart[] = [];
   const rl = rd.slice(-12);
   if (rl.length > 1) charts.push({ title: 'Odometer over time (each reading)', kind: 'line', labels: rl.map((x) => fd(x.date).slice(0, -5)), values: rl.map((x) => n0(x.odo)), unit: 'km', color: '#d63f7c' });
-  if (last(dm).length) charts.push({ title: 'Distance ridden per month', kind: 'bars', labels: last(dm).map(ml), values: last(dm).map((m) => dm[m]), unit: 'km', color: '#7a50e6' });
+  if (last(dm).length) charts.push({ title: 'Distance travelled per month', kind: 'bars', labels: last(dm).map(ml), values: last(dm).map((m) => dm[m]), unit: 'km', color: '#7a50e6' });
   const yk = Object.keys(yr).sort().slice(-5);
   if (yk.length > 1) charts.push({ title: 'Odometer at the end of each year', kind: 'bars', labels: yk, values: yk.map((y) => yr[y]), unit: 'km', color: '#d63f7c' });
   if (last(sp).length) charts.push({ title: 'Spending per month', kind: 'bars', labels: last(sp).map(ml), values: last(sp).map((m) => Math.round(sp[m] * 100) / 100), unit: 'RM', color: '#ff8f5a' });
@@ -63,7 +63,7 @@ export function buildRecordHtml(vehicle: string, d: any, latest: number, owner =
   if (top.length > 1) charts.push({ title: 'Biggest maintenance costs', kind: 'hbars', labels: top.map((t) => (t.length > 14 ? t.slice(0, 13) + '…' : t)), values: top.map((t) => Math.round(byName[t] * 100) / 100), unit: 'RM' });
 
   const tc = ['#fff0f5', '#f3edff', '#fff4e3', '#e9fbf4', '#eef1ff', '#e8fbfa'];
-  const tl: [string, string][] = [['Latest odometer', latest > 0 ? k(latest) + ' km' : '-'], ['Distance ridden', dist > 0 ? k(dist) + ' km' : '-'], ['Maintenance', rm(mTot)], ['Fuel', rm(fTot)], ['Cost per km', cpk > 0 ? 'RM ' + cpk.toFixed(2) : '-'], ['Fuel economy', kml > 0 ? kml.toFixed(1) + ' km/L' : 'Add 2+ fill-ups']];
+  const tl: [string, string][] = [['Latest odometer', latest > 0 ? k(latest) + ' km' : '-'], ['Distance travelled', dist > 0 ? k(dist) + ' km' : '-'], ['Maintenance', rm(mTot)], ['Fuel', rm(fTot)], ['Cost per km', cpk > 0 ? 'RM ' + cpk.toFixed(2) : '-'], ['Fuel economy', kml > 0 ? kml.toFixed(1) + ' km/L' : 'Add 2+ fill-ups']];
   const tiles = tl.map(([a, b], i) => '<div class="t" style="background:' + tc[i] + '"><b>' + esc(b) + '</b><span>' + esc(a) + '</span></div>').join('');
 
   const RK: [string, string][] = [['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Driving licence']];
