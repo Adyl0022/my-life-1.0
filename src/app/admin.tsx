@@ -289,13 +289,16 @@ export default function Admin() {
                 </View>
               </View>
             )) : <Text style={{ color: dim, marginTop: 16 }}>No messages yet. Users can send feedback from Settings.</Text>)
-            : (att.length ? att.map((a) => (
+            : (att.length ? [<View key="clr" style={{ marginTop: 12, flexDirection: 'row' }}><Pill t={ask === 'clrall' ? 'Tap again to clear all' : 'Clear all'} on={ask === 'clrall'} c="#ff8fa0" onPress={() => act('admin_clear_attempts', { p_email: null }, 'clrall')} /></View>, ...att.map((a) => (
               <View key={a.email} style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: CARD, borderWidth: 1, borderColor: a.tries_24h >= 8 ? 'rgba(255,143,160,.5)' : 'rgba(255,255,255,.09)', overflow: 'hidden', ...RAISED }}>
                 <Shine h={36} />
                 <Text style={{ color: W, fontWeight: '700' }} numberOfLines={1}>{a.email}</Text>
-                <Text style={{ color: dim, fontSize: 12, marginTop: 2 }}>{a.tries + ' wrong tries  ·  ' + a.tries_24h + ' in the last 24 hours  ·  last ' + day(a.last_at)}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                  <Text style={{ flex: 1, color: dim, fontSize: 12 }}>{a.tries + ' wrong tries  ·  ' + a.tries_24h + ' in the last 24 hours  ·  last ' + day(a.last_at)}</Text>
+                  <Pressable onPress={() => act('admin_clear_attempts', { p_email: a.email }, 'clr' + a.email)} hitSlop={8}><Text style={{ color: '#ff8fa0', fontWeight: '800', fontSize: 12.5 }}>{ask === 'clr' + a.email ? 'Tap again' : 'Clear'}</Text></Pressable>
+                </View>
               </View>
-            )) : <Text style={{ color: dim, marginTop: 16 }}>No wrong codes in the last 30 days.</Text>)}
+            ))] : <Text style={{ color: dim, marginTop: 16 }}>No wrong codes in the last 30 days.</Text>)}
           </>}
         </ScrollView>
       </SafeAreaView>
