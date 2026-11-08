@@ -6,7 +6,7 @@ const f = 'dist/index.html';
 let h = fs.readFileSync(f, 'utf8');
 h = h.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />');
 const css = 'html,body{height:100%;width:100%;margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:#0a0f2c;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}' +
-  '#root{position:fixed;left:0;top:0;right:0;bottom:0;height:100dvh;overflow:hidden;overscroll-behavior:none}' +
+  'body{position:fixed;left:0;top:0;right:0;bottom:0}#root{position:fixed;left:0;top:0;right:0;bottom:0;overflow:hidden;overscroll-behavior:none}' +
   '*::-webkit-scrollbar{display:none;width:0;height:0}*{scrollbar-width:none}' +
   'input,textarea{-webkit-user-select:text;user-select:text;font-size:16px}';
 const splash = `<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3)" href="${base}/ios/splash-1320x2868.png">`;
