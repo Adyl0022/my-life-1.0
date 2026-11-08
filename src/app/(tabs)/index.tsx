@@ -1,6 +1,6 @@
 import React from 'react';
 import { PageIn } from '../../components/PageIn';
-import { View, ScrollView, Pressable, Animated, Easing } from 'react-native';
+import { View, ScrollView, Pressable, Animated, Easing, Platform } from 'react-native';
 import { Text } from '../../components/Txt';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -16,6 +16,8 @@ import { useName, useStored } from '../../lib/store';
 import { HData, HEMPTY, getDay, cupsGoal } from '../../lib/habit';
 import { THEMES, LINES, periodOf } from '../../lib/theme';
 import { TOP, INSET_TOP } from '../../lib/layout';
+// iPhone web version only: keep the small greeting lines crisp over the bright night moon (Android keeps its original look).
+const WEB_TXT = Platform.OS === 'web' ? { color: '#fff', fontWeight: '700' as const, textShadowColor: 'rgba(6,8,36,.65)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 } : null;
 
 const HALO: Record<string, string> = { Planner: '124,156,255', Islamic: '52,211,153', Finance: '255,196,107', Record: '255,143,171', Habit: '183,148,255' };
 const Halo = ({ k }: { k: string }) => (
@@ -65,9 +67,9 @@ export default function Home() {
         <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: HEAD, paddingBottom: 104 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.88)' }}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
+              <Text style={[{ fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
               <Text style={{ marginTop: 5, fontSize: 21, fontWeight: '800', color: '#fff', letterSpacing: -0.3 }}>Hi {name},</Text>
-              <Text style={{ marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,.88)' }}>{LINES[(now.getDate() - 1) % 31]}</Text>
+              <Text style={[{ marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>{LINES[(now.getDate() - 1) % 31]}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
               <Pressable onPress={() => router.push('/assistant')} accessibilityLabel="Ask My Life assistant"><Orb size={42} /></Pressable>
