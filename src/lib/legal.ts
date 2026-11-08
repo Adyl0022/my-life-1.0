@@ -14,7 +14,7 @@ export const PRIVACY: Sec[] = [
   { h: 'Location', p: 'Prayer times use your location only to work out the times. It is not saved or sent anywhere except to the prayer-time service to look up your zone.' },
   { h: 'App lock', p: 'If you turn on App lock, your PIN is stored only on your phone in scrambled (hashed) form. We cannot see it or reset it for you.' },
   { h: 'Your control', p: 'You can export everything at any time from Settings, reset all your data (this also erases the online copy), or delete your account in Settings, which permanently removes your account and everything saved online. Removing the app from your phone removes only the data on that phone.' },
-  { h: 'Contact', p: 'Questions about privacy go to the developer, Adli Syahmi.' },
+  { h: 'Contact', p: 'Questions about privacy go to the developer, Adli Syahmi. Email adlisyahmi324@gmail.com or mylifeapp.support@gmail.com.' },
 ];
 export const TERMS: Sec[] = [
   { h: 'Using My Life', p: 'My Life is a personal organiser for your own use. Keep your phone and your PIN private. You are responsible for what is done on your device.' },
@@ -29,6 +29,7 @@ export const LICENCES: Sec[] = [
 ];
 
 export const SUPPORT_EMAIL = 'adlisyahmi324@gmail.com';
+export const SUPPORT_EMAIL2 = 'mylifeapp.support@gmail.com';
 export const PRIVACY_URL = 'https://adyl0022.github.io/my-life-1.0/privacy.html';
 export const HOWTO: Sec[] = [
   { h: '1. Start on Home', p: 'The Dashboard shows your day: next prayer, tasks, spending and habits. Use the bottom bar to move between Home, Stats, Insights and Settings.' },
@@ -56,5 +57,5 @@ export const COPYRIGHT: Sec[] = [
   { h: 'Third-party software', p: 'My Life uses open-source software that stays under its own licences. See Open-source licences in this screen. These licences do not give you rights over the My Life code, design or name.' },
   { h: 'No warranty', p: 'The app is provided as it is, without any promise that it is free of mistakes or will always be available. Use the figures and reminders as a helper and not as professional financial, medical or religious advice.' },
   { h: 'Breaking these terms', p: 'If you break these terms your licence ends automatically, and the developer may take action to protect the app, including under copyright law.' },
-  { h: 'Contact', p: 'For permission or questions about copyright and licence, contact the developer, Adli Syahmi.' },
+  { h: 'Contact', p: 'For permission or questions about copyright and licence, contact the developer, Adli Syahmi, at adlisyahmi324@gmail.com or mylifeapp.support@gmail.com.' },
 ];

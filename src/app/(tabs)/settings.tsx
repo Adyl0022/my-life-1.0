@@ -21,7 +21,7 @@ import { Announcement } from '../../components/Announcement';
 import { markSeen, useAnnouncement } from '../../lib/announcement';
 import { useSession, signOut, checkPassword, setNewPassword, deleteAccount } from '../../lib/auth';
 import { syncNow, syncState, wipeCloud } from '../../lib/sync';
-import { PRIVACY, TERMS, COPYRIGHT, WHATS_NEW, LICENCES, HOWTO, FAQ, SUPPORT_EMAIL, PRIVACY_URL, Sec } from '../../lib/legal';
+import { PRIVACY, TERMS, COPYRIGHT, WHATS_NEW, LICENCES, HOWTO, FAQ, SUPPORT_EMAIL, SUPPORT_EMAIL2, PRIVACY_URL, Sec } from '../../lib/legal';
 import { TOP } from '../../lib/layout';
 import { useLock, setPin, patchLock, disableLock, bioReady, AFTER } from '../../lib/lock';
 import { PinDialog } from '../../components/LockScreen';
@@ -171,7 +171,7 @@ export default function Settings() {
   const [lead, setLead] = useStored<number>('ml_prayer_lead', 0);
   const [bkRem, setBkRem] = useStored<boolean>('ml_backup_rem', false);
   const [bkLast] = useStored<number>('ml_backup_last', 0);
-  const mail = (subj: string, body: string) => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body)).catch(() => say('No email app found. Write to ' + SUPPORT_EMAIL));
+  const mail = (subj: string, body: string) => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body)).catch(() => say('No email app found. Write to ' + SUPPORT_EMAIL + ' or ' + SUPPORT_EMAIL2));
   const info = 'App: My Life 1.0 (1.0.0, build 1)\nPhone: ' + Platform.OS + ' ' + String(Platform.Version) + '\n\n';
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');

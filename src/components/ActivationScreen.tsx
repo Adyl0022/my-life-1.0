@@ -7,7 +7,7 @@ import { CodeBoxes } from './CodeBoxes';
 import { Drift, Sky, Wallpaper, Logo, TEAL } from './AuthScreen';
 import { redeemCode } from '../lib/license';
 import { signOut } from '../lib/auth';
-import { SUPPORT_EMAIL } from '../lib/legal';
+import { SUPPORT_EMAIL, SUPPORT_EMAIL2 } from '../lib/legal';
 
 export function ActivationScreen({ email, expired }: { email: string; expired: boolean }) {
   const [code, setCode] = useState(''); const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
@@ -44,7 +44,7 @@ export function ActivationScreen({ email, expired }: { email: string; expired: b
                 </LinearGradient>
               </Pressable>
               <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 14 }}>
-                {link('Get a code', () => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('My Life activation code')))}
+                {link('Get a code', () => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent('My Life activation code')))}
                 {link('Sign out', () => { signOut(); })}
               </View>
             </Animated.View>
