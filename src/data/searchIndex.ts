@@ -122,7 +122,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Tahlil Arwah",
-  "s": "Standard reading, 26 parts",
+  "s": "Standard reading, 25 parts",
   "m": "Islamic",
   "c": "#34d399",
   "h": "Tahlil.dc.html",

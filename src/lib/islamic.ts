@@ -45,7 +45,7 @@ export const TAHLIL: Part[] = [
   { name: 'Hud 73 (3×)', kind: 'Quran', refs: ['hud73'] }, { name: 'Al-Ahzab 33', kind: 'Quran', refs: ['ahzab33'] }, { name: 'Al-Ahzab 56', kind: 'Quran', refs: ['ahzab56'] },
   { name: 'Selawat upon the Prophet (11×)', kind: 'Selawat' }, { name: 'Salam upon the Prophet', kind: 'Selawat' }, { name: 'Ali Imran 173 and Al-Anfal 40', kind: 'Quran', refs: ['imran173', 'anfal40'] },
   { name: 'Hauqalah', kind: 'Dhikr' }, { name: 'Istighfar (3×)', kind: 'Dhikr' }, { name: 'Tahlil (33×)', kind: 'Dhikr', custom: 'tahlil33' },
-  { name: 'Syahadah (La ilaha illallah Muhammadur Rasulullah)', kind: 'Dhikr' }, { name: 'Al-Fatihah (closing)', kind: 'Quran', surah: 'fatihah' }, { name: 'Doa Tahlil', kind: 'Doa' }, { name: 'Doa Penutup Tahlil', kind: 'Doa' },
+  { name: 'Syahadah (La ilaha illallah Muhammadur Rasulullah)', kind: 'Dhikr' }, { name: 'Al-Fatihah (closing)', kind: 'Quran', surah: 'fatihah' }, { name: 'Doa Tahlil', kind: 'Doa' },
 ];
 export const MATHURAT: Part[] = [
   { name: "Ta'awwudh", kind: 'Dhikr' }, { name: 'Al-Fatihah', kind: 'Quran', surah: 'fatihah' }, { name: 'Al-Baqarah 1 to 5', kind: 'Quran', refs: ['baq1-5'] },
