@@ -69,14 +69,14 @@ export default function Home() {
         <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: HEAD, paddingBottom: 104 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flex: 1 }}>
-              <Text style={[{ fontSize: 12.5, fontWeight: '600', color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
+              <Text style={[{ fontSize: 12.5, fontWeight: '600', color: 'rgba(255,255,255,.88)' }, WEB_TXT, Platform.OS === 'web' ? { alignSelf: 'flex-start', backgroundColor: 'rgba(8,12,40,.55)', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8, overflow: 'hidden' } : null]}>Good {period} · {DAYS[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]} {now.getFullYear()}</Text>
               <Text style={{ marginTop: 5, fontSize: 21, fontWeight: '800', color: '#fff', letterSpacing: -0.3 }}>Hi {name},</Text>
               <Text style={[{ marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,.88)' }, WEB_TXT]}>{LINES[(now.getDate() - 1) % 31]}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
               <Pressable onPress={() => router.push('/assistant')} accessibilityLabel="Ask My Life assistant"><Orb size={42} /></Pressable>
               <Pressable onPress={() => router.push('/search')} accessibilityLabel="Search">
-              <Glass radius={14} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <Glass flat radius={14} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
                 <View><Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={11} cy={11} r={7} stroke="#fff" strokeWidth={1.8} fill="none" /><Path d="M20 20l-4-4" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" /></Svg></View>
               </Glass>
               </Pressable>
@@ -95,7 +95,7 @@ export default function Home() {
             {row.map((c) => (
               <Pressable key={c.k} onPress={() => go(c.k)} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
                 <Halo k={c.k} />
-                <Glass style={{ flex: 1 }}>
+                <Glass flat style={{ flex: 1 }}>
                   <LinearGradient colors={[RICH(c.c1), RICH(c.c2)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
                     {ARTS[c.k]()}
                   </LinearGradient>
@@ -113,7 +113,7 @@ export default function Home() {
             ))}
             <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
               <Halo k="Habit" />
-              <Glass style={{ height: 132 }}>
+              <Glass flat style={{ height: 132 }}>
                 <LinearGradient colors={[RICH('rgba(183,148,255,.55)'), RICH('rgba(94,231,223,.22)')]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
                 <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: 0, bottom: 0, width: '36%' }}>{HabitBanner()}</View>
                 <View style={{ flex: 1, width: '62%', paddingLeft: 20, paddingVertical: 16, justifyContent: 'space-between' }}>
@@ -134,7 +134,7 @@ export default function Home() {
               </Glass>
             </Pressable>
           </View>
-          <Glass style={{ marginTop: 12, height: 90, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 16 }}>
+          <Glass flat style={{ marginTop: 12, height: 90, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 16 }}>
             <View>
               <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>App Usage <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· 30 days</Text></Text>
               <View style={{ flexDirection: 'row', gap: 16, marginTop: 6 }}>
