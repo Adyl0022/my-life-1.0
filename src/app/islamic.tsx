@@ -9,7 +9,6 @@ import { IslamicBg, Header, Ic } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { useIslamic, SURAH, SURAH_LIST, FEATURED } from '../lib/islamic';
 import { usePrayer } from '../lib/prayer';
-import { TOP } from '../lib/layout';
 import { useStored } from '../lib/store';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram, keyD } from '../lib/fasting';
 
@@ -57,7 +56,7 @@ export default function IslamicHub() {
             </Pressable>
           ))}
         </View>
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14 + TOP, paddingBottom: 50, gap: 12 }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 50, gap: 12 }}>
           {tab === 0 && (<>
             <Pressable onPress={() => go('/prayer')}>
               <Glass radius={26} style={{ padding: 18 }}>

@@ -2,7 +2,14 @@ name: Deploy site to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['public/**', '.github/workflows/pages.yml']
+    paths:
+      - 'public/**'
+      - 'src/**'
+      - 'assets/**'
+      - 'app.json'
+      - 'package.json'
+      - 'scripts/postexport.js'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,18 +18,39 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: true
+env:
+  # Unlisted folder for the iPhone web version. Not linked from the download page.
+  IOS_DIR: i-q7k3x9
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build the download site (landing page and privacy policy only)
+      - name: Build the download site (landing page and privacy policy)
         run: |
           mkdir site
           cp public/welcome.html site/index.html
           cp public/privacy.html public/icon.png site/
           cp -r public/welcome site/welcome
           cp site/index.html site/404.html
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Build the iPhone web version (never blocks the download page)
+        continue-on-error: true
+        run: |
+          set -e
+          npm ci
+          BASE="/my-life-1.0/$IOS_DIR"
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('app.json'));d.expo.experiments={...(d.expo.experiments||{}),baseUrl:'$BASE'};fs.writeFileSync('app.json',JSON.stringify(d,null,2));"
+          npx expo export --platform web
+          cp public/manifest.webmanifest public/sw.js public/icon-192.png public/icon-512.png dist/
+          cp -r public/ios dist/ios
+          node scripts/postexport.js "$BASE"
+          cp -r dist "site/$IOS_DIR"
+          # Refreshing inside the web version sends the visitor back to its start page instead of the download page.
+          sed -i "s#</head>#<script>if(location.pathname.indexOf('$BASE/')===0){location.replace('$BASE/')}</script></head>#" site/404.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

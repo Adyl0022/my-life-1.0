@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Pressable, Animated, Easing } from 'react-native';
+import { TOP } from '../lib/layout';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -159,7 +160,7 @@ export const IslamicBg = ({ a = 'rgba(52,211,153,.4)', b = 'rgba(124,156,255,.35
 export function Header({ title, sub, right }: { title: string; sub?: string; right?: React.ReactNode }) {
   const router = useRouter();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 16 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 16 + TOP }}>
       <Pressable onPress={() => router.back()} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
       <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 21, fontWeight: '800', letterSpacing: -0.3 }}>{title}</Text>{sub ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{sub}</Text> : null}</View>
       {right}

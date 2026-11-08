@@ -15,7 +15,7 @@ import { useUsage } from '../../lib/usage';
 import { useName, useStored } from '../../lib/store';
 import { HData, HEMPTY, getDay, cupsGoal } from '../../lib/habit';
 import { THEMES, LINES, periodOf } from '../../lib/theme';
-import { TOP } from '../../lib/layout';
+import { TOP, INSET_TOP } from '../../lib/layout';
 
 const HALO: Record<string, string> = { Planner: '124,156,255', Islamic: '52,211,153', Finance: '255,196,107', Record: '255,143,171', Habit: '183,148,255' };
 const Halo = ({ k }: { k: string }) => (
@@ -47,7 +47,7 @@ export default function Home() {
   const now = new Date();
   const [force, setForce] = React.useState(-1);
   const insets = useSafeAreaInsets();
-  const HEAD = insets.top > 0 ? insets.top + 30 : 56;
+  const HEAD = insets.top > 0 ? insets.top + 30 : INSET_TOP > 0 ? INSET_TOP + 14 : 56;
   const NAMES = ['Morning', 'Afternoon', 'Evening', 'Night'] as const;
   const period = force >= 0 ? NAMES[force] : periodOf(now);
   const t = THEMES[period];
