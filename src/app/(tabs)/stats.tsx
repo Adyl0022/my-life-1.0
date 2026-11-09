@@ -14,7 +14,7 @@ import { Rise, FillBar, GrowBar } from '../../components/Anim';
 import { HeadIcon } from '../../components/HabitIcons';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useStored } from '../../lib/store';
-import { MODS, ModCount } from '../../lib/modules';
+import { MODS } from '../../lib/modules';
 import { HEMPTY, getDay, cupsGoal, dateOf, keyOfDate, MOODS } from '../../lib/habit';
 import { useCore, weekly, records, hasData as hasHab, dayPct, incomeOf } from '../../lib/insights';
 import { debtSummary, remainingAt, amountDue, yearsMonths, payoffLabel } from '../../lib/debts';
@@ -60,7 +60,6 @@ export default function Stats() {
   const hasData = sum > 0;
   const [hd] = useStored('ml_habit', HEMPTY);
   const [fin] = useStored<{ spends: { amt: number; date: string }[] }>('ml_finance', { spends: [] } as any);
-  const [mc] = useStored<ModCount>('ml_modules', {});
   const cg = cupsGoal(hd);
   const core = useCore();
   const ds = debtSummary(core.debts); const incNow = incomeOf(core);
@@ -72,8 +71,7 @@ export default function Stats() {
   const dmax = Math.max(...dm6.map((x) => x.v), 1);
   const wk = weekly(core);
   const rc = records(core);
-  const [hrs] = useStored<number[]>('ml_hours', new Array(24).fill(0));
-  const hh = Array.isArray(hrs) && hrs.length === 24 ? hrs : new Array(24).fill(0);
+  const hh = u.hours;
   const bk = [['Night', [0, 1, 2, 3, 4, 5]], ['Morning', [6, 7, 8, 9, 10, 11]], ['Afternoon', [12, 13, 14, 15, 16, 17]], ['Evening', [18, 19, 20, 21, 22, 23]]] as [string, number[]][];
   const bt = bk.map(([n, l]) => ({ n, v: l.reduce((a, h) => a + (hh[h] || 0), 0) }));
   const bmax = Math.max(...bt.map((b) => b.v), 1);
@@ -90,8 +88,7 @@ export default function Stats() {
     { t: 'Mood', k: 'mood', c: '#ff8fab', v: last7.map((o) => { const m = getDay(hd, o).mood; return m >= 0 ? m + 1 : 0; }), fmt: (n: number) => { const lg = last7.map((o) => getDay(hd, o).mood).filter((m) => m >= 0); if (!lg.length) return 'None'; return MOODS[Math.max(0, Math.min(4, Math.round(lg.reduce((a, b) => a + b, 0) / lg.length)))][0]; }, unit: 'on average' },
     { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => 'RM ' + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'in 7 days', sum: true },
   ];
-  const tot: Record<string, number> = {};
-  Object.values(mc || {}).forEach((day) => Object.keys(day).forEach((m) => { tot[m] = (tot[m] || 0) + day[m]; }));
+  const tot: Record<string, number> = u.mods;
   const ranked = MODS.map((m) => ({ ...m, n: tot[m.k] || 0 })).filter((m) => m.n > 0).sort((a, b) => b.n - a.n);
   const topN = ranked.length ? ranked[0].n : 1;
   return (
