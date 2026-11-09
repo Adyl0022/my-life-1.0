@@ -19,6 +19,8 @@ export async function getItemStrict<T>(k: string, d: T, tries = 3): Promise<T | 
   }
   return null;
 }
+// Tells every screen that reads saved values to read again (used by code that writes with AsyncStorage directly).
+export function notifyStored() { listeners.forEach((f) => f()); }
 export async function setItem(k: string, v: unknown) {
   try { await AsyncStorage.setItem(k, await seal(JSON.stringify(v))); } catch (e) {}
   listeners.forEach((f) => f());
@@ -37,7 +39,7 @@ export async function getText(k: string): Promise<string | null> {
 // One-time pass after the update: encrypts everything that was saved as plain text before.
 export async function encryptExisting() {
   try {
-    const ks = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('ml_') && !k.startsWith('ml_pt_') && !k.startsWith('ml_usage'));
+    const ks = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('ml_') && !k.startsWith('ml_pt_') && !k.startsWith('ml_usage') && k !== 'ml_modules' && k !== 'ml_hours');
     for (const k of ks) {
       const r = await AsyncStorage.getItem(k);
       if (r != null && !r.startsWith('enc1:')) { const e = await seal(r); if (e !== r) await AsyncStorage.setItem(k, e); }
