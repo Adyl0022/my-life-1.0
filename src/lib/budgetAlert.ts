@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { getItem, setItem } from './store';
+import { getItem, getItemStrict, setItem } from './store';
 import { DEBT_EMPTY } from './debts';
 import { calcLeft, commitFor, ymKey } from './moneyLeft';
 
@@ -12,7 +12,7 @@ const rm = (n: number) => 'RM ' + Math.round(n).toLocaleString('en-MY');
 export async function checkBudget(): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
-    const cfg = await getItem<BudgetCfg>('ml_budget', BUDGET_EMPTY); if (!cfg.on) return;
+    const cfg = await getItemStrict<BudgetCfg>('ml_budget', BUDGET_EMPTY, 1); if (!cfg || !cfg.on) return;
     const fin: any = await getItem('ml_finance', { inc: {}, spends: [] }); const debts: any = await getItem('ml_debts', DEBT_EMPTY);
     const now = new Date(); const ym = ymKey(now);
     const income = Object.keys((fin.inc || {})[ym] || {}).reduce((a, k) => a + (fin.inc[ym][k] || 0), 0);

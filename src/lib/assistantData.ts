@@ -1,6 +1,6 @@
 import { goalSaved } from './savings';
 import { useEffect } from 'react';
-import { useStored, getItem, setItem } from './store';
+import { useStored, getItem, getItemStrict, setItem } from './store';
 import { HEMPTY, HData, keyOfDate, dateOf, cupsGoal, getDay, bestStreakAll, BLANK } from './habit';
 import { DEBT_EMPTY, DebtData, debtSummary, ymOf } from './debts';
 import { commitFor } from './moneyLeft';
@@ -91,16 +91,16 @@ export function useReal(P: [string, number, number][]): Real {
 export async function persist(a: any): Promise<void> {
   const today = td(); const id = Date.now();
   if (a.type === 'spend') {
-    const f: any = await getItem('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 });
+    const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const nid = f.nextId || 1;
     await setItem('ml_finance', { ...f, spends: [{ id: nid, name: a.name, cat: a.cat, amt: a.amt, date: a.date || today }, ...(f.spends || [])], nextId: nid + 1 });
   } else if (a.type === 'inc') {
-    const f: any = await getItem('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 });
+    const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const ym = ymOf(new Date()); const inc = { ...(f.inc || {}) }; const row = { ...(inc[ym] || {}) };
     row[a.name] = (row[a.name] || 0) + a.amt; inc[ym] = row;
     await setItem('ml_finance', { ...f, inc });
   } else if (a.type === 'mtc' || a.type === 'odo') {
-    const r: any = await getItem('ml_record', { cats: ['Motorcycle'], sel: 0, data: {}, nextId: 1 });
+    const r: any = await getItemStrict('ml_record', { cats: ['Motorcycle'], sel: 0, data: {}, nextId: 1 }); if (r === null) return;
     const cats = r.cats && r.cats.length ? r.cats : ['Motorcycle']; const name = cats[r.sel] || cats[0];
     const v = { readings: [], yreadings: [], exps: [], ...(r.data && r.data[name] || {}) };
     let nid = r.nextId || 1;
@@ -108,7 +108,7 @@ export async function persist(a: any): Promise<void> {
     else v.readings = [...v.readings, { id: nid++, date: today, odo: a.val }];
     await setItem('ml_record', { ...r, cats, data: { ...(r.data || {}), [name]: v }, nextId: nid });
   } else if (a.type === 'steps' || a.type === 'sleep' || a.type === 'mood' || a.type === 'cups') {
-    const h: any = await getItem('ml_habit', HEMPTY);
+    const h: any = await getItemStrict('ml_habit', HEMPTY); if (h === null) return;
     const cur = { ...BLANK, ...((h.days || {})[today] || {}) };
     if (a.type === 'steps') cur.steps = (cur.steps || 0) + a.n;
     if (a.type === 'sleep') cur.sleep = a.h;
@@ -116,21 +116,21 @@ export async function persist(a: any): Promise<void> {
     if (a.type === 'cups') cur.cups = a.c;
     await setItem('ml_habit', { ...h, days: { ...(h.days || {}), [today]: cur } });
   } else if (a.type === 'task') {
-    const p: any = await getItem('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 });
+    const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
     const nid = p.nextId || 1;
     await setItem('ml_planner', { ...p, nextId: nid + 1, tasks: [...(p.tasks || []), { id: nid, name: a.name, note: '', prio: a.prio || 'Medium', due: a.due || '', cat: (p.cats && p.cats[0]) || 'Tasks', status: 'todo' }] });
   } else if (a.type === 'event') {
-    const p: any = await getItem('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 });
+    const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
     const nid = p.nextId || 1;
     await setItem('ml_planner', { ...p, nextId: nid + 1, events: [...(p.events || []), { id: nid, name: a.name, date: a.date, remind: a.remind || '1 day before', done: false }] });
   } else if (a.type === 'taskdone') {
-    const p: any = await getItem('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 });
+    const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
     await setItem('ml_planner', { ...p, tasks: (p.tasks || []).map((x: any) => (x.id === a.id ? { ...x, status: 'done' } : x)) });
   } else if (a.type === 'undoSpend') {
-    const f: any = await getItem('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 });
+    const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     await setItem('ml_finance', { ...f, spends: (f.spends || []).filter((x: any) => x.id !== a.id) });
   } else if (a.type === 'note') {
-    const n: any = await getItem('ml_notes', { notes: [], seq: 1 });
+    const n: any = await getItemStrict('ml_notes', { notes: [], seq: 1 }); if (n === null) return;
     const id = n.seq || 1;
     await setItem('ml_notes', { notes: [{ id, t: a.title || '', s: a.text, c: 6, pin: false, u: Date.now(), r: '' }, ...(n.notes || [])], seq: id + 1 });
   }

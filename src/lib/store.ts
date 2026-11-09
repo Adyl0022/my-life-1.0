@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { seal, open } from './secure';
 
@@ -9,6 +9,15 @@ const listeners = new Set<() => void>();
 AppState.addEventListener('change', (st) => { if (st === 'active') listeners.forEach((f) => f()); });
 export async function getItem<T>(k: string, d: T): Promise<T> {
   try { const r = await AsyncStorage.getItem(k); return r == null ? d : (JSON.parse(await open(r)) as T); } catch (e) { return d; }
+}
+// Like getItem, but returns null when the saved value could not be read (for example the phone keystore is slow right after the app wakes),
+// so the caller can stop instead of saving over good data with an empty default. It tries a few times before giving up.
+export async function getItemStrict<T>(k: string, d: T, tries = 3): Promise<T | null> {
+  for (let i = 0; i < tries; i++) {
+    try { const r = await AsyncStorage.getItem(k); return r == null ? d : (JSON.parse(await open(r)) as T); } catch (e) {}
+    if (i < tries - 1) await new Promise((res) => setTimeout(res, 1000));
+  }
+  return null;
 }
 export async function setItem(k: string, v: unknown) {
   try { await AsyncStorage.setItem(k, await seal(JSON.stringify(v))); } catch (e) {}
@@ -45,8 +54,9 @@ export async function clearMine(keepName: boolean) {
 }
 export function useStored<T>(k: string, d: T): [T, (v: T) => void, boolean] {
   const [v, setV] = useState<T>(d); const [ok, setOk] = useState(false);
+  const bad = useRef(false); // true while the saved value could not be read: edits are not saved then, so they cannot erase it
   useEffect(() => {
-    let alive = true; let last: string | null | undefined; // last saved text we showed; undefined = nothing shown yet
+    let alive = true; let last: string | null | undefined; let retries = 0; // last saved text we showed; undefined = nothing shown yet
     // Every write in the app re-reads every screen's data. Only update the screen when this key's saved text really changed, so the first sync after install does not make everything re-render and blink.
     const load = () => AsyncStorage.getItem(k).then(async (r) => {
       if (!alive || r === last) return;
@@ -54,10 +64,13 @@ export function useStored<T>(k: string, d: T): [T, (v: T) => void, boolean] {
       try { if (r != null) x = JSON.parse(await open(r)) as T; } catch (e) { good = false; }
       if (!alive) return;
       last = good ? r : undefined; setV(x); setOk(true);
-    }).catch(() => { if (alive) { last = undefined; setOk(true); } });
+      bad.current = !good;
+      if (!good && retries++ < 4) setTimeout(() => { if (alive) load(); }, 1500);
+      if (good) retries = 0;
+    }).catch(() => { if (alive) { last = undefined; setOk(true); bad.current = true; if (retries++ < 4) setTimeout(() => { if (alive) load(); }, 1500); } });
     load(); listeners.add(load);
     return () => { alive = false; listeners.delete(load); };
   }, [k]);
-  return [v, (x: T) => { setV(x); setItem(k, x); }, ok];
+  return [v, (x: T) => { if (bad.current) return; setV(x); setItem(k, x); }, ok];
 }
 export const useName = () => { const [n] = useStored<string>('ml_name', DEFAULT_NAME); return n; };
