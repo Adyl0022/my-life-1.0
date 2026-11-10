@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { getSession, useSession } from './auth';
+import { readPlain } from './store';
 
 export type Lic = { status: 'unknown' | 'active' | 'locked'; expires: string | null };
 const KEY = 'ml_license_cache';
@@ -14,7 +15,7 @@ const valid = (e: string | null) => !e || new Date(e).getTime() > Date.now();
 
 async function cached(u: string) {
   try {
-    const raw = await AsyncStorage.getItem(KEY); if (!raw) return undefined;
+    const raw = await readPlain(KEY); if (!raw) return undefined;
     const c = JSON.parse(raw); return c.uid === u ? (c.expires as string | null) : undefined;
   } catch { return undefined; }
 }

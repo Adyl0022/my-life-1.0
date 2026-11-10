@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { getSession, useSession } from './auth';
+import { readPlain } from './store';
 
 // A short message from the owner. It shows at the top of Settings, and the Settings tab shows a dot until it has been opened.
 type Ann = { id: number; msg: string };
@@ -13,7 +14,7 @@ const subs = new Set<() => void>(); const emit = () => subs.forEach((f) => f());
 export async function refreshAnnouncement() {
   if (!getSession()) { cur = null; emit(); return; }
   try {
-    if (!loaded) { seen = (await AsyncStorage.getItem(SEEN)) || ''; gone = (await AsyncStorage.getItem(GONE)) || ''; loaded = true; }
+    if (!loaded) { seen = (await readPlain(SEEN).catch(() => '')) || ''; gone = (await readPlain(GONE).catch(() => '')) || ''; loaded = true; }
     const { data, error } = await supabase.rpc('get_announcement');
     if (error) return;
     cur = data && data.msg ? { id: data.id, msg: data.msg } : null; emit();
