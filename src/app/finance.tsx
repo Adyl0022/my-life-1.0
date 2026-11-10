@@ -14,6 +14,8 @@ import { useStored } from '../lib/store';
 import { Commitments } from '../components/Commitments';
 import { MoneyLeft } from '../components/MoneyLeft';
 import { TOP } from '../lib/layout';
+import { Locked } from '../components/Paywall';
+import { usePro } from '../lib/pro';
 
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
@@ -55,7 +57,7 @@ const Stat = ({ l, v, bg, vc }: { l: string; v: string; bg?: string; vc?: string
 );
 
 export default function Finance() {
-  const router = useRouter();
+  const router = useRouter(); const pro = usePro();
   const [d, setD] = useStored<Data>('ml_finance', EMPTY);
   const now = new Date(); const curY = now.getFullYear(); const curKey = keyOf(curY, now.getMonth());
   const [ym, setYm] = useState(curKey);
@@ -275,7 +277,8 @@ export default function Finance() {
           </Glass>
 
           {/* By category */}
-          <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+          <Locked on={!pro} mt={12}>
+          <Glass radius={24} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending by Category</Text>
               <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{MON[selM] + ' ' + selY}</Text>
@@ -316,9 +319,11 @@ export default function Finance() {
               })}
             </View>
           </Glass>
+          </Locked>
 
           {/* Income trend */}
-          <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+          <Locked on={!pro} mt={12}>
+          <Glass radius={24} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Income Trend</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>Last 6 months · tap to open</Text></View>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 104, marginTop: 18 }}>
               {tr.map((x) => {
@@ -335,6 +340,7 @@ export default function Finance() {
             </View>
             {total <= 0 ? <Text style={{ marginTop: 8, color: dim, fontSize: 12 }}>No income saved for {MON[selM] + ' ' + selY} yet.</Text> : null}
           </Glass>
+          </Locked>
         </ScrollView>
       </SafeAreaView>
     </View>

@@ -11,6 +11,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, Path, LinearGradient as SvgGrad, Stop } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { Glass } from '../../components/Glass';
+import { openPaywall } from '../../components/Paywall';
+import { usePro } from '../../lib/pro';
 import { getDay, cupsGoal, goalPctOf, keyOfDate, dateOf } from '../../lib/habit';
 import { useCore, scoreParts, lifeScore, tips, weekly, patterns, hideTip, tipCat } from '../../lib/insights';
 import { TOP } from '../../lib/layout';
@@ -77,7 +79,8 @@ export default function Insights() {
   const cats = ['All'].concat(['Health', 'Money', 'Faith', 'Tasks', 'Vehicle'].filter((k) => allTips.some((x) => tipCat(x.id) === k)));
   const curCat = cats.indexOf(cat) >= 0 ? cat : 'All';
   const pool = curCat === 'All' ? allTips : allTips.filter((x) => tipCat(x.id) === curCat);
-  const shown = showAll || curCat !== 'All' ? pool : pool.slice(0, 3);
+  const pro = usePro();
+  const shown = pro && (showAll || curCat !== 'All') ? pool : pool.slice(0, 3);
   const wk = weekly(core);
   const pats = patterns(core);
 
@@ -168,9 +171,9 @@ export default function Insights() {
                 </Glass>
               </Rise>
             ))}
-            {curCat === 'All' && allTips.length > 3 && (
-              <Pressable onPress={() => setShowAll(!showAll)} style={{ alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 14 }}>
-                <Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{showAll ? 'Show fewer' : 'Show all ' + allTips.length}</Text>
+            {(pro ? curCat === 'All' && allTips.length > 3 : pool.length > 3) && (
+              <Pressable onPress={() => { if (!pro) { openPaywall(); return; } setShowAll(!showAll); }} style={{ alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 14 }}>
+                <Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{!pro ? 'Show more · Unlock' : showAll ? 'Show fewer' : 'Show all ' + allTips.length}</Text>
               </Pressable>
             )}
           </View>

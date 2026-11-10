@@ -10,6 +10,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Glass } from '../../components/Glass';
 import { Blob } from '../../components/Bg';
 import { useUsage } from '../../lib/usage';
+import { Locked } from '../../components/Paywall';
+import { usePro } from '../../lib/pro';
 import { Rise, FillBar, GrowBar } from '../../components/Anim';
 import { HeadIcon } from '../../components/HabitIcons';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
@@ -44,7 +46,7 @@ const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.6
 
 export default function Stats() {
   const [tab, setTab] = useState<'use' | 'health' | 'money'>('use');
-  const u = useUsage(16);
+  const u = useUsage(16); const pro = usePro();
   const [metric, setMetric] = useState<'time' | 'opens'>('time');
   const days = u.days;
   const arr = days.map((d) => (metric === 'time' ? Math.round(d.min) : d.opens));
@@ -372,7 +374,7 @@ export default function Stats() {
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>{rows.map((r) => <Text key={r.ym} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{r.label}</Text>)}</View>
                   <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{best && best.ym !== cur.ym ? 'Your best month was ' + best.label + ' with ' + fm(best.left) + ' left. ' : ''}Red bars are months you went over budget. Months without income are grey.</Text>
                 </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Add your income and spending in My Finance to see how much you keep each month.</Text>}
-                {any && cur.income > 0 ? (<View style={{ marginTop: 18, paddingTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
+                {any && cur.income > 0 ? (<Locked on={!pro}><View style={{ marginTop: 18, paddingTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
                   <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 14 }}>Where this month's income goes</Text>
                   <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', marginBottom: 6, backgroundColor: 'rgba(255,255,255,.12)' }}>
                     {[[cur.commit, '#b794ff'], [cur.spent, '#ffc46b'], [cur.savings, '#7c9cff'], [Math.max(0, cur.left), '#5ee7b5']].map(([v, col], i) => <View key={i} style={{ flex: Math.max(0, v as number) / Math.max(cur.income, cur.commit + cur.spent + cur.savings), backgroundColor: col as string }} />)}
@@ -385,7 +387,7 @@ export default function Stats() {
                       <Text style={{ width: 42, textAlign: 'right', color: 'rgba(255,255,255,.6)', fontSize: 12.5 }}>{Math.round(((v as number) / cur.income) * 100)}%</Text>
                     </View>
                   ))}
-                </View>) : null}
+                </View></Locked>) : null}
               </>);
             })()}
           </Glass>
@@ -450,7 +452,7 @@ export default function Stats() {
           </Rise>
           {ds.commit + ds.food > 0 ? (
             <Rise i={4}>
-            <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+            <Locked on={!pro} mt={12}><Glass style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
               <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Where your income goes</Text>
               <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{incNow > 0 ? 'This month, out of RM ' + Math.round(incNow).toLocaleString() : 'Add this month\'s income in My Finance to see the full split.'}</Text>
               <View style={{ flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', marginTop: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
@@ -467,7 +469,7 @@ export default function Stats() {
                   </View>
                 ))}
               </View>
-            </Glass>
+            </Glass></Locked>
             </Rise>
           ) : null}
 

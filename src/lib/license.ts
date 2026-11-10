@@ -71,3 +71,10 @@ export function useLicense(): Lic {
   }, [id]);
   return id ? cur : { status: 'unknown', expires: null };
 }
+
+// Reads the current answer without asking the server again. Use this on screens that only need to know if the account is unlocked.
+export function useLicenseLite(): Lic {
+  const [, n] = useState(0);
+  useEffect(() => { const f = () => n((x) => x + 1); subs.add(f); return () => { subs.delete(f); }; }, []);
+  return cur;
+}

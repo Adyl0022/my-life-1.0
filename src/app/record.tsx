@@ -9,6 +9,8 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, DateField, Sheet, SBtn, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
+import { Locked, openPaywall } from '../components/Paywall';
+import { usePro } from '../lib/pro';
 import { Ext, ProfileCard, RenewCard, FuelCard, PartsCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
 import { TOP } from '../lib/layout';
 
@@ -107,6 +109,7 @@ const Bars = ({ bars, height = 158, noteH = 13 }: { bars: Bar[]; height?: number
 };
 
 export default function Record() {
+  const pro = usePro();
   const router = useRouter();
   const [st, setSt] = useStored<Data>('ml_record', EMPTY);
   const [mPage, setMPage] = useState<number | null>(null); const [sPage, setSPage] = useState<number | null>(null); const [selYear, setSelYear] = useState<string | null>(null); const [allExp, setAllExp] = useState(false); const [yPage, setYPage] = useState<number | null>(null);
@@ -243,7 +246,7 @@ export default function Record() {
                   : <View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '600' }}>{n}</Text></View>}
               </Pressable>
             ))}
-            {!addingCat ? <Pressable onPress={() => { setAddingCat(true); setCatIn(''); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '600' }}>+ New category</Text></Pressable> : null}
+            {!addingCat ? <Pressable onPress={() => { if (!pro) { openPaywall(); return; } setAddingCat(true); setCatIn(''); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '600' }}>+ New category</Text></Pressable> : null}
           </View>
           {addingCat ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
@@ -414,7 +417,7 @@ export default function Record() {
           </Glass>
           <PartsCard d={d} upd={(fn) => upd(fn)} latest={allOdo} addNow={(o) => upd((x) => ({ ...x, readings: [...x.readings, { id: Date.now(), date: t0, odo: o }] }))} />
           <DocsCard d={d} upd={(fn) => upd(fn)} />
-          <ExportCard name={catName} d={d} latest={latest} />
+          <Locked on={!pro}><ExportCard name={catName} d={d} latest={latest} /></Locked>
         </ScrollView>
 
         {quick ? (
