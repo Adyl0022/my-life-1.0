@@ -28,12 +28,32 @@ export function Commitments({ income }: { income: number }) {
   const [sav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [gl, setGl] = useState(0);
   const [adding, setAdding] = useState(false); const [edit, setEdit] = useState(0);
   const [n, setN] = useState(''); const [bal, setBal] = useState(''); const [mo, setMo] = useState(''); const [day, setDay] = useState('');
+  // The order is kept in its own small record. The bills themselves are never changed by sorting.
+  const [co, setOrd] = useStored<{ mode: string; ids: number[] }>('ml_commit_order', { mode: 'my', ids: [] });
+  const [arrange, setArrange] = useState(false); const [sortMenu, setSortMenu] = useState(false);
   const [msg, setMsg] = useState(''); const [fixed, setFixed] = useState(false); const [fb, setFb] = useState(''); const [fe, setFe] = useState(false);
   const now = new Date(); const ym = ymOf(now); const today = now.getDate();
   const lastD = new Date(now.getFullYear(), now.getMonth() - 1, 1); const lastYm = ymOf(lastD); const LM = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][lastD.getMonth()];
   const list = d.debts || [];
   const act = list.filter((x) => isActive(x, ym));
   const done = list.filter((x) => !isActive(x, ym));
+  const mode = arrange ? 'my' : (co && co.mode) || 'my';
+  const myIds = (co && Array.isArray(co.ids) ? co.ids : []);
+  const myRank = (x: Debt) => { const i = myIds.indexOf(x.id); return i < 0 ? 100000 + act.indexOf(x) : i; };
+  const shown = act.slice().sort((a, b) => {
+    if (mode === 'due') return dueDay(a, now.getFullYear(), now.getMonth()) - dueDay(b, now.getFullYear(), now.getMonth()) || myRank(a) - myRank(b);
+    if (mode === 'amount') return amountDue(b, ym) - amountDue(a, ym) || myRank(a) - myRank(b);
+    if (mode === 'unpaid') return (((a.paid || {})[ym] > 0 ? 1 : 0) - ((b.paid || {})[ym] > 0 ? 1 : 0)) || myRank(a) - myRank(b);
+    return myRank(a) - myRank(b);
+  });
+  const SORTS: [string, string][] = [['my', 'My order'], ['due', 'Due date'], ['amount', 'Biggest amount first'], ['unpaid', 'Unpaid first']];
+  const sortName = (SORTS.find((x) => x[0] === mode) || SORTS[0])[1];
+  const move = (id: number, dir: number) => {
+    const ids = shown.map((x) => x.id); const i = ids.indexOf(id); const j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    const t = ids[i]; ids[i] = ids[j]; ids[j] = t;
+    setOrd({ mode: 'my', ids });
+  };
   const debtsOnly = list.filter((x) => !x.fixed);
   const food = 0;
   const commit = act.reduce((a, x) => a + amountDue(x, ym), 0);
@@ -126,9 +146,24 @@ export function Commitments({ income }: { income: number }) {
       ) : null}
       {msg ? <Text style={{ color: '#ffb3a0', fontSize: 12, marginTop: 8 }}>{msg}</Text> : null}
 
+      {act.length > 1 ? (
+        <View style={{ marginTop: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            {!arrange ? <Pressable accessibilityLabel="Sort by" onPress={() => setSortMenu(!sortMenu)} style={{ paddingVertical: 7, paddingHorizontal: 13, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)', backgroundColor: sortMenu ? 'rgba(124,156,255,.4)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{'Sort by: ' + sortName + (sortMenu ? ' ▴' : ' ▾')}</Text></Pressable> : <Text style={{ flex: 1, color: dim, fontSize: 12 }}>Tap ▲ ▼ to move a bill. Your order is saved.</Text>}
+            <Pressable accessibilityLabel={arrange ? 'Done' : 'Arrange'} onPress={() => { setArrange(!arrange); setSortMenu(false); if (!arrange && (!co || co.mode !== 'my')) setOrd({ mode: 'my', ids: shown.map((x) => x.id) }); }} style={{ paddingVertical: 7, paddingHorizontal: 13, borderRadius: 999, borderWidth: 1, borderColor: arrange ? 'transparent' : 'rgba(255,255,255,.3)', backgroundColor: arrange ? '#7c9cff' : 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{arrange ? 'Done' : 'Arrange'}</Text></Pressable>
+          </View>
+          {sortMenu && !arrange ? (
+            <View style={{ marginTop: 8, borderRadius: 16, padding: 6, backgroundColor: 'rgba(14,18,50,.72)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}>
+              {SORTS.map(([k, t]) => (
+                <Pressable key={k} onPress={() => { setOrd({ mode: k, ids: myIds }); setSortMenu(false); }} style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: mode === k ? 'rgba(124,156,255,.28)' : 'transparent' }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '600' }}>{t}</Text>{mode === k ? <Text style={{ color: W }}>✓</Text> : null}</Pressable>
+              ))}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
       {act.length > 0 ? (
         <View style={{ marginTop: 10 }}>
-          {act.map((x, i) => {
+          {shown.map((x, i) => {
             const pd = (x.paid || {})[ym] > 0; const dday = dueDay(x, now.getFullYear(), now.getMonth()); const late = !pd && today > dday; const diff = dday - today;
             const status = pd ? 'Paid this month' : late ? 'Overdue by ' + (today - dday) + (today - dday === 1 ? ' day' : ' days') : diff === 0 ? 'Due today' : diff === 1 ? 'Due tomorrow' : 'Due on the ' + ord(dday);
             return (
@@ -139,7 +174,13 @@ export function Commitments({ income }: { income: number }) {
                   {pd ? <Text style={{ color: '#062b1c', fontSize: 16, fontWeight: '900', marginTop: -1 }}>✓</Text> : null}
                 </Pressable>
                 <Text style={{ flex: 1, color: W, fontSize: 15, fontWeight: '800', textDecorationLine: pd ? 'line-through' : 'none', opacity: pd ? 0.7 : 1 }} numberOfLines={1}>{x.name}{x.goal && sav.goals.find((g) => g.id === x.goal) ? '  → ' + (sav.goals.find((g) => g.id === x.goal) as any).name : ''}</Text>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
+                {arrange ? (
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <Pressable accessibilityLabel="Move up" disabled={i === 0} onPress={() => move(x.id, -1)} style={{ width: 40, height: 32, borderRadius: 10, backgroundColor: 'rgba(124,156,255,.4)', alignItems: 'center', justifyContent: 'center', opacity: i === 0 ? 0.3 : 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '900' }}>▲</Text></Pressable>
+                    <Pressable accessibilityLabel="Move down" disabled={i === shown.length - 1} onPress={() => move(x.id, 1)} style={{ width: 40, height: 32, borderRadius: 10, backgroundColor: 'rgba(124,156,255,.4)', alignItems: 'center', justifyContent: 'center', opacity: i === shown.length - 1 ? 0.3 : 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '900' }}>▼</Text></Pressable>
+                  </View>
+                ) : null}
+                <View style={{ flexDirection: 'row', gap: 6, display: arrange ? 'none' : 'flex' }}>
                     <Pressable accessibilityLabel="Reminder" onPress={() => save({ ...d, debts: list.map((y) => (y.id === x.id ? { ...y, remind: !y.remind } : y)) })} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: x.remind ? 'rgba(255,196,107,.28)' : 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 14, opacity: x.remind ? 1 : 0.4 }}>🔔</Text></Pressable>
                     <Pressable accessibilityLabel="Edit" onPress={() => startEdit(x)} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffd593', fontSize: 14 }}>✎</Text></Pressable>
                     <Pressable accessibilityLabel="Delete" onPress={() => save({ ...d, debts: list.filter((y) => y.id !== x.id) })} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 13 }}>✕</Text></Pressable>
