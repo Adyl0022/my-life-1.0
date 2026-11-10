@@ -15,17 +15,22 @@ const fromHex = (h: string) => aesjs.utils.hex.toBytes(h) as unknown as Uint8Arr
 function getKey(): Promise<Uint8Array | null> {
   if (Platform.OS === 'web') return Promise.resolve(null);
   if (!keyP) keyP = (async () => {
-    try {
-      // The phone's keystore can be slow or stuck right after the app wakes up. Never wait on it forever.
-      const have = await Promise.race([SecureStore.getItemAsync(KEY_NAME), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('keystore timeout')), 6000))]);
-      if (have) return fromHex(have);
-      const k = Crypto.getRandomBytes(32);
-      await SecureStore.setItemAsync(KEY_NAME, toHex(k));
-      return k;
-    } catch (e) { keyP = null; return null; }
+    // The phone's keystore can be slow or stuck right after the app wakes up. Try twice, and never wait on it forever.
+    for (let i = 0; i < 2; i++) {
+      try {
+        const have = await Promise.race([SecureStore.getItemAsync(KEY_NAME), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('keystore timeout')), 6000))]);
+        if (have) return fromHex(have);
+        const k = Crypto.getRandomBytes(32);
+        await SecureStore.setItemAsync(KEY_NAME, toHex(k));
+        return k;
+      } catch (e) { /* try again once */ }
+    }
+    keyP = null; return null;
   })();
   return keyP;
 }
+// Wakes the keystore as soon as the app starts, so the first save after a long break does not have to wait for it.
+export function warmKey() { getKey().catch(() => {}); }
 
 export async function seal(plain: string): Promise<string> {
   const key = await getKey(); if (!key) return plain;

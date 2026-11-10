@@ -1,6 +1,8 @@
 import { Stack, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { trackModule } from '../lib/modules';
+import { warmKey } from '../lib/secure';
+warmKey();
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
 import { Platform, View, ActivityIndicator, Pressable, AppState } from 'react-native';

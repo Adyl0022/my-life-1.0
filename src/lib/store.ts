@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform, ToastAndroid } from 'react-native';
 import { seal, open } from './secure';
 
 export const DEFAULT_NAME = 'Adli Syahmi';
@@ -56,7 +56,7 @@ export async function clearMine(keepName: boolean) {
 }
 export function useStored<T>(k: string, d: T): [T, (v: T) => void, boolean] {
   const [v, setV] = useState<T>(d); const [ok, setOk] = useState(false);
-  const bad = useRef(false); // true while the saved value could not be read: edits are not saved then, so they cannot erase it
+  const ready = useRef(false); const bad = useRef(false); // true while the saved value could not be read: edits are not saved then, so they cannot erase it
   useEffect(() => {
     let alive = true; let last: string | null | undefined; let retries = 0; // last saved text we showed; undefined = nothing shown yet
     // Every write in the app re-reads every screen's data. Only update the screen when this key's saved text really changed, so the first sync after install does not make everything re-render and blink.
@@ -66,13 +66,14 @@ export function useStored<T>(k: string, d: T): [T, (v: T) => void, boolean] {
       try { if (r != null) x = JSON.parse(await open(r)) as T; } catch (e) { good = false; }
       if (!alive) return;
       last = good ? r : undefined; setV(x); setOk(true);
-      bad.current = !good;
+      bad.current = !good; if (good) ready.current = true;
       if (!good && retries++ < 4) setTimeout(() => { if (alive) load(); }, 1500);
       if (good) retries = 0;
     }).catch(() => { if (alive) { last = undefined; setOk(true); bad.current = true; if (retries++ < 4) setTimeout(() => { if (alive) load(); }, 1500); } });
     load(); listeners.add(load);
     return () => { alive = false; listeners.delete(load); };
   }, [k]);
-  return [v, (x: T) => { if (bad.current) return; setV(x); setItem(k, x); }, ok];
+  // Saving before the saved data has been read would write over it, so wait and say so instead of failing silently.
+  return [v, (x: T) => { if (bad.current || !ready.current) { if (Platform.OS === 'android') ToastAndroid.show('Your data is still loading. Please try again in a moment.', ToastAndroid.SHORT); return; } setV(x); setItem(k, x); }, ok];
 }
 export const useName = () => { const [n] = useStored<string>('ml_name', DEFAULT_NAME); return n; };
