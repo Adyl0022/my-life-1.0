@@ -1,0 +1,93 @@
+name: Build Play AAB
+# Builds the Google Play edition as an Android App Bundle (.aab) for Play Console.
+# Runs only for the play-aab branch (or by hand), so it never touches main or the GitHub APK release.
+on:
+  push:
+    branches: [play-aab]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: play-aab
+  cancel-in-progress: true
+jobs:
+  aab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPO_PUBLIC_EDITION: play
+      EXPO_PUBLIC_PLAY_TESTING: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-aab-${{ runner.os }}-${{ hashFiles('package-lock.json', 'app.json') }}
+          restore-keys: gradle-aab-${{ runner.os }}-
+      - run: npm ci
+      - name: Prepare signing key
+        env:
+          KS_B64: ${{ secrets.MYLIFE_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.MYLIFE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ] || [ -z "$KS_PASS" ]; then
+            echo "The signing secrets are missing. Play needs a signed bundle."
+            exit 1
+          fi
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/mylife-release.jks"
+          echo "MYLIFE_KEYSTORE_FILE=$RUNNER_TEMP/mylife-release.jks" >> "$GITHUB_ENV"
+          echo "MYLIFE_KEYSTORE_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
+          echo "MYLIFE_KEY_ALIAS=mylife" >> "$GITHUB_ENV"
+          echo "MYLIFE_KEY_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+      - name: Set the Play version number
+        working-directory: android
+        run: |
+          # Play needs a higher versionCode on every upload. The run number only ever goes up.
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/" app/build.gradle
+          grep -n "versionCode\|versionName" app/build.gradle
+      - name: Build release bundle
+        working-directory: android
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4g
+          EXPO_PUBLIC_BUILD_SHA: ${{ github.sha }}
+        run: |
+          sed -i 's/^networkTimeout=.*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties || true
+          PROPS=gradle/wrapper/gradle-wrapper.properties
+          F=$(sed -n 's/^distributionUrl=//p' "$PROPS" | sed 's#\\##g' | xargs basename)
+          V=$(echo "$F" | sed -E 's/^gradle-(.*)-(bin|all)\.zip$/\1/')
+          for u in "https://services.gradle.org/distributions/$F" "https://downloads.gradle.org/distributions/$F" "https://github.com/gradle/gradle-distributions/releases/download/v$V/$F" "https://mirrors.cloud.tencent.com/gradle/$F" "https://repo.huaweicloud.com/gradle/$F"; do
+            echo "Trying $u"
+            if curl -fL --retry 2 --retry-delay 5 --connect-timeout 20 --max-time 400 -o "$RUNNER_TEMP/$F" "$u" && unzip -tq "$RUNNER_TEMP/$F" >/dev/null 2>&1; then
+              echo "Got Gradle from $u"
+              sed -i "s#^distributionUrl=.*#distributionUrl=file\\\\:$RUNNER_TEMP/$F#" "$PROPS"
+              break
+            fi
+            rm -f "$RUNNER_TEMP/$F"
+          done
+          for i in 1 2 3 4; do
+            ./gradlew bundleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon && exit 0
+            echo "Build attempt $i failed, retrying in 45s..."
+            sleep 45
+          done
+          exit 1
+      - name: Check the bundle is signed
+        run: |
+          cp android/app/build/outputs/bundle/release/app-release.aab MyLife-play.aab
+          jarsigner -verify MyLife-play.aab | head -3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MyLife-play-aab
+          path: MyLife-play.aab
+          retention-days: 30
