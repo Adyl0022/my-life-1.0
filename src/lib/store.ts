@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, Platform, ToastAndroid } from 'react-native';
 import { seal, open } from './secure';
 
-export const DEFAULT_NAME = 'Adli Syahmi';
+export const DEFAULT_NAME = '';
 const listeners = new Set<() => void>();
 // When the app comes back to the front, read everything again, so a read that failed while the phone was asleep is repaired.
 AppState.addEventListener('change', (st) => { if (st === 'active') listeners.forEach((f) => f()); });
