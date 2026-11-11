@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { Text } from './Txt';
 import { Glass } from './Glass';
-import { PRICE, buyPro, restorePurchases } from '../lib/purchase';
+import { PRICE, PER, buyPro, restorePurchases } from '../lib/purchase';
 
 let shown = false;
 const subs = new Set<() => void>();
@@ -47,16 +47,17 @@ export function PaywallHost() {
           <View style={{ alignItems: 'center' }}>
             <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.28)' }}><Lock s={26} /></View>
             <Text style={{ color: '#fff', fontSize: 21, fontWeight: '800', marginTop: 14 }}>Unlock My Life</Text>
-            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 13.5, marginTop: 4, textAlign: 'center' }}>{PRICE} one time. Yours forever.</Text>
+            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 13.5, marginTop: 4, textAlign: 'center' }}>{PRICE} {PER}. Renews every year until you cancel.</Text>
           </View>
           <View style={{ marginTop: 18, gap: 11 }}>
             {PERKS.map((p) => (<View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Tick /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', flex: 1 }}>{p}</Text></View>))}
           </View>
           {msg ? <Text style={{ color: '#ffd9a0', fontSize: 12.5, marginTop: 16, textAlign: 'center' }}>{msg}</Text> : null}
           <View style={{ marginTop: 18 }}>
-            <Btn solid t={busy ? 'Please wait...' : 'Unlock for ' + PRICE} onPress={() => { if (!busy) go(buyPro); }} />
+            <Btn solid t={busy ? 'Please wait...' : 'Subscribe · ' + PRICE + ' ' + PER} onPress={() => { if (!busy) go(buyPro); }} />
             <Btn t="Restore purchase" onPress={() => { if (!busy) go(restorePurchases); }} />
             <Btn t="Not now" onPress={closePaywall} />
+            <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, textAlign: 'center', marginTop: 4, lineHeight: 16 }}>Cancel anytime in Google Play. Your data stays with you if you stop.</Text>
           </View>
         </Glass>
       </View>
@@ -70,10 +71,10 @@ export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?
   return (
     <View style={{ marginTop: mt, borderRadius: radius, overflow: 'hidden' }}>
       <View pointerEvents="none" style={{ opacity: 0.55 }}>{children}</View>
-      <Pressable onPress={openPaywall} accessibilityRole="button" accessibilityLabel={'Unlock for ' + PRICE} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+      <Pressable onPress={openPaywall} accessibilityRole="button" accessibilityLabel={'Unlock, ' + PRICE + ' ' + PER} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
         <BlurView intensity={26} tint="dark" pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(10,15,44,.78)', borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' }}>
-          <Lock s={15} /><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>Unlock · {PRICE}</Text>
+          <Lock s={15} /><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>Unlock · {PRICE} {PER}</Text>
         </View>
       </Pressable>
     </View>
@@ -92,7 +93,7 @@ export function UnlockPage({ title, text }: { title: string; text: string }) {
           <View style={{ width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.28)' }}><Lock s={34} /></View>
           <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', marginTop: 20, textAlign: 'center' }}>{title}</Text>
           <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 14.5, marginTop: 10, textAlign: 'center', lineHeight: 21, maxWidth: 320 }}>{text}</Text>
-          <Pressable onPress={openPaywall} accessibilityRole="button" style={{ marginTop: 26 }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 34, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Unlock for {PRICE}</Text></LinearGradient></Pressable>
+          <Pressable onPress={openPaywall} accessibilityRole="button" style={{ marginTop: 26 }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 34, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Subscribe · {PRICE} {PER}</Text></LinearGradient></Pressable>
         </View>
       </SafeAreaView>
     </View>
