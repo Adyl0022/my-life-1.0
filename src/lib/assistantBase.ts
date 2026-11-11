@@ -26,7 +26,7 @@ export class AssistantBase extends React.Component<any, any> {
   componentDidUpdate(prev) { if (prev.real !== this.props.real) this.setState(this.fromReal(this.props.real)); }
   todayStr(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   rm(n) { return String(Math.round(n * 100) / 100); }
-  mk(text, x) { return Object.assign({ me: false, text: text, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '', pid: 0 }, x || {}); }
+  mk(text, x) { return Object.assign({ me: false, text: this.clean(text), time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '', pid: 0 }, x || {}); }
   D() {
     const s = this.state; const r = this.R();
     const cats = r.cats || {}; let top = ''; let topAmt = 0;
@@ -120,7 +120,9 @@ export class AssistantBase extends React.Component<any, any> {
     if (n === 1) return L('due tomorrow', 'esok');
     return L('in ' + n + ' days', 'dalam ' + n + ' hari');
   }
-  fn() { return String(this.props.userName || 'there').trim().split(/\s+/)[0]; }
+  // With no name yet fn() returns a marker that clean() removes together with the comma or space before it, so "Hi \u0001!" reads "Hi!".
+  fn() { return String(this.props.userName || '').trim().split(/\s+/)[0] || '\u0001'; }
+  clean(t) { return typeof t === 'string' ? t.replace(/,?\s?\u0001/g, '') : t; }
   nextPrayer() {
     const D = this.D(); if (!D.P.length) return null; const now = new Date(); const cur = now.getHours() * 60 + now.getMinutes();
     let pick = null; let add = 0;
@@ -504,7 +506,7 @@ export class AssistantBase extends React.Component<any, any> {
       l1: ms ? '' : 'on', l2: ms ? 'on' : '',
       goEn: () => this.setState({ lang: 'en' }), goMs: () => this.setState({ lang: 'ms' }),
       clear: () => this.setState({ msgs: [], typing: false }),
-      welcome: L('Hi ' + this.fn() + '! I am your My Life assistant. I answer from your own data, on this device, with no internet or AI service. You can type in your own words, like "how much did I spend last week?" or "remind me to call mom tomorrow". Tap a question below or type your own.', 'Hai ' + this.fn() + '! Saya pembantu My Life awak. Saya jawab berdasarkan data awak sendiri, dalam peranti ini, tanpa internet atau perkhidmatan AI. Taip dengan cara awak sendiri, contohnya "berapa belanja minggu lepas?" atau "ingatkan saya telefon mak esok". Tekan soalan di bawah atau taip sendiri.'),
+      welcome: this.clean(L('Hi ' + this.fn() + '! I am your My Life assistant. I answer from your own data, on this device, with no internet or AI service. You can type in your own words, like "how much did I spend last week?" or "remind me to call mom tomorrow". Tap a question below or type your own.', 'Hai ' + this.fn() + '! Saya pembantu My Life awak. Saya jawab berdasarkan data awak sendiri, dalam peranti ini, tanpa internet atau perkhidmatan AI. Taip dengan cara awak sendiri, contohnya "berapa belanja minggu lepas?" atau "ingatkan saya telefon mak esok". Tekan soalan di bawah atau taip sendiri.')),
       startDisp: s.msgs.length === 0 ? 'grid' : 'none',
       starters: S.map(x => { const q = Q[x[0]][x[1]][ix]; return { label: q, d: x[2], bg: x[3], go: () => this.ask(q) }; }),
       msgs: msgs,
