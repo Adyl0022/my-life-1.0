@@ -120,7 +120,7 @@ export class AssistantBase extends React.Component<any, any> {
     if (n === 1) return L('due tomorrow', 'esok');
     return L('in ' + n + ' days', 'dalam ' + n + ' hari');
   }
-  fn() { return String(this.props.userName || 'Adli Syahmi').trim().split(/\s+/)[0]; }
+  fn() { return String(this.props.userName || 'there').trim().split(/\s+/)[0]; }
   nextPrayer() {
     const D = this.D(); if (!D.P.length) return null; const now = new Date(); const cur = now.getHours() * 60 + now.getMinutes();
     let pick = null; let add = 0;
