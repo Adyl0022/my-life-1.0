@@ -17,6 +17,8 @@ jobs:
     env:
       EXPO_PUBLIC_EDITION: play
       EXPO_PUBLIC_PLAY_TESTING: '1'
+      # Set the RevenueCat public Android key as the repository secret REVENUECAT_ANDROID_KEY. Without it, purchases stay switched off.
+      EXPO_PUBLIC_REVENUECAT_KEY: ${{ secrets.REVENUECAT_ANDROID_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
