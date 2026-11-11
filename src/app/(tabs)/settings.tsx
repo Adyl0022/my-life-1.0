@@ -373,7 +373,7 @@ export default function Settings() {
               </Glass>
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Privacy at a glance" />
-                {['Your data stays yours. It lives on your phone and is backed up to your own account.', 'Encrypted on your phone, with an optional PIN or fingerprint lock.', 'No ads, no tracking, never sold or shared.'].map((t) => (
+                {['Your data stays yours. It lives on your phone and is backed up to your own account.', 'Encrypted on your phone, with an optional PIN or fingerprint lock.', 'No ads, no tracking, never sold. Location is only used for prayer times.'].map((t) => (
                   <View key={t} style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}><Text style={{ color: '#5ee7df', fontSize: 13 }}>✓</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}>{t}</Text></View>
                 ))}
               </Glass>
