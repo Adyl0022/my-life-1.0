@@ -1,3 +1,4 @@
+import { FREEMIUM } from './edition';
 export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
   { h: 'Version 1.0.0', p: 'The first release of My Life, with everything you need for your day in one app.' },
@@ -13,7 +14,7 @@ export const PRIVACY: Sec[] = [
   { h: 'What we never do', p: 'We do not show ads, track you across other apps or sell your data. We only send data to the services the app needs in order to work, listed under Other services, and only what each one needs. The server stores your data so the app can sync it; it is not end-to-end encrypted, so the developer could technically access it, but does not read it.' },
   { h: 'Location', p: 'Prayer times use your location only to work out the times. Your coordinates are sent to the prayer-time service (waktusolat.app) to look up your zone. The last place found is kept on your phone only, so times can show without asking again, and it is not saved to your account. You can choose your zone by hand instead.' },
   { h: 'Steps and health', p: 'If you allow it, My Life reads your step count from your phone\'s step sensor or Health Connect to fill in your daily goal. Steps are kept with your habit data: saved on your phone and, when you are signed in, in your online copy. They are not used for anything else.' },
-  { h: 'Other services', p: 'To work, the app contacts these services: waktusolat.app and e-solat.gov.my for prayer times (your location is sent to waktusolat.app, see Location); date.nager.at for Malaysian public holidays (no personal data is sent); and Supabase for sign-in and sync. In the GitHub edition, GitHub is contacted when you tap Check for updates. As with any internet request, each service can see your device\'s IP address.' },
+  { h: 'Other services', p: 'To work, the app contacts these services: waktusolat.app and e-solat.gov.my for prayer times (your location is sent to waktusolat.app, see Location); date.nager.at for Malaysian public holidays (no personal data is sent); and Supabase for sign-in and sync. In the GitHub edition of the app, GitHub is contacted when you tap Check for updates. As with any internet request, each service can see your device\'s IP address.' },
   { h: 'App lock', p: 'If you turn on App lock, your PIN is stored only on your phone in scrambled (hashed) form. We cannot see it or reset it for you.' },
   { h: 'Your control', p: 'You can export everything at any time from Settings, reset all your data (this also erases the online copy), or delete your account in Settings, which permanently removes your account and everything saved online. Removing the app from your phone removes only the data on that phone.' },
   { h: 'Contact', p: 'Questions about privacy go to the developer, Adli Syahmi. Email adlisyahmi324@gmail.com or mylifeapp.support@gmail.com.' },
@@ -43,7 +44,9 @@ export const HOWTO: Sec[] = [
   { h: '7. Keep it safe', p: 'Turn on App lock in Settings, Security. Save a backup now and then from Settings, Export.' },
 ];
 export const FAQ: Sec[] = [
-  { h: 'How do I activate the app?', p: 'Create an account, then enter the activation code you receive from the developer after payment. Each code works once and unlocks your account on all your devices.' },
+  FREEMIUM
+    ? { h: 'What do I get with the subscription?', p: 'The subscription (RM15 a year) unlocks the Assistant, Spending by Category and Income Trend in Finance, PDF export and new categories in My Record, and every tip in Insights. Everything else is open to all. It renews every year until you cancel in Google Play, and your data stays with you if you stop.' }
+    : { h: 'How do I activate the app?', p: 'Create an account, then enter the activation code you receive from the developer after payment. Each code works once and unlocks your account on all your devices.' },
   { h: 'Where is my data?', p: 'On your phone, encrypted, and backed up to your account online when you are signed in. Each account can only read its own data. The online copy is not end-to-end encrypted, so the developer could technically access it, but does not read it.' },
   { h: 'Can I use it on a new phone?', p: 'Yes. Install My Life, sign in with the same email and password, and your data comes back. Receipt photos are not included.' },
   { h: 'I changed phone. How do I move my data?', p: 'On the old phone, go to Settings, Export, choose Backup (JSON) and keep the file. On the new phone, open Settings, Security, Backup and restore, then Restore from a file. Photos such as receipts are not included.' },
