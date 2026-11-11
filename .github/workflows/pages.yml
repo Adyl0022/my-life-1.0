@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir site
           cp public/welcome.html site/index.html
-          cp public/privacy.html public/icon.png site/
+          cp public/privacy.html public/delete-account.html public/icon.png site/
           cp -r public/welcome site/welcome
           cp site/index.html site/404.html
       - uses: actions/setup-node@v4
