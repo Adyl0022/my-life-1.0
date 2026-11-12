@@ -48,9 +48,11 @@ function AlertSync() {
   return null;
 }
 // Starts syncing as soon as the user is signed in, and again when the app comes back to the front.
+// The Play edition has no activation step, so it syncs for every signed-in account; the first step of a sync also
+// puts the sign-up name on the Dashboard.
 function SyncRunner() {
   const [sess] = useSession(); const lic = useLicense();
-  useEffect(() => { if (sess && lic.status === 'active') { startSync(); syncNow(); } }, [sess?.user?.id, lic.status]);
+  useEffect(() => { if (sess && (FREEMIUM || lic.status === 'active')) { startSync(); syncNow(); } }, [sess?.user?.id, lic.status]);
   return null;
 }
 // Shown while the account is being checked. It never stays silent: after a few seconds it offers a retry.
