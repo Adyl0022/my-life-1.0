@@ -58,6 +58,11 @@ export async function syncNow(): Promise<boolean> {
     const prev = await readPlain(UID);
     if (prev && prev !== uid) { await clearMine(false); meta = {}; fresh = true; dirty = new Set(); Object.keys(stamp).forEach((k) => delete stamp[k]); await saveMeta(); }
     await AsyncStorage.setItem(UID, uid);
+    // Show the name typed at sign-up at once, before the network round trip. A name saved in the cloud still wins on the first sync.
+    if ((await getText('ml_name')) == null) {
+      const nm0 = (s.user.user_metadata as any)?.name;
+      if (typeof nm0 === 'string' && nm0.trim()) await applyRemote('ml_name', nm0.trim());
+    }
     const m = await loadMeta();
     Object.keys(stamp).forEach((k) => { m[k] = Math.max(m[k] || 0, stamp[k]); delete stamp[k]; });
     // First sync of this install or login (nothing synced here before): the cloud copy wins, so a quick edit made on
