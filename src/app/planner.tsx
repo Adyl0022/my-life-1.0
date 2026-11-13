@@ -11,6 +11,7 @@ import { PlannerArt } from '../components/PlannerArt';
 import { Inp, DateField, Pill, SBtn, Sheet, Toast, todayStr, W, GP } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
+import { useRegion, regionCountry } from '../lib/region';
 import { upcomingMy, fetchMy, EMPTY_CACHE, MyCache } from '../lib/myEvents';
 
 type Ev = { id: number; name: string; date: string; remind: string; done: boolean };
@@ -144,8 +145,9 @@ export default function Planner() {
   const sorted = d.events.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const upcoming = sorted.filter((x) => !x.done), completed = sorted.filter((x) => x.done);
   const [mc, setMc, mcOk] = useStored<MyCache>('ml_myevents', EMPTY_CACHE);
-  useEffect(() => { if (!mcOk) return; fetchMy(mc, today).then((n) => { if (n) setMc(n); }); }, [mcOk, today]);
-  const my = upcomingMy(today, 5, mc);
+  const [rg] = useRegion();
+  useEffect(() => { if (!mcOk) return; fetchMy(mc, today, false, rg.cc).then((n) => { if (n) setMc(n); }); }, [mcOk, today, rg.cc]);
+  const my = upcomingMy(today, 5, mc, rg.cc);
   const mk = (e: any) => e.date + '|' + e.name;
   const [shown, setShown] = useState<{ e: any; leaving: boolean; fresh: boolean }[]>(() => my.map((e) => ({ e, leaving: false, fresh: false })));
   const myKey = my.map(mk).join(',');
@@ -203,8 +205,9 @@ export default function Planner() {
 
           {tab === 'events' ? (
             <View style={{ gap: 8 }}>
-              <Sec t="Malaysia events" hint="auto · official calendar" c="#ffd27d" n={my.length} />
+              <Sec t={'Public holidays · ' + regionCountry().name} hint="auto · official calendar" c="#ffd27d" n={my.length} />
               <Glass radius={22} style={{ padding: 12, paddingBottom: 4 }}>
+                {shown.length === 0 ? <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12.5, paddingBottom: 10, lineHeight: 18 }}>No public holidays found for {regionCountry().name} yet. Connect to the internet once and they will appear here.</Text> : null}
                 {shown.map((sx) => {
                   const e = sx.e;
                   const added = d.events.some((y) => y.date === e.date && y.name === e.name);
