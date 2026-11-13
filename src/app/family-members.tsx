@@ -41,10 +41,16 @@ export default function FamilyMembers() {
   const parent = isParent(info.role);
   const share = () => Share.share({ message: 'Join our family on My Life. Open Daily Planner, then Family, then Join with a code. Code: ' + showCode(info.code) }).catch(() => {});
 
+  // A solid dark card tinted with the member's own colour (no see-through).
+  const tint = (hex: string, t: number) => {
+    const h = /^#[0-9a-f]{6}$/i.test(hex) ? hex : '#7c9cff';
+    const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), b = [16, 22, 52];
+    return 'rgb(' + c.map((v, i) => Math.round(b[i] + (v - b[i]) * t)).join(',') + ')';
+  };
   const Row = ({ m }: { m: FMember }) => {
     const me = m.user_id === info.me; const on = open === m.user_id;
     return (
-      <View>
+      <View style={{ borderRadius: 20, overflow: 'hidden', backgroundColor: tint(m.color, 0.26), borderWidth: 1.5, borderColor: tint(m.color, 0.7), borderLeftWidth: 5, borderLeftColor: m.color }}>
         <Pressable onPress={() => (owner && !me ? setOpen(on ? '' : m.user_id) : null)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
           <Avatar name={m.name} color={m.color} />
           <View style={{ flex: 1 }}>
@@ -97,7 +103,7 @@ export default function FamilyMembers() {
 
           <Rise i={1}>
             <Label t="Members" />
-            <Glass solid radius={24}>{info.members.map((m, i) => <View key={m.user_id} style={{ borderTopWidth: i ? 1 : 0, borderTopColor: 'rgba(255,255,255,.09)' }}><Row m={m} /></View>)}</Glass>
+            <View style={{ gap: 10 }}>{info.members.map((m) => <Row key={m.user_id} m={m} />)}</View>
             {owner ? <Text style={{ color: DIM, fontSize: 11.5, marginTop: 8, marginLeft: 4 }}>Tap a member to change their role or remove them.</Text> : null}
           </Rise>
 
