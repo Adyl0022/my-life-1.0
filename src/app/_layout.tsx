@@ -1,5 +1,5 @@
 import { Stack, usePathname } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { trackModule } from '../lib/modules';
 import { useRegion } from '../lib/region';
 import { useHidden } from '../lib/hidden';
@@ -22,6 +22,9 @@ import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
 import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles } from '../lib/adhan';
+import { useFamily } from '../lib/family';
+import { useFamTasks, useFamEvents } from '../lib/familyData';
+import { syncFamilyAlerts } from '../lib/familyAlerts';
 
 // Keeps prayer alerts scheduled after the user has opened Prayer Times once (never asks for location on first launch).
 function Runner() { usePrayer(); return null; }
@@ -53,6 +56,26 @@ function AlertSync() {
   useEffect(() => { if (okb && okc && Platform.OS !== 'web') syncBackupAlert(!!bo, bk); }, [okb, okc, bk, bo]);
   return null;
 }
+// Plans reminders for family tasks and activities. It waits until the family lists are loaded, so a slow start never wipes them.
+function FamilySync() {
+  const [sess] = useSession(); const lic = useLicense();
+  const [tg, , ok] = useStored<Partial<Toggles>>('ml_toggles', {});
+  const hid = useHidden();
+  const f = useFamily();
+  const fid = f.info && lic.status === 'active' ? f.info.id : undefined;
+  const tk = useFamTasks(fid); const ev = useFamEvents(fid);
+  const t = { ...TG_DEFAULT, ...tg }; const plannerOn = hid.on('planner');
+  const had = useRef(false);
+  useEffect(() => { if (sess) had.current = true; else if (had.current && Platform.OS !== 'web') { had.current = false; syncFamilyAlerts('', [], [], t as Toggles, false); } }, [!!sess]);   // signed out: no family reminders of the old account
+  const key = JSON.stringify([f.info?.me, tk.rows.map((x) => [x.id, x.due_at, x.remind_min, x.done, x.assignees, x.title]), ev.rows.map((x) => [x.id, x.starts_at, x.remind_min, x.attendees, x.title])]);
+  useEffect(() => {
+    if (!ok || !hid.ready || Platform.OS === 'web' || !sess) return;
+    if (lic.status === 'locked' || f.state === 'none' || f.state === 'locked') { syncFamilyAlerts('', [], [], t as Toggles, false); return; }
+    if (!f.info || lic.status !== 'active' || !tk.ready || !ev.ready) return;
+    syncFamilyAlerts(f.info.me, tk.rows, ev.rows, t as Toggles, plannerOn);
+  }, [ok, hid.ready, sess?.user?.id, lic.status, f.state, tk.ready, ev.ready, plannerOn, t.ev, t.qh, key]);
+  return null;
+}
 // Starts syncing as soon as the user is signed in, and again when the app comes back to the front.
 function SyncRunner() {
   const [sess] = useSession(); const lic = useLicense();
@@ -80,5 +103,5 @@ export default function Root() {
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
+  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><FamilySync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }

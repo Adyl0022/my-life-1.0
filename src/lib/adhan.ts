@@ -8,7 +8,7 @@ export const TG_DEFAULT: Toggles = { ev: true, pr: true, zk: true, qh: true };
 export const readToggles = async (): Promise<Toggles> => ({ ...TG_DEFAULT, ...(await getItem<Partial<Toggles>>('ml_toggles', {})) });
 // Quiet hours: nothing rings between 12 am and 5 am.
 export const inQuiet = (at: Date, tg: Toggles) => !!tg.qh && at.getHours() < 5;
-const OWN = ['debt-', 'event-', 'zikir-', 'backup-'];
+const OWN = ['debt-', 'event-', 'zikir-', 'backup-', 'fam-'];
 
 export type Alert = { key: string; name: string; at: Date };
 let ready = false;
