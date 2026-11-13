@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Alert } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
+import { showAlert } from '../lib/dialog';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../components/Txt';
 import { Glass } from '../components/Glass';
@@ -43,7 +44,7 @@ export default function FamilyShop() {
     } catch (e) { setMsg(famError(e)); }
     setBusy(false);
   };
-  const del = () => Alert.alert('Delete this item?', 'It moves to Recently deleted for 7 days.', [
+  const del = () => showAlert('Delete this item?', 'It moves to Recently deleted for 7 days.', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Delete', style: 'destructive', onPress: async () => { try { await famDelete('shop', eid!); await s.reload(); setPanel(false); setEid(null); } catch (e) { setMsg(famError(e)); } } },
   ]);
@@ -52,7 +53,7 @@ export default function FamilyShop() {
     s.patch(x.id, { bought: !x.bought });
     try { await shopBought(x.id, !x.bought); } catch (e) { setMsg(famError(e)); s.reload(); }
   };
-  const clear = () => Alert.alert('Clear bought items?', 'They move to Recently deleted for 7 days.', [
+  const clear = () => showAlert('Clear bought items?', 'They move to Recently deleted for 7 days.', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Clear', onPress: async () => { try { await shopClear(); await s.reload(); } catch (e) { setMsg(famError(e)); } } },
   ]);

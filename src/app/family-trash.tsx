@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, Pressable, Alert } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
+import { showAlert } from '../lib/dialog';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../components/Txt';
 import { Glass } from '../components/Glass';
@@ -28,10 +29,10 @@ export default function FamilyTrash() {
   useEffect(() => { if (info) load(); }, [info, load]);
 
   const act = async (fn: () => Promise<any>) => { try { await fn(); await load(); } catch (e) { setMsg(famError(e)); } };
-  const forever = (x: Trashed) => Alert.alert('Delete for good?', '"' + x.title + '" cannot be brought back after this.', [
+  const forever = (x: Trashed) => showAlert('Delete for good?', '"' + x.title + '" cannot be brought back after this.', [
     { text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: () => act(() => trashRemove(x.kind, x.id)) },
   ]);
-  const empty = () => Alert.alert('Empty Recently deleted?', 'Everything here is removed for good.', [
+  const empty = () => showAlert('Empty Recently deleted?', 'Everything here is removed for good.', [
     { text: 'Cancel', style: 'cancel' }, { text: 'Empty', style: 'destructive', onPress: () => act(trashEmpty) },
   ]);
 
