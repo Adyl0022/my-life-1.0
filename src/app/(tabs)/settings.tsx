@@ -18,6 +18,7 @@ import { useIsAdmin } from '../../lib/admin';
 import { useLicense } from '../../lib/license';
 import { supabase } from '../../lib/supabase';
 import { Announcement } from '../../components/Announcement';
+import { RegionCard } from '../../components/RegionCard';
 import { markSeen, useAnnouncement } from '../../lib/announcement';
 import { useSession, signOut, checkPassword, setNewPassword, deleteAccount } from '../../lib/auth';
 import { syncNow, syncState, wipeCloud } from '../../lib/sync';
@@ -246,6 +247,7 @@ export default function Settings() {
           {tab === 0 && (
             <View style={{ gap: 12, marginTop: 14 }}>
               <Announcement />
+              <RegionCard />
               <Glass style={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                 <View style={{ paddingTop: 8 }}><Ttl t="Reminders and notifications" /></View>
                 {TOG.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOG.length - 1} onPress={() => setTg({ ...tg, [k]: !tg[k] })} right={<Sw on={!!tg[k]} />} />)}
