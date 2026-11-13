@@ -31,6 +31,13 @@ const MSG: Record<string, string> = {
   profiles_full: 'You can add up to 10 people without an account.',
   cannot_remove_self: 'You cannot remove yourself. Use Leave family instead.',
   not_in_family: 'You are not in a family.',
+  no_family: 'You are not in a family.',
+  bad_title: 'Please type a title.',
+  bad_people: 'One of the chosen people is no longer in the family.',
+  bad_date: 'Please check the date and time.',
+  repeat_needs_date: 'A repeating task needs a date.',
+  list_full: 'This list is full. Delete some old items first.',
+  not_found: 'That item was already changed or deleted by someone else.',
 };
 export function famError(e: any): string {
   const m = String((e && (e.message || e.error)) || e || '');
@@ -38,7 +45,7 @@ export function famError(e: any): string {
   if (k) return MSG[k];
   return /network|fetch|timeout/i.test(m) ? 'No internet connection. Please try again.' : 'Something went wrong. Please try again.';
 }
-async function call<T = any>(fn: string, args: Record<string, any> = {}): Promise<T> {
+export async function call<T = any>(fn: string, args: Record<string, any> = {}): Promise<T> {
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw error;
   if (data && typeof data === 'object' && (data as any).error) throw new Error((data as any).error);
@@ -57,6 +64,11 @@ export const famSetMe = (name: string, color: string) => call('family_set_me', {
 export const famAddProfile = (name: string, color: string) => call('family_profile_add', { p_name: name, p_color: color });
 export const famRemoveProfile = (id: string) => call('family_profile_remove', { p_id: id });
 
+// Forget the saved copies of the family lists when the person is no longer in a family.
+function clearRows() {
+  AsyncStorage.getAllKeys().then((ks) => { const d = ks.filter((k) => k.indexOf('ml_famrows_') === 0); if (d.length) AsyncStorage.multiRemove(d).catch(() => {}); }).catch(() => {});
+}
+
 // Loads the family for the signed-in person. Shows the last saved copy while offline.
 export function useFamily() {
   const [sess] = useSession();
@@ -73,7 +85,7 @@ export function useFamily() {
       const r: any = await call('family_info');
       if (!alive.current) return;
       setOffline(false);
-      if (!r || r.state === 'none') { setInfo(null); setState('none'); AsyncStorage.removeItem(KEY).catch(() => {}); }
+      if (!r || r.state === 'none') { setInfo(null); setState('none'); AsyncStorage.removeItem(KEY).catch(() => {}); clearRows(); }
       else if (r.state === 'locked') { setInfo(null); setState('locked'); }
       else { setInfo(r as FInfo); setState('ready'); AsyncStorage.setItem(KEY, JSON.stringify({ uid, info: r })).catch(() => {}); }
     } catch (e) {

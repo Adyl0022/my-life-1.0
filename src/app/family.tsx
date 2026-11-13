@@ -7,8 +7,9 @@ import { Glass } from '../components/Glass';
 import { Header } from '../components/IslamicUi';
 import { FamilyBg, HouseHeart } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
-import { Avatar, Pill, Btn, Field, Note, Label, W, DIM } from '../components/FamilyUi';
+import { Avatar, Pill, Btn, Field, Note, Label, Tile, W, DIM } from '../components/FamilyUi';
 import { useFamily, famCreate, famError, pickColor, isParent } from '../lib/family';
+import { useFamTasks, useFamShop } from '../lib/familyData';
 import { useLicense } from '../lib/license';
 import { useName } from '../lib/store';
 
@@ -23,6 +24,10 @@ export default function Family() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const info = f.info;
+  const tk = useFamTasks(info?.id);
+  const sh = useFamShop(info?.id);
+  const tkOpen = tk.rows.filter((x) => !x.done).length;
+  const shLeft = sh.rows.filter((x) => !x.bought).length;
 
   const create = async () => {
     setBusy(true); setErr('');
@@ -93,10 +98,10 @@ export default function Family() {
         ) : null}
         <Rise i={2}>
           <Label t="Plans" />
-          <Glass radius={24} style={{ padding: 18 }}>
-            <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Your family space is ready</Text>
-            <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{isParent(info.role) ? 'Share your family code from the members page so others can join.' : 'Ask a parent for the family code if someone else wants to join.'} Shared tasks, activities and lists are coming next.</Text>
-          </Glass>
+          <Tile ic="tasks" c="#5ee7df" t="Tasks" sub={tk.ready ? (tkOpen ? tkOpen + ' open' : 'Nothing open') : 'Tasks for everyone'} onPress={() => router.push('/family-tasks' as any)} />
+          <Tile ic="shop" c="#ff8fab" t="Shopping list" sub={sh.ready ? (shLeft ? shLeft + ' to buy' : 'Nothing to buy') : 'One list for the family'} onPress={() => router.push('/family-shop' as any)} />
+          <Tile ic="undo" c="#9aa6c4" t="Recently deleted" sub="Kept for 7 days" onPress={() => router.push('/family-trash' as any)} />
+          <Note t={isParent(info.role) ? 'Share your family code from the members page so others can join. Activities and the calendar are coming next.' : 'Ask a parent for the family code if someone else wants to join. Activities and the calendar are coming next.'} />
         </Rise>
         {f.offline ? <View style={{ marginTop: 12 }}><Note t="You are offline. Showing the last saved copy." /></View> : null}
       </>
