@@ -9,13 +9,14 @@ import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Chip, Ico, Label, NewBtn, Note, Tick, W, DIM } from '../components/FamilyUi';
 import { useFamily, famError } from '../lib/family';
-import { useFamTasks, peopleOf, taskDone, dueText, dayDiff, FTask } from '../lib/familyData';
+import { useFamTasks, peopleOf, taskDone, dueText, dayDiff, FTask, useReloadOnFocus } from '../lib/familyData';
 
 export default function FamilyTasks() {
   const router = useRouter();
   const f = useFamily();
   const info = f.info;
   const t = useFamTasks(info?.id);
+  useReloadOnFocus(t.reload);
   const people = useMemo(() => peopleOf(info), [info]);
   const [who, setWho] = useState('all');
   const [msg, setMsg] = useState('');

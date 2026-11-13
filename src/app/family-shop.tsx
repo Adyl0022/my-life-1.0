@@ -8,13 +8,14 @@ import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Btn, Chip, Field, Label, NewBtn, Note, Tick, W, DIM } from '../components/FamilyUi';
 import { useFamily, famError } from '../lib/family';
-import { useFamShop, shopSave, shopBought, shopClear, famDelete, nameOf, SHOP_CATS, FShop } from '../lib/familyData';
+import { useFamShop, shopSave, shopBought, shopClear, famDelete, nameOf, SHOP_CATS, FShop, useReloadOnFocus } from '../lib/familyData';
 
 // One list for the whole family. Anyone can add, tick off, edit or delete. Bought items stay until "Clear bought".
 export default function FamilyShop() {
   const f = useFamily();
   const info = f.info;
   const s = useFamShop(info?.id);
+  useReloadOnFocus(s.reload);
   const [panel, setPanel] = useState(false);
   const [eid, setEid] = useState<string | null>(null);
   const [name, setName] = useState('');

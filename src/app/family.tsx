@@ -9,7 +9,7 @@ import { FamilyBg, HouseHeart } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, Tile, W, DIM } from '../components/FamilyUi';
 import { useFamily, famCreate, famError, pickColor, isParent } from '../lib/family';
-import { useFamTasks, useFamShop, useFamEvents, dayDiff } from '../lib/familyData';
+import { useFamTasks, useFamShop, useFamEvents, dayDiff, useReloadOnFocus } from '../lib/familyData';
 import { useLicense } from '../lib/license';
 import { useName } from '../lib/store';
 
@@ -27,6 +27,7 @@ export default function Family() {
   const tk = useFamTasks(info?.id);
   const sh = useFamShop(info?.id);
   const ev = useFamEvents(info?.id);
+  useReloadOnFocus(tk.reload, sh.reload, ev.reload);
   const evNext = ev.rows.filter((x) => dayDiff(x.starts_at) >= 0).length;
   const tkOpen = tk.rows.filter((x) => !x.done).length;
   const shLeft = sh.rows.filter((x) => !x.bought).length;
