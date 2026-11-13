@@ -166,6 +166,26 @@ export function Header({ title, sub, right }: { title: string; sub?: string; rig
     </View>
   );
 }
+
+// Small panel above the toolbar to choose how a text is shown (with translation, Arabic only, ...). Uses the Islamic Hub greens.
+export type ReadOpt = { k: string; ic: string; t: string; sub: string };
+export function ReadPicker({ opts, mode, onMode, lang, onLang, onClose }: { opts: ReadOpt[]; mode: string; onMode: (k: string) => void; lang: string; onLang: (l: 'ms' | 'en') => void; onClose: () => void }) {
+  return (
+    <View style={{ position: 'absolute', left: 20, right: 20, bottom: 84, borderRadius: 22, backgroundColor: '#0e2f3a', borderWidth: 1, borderColor: 'rgba(125,240,198,.3)', padding: 8 }}>
+      {opts.map((o) => (
+        <Pressable key={o.k} onPress={() => { onMode(o.k); if (o.k !== 'tr') onClose(); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 9, borderRadius: 14, backgroundColor: mode === o.k ? 'rgba(125,240,198,.2)' : 'transparent', borderWidth: mode === o.k ? 1.5 : 0, borderColor: 'rgba(125,240,198,.65)' }}>
+          <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14 }}>{o.ic}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{o.t}</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{o.sub}</Text></View>
+          {o.k === 'tr' && mode === 'tr' ? (
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {(['ms', 'en'] as const).map((l) => <Pressable key={l} onPress={() => { onLang(l); onClose(); }} style={{ paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: lang === l ? 'rgba(125,240,198,.45)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{l === 'ms' ? 'BM' : 'EN'}</Text></Pressable>)}
+            </View>
+          ) : null}
+        </Pressable>
+      ))}
+    </View>
+  );
+}
 export function ToolBar({ saved, onSave, size, onSize, lang, onLang, langLabel }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void; langLabel?: string }) {
   const T = ({ a, b, onPress, c }: any) => <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}><Text style={{ color: c || 'rgba(255,255,255,.85)', fontSize: 15, fontWeight: '800' }}>{a}</Text><Text style={{ color: c || 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '600', marginTop: 1 }}>{b}</Text></Pressable>;
   return (

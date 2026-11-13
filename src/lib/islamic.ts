@@ -34,6 +34,8 @@ export const useLang = () => useStored<'ms' | 'en'>('ml_mean', 'ms');
 export type ReadMode = 'tr' | 'ar' | 'flow';
 // How the Quran screens show a surah: with translation, Arabic only, or one continuous flow.
 export const useRead = () => useStored<ReadMode>('ml_read', 'tr');
+// Tahlil, Mathurat and other dhikr screens: with translation or Arabic only.
+export const useZRead = () => useStored<'tr' | 'ar'>('ml_read_z', 'tr');
 export const useSize = () => useStored<number>('ml_size', 1);
 export const AR_SIZE = [18, 21, 25];
 export const M_SIZE = [11.5, 12.5, 14];

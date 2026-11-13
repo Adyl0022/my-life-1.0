@@ -5,7 +5,7 @@ import { getSession } from './auth';
 import { getText, applyRemote, clearMine, readPlain } from './store';
 
 // Data that follows the account. Lock/PIN, keys, caches and per-phone switches stay on the phone.
-export const SYNC_KEYS = ['ml_planner', 'ml_notes', 'ml_islamic', 'ml_tasbih', 'ml_puasa', 'ml_finance', 'ml_debts', 'ml_savings', 'ml_record', 'ml_habit', 'ml_name', 'ml_budget', 'ml_mean', 'ml_region', 'ml_toggles', 'ml_prayer_alerts', 'ml_prayer_lead', 'ml_backup_rem', 'ml_commit_order', 'ml_size', 'ml_tips_off', 'ml_read'];
+export const SYNC_KEYS = ['ml_planner', 'ml_notes', 'ml_islamic', 'ml_tasbih', 'ml_puasa', 'ml_finance', 'ml_debts', 'ml_savings', 'ml_record', 'ml_habit', 'ml_name', 'ml_budget', 'ml_mean', 'ml_region', 'ml_toggles', 'ml_prayer_alerts', 'ml_prayer_lead', 'ml_backup_rem', 'ml_commit_order', 'ml_size', 'ml_tips_off', 'ml_read', 'ml_read_z'];
 const META = 'ml_sync_meta', UID = 'ml_sync_uid';
 type Meta = Record<string, number>;
 let meta: Meta | null = null; let dirty = new Set<string>(); let timer: any = null; let busy = false; let again = false;

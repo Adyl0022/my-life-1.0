@@ -3,13 +3,14 @@ import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from './Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from './Glass';
-import { IslamicBg, Header, ToolBar, VerseBlock, Pending, Credit } from './IslamicUi';
+import { IslamicBg, Header, ToolBar, VerseBlock, Pending, Credit, ReadPicker } from './IslamicUi';
 import { W } from './Ui';
-import { Part, KIND_COL, partVerses, useIslamic, useLang, useSize, AR_SIZE, M_SIZE, dayKey, nm } from '../lib/islamic';
+import { Part, KIND_COL, partVerses, useIslamic, useLang, useSize, useZRead, AR_SIZE, M_SIZE, dayKey, nm } from '../lib/islamic';
 
 export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening, headExtra, footNote }: { title: string; sub: string; parts: Part[]; storeKey: string; bmKey: string; start: number; evening?: boolean; headExtra?: React.ReactNode; footNote: string }) {
   const [isl, setIsl] = useIslamic();
   const [lang, setLang] = useLang(); const [size, setSize] = useSize();
+  const [zr, setZr] = useZRead(); const [pick, setPick] = useState(false);
   const [sel, setSel] = useState(start);
   const [count, setCount] = useState(0);
   const [toast, setToast] = useState('');
@@ -41,12 +42,12 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
             {p.custom === 'tahlil33' ? (
               <View style={{ alignItems: 'center', paddingVertical: 6 }}>
                 <Text style={{ color: W, fontSize: AR_SIZE[size] + 8, lineHeight: (AR_SIZE[size] + 8) * 1.8, textAlign: 'center' }}>لَا إِلَٰهَ إِلَّا ٱللَّهُ</Text>
-                <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: M_SIZE[size] + 1, marginTop: 4 }}>{lang === 'en' ? 'There is no god but Allah.' : 'Tiada Tuhan selain Allah.'}</Text>
+                {zr === 'ar' ? null : <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: M_SIZE[size] + 1, marginTop: 4 }}>{lang === 'en' ? 'There is no god but Allah.' : 'Tiada Tuhan selain Allah.'}</Text>}
                 <Pressable onPress={tap33} style={{ marginTop: 12, minWidth: 190, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999, borderWidth: 1, borderColor: count >= 33 ? 'rgba(52,211,153,.7)' : 'rgba(255,255,255,.25)', backgroundColor: count >= 33 ? 'rgba(52,211,153,.4)' : 'rgba(255,196,107,.' + (20 + Math.round((count / 33) * 30)) + ')', alignItems: 'center' }}>
                   <Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{count >= 33 ? 'Completed ✓ · tap to restart' : 'Tap to count · ' + count + ' of 33'}</Text>
                 </Pressable>
               </View>
-            ) : verses ? verses.map((v, i) => <VerseBlock key={i} v={v} size={size} lang={lang} showNum={verses.length > 1} last={i === verses.length - 1} />)
+            ) : verses ? verses.map((v, i) => <VerseBlock key={i} v={v} size={size} lang={lang} arOnly={zr === 'ar'} showNum={verses.length > 1} last={i === verses.length - 1} />)
               : <Pending kind={p.kind} />}
           </ScrollView>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, gap: 8 }}>
@@ -80,7 +81,8 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
           </ScrollView>
         </Glass>
         {toast ? <View pointerEvents="none" style={{ position: 'absolute', bottom: 100, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.75)' }}><Text style={{ color: W, fontSize: 12.5 }}>{toast}</Text></View> : null}
-        <ToolBar saved={saved} onSave={() => { setIsl({ ...isl, bm: { ...isl.bm, [bmKey]: !saved } }); say(saved ? 'Bookmark removed' : 'Bookmarked'); }} size={size} onSize={() => setSize((size + 1) % 3)} lang={lang} onLang={() => setLang(lang === 'en' ? 'ms' : 'en')} />
+        {pick ? <ReadPicker opts={[{ k: 'tr', ic: '文', t: 'With translation', sub: 'Arabic with rumi and Malay or English' }, { k: 'ar', ic: 'ع', t: 'Arabic only', sub: 'No rumi, no translation' }]} mode={zr} onMode={(k) => setZr(k as any)} lang={lang} onLang={setLang} onClose={() => setPick(false)} /> : null}
+        <ToolBar saved={saved} onSave={() => { setIsl({ ...isl, bm: { ...isl.bm, [bmKey]: !saved } }); say(saved ? 'Bookmark removed' : 'Bookmarked'); }} size={size} onSize={() => setSize((size + 1) % 3)} lang={lang} onLang={() => setPick(!pick)} langLabel={zr === 'ar' ? 'Arabic' : lang === 'en' ? 'EN' : 'BM'} />
       </SafeAreaView>
     </View>
   );

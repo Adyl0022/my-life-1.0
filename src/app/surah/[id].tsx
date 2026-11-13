@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { Text } from '../../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Glass } from '../../components/Glass';
-import { IslamicBg, Header, ToolBar, VerseBlock, Credit } from '../../components/IslamicUi';
+import { IslamicBg, Header, ToolBar, VerseBlock, Credit, ReadPicker } from '../../components/IslamicUi';
 import { W } from '../../components/Ui';
 import { SURAH, BISMILLAH, partVerses, useIslamic, useLang, useSize, useRead, AR_SIZE } from '../../lib/islamic';
 
@@ -73,21 +73,7 @@ export default function SurahScreen() {
           <Credit lang={lang} />
         </ScrollView>
         {toast ? <View pointerEvents="none" style={{ position: 'absolute', bottom: 90, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.75)' }}><Text style={{ color: W, fontSize: 12.5 }}>{toast}</Text></View> : null}
-        {pick ? (
-          <View style={{ position: 'absolute', left: 20, right: 20, bottom: 84, borderRadius: 22, backgroundColor: '#0e2f3a', borderWidth: 1, borderColor: 'rgba(125,240,198,.3)', padding: 8 }}>
-            {([['tr', '文', 'With translation', 'Arabic with Malay or English'], ['ar', 'ع', 'Arabic only', 'No translation'], ['flow', '☰', 'Continuous', 'Flowing text, no breaks']] as const).map(([k, ic, t, sub]) => (
-              <Pressable key={k} onPress={() => { setMode(k); if (k !== 'tr') setPick(false); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 9, borderRadius: 14, backgroundColor: mode === k ? 'rgba(125,240,198,.2)' : 'transparent', borderWidth: mode === k ? 1.5 : 0, borderColor: 'rgba(125,240,198,.65)' }}>
-                <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14 }}>{ic}</Text></View>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{sub}</Text></View>
-                {k === 'tr' && mode === 'tr' ? (
-                  <View style={{ flexDirection: 'row', gap: 6 }}>
-                    {(['ms', 'en'] as const).map((l) => <Pressable key={l} onPress={() => { setLang(l); setPick(false); }} style={{ paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: lang === l ? 'rgba(125,240,198,.45)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{l === 'ms' ? 'BM' : 'EN'}</Text></Pressable>)}
-                  </View>
-                ) : null}
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
+        {pick ? <ReadPicker opts={[{ k: 'tr', ic: '文', t: 'With translation', sub: 'Arabic with Malay or English' }, { k: 'ar', ic: 'ع', t: 'Arabic only', sub: 'No translation' }, { k: 'flow', ic: '☰', t: 'Continuous', sub: 'Flowing text, no breaks' }]} mode={mode} onMode={(k) => setMode(k as any)} lang={lang} onLang={setLang} onClose={() => setPick(false)} /> : null}
         <ToolBar saved={saved} onSave={() => { setIsl({ ...isl, bm: { ...isl.bm, [key]: !saved } }); say(saved ? 'Bookmark removed' : 'Bookmarked'); }} size={size} onSize={() => setSize((size + 1) % 3)} lang={lang} onLang={() => setPick(!pick)} langLabel={mode === 'ar' ? 'Arabic' : mode === 'flow' ? 'Flow' : lang === 'en' ? 'EN' : 'BM'} />
       </SafeAreaView>
     </View>
