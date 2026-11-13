@@ -12,6 +12,7 @@ export type FTask = {
   assignees: string[]; done: boolean; done_at: string | null; done_by: string | null; created_by: string | null; created_at: string;
 };
 export type FShop = { id: string; name: string; qty: string | null; category: string; bought: boolean; bought_by: string | null; created_by: string | null; created_at: string };
+export type FEvent = { id: string; title: string; place: string | null; note: string | null; starts_at: string; ends_at: string | null; attendees: string[]; remind_min: number | null; created_by: string | null; created_at: string };
 export type Repeat = 'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly';
 export type Trashed = { kind: 'task' | 'event' | 'shop'; id: string; title: string; deleted_at: string; deleted_by: string | null };
 export type FPerson = { id: string; name: string; color: string; member: boolean };
@@ -64,10 +65,13 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
   return { rows, ready, offline, reload: load, patch };
 }
 export const useFamTasks = (fid?: string) => useRows<FTask>('family_tasks', fid, 'due_at', true);
+export const useFamEvents = (fid?: string) => useRows<FEvent>('family_events', fid, 'starts_at', true);
 export const useFamShop = (fid?: string) => useRows<FShop>('family_shop', fid, 'created_at', true);
 
 export type TaskIn = { id?: string | null; title: string; note: string; due: string | null; repeat: Repeat; remind: number | null; assignees: string[] };
 export const taskSave = (a: TaskIn) => call<string>('family_task_save', { p_id: a.id || null, p_title: a.title, p_note: a.note || null, p_due: a.due, p_repeat: a.repeat, p_remind: a.due ? a.remind : null, p_assignees: a.assignees });
+export type EventIn = { id?: string | null; title: string; place: string; note: string; starts: string; ends: string | null; attendees: string[]; remind: number | null };
+export const eventSave = (a: EventIn) => call<string>('family_event_save', { p_id: a.id || null, p_title: a.title, p_place: a.place || null, p_note: a.note || null, p_starts: a.starts, p_ends: a.ends, p_attendees: a.attendees, p_remind: a.remind });
 export const taskDone = (id: string, done: boolean) => call('family_task_done', { p_id: id, p_done: done });
 export const shopSave = (id: string | null, name: string, qty: string, cat: string) => call<string>('family_shop_save', { p_id: id, p_name: name, p_qty: qty || null, p_cat: cat });
 export const shopBought = (id: string, bought: boolean) => call('family_shop_bought', { p_id: id, p_bought: bought });

@@ -9,7 +9,7 @@ import { FamilyBg, HouseHeart } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, Tile, W, DIM } from '../components/FamilyUi';
 import { useFamily, famCreate, famError, pickColor, isParent } from '../lib/family';
-import { useFamTasks, useFamShop } from '../lib/familyData';
+import { useFamTasks, useFamShop, useFamEvents, dayDiff } from '../lib/familyData';
 import { useLicense } from '../lib/license';
 import { useName } from '../lib/store';
 
@@ -26,6 +26,8 @@ export default function Family() {
   const info = f.info;
   const tk = useFamTasks(info?.id);
   const sh = useFamShop(info?.id);
+  const ev = useFamEvents(info?.id);
+  const evNext = ev.rows.filter((x) => dayDiff(x.starts_at) >= 0).length;
   const tkOpen = tk.rows.filter((x) => !x.done).length;
   const shLeft = sh.rows.filter((x) => !x.bought).length;
 
@@ -99,9 +101,10 @@ export default function Family() {
         <Rise i={2}>
           <Label t="Plans" />
           <Tile ic="tasks" c="#5ee7df" t="Tasks" sub={tk.ready ? (tkOpen ? tkOpen + ' open' : 'Nothing open') : 'Tasks for everyone'} onPress={() => router.push('/family-tasks' as any)} />
+          <Tile ic="star" c="#ffc46b" t="Activities" sub={ev.ready ? (evNext ? evNext + ' coming up' : 'Nothing planned') : 'Plans together'} onPress={() => router.push('/family-events' as any)} />
           <Tile ic="shop" c="#ff8fab" t="Shopping list" sub={sh.ready ? (shLeft ? shLeft + ' to buy' : 'Nothing to buy') : 'One list for the family'} onPress={() => router.push('/family-shop' as any)} />
           <Tile ic="undo" c="#9aa6c4" t="Recently deleted" sub="Kept for 7 days" onPress={() => router.push('/family-trash' as any)} />
-          <Note t={isParent(info.role) ? 'Share your family code from the members page so others can join. Activities and the calendar are coming next.' : 'Ask a parent for the family code if someone else wants to join. Activities and the calendar are coming next.'} />
+          <Note t={isParent(info.role) ? 'Share your family code from the members page so others can join. The calendar is coming next.' : 'Ask a parent for the family code if someone else wants to join. The calendar is coming next.'} />
         </Rise>
         {f.offline ? <View style={{ marginTop: 12 }}><Note t="You are offline. Showing the last saved copy." /></View> : null}
       </>
