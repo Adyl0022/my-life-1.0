@@ -23,6 +23,7 @@ import { ModulesCard } from '../../components/ModulesCard';
 import { useHidden } from '../../lib/hidden';
 import { markSeen, useAnnouncement } from '../../lib/announcement';
 import { useSession, signOut, checkPassword, setNewPassword, deleteAccount } from '../../lib/auth';
+import { call as famCall } from '../../lib/family';
 import { syncNow, syncState, wipeCloud } from '../../lib/sync';
 import { PRIVACY, TERMS, COPYRIGHT, WHATS_NEW, LICENCES, HOWTO, FAQ, SUPPORT_EMAIL, SUPPORT_EMAIL2, PRIVACY_URL, Sec } from '../../lib/legal';
 import { TOP } from '../../lib/layout';
@@ -204,6 +205,11 @@ export default function Settings() {
   const hid = useHidden();
   const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : k === 'pr' || k === 'zk' ? hid.on('islamic') : true));
   const isDel = dlg === 'delete';
+  const [fam, setFam] = useState<{ name: string; role: string; n: number } | null>(null);
+  const askDelete = () => {
+    setFam(null); setDlg('delete');
+    famCall<any>('family_info').then((r) => { if (r && r.state === 'ready') setFam({ name: r.name, role: r.role, n: r.members.length }); }).catch(() => {});
+  };
   const canGo = isDel ? typed.trim().toUpperCase() === 'DELETE' && pwv.length > 0 : typed.trim().toUpperCase() === 'RESET';
 
   const [sess] = useSession(); const lic = useLicense(); const isAdmin = useIsAdmin(); const [busy, setBusy] = useState(false); const [synced, setSynced] = useState(syncState.last);
@@ -335,7 +341,7 @@ export default function Settings() {
                 {nameMsg ? <Text style={{ color: '#8fe9e2', fontSize: 12, marginTop: 6 }}>{nameMsg}</Text> : null}
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
                   <Btn t="Reset all data" kind="warn" onPress={() => setDlg('reset')} />
-                  <Btn t="Delete account" kind="danger" onPress={() => setDlg('delete')} />
+                  <Btn t="Delete account" kind="danger" onPress={askDelete} />
                 </View>
               </Glass>
             </View>
@@ -486,6 +492,7 @@ export default function Settings() {
           <Overlay onClose={close}><View style={{ padding: 20, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
             <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>{isDel ? 'Delete your account?' : 'Reset all your data?'}</Text>
             <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{isDel ? 'This permanently deletes your account and everything in it: planner, notes, finance, records and habits, on all your devices. This cannot be undone. Export your data first if you want a copy.' : 'This erases ALL your data: planner, notes, finance, records and habits. Your account and login stay, and the saved copy online is erased too. This cannot be undone. Export your data first if you want a copy.'}</Text>
+            {isDel && fam ? <View style={{ marginTop: 10, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,213,147,.12)', borderWidth: 1, borderColor: 'rgba(255,213,147,.45)' }}><Text style={{ color: '#ffe0ad', fontSize: 12.5, lineHeight: 18 }}>{fam.role === 'owner' ? 'You are the owner of the family "' + fam.name + '" (' + fam.n + (fam.n === 1 ? ' member' : ' members') + '). Deleting your account also deletes that family for everyone: its members, tasks, activities and shopping list. To keep the family, close this and make another member the owner first (Daily Planner, Family, Members).' : 'You are in the family "' + fam.name + '". Deleting your account also removes you from it.'}</Text></View> : null}
             <Text style={{ color: W, fontSize: 12.5, fontWeight: '700', marginTop: 12, marginBottom: 6 }}>{isDel ? 'Type DELETE to confirm' : 'Type RESET to confirm'}</Text>
             <Inp autoCapitalize="characters" value={typed} onChangeText={setTyped} />
             {isDel && (<><Text style={{ color: W, fontSize: 12.5, fontWeight: '700', marginTop: 10, marginBottom: 6 }}>Enter your password</Text><Inp secureTextEntry value={pwv} onChangeText={setPwv} /></>)}
