@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { PlannerArt } from '../components/PlannerArt';
-import { Inp, DateField, Pill, SBtn, Sheet, Toast, todayStr, W, GP } from '../components/Ui';
+import { Inp, DateField, pickDate, Pill, SBtn, Sheet, Toast, todayStr, W, GP } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { useRegion, regionCountry } from '../lib/region';
@@ -284,9 +284,9 @@ export default function Planner() {
           <Sheet onClose={() => setAdd(null)}>
             <View style={{ padding: 20, gap: 10, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
               <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>{add.kind === 'task' ? 'New task' : 'New event'}</Text>
-              <Inp autoFocus value={add.name} onChangeText={(v: string) => setAdd({ ...add, name: v })} placeholder={add.kind === 'task' ? 'What needs to be done?' : 'Event name'} />
+              <Inp autoFocus value={add.name} onChangeText={(v: string) => setAdd({ ...add, name: v })} placeholder={add.kind === 'task' ? 'What needs to be done?' : 'Event name'} {...(add.kind === 'event' ? { onSubmitEditing: () => pickDate(add.date, (v) => setAdd({ ...add, date: v })) } : {})} />
               {add.kind === 'task' ? (<>
-                <Inp value={add.note} onChangeText={(v: string) => setAdd({ ...add, note: v })} placeholder="Note (optional)" />
+                <Inp value={add.note} onChangeText={(v: string) => setAdd({ ...add, note: v })} placeholder="Note (optional)" onSubmitEditing={() => pickDate(add.due, (v) => setAdd({ ...add, due: v }))} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>{PR.map((n) => (
                   <Pressable key={n} style={{ flex: 1 }} onPress={() => setAdd({ ...add, prio: n })}><View style={{ paddingVertical: 9, borderRadius: 12, alignItems: 'center', backgroundColor: add.prio === n ? PB[n] : 'rgba(255,255,255,.06)', borderWidth: 1, borderColor: add.prio === n ? PC[n] : 'rgba(255,255,255,.2)' }}><Text style={{ color: add.prio === n ? PC[n] : W, fontSize: 12.5, fontWeight: '700' }}>{n}</Text></View></Pressable>))}</View>
                 <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5 }}>Due</Text><DateField value={add.due} onChange={(v) => setAdd({ ...add, due: v })} style={{ flex: 1 }} /></View>

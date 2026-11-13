@@ -37,6 +37,14 @@ export function DateField({ value, onChange, style }: { value: string; onChange:
     </Pressable>
   );
 }
+// Opens the date picker straight away (used when Enter is pressed on the name field: the next thing to fill in is the date).
+export const pickDate = (value: string, onChange: (v: string) => void) => {
+  if (Platform.OS !== 'android') { Keyboard.dismiss(); return; }
+  Keyboard.dismiss();
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(value + 'T12:00:00') : new Date();
+  const fmt = (x: Date) => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+  DateTimePickerAndroid.open({ value: d, mode: 'date', onChange: (e: any, x?: Date) => { if (e.type === 'set' && x) onChange(fmt(x)); } });
+};
 // Faint family motifs behind the Family Planner pill: little houses, birds in flight, sparkles.
 const FP = 'rgba(255,255,255,.72)';
 const Mo = ({ k, s, st }: { k: 'house' | 'bird' | 'spark' | 'dot'; s: number; st: any }) => (

@@ -323,3 +323,7 @@ grant execute on function public.family_task_save(uuid, text, text, timestamptz,
   public.family_shop_save(uuid, text, text, text), public.family_shop_bought(uuid, boolean), public.family_shop_clear_bought(),
   public.family_delete(text, uuid), public.family_restore(text, uuid), public.family_trash_remove(text, uuid),
   public.family_trash_empty(), public.family_trash() to authenticated;
+
+-- The family lists are read straight from the tables (the row rules above decide who may see what), so signed-in people need
+-- permission to read them. Without this line adding works but the lists stay empty. Safe to run twice.
+grant select on public.family_tasks, public.family_events, public.family_shop to authenticated;

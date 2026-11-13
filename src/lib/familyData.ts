@@ -31,6 +31,7 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
   const [rows, setRows] = useState<T[]>([]);
   const [ready, setReady] = useState(false);
   const [offline, setOffline] = useState(false);
+  const [msg, setMsg] = useState('');
   const alive = useRef(true);
   const timer = useRef<any>(null);
   const uid = useRef(Math.random().toString(36).slice(2, 9)); // every screen gets its own channel name, so opening a screen again never clashes with one still closing
@@ -43,11 +44,13 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
       const { data, error } = await supabase.from(table).select('*').eq('family_id', fid).is('deleted_at', null).order(order, { ascending: asc }).limit(600);
       if (error) throw error;
       if (!alive.current) return;
-      setRows((data || []) as T[]); setReady(true); setOffline(false);
+      setRows((data || []) as T[]); setReady(true); setOffline(false); setMsg('');
       AsyncStorage.setItem(key, JSON.stringify(data || [])).catch(() => {});
-    } catch (e) {
+    } catch (e: any) {
       if (!alive.current) return;
       setOffline(true);
+      const m = String((e && (e.message || e.error)) || e || '');
+      setMsg(/network|fetch|timeout/i.test(m) || !m ? 'You are offline. Showing the last saved list. Changes need an internet connection.' : 'The list could not be read (' + m.replace(/\s+/g, ' ').slice(0, 110) + '). Anything you add is saved, but cannot be shown yet.');
     }
   }, [fid, table, order, asc, key]);
   const soon = useCallback(() => { clearTimeout(timer.current); timer.current = setTimeout(load, 250); }, [load]);
@@ -67,7 +70,7 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
   }, [fid, key, load, soon, table]);
 
   const patch = useCallback((id: string, p: Partial<T>) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...p } : x))), []);
-  return { rows, ready, offline, reload: load, patch };
+  return { rows, ready, offline, msg, reload: load, patch };
 }
 // Call this on a screen (never in the root layout, which has no navigation yet): reads the list again every time the screen
 // comes back into view, for example after saving a task, even if no live update arrived.

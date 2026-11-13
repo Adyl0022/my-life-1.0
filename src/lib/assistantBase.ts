@@ -213,12 +213,16 @@ export class AssistantBase extends React.Component<any, any> {
     const L = (en, ms) => (lang === 'ms' ? ms : en);
     const mk = (text, x) => Object.assign({ me: false, text: text, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, x || {});
     let patch = {}; let m = null; let doAct = null;
+    // A question about a module that is turned off gets a short answer asking to turn it on, never an error.
+    const MODQ = [['habit', 'Habit & Health', /steps|walk|water|sleep|slept|mood|habit|langkah|jalan kaki|air minum|tidur/i], ['planner', 'Daily Planner', /\btasks?\b|\bevents?\b|todo|tugas|acara/i], ['finance', 'My Finance', /spent|spend|petrol|income|overtime|money left|saving|budget|commit|bill|debt|belanja|gaji|pendapatan|simpan|hutang/i], ['record', 'My Record', /motorcycle|mileage|odometer|service|motor|milage|servis/i], ['islamic', 'Islamic Hub', /prayer|pray|fasting|quran|zikir|solat|puasa|doa|waktu/i]];
+    const offHit = MODQ.find((x) => !modOn(x[0]) && x[2].test(q));
+    if (offHit) return { m: mk(L('That needs the ' + offHit[1] + ' module, and it is turned off. Turn it on in Settings, Modules, then ask me again. Your data is still saved.', 'Itu memerlukan modul ' + offHit[1] + ', dan ia dimatikan. Hidupkan di Settings, Modules, kemudian tanya saya semula. Data awak masih tersimpan.')), patch: {}, act: null };
     const cmdTask = q.trim().match(/^(tambah|add|buat|create|new)\s+(tugasan|tugas|task|todo)\b\s*:?\s*(.*)$/i);
     const cmdWater = /^(tambah|add|log|minum|drink)\b/.test(qn) && /(air|water|gelas|segelas|glass|cup)/.test(qn);
     const pc = Math.round(D.steps / D.goal * 100);
-    const cs = this.comps();
-    const avg = Math.round(cs.reduce((a, c) => a + c.r, 0) / cs.length * 100);
-    const weak = cs.slice().sort((a, b) => a.r - b.r)[0];
+    const cps = this.comps(); // (was named cs, which hid the currency helper cs() used in many answers below)
+    const avg = Math.round(cps.reduce((a, c) => a + c.r, 0) / cps.length * 100);
+    const weak = cps.slice().sort((a, b) => a.r - b.r)[0];
     const np = this.nextPrayer();
     const R = this.R();
     const open = s.tasks.filter(t => t.s !== 'done');
@@ -414,9 +418,18 @@ export class AssistantBase extends React.Component<any, any> {
           m = mk(mine, { label: L('Open Date & Events', 'Buka Date & Events'), href: 'Planner.dc.html' });
           break;
         }
-        case 'summary':
-          m = mk(L('Your day so far:\nSteps ' + this.num(D.steps) + ' (' + pc + '%)\nWater ' + s.cups + '/' + D.cupGoal + ' · Sleep ' + D.sleep + 'h\nSpent ' + cs() + D.spendToday + '\nOpen tasks ' + open.length, 'Hari awak setakat ini:\nLangkah ' + this.num(D.steps) + ' (' + pc + '%)\nAir ' + s.cups + '/' + D.cupGoal + ' · Tidur ' + D.sleep + 'j\nBelanja ' + cs() + D.spendToday + '\nTugasan belum siap ' + open.length), { big: avg + '%', bigLbl: L('daily goal', 'sasaran harian'), pct: avg, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' });
+        case 'summary': {
+          const hb = modOn('habit'), fi = modOn('finance'), pl = modOn('planner');
+          const en = [], my = [];
+          if (hb) { en.push('Steps ' + this.num(D.steps) + ' (' + pc + '%)', 'Water ' + s.cups + '/' + D.cupGoal + ' · Sleep ' + D.sleep + 'h'); my.push('Langkah ' + this.num(D.steps) + ' (' + pc + '%)', 'Air ' + s.cups + '/' + D.cupGoal + ' · Tidur ' + D.sleep + 'j'); }
+          if (fi) { en.push('Spent ' + cs() + D.spendToday); my.push('Belanja ' + cs() + D.spendToday); }
+          if (pl) { en.push('Open tasks ' + open.length); my.push('Tugasan belum siap ' + open.length); }
+          const offN = [['habit', 'Habit & Health'], ['finance', 'My Finance'], ['planner', 'Daily Planner']].filter((x) => !modOn(x[0])).map((x) => x[1]);
+          const tailEn = offN.length ? '\n\n' + offN.join(', ') + (offN.length > 1 ? ' are' : ' is') + ' turned off. Turn it on in Settings, Modules to include it.' : '';
+          const tailMs = offN.length ? '\n\n' + offN.join(', ') + ' dimatikan. Hidupkan di Settings, Modules untuk dimasukkan.' : '';
+          m = mk(L('Your day so far:\n' + en.join('\n') + tailEn, 'Hari awak setakat ini:\n' + my.join('\n') + tailMs), hb ? { big: avg + '%', bigLbl: L('daily goal', 'sasaran harian'), pct: avg, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' } : {});
           break;
+        }
         case 'advice': {
           const a = [];
           if (np && np.mins <= 45) a.push(L('Get ready for ' + np.name + ' in ' + np.mins + ' minutes.', 'Bersedia untuk ' + np.name + ' dalam ' + np.mins + ' minit.'));
@@ -460,7 +473,10 @@ export class AssistantBase extends React.Component<any, any> {
     this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
     setTimeout(() => {
-      const r = this.reply(q, lang);
+      let r;
+      try { r = this.reply(q, lang); } catch (e) {
+        r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
+      }
       this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();

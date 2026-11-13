@@ -57,7 +57,7 @@ export default function FamilyEvents() {
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Activities" sub="Plans the family does together" right={<NewBtn onPress={() => edit()} />} />
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
-          {e.offline ? <Note t="You are offline. Showing the last saved list. Changes need an internet connection." /> : null}
+          {e.offline ? <Note t={e.msg || "You are offline. Showing the last saved list."} /> : null}
           <Rise>
             {next.length ? <><Label t="Coming up" />{next.map((x) => <Row key={x.id} x={x} />)}</> : null}
             {past.length ? <><Label t="Earlier" />{past.map((x) => <Row key={x.id} x={x} old />)}</> : null}

@@ -8,7 +8,7 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, W, DIM } from '../components/FamilyUi';
-import { useFamily, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famAddProfile, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
+import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famAddProfile, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
 
 const ROLE: Record<string, string> = { owner: 'Owner', parent: 'Parent', member: 'Member' };
 
@@ -16,6 +16,7 @@ export default function FamilyMembers() {
   const router = useRouter();
   const f = useFamily();
   const info = f.info;
+  useAutoRefresh(f.refresh);
   const [open, setOpen] = useState('');
   const [msg, setMsg] = useState('');
   const [pname, setPname] = useState('');
@@ -52,9 +53,9 @@ export default function FamilyMembers() {
         </Pressable>
         {on ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 12 }}>
-            <Btn t={m.role === 'parent' ? 'Make member' : 'Make parent'} onPress={() => run(() => famSetRole(m.user_id, m.role === 'parent' ? 'member' : 'parent'))} disabled={busy} />
-            <Btn t="Make owner" onPress={() => ask('Make ' + m.name + ' the owner?', 'You will become a parent. Only the owner can remove members and change the code.', 'Make owner', () => run(() => famTransfer(m.user_id)))} disabled={busy} />
-            <Btn t="Remove" kind="danger" onPress={() => ask('Remove ' + m.name + '?', 'They lose access to this family. Their own data on their phone is not affected.', 'Remove', () => run(() => famRemove(m.user_id)))} disabled={busy} />
+            <Btn solid t={m.role === 'parent' ? 'Make member' : 'Make parent'} onPress={() => run(() => famSetRole(m.user_id, m.role === 'parent' ? 'member' : 'parent'))} disabled={busy} />
+            <Btn solid t="Make owner" onPress={() => ask('Make ' + m.name + ' the owner?', 'You will become a parent. Only the owner can remove members and change the code.', 'Make owner', () => run(() => famTransfer(m.user_id)))} disabled={busy} />
+            <Btn solid t="Remove" kind="danger" onPress={() => ask('Remove ' + m.name + '?', 'They lose access to this family. Their own data on their phone is not affected.', 'Remove', () => run(() => famRemove(m.user_id)))} disabled={busy} />
           </View>
         ) : null}
       </View>
@@ -69,22 +70,22 @@ export default function FamilyMembers() {
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 170 }} showsVerticalScrollIndicator={false}>
           {parent ? (
             <Rise>
-              <Glass radius={24} style={{ padding: 16 }}>
+              <Glass solid radius={24} style={{ padding: 16 }}>
                 <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Invite code</Text>
                 {info.invites_open ? (
                   <>
                     <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 3 }}>Share it with your family. Everyone who joins needs an active My Life subscription.</Text>
                     <Text style={{ color: W, fontSize: 28, fontWeight: '900', letterSpacing: 6, textAlign: 'center', paddingVertical: 14, marginTop: 12, borderRadius: 16, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}>{showCode(info.code)}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                      <Btn t="Share code" kind="main" onPress={share} flex />
-                      {owner ? <Btn t="New code" onPress={() => ask('Make a new code?', 'The old code stops working. People already in the family stay.', 'New code', () => run(famNewCode))} disabled={busy} flex /> : null}
+                      <Btn solid t="Share code" kind="main" onPress={share} flex />
+                      {owner ? <Btn solid t="New code" onPress={() => ask('Make a new code?', 'The old code stops working. People already in the family stay.', 'New code', () => run(famNewCode))} disabled={busy} flex /> : null}
                     </View>
-                    {owner ? <View style={{ marginTop: 8 }}><Btn t="Turn off code" onPress={() => ask('Turn off the code?', 'Nobody can join until you turn it on again. People already in the family stay.', 'Turn off', () => run(() => famSetInvites(false), 'Code turned off.'))} disabled={busy} /></View> : null}
+                    {owner ? <View style={{ marginTop: 8 }}><Btn solid t="Turn off code" onPress={() => ask('Turn off the code?', 'Nobody can join until you turn it on again. People already in the family stay.', 'Turn off', () => run(() => famSetInvites(false), 'Code turned off.'))} disabled={busy} /></View> : null}
                   </>
                 ) : (
                   <>
                     <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 3 }}>The code is turned off, so nobody can join right now.{owner ? ' Turn it on to get a fresh code. Old codes stay dead.' : ' Ask the owner to turn it on.'}</Text>
-                    {owner ? <View style={{ marginTop: 12 }}><Btn t="Turn on code" kind="main" onPress={() => run(() => famSetInvites(true), 'New code ready.')} disabled={busy} /></View> : null}
+                    {owner ? <View style={{ marginTop: 12 }}><Btn solid t="Turn on code" kind="main" onPress={() => run(() => famSetInvites(true), 'New code ready.')} disabled={busy} /></View> : null}
                   </>
                 )}
               </Glass>
@@ -94,13 +95,13 @@ export default function FamilyMembers() {
 
           <Rise i={1}>
             <Label t="Members" />
-            <Glass radius={24}>{info.members.map((m, i) => <View key={m.user_id} style={{ borderTopWidth: i ? 1 : 0, borderTopColor: 'rgba(255,255,255,.09)' }}><Row m={m} /></View>)}</Glass>
+            <Glass solid radius={24}>{info.members.map((m, i) => <View key={m.user_id} style={{ borderTopWidth: i ? 1 : 0, borderTopColor: 'rgba(255,255,255,.09)' }}><Row m={m} /></View>)}</Glass>
             {owner ? <Text style={{ color: DIM, fontSize: 11.5, marginTop: 8, marginLeft: 4 }}>Tap a member to change their role or remove them.</Text> : null}
           </Rise>
 
           <Rise i={2}>
             <Label t="People without an account" />
-            <Glass radius={24} style={{ padding: 14 }}>
+            <Glass solid radius={24} style={{ padding: 14 }}>
               {info.profiles.length ? info.profiles.map((p) => (
                 <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }}>
                   <Avatar name={p.name} color={p.color} size={34} />
@@ -111,7 +112,7 @@ export default function FamilyMembers() {
               {parent && info.profiles.length < info.max_profiles ? (
                 <>
                   <Field label="Add a person" value={pname} onChange={setPname} ph="Name" />
-                  <View style={{ marginTop: 10 }}><Btn t="Add" kind="good" onPress={() => run(async () => { await famAddProfile(pname, pickColor(info.profiles.length + 1)); setPname(''); })} disabled={!pname.trim() || busy} /></View>
+                  <View style={{ marginTop: 10 }}><Btn solid t="Add" kind="good" onPress={() => run(async () => { await famAddProfile(pname, pickColor(info.profiles.length + 1)); setPname(''); })} disabled={!pname.trim() || busy} /></View>
                 </>
               ) : null}
             </Glass>
@@ -120,29 +121,29 @@ export default function FamilyMembers() {
           {owner ? (
             <Rise i={3}>
               <Label t="Family name" />
-              <Glass radius={24} style={{ padding: 14 }}>
+              <Glass solid radius={24} style={{ padding: 14 }}>
                 <Field label="" value={rn} onChange={setRn} ph={info.name} max={40} />
-                <View style={{ marginTop: 10 }}><Btn t="Rename" kind="good" onPress={() => run(async () => { await famRename(rn); setRn(''); }, 'Family renamed.')} disabled={!rn.trim() || busy} /></View>
+                <View style={{ marginTop: 10 }}><Btn solid t="Rename" kind="good" onPress={() => run(async () => { await famRename(rn); setRn(''); }, 'Family renamed.')} disabled={!rn.trim() || busy} /></View>
               </Glass>
             </Rise>
           ) : null}
 
           <Rise i={4}>
             <View style={{ marginTop: 22 }}>
-              <Btn t="Leave family" kind="danger" disabled={busy} onPress={() => ask('Leave this family?', owner && info.members.length > 1 ? 'You are the owner. Make someone else the owner first.' : owner ? 'You are the only member. The family will be removed.' : 'You lose access to the family. Your own data is not affected.', 'Leave', async () => { try { setBusy(true); await famLeave(); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); })} />
+              <Btn solid t="Leave family" kind="danger" disabled={busy} onPress={() => ask('Leave this family?', owner && info.members.length > 1 ? 'You are the owner. Make someone else the owner first.' : owner ? 'You are the only member. The family will be removed.' : 'You lose access to the family. Your own data is not affected.', 'Leave', async () => { try { setBusy(true); await famLeave(); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); })} />
             </View>
           </Rise>
           {owner ? (
             <Rise i={5}>
               <View style={{ marginTop: 10 }}>
-                {!del ? <Btn t="Delete family" kind="danger" disabled={busy} onPress={() => setDel(true)} /> : (
-                  <Glass radius={24} style={{ padding: 16 }}>
+                {!del ? <Btn solid t="Delete family" kind="danger" disabled={busy} onPress={() => setDel(true)} /> : (
+                  <Glass solid radius={24} style={{ padding: 16 }}>
                     <Text style={{ color: '#ffb3bf', fontSize: 15, fontWeight: '800' }}>Delete this family?</Text>
                     <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>This removes the family for everyone: all members, tasks, activities and shopping items. It cannot be undone. To confirm, type the family name: {info.name}</Text>
                     <Field label="" value={dn} onChange={setDn} ph={info.name} max={40} />
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                      <Btn t="Cancel" onPress={() => { setDel(false); setDn(''); }} flex />
-                      <Btn t="Delete forever" kind="danger" busy={busy} disabled={!dn.trim()} flex onPress={async () => { try { setBusy(true); setMsg(''); await famDeleteAll(dn); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); }} />
+                      <Btn solid t="Cancel" onPress={() => { setDel(false); setDn(''); }} flex />
+                      <Btn solid t="Delete forever" kind="danger" busy={busy} disabled={!dn.trim()} flex onPress={async () => { try { setBusy(true); setMsg(''); await famDeleteAll(dn); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); }} />
                     </View>
                   </Glass>
                 )}

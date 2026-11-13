@@ -42,7 +42,7 @@ export default function FamilyJoin() {
             <Glass radius={22} style={{ padding: 16, marginTop: 14 }}>
               <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Your name in the family</Text>
               <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>Other members will see this name.</Text>
-              <Field label="" value={name} onChange={setName} ph={myName} />
+              <Field label="" value={name} onChange={setName} ph="Your name" />
             </Glass>
           </Rise>
           <Rise i={2}>
