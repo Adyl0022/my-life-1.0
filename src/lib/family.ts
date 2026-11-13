@@ -19,6 +19,7 @@ export const showCode = (c: string | null) => (c ? c.slice(0, 3) + '-' + c.slice
 export const isParent = (r?: FRole | null) => r === 'owner' || r === 'parent';
 
 const KEY = 'ml_family_cache';
+let mem: { uid: string; info: FInfo } | null = null; // last known family, so opening the screens again is instant
 const MSG: Record<string, string> = {
   not_active: 'Family Planner needs an active My Life subscription.',
   already_in_family: 'You are already in a family.',
@@ -76,8 +77,8 @@ function clearRows() {
 export function useFamily() {
   const [sess] = useSession();
   const uid = sess?.user?.id || '';
-  const [state, setState] = useState<FState>('loading');
-  const [info, setInfo] = useState<FInfo | null>(null);
+  const [state, setState] = useState<FState>(mem && mem.uid === uid ? 'ready' : 'loading');
+  const [info, setInfo] = useState<FInfo | null>(mem && mem.uid === uid ? mem.info : null);
   const [offline, setOffline] = useState(false);
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
@@ -88,9 +89,9 @@ export function useFamily() {
       const r: any = await call('family_info');
       if (!alive.current) return;
       setOffline(false);
-      if (!r || r.state === 'none') { setInfo(null); setState('none'); AsyncStorage.removeItem(KEY).catch(() => {}); clearRows(); }
-      else if (r.state === 'locked') { setInfo(null); setState('locked'); }
-      else { setInfo(r as FInfo); setState('ready'); AsyncStorage.setItem(KEY, JSON.stringify({ uid, info: r })).catch(() => {}); }
+      if (!r || r.state === 'none') { mem = null; setInfo(null); setState('none'); AsyncStorage.removeItem(KEY).catch(() => {}); clearRows(); }
+      else if (r.state === 'locked') { mem = null; setInfo(null); setState('locked'); }
+      else { mem = { uid, info: r as FInfo }; setInfo(r as FInfo); setState('ready'); AsyncStorage.setItem(KEY, JSON.stringify({ uid, info: r })).catch(() => {}); }
     } catch (e) {
       if (!alive.current) return;
       try {
@@ -101,6 +102,11 @@ export function useFamily() {
     }
   }, [uid]);
 
+  // Show the saved copy straight away, then bring it up to date in the background.
+  useEffect(() => {
+    if (!uid || state !== 'loading') return;
+    AsyncStorage.getItem(KEY).then((raw) => { try { const c = raw ? JSON.parse(raw) : null; if (c && c.uid === uid && c.info && alive.current) { mem = { uid, info: c.info }; setInfo((i) => i || c.info); setState((x) => (x === 'loading' ? 'ready' : x)); } } catch (e) {} }).catch(() => {});
+  }, [uid]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => { const s = AppState.addEventListener('change', (x) => { if (x === 'active') refresh(); }); return () => s.remove(); }, [refresh]);
   return { state, info, offline, refresh };

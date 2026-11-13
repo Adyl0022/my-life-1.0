@@ -111,7 +111,7 @@ export default function FamilyMembers() {
               {parent && info.profiles.length < info.max_profiles ? (
                 <>
                   <Field label="Add a person" value={pname} onChange={setPname} ph="Name" />
-                  <View style={{ marginTop: 10 }}><Btn t="Add" onPress={() => run(async () => { await famAddProfile(pname, pickColor(info.profiles.length + 1)); setPname(''); })} disabled={!pname.trim() || busy} /></View>
+                  <View style={{ marginTop: 10 }}><Btn t="Add" kind="good" onPress={() => run(async () => { await famAddProfile(pname, pickColor(info.profiles.length + 1)); setPname(''); })} disabled={!pname.trim() || busy} /></View>
                 </>
               ) : null}
             </Glass>
@@ -122,7 +122,7 @@ export default function FamilyMembers() {
               <Label t="Family name" />
               <Glass radius={24} style={{ padding: 14 }}>
                 <Field label="" value={rn} onChange={setRn} ph={info.name} max={40} />
-                <View style={{ marginTop: 10 }}><Btn t="Rename" onPress={() => run(async () => { await famRename(rn); setRn(''); }, 'Family renamed.')} disabled={!rn.trim() || busy} /></View>
+                <View style={{ marginTop: 10 }}><Btn t="Rename" kind="good" onPress={() => run(async () => { await famRename(rn); setRn(''); }, 'Family renamed.')} disabled={!rn.trim() || busy} /></View>
               </Glass>
             </Rise>
           ) : null}
