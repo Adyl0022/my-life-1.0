@@ -6,6 +6,7 @@ export const WHATS_NEW: Sec[] = [
   { h: 'Islamic Hub settings', p: 'Prayer times, daily zikir and prayer alert timing moved from Settings into the Islamic Hub (tap the gear icon). You can also hide modules you do not use.' },
   { h: 'Quran and zikir', p: 'Read with translation, Arabic only, or continuous. The same choices are in Tahlil, Mathurat and dhikr.' },
   { h: 'Dashboard and backup', p: 'The bottom Dashboard card can be tapped to switch views, and Dashboard cards can be reordered. Backups now include My Record receipt photos.' },
+  { h: 'New logo', p: 'The My Life logo inside the app now matches the icon on your home screen, with a soft glass look and gentle moving lights.' },
   { h: 'Fixes', p: '•  Sleep tracker times type and clear properly\n•  Budget alerts show while the app is open\n•  Reminder settings now sync between your devices\n•  Clearer steps to connect Honor Health or Samsung Health' },
   { h: 'Version 1.0.0', p: 'The first release of My Life, with everything you need for your day in one app.' },
   { h: 'What you can do', p: '•  Plan tasks and events\n•  Prayer times, Quran and zikir\n•  Track money in Finance\n•  Keep vehicle records (motorcycle, car and more)\n•  Log habits, sleep and steps\n•  Ask the Assistant or use Search\n•  See progress in Stats and Insights' },

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing } from 'react-native';
+import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image } from 'react-native';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect, Defs, Pattern, Stop, RadialGradient as SRG } from 'react-native-svg';
@@ -122,25 +122,28 @@ export function Logo({ waves = true }: { waves?: boolean }) {
   useEffect(() => { const a = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })])); a.start(); return () => a.stop(); }, []);
   return (
     <View style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}>
-      {waves ? <><Wave delay={0} /><Wave delay={1600} /></> : null}
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] }) }] }}>
-        <Blob size={150} color="rgba(138,123,255,0.55)" />
-      </Animated.View>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit }] }}>
         <View style={{ position: 'absolute', left: 82, top: 2, width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff', shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit2 }] }}>
         <View style={{ position: 'absolute', left: 83, top: 160, width: 5, height: 5, borderRadius: 3, backgroundColor: '#ffd593', shadowColor: '#ffc46b', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
-      <View style={{ width: 112, height: 112, borderRadius: 34, overflow: 'hidden', backgroundColor: '#1e2255', borderWidth: 1.2, borderColor: 'rgba(255,255,255,.26)' }}>
-        <LinearGradient colors={['#4b5889', '#262962', '#1a2250', '#2f7580']} locations={[0, 0.42, 0.7, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112 }} />
-        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112, transform: [{ rotate: inner }] }}>
-          <View style={{ position: 'absolute', left: 60, top: -30 }}><Blob size={90} color="rgba(94,231,223,0.35)" /></View>
+      {/* The same soft breathing glow as the old logo: one round purple light just beyond the icon. */}
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] }) }] }}>
+        <Blob size={150} color="rgba(138,123,255,0.55)" />
+      </Animated.View>
+      <View style={{ width: 112, height: 112, borderRadius: 28, backgroundColor: '#1e2255' }}>
+      <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden' }}>
+        {/* Same icon as the home screen, built in layers: the three colour lights turn slowly behind the raised glass tile. */}
+        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -28, top: -28, width: 168, height: 168, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.75, 1] }), transform: [{ rotate: inner }] }}>
+          <Image source={require('../../assets/android-icon-background.png')} style={{ width: 168, height: 168 }} />
         </Animated.View>
-        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112, transform: [{ rotate: inner2 }] }}>
-          <View style={{ position: 'absolute', left: -34, top: 62 }}><Blob size={90} color="rgba(183,148,255,0.35)" /></View>
-        </Animated.View>
-        <Svg width={112} height={112} viewBox="0 0 112 112" fill="none" style={{ position: 'absolute', left: 0, top: 0 }}><Path d="M27 82V30L56 63L85 30V82" stroke="#fff" strokeWidth={11} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+        <Image source={require('../../assets/android-icon-foreground.png')} style={{ position: 'absolute', left: -10, top: -10, width: 132, height: 132 }} />
+        {/* Glass sheen on the raised tile only (the icon's own background stays as it is). */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 21, top: 21, width: 70, height: 70, borderRadius: 20, overflow: 'hidden' }}>
+          <LinearGradient colors={['rgba(255,255,255,.3)', 'rgba(255,255,255,.06)', 'rgba(255,255,255,0)']} locations={[0, 0.4, 0.7]} start={{ x: 0.1, y: 0 }} end={{ x: 0.7, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, width: 70, height: 70 }} />
+        </View>
+      </View>
       </View>
     </View>
   );
