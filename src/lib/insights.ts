@@ -4,6 +4,7 @@ import { DEBT_EMPTY, DebtData, remaining, isActive, ymOf, dueDay, amountDue, deb
 import { SAV_EMPTY, SavData, goalSaved, perMonth } from './savings';
 import { calcLeft, commitFor } from './moneyLeft';
 import { HEMPTY, HData, getDay, cupsGoal, goalPctOf, keyOfDate, dateOf, MOODS, WD, bestStreakAll } from './habit';
+import { cs } from './region';
 
 export type Sp = { amt: number; date: string; cat?: string; name?: string; id?: number; goal?: number };
 export type Fin = { inc: Record<string, Record<string, number>>; spends: Sp[]; limits?: Record<string, number> };
@@ -39,7 +40,7 @@ export const dayPct = (c: Core, o: number) => goalPctOf(getDay(c.hd, o), c.hd.go
 export const avgPct = (c: Core, from: number, to: number) => { let n = 0, t = 0; for (let o = from; o <= to; o++) if (hasData(c, o)) { n++; t += dayPct(c, o); } return n ? Math.round(t / n) : 0; };
 const daysTo = (s: string) => { const a = new Date(s + 'T00:00:00').getTime(); const n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((a - n.getTime()) / 86400000); };
 export const incomeOf = (c: Core) => Object.values((c.fin && c.fin.inc && c.fin.inc[ymOf(new Date())]) || {}).reduce((a: number, b: any) => a + (b || 0), 0) as number;
-const rmf = (n: number) => 'RM ' + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rmf = (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // Everyday spending guide: average of days that had spending in the last 30 days.
 const usualSpend = (c: Core) => { let t = 0, n = 0; for (let o = -30; o <= -1; o++) { const v = spendOn(c, o); if (v > 0) { t += v; n++; } } return n >= 3 ? t / n : 0; };
@@ -217,8 +218,8 @@ export function tips(c: Core, week: boolean): Tip[] {
   const dym = ymOf(now);
   ((c.debts && c.debts.debts) || []).filter((x) => isActive(x, dym) && !((x.paid || {})[dym] > 0)).forEach((x) => {
     const dd = dueDay(x, now.getFullYear(), now.getMonth()) - now.getDate();
-    if (dd < 0) add({ id: 'debt-' + x.id, title: x.name + ' is ' + -dd + (dd === -1 ? ' day' : ' days') + ' overdue', sub: 'RM ' + Math.round(amountDue(x, dym)).toLocaleString() + ' is still unpaid this month.', why: 'The due day has passed and this month is not ticked as paid in My Finance.', go: '/finance', k: 'goal', pri: 92 });
-    else if (dd <= 3) add({ id: 'debt-' + x.id, title: x.name + (dd === 0 ? ' is due today' : dd === 1 ? ' is due tomorrow' : ' is due in ' + dd + ' days'), sub: 'RM ' + Math.round(amountDue(x, dym)).toLocaleString() + '. Tick it off in My Finance once paid.', why: 'Based on the due day you saved for this debt.', go: '/finance', k: 'goal', pri: 89 });
+    if (dd < 0) add({ id: 'debt-' + x.id, title: x.name + ' is ' + -dd + (dd === -1 ? ' day' : ' days') + ' overdue', sub: cs() + Math.round(amountDue(x, dym)).toLocaleString() + ' is still unpaid this month.', why: 'The due day has passed and this month is not ticked as paid in My Finance.', go: '/finance', k: 'goal', pri: 92 });
+    else if (dd <= 3) add({ id: 'debt-' + x.id, title: x.name + (dd === 0 ? ' is due today' : dd === 1 ? ' is due tomorrow' : ' is due in ' + dd + ' days'), sub: cs() + Math.round(amountDue(x, dym)).toLocaleString() + '. Tick it off in My Finance once paid.', why: 'Based on the due day you saved for this debt.', go: '/finance', k: 'goal', pri: 89 });
   });
   // Commitments
   {
@@ -239,7 +240,7 @@ export function tips(c: Core, week: boolean): Tip[] {
     if (ds.debts.length >= 1) {
       const big = ds.debts.slice().sort((a, b) => remaining(b) - remaining(a))[0];
       const extra = Math.max(20, Math.round((big.monthly * 0.2) / 10) * 10); const was = monthsLeft(big), now2 = Math.ceil(remaining(big) / (big.monthly + extra));
-      if (was - now2 >= 1) add({ id: 'cm-extra', title: 'Pay RM ' + extra + ' extra on ' + big.name, sub: 'You would finish ' + (was - now2) + (was - now2 === 1 ? ' month' : ' months') + ' sooner.', why: 'Works out how long the balance lasts at ' + rmf(big.monthly + extra) + ' a month instead of ' + rmf(big.monthly) + '. Extra payments often save interest too.', go: '/finance', k: 'goal', pri: 47 });
+      if (was - now2 >= 1) add({ id: 'cm-extra', title: 'Pay ' + cs() + extra + ' extra on ' + big.name, sub: 'You would finish ' + (was - now2) + (was - now2 === 1 ? ' month' : ' months') + ' sooner.', why: 'Works out how long the balance lasts at ' + rmf(big.monthly + extra) + ' a month instead of ' + rmf(big.monthly) + '. Extra payments often save interest too.', go: '/finance', k: 'goal', pri: 47 });
       add({ id: 'cm-free-date', title: 'Debt-free by ' + payoffLabel(ds.worst, ds.unpaid.every((x) => x.fixed) || ds.debts.every((x) => (x.paid || {})[ds.ym] > 0)), sub: 'About ' + yearsMonths(ds.worst) + ' to go, ' + rmf(ds.totalLeft) + ' remaining.', why: 'Based on your balances and monthly payments if you keep paying every month.', go: '/finance', k: 'badge', pri: 24 });
     }
     if (ds.unpaid.length > 0 && dmonth - now.getDate() <= 5) add({ id: 'cm-left', title: ds.unpaid.length + (ds.unpaid.length === 1 ? ' payment is' : ' payments are') + ' not ticked yet', sub: rmf(ds.toPay) + ' with ' + (dmonth - now.getDate()) + (dmonth - now.getDate() === 1 ? ' day' : ' days') + ' left this month.', why: 'Tick each payment in My Finance once paid so your balances stay right.', go: '/finance', k: 'goal', pri: 70 });

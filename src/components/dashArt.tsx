@@ -1,5 +1,6 @@
 import React from 'react';
 import Svg, { G, Rect, Circle, Path, Polygon, Polyline, Ellipse, Line, Defs, RadialGradient, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
+import { cu } from '../lib/region';
 
 export const PlannerArt = () => (
 <Svg width="100%" height="100%" viewBox="0 -8 170 98" preserveAspectRatio="xMidYMid meet">
@@ -40,7 +41,7 @@ export const FinanceArt = () => (
 <Ellipse cx="122" cy="68" rx="22" ry="7" fill="#d98f1f"/><Rect x="100" y="58" width="44" height="10" fill="#f4b13d"/><Ellipse cx="122" cy="58" rx="22" ry="7" fill="#ffd27a"/>
 <Ellipse cx="122" cy="48" rx="22" ry="7" fill="#d98f1f"/><Rect x="100" y="38" width="44" height="10" fill="#f4b13d"/><Ellipse cx="122" cy="38" rx="22" ry="7" fill="#ffd27a"/>
 <Ellipse cx="122" cy="28" rx="22" ry="7" fill="#d98f1f"/><Rect x="100" y="18" width="44" height="10" fill="#f4b13d"/><Ellipse cx="122" cy="18" rx="22" ry="7" fill="#ffe3a0"/>
-<SvgText x="122" y="21" textAnchor="middle" fontSize="9" fontWeight="800" fill="#a86a00">RM</SvgText>
+<SvgText x="122" y="21" textAnchor="middle" fontSize="9" fontWeight="800" fill="#a86a00">{cu().slice(0, 3)}</SvgText>
 </Svg>
 );
 

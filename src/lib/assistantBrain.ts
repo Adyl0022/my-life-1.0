@@ -4,6 +4,7 @@
 // 3) think() answers analysis questions, small talk and new actions, and remembers the last topic (ctx).
 import * as DB from './debts';
 import { calcLeft } from './moneyLeft';
+import { cs } from './region';
 
 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WD_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -132,7 +133,7 @@ export function think(A, q, lang) {
   const ctx = s.ctx || {};
   const done = (m, patch, act, c) => ({ m, patch: Object.assign({}, patch || {}, c !== undefined ? { ctx: c } : {}), act: act || null });
   const per = period(qn);
-  const rm = (n) => 'RM ' + A.num(r2(n));
+  const rm = (n) => cs() + A.num(r2(n));
   const FIN = { label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' };
   const todayD = new Date(); const todayS = iso(todayD);
   const daysInMonth = new Date(todayD.getFullYear(), todayD.getMonth() + 1, 0).getDate();
@@ -427,7 +428,7 @@ export function think(A, q, lang) {
     const flex = ['Food', 'Shopping', 'Other', 'Petrol'].filter((k) => o[k]).sort((a, b) => o[b] - o[a]);
     const out = [L('Based on what you logged this month (' + rm(tc) + '):', 'Berdasarkan apa yang awak rekod bulan ini (' + rm(tc) + '):')];
     flex.slice(0, 2).forEach((k) => out.push(L('• ' + k + ' is ' + rm(o[k]) + '. Cutting it by 10% saves about ' + rm(o[k] * 0.1) + ' a month.', '• ' + k + ' ialah ' + rm(o[k]) + '. Kurangkan 10% jimat kira-kira ' + rm(o[k] * 0.1) + ' sebulan.')));
-    const small = cur.filter((x) => x.amt <= 15); if (small.length >= 5) out.push(L('• ' + small.length + ' small spends of RM15 or less add up to ' + rm(sum(small, (x) => x.amt)) + '. Small things add up.', '• ' + small.length + ' belanja kecil RM15 ke bawah berjumlah ' + rm(sum(small, (x) => x.amt)) + '. Yang kecil pun terkumpul.'));
+    const small = cur.filter((x) => x.amt <= 15); if (small.length >= 5) out.push(L('• ' + small.length + ' small spends of ' + cs() + '15 or less add up to ' + rm(sum(small, (x) => x.amt)) + '. Small things add up.', '• ' + small.length + ' belanja kecil RM15 ke bawah berjumlah ' + rm(sum(small, (x) => x.amt)) + '. Yang kecil pun terkumpul.'));
     if (s.income) out.push(L('• You have spent ' + Math.round(tc / s.income * 100) + '% of this month\'s income. A common goal is to keep ' + '20% for savings.', '• Awak dah belanja ' + Math.round(tc / s.income * 100) + '% pendapatan bulan ini. Sasaran biasa ialah simpan 20%.'));
     return mk(out.join('\n'), FIN);
   }

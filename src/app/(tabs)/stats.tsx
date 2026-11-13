@@ -23,6 +23,7 @@ import { monthRows } from '../../lib/financeStats';
 import { goalSaved } from '../../lib/savings';
 import { healthMonths } from '../../components/BodyCards';
 import { sunatYear, qadhaOwed, ramadanState } from '../../lib/fasting';
+import { cs, useRegion } from '../../lib/region';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MI = ({ k, s = 30 }: { k: string; s?: number }) => {
@@ -43,6 +44,7 @@ const MI = ({ k, s = 30 }: { k: string; s?: number }) => {
 const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700', letterSpacing: 1.2 }}>{t.toUpperCase()}</Text>;
 
 export default function Stats() {
+  useRegion();
   const [tab, setTab] = useState<'use' | 'health' | 'money'>('use');
   const u = useUsage(16);
   const [metric, setMetric] = useState<'time' | 'opens'>('time');
@@ -86,7 +88,7 @@ export default function Stats() {
     { t: 'Water', k: 'water', c: '#5ee7df', v: last7.map((o) => getDay(hd, o).cups), fmt: (n: number) => String(Math.round(n * 10) / 10), unit: 'of ' + cg + ' glasses' },
     { t: 'Sleep', k: 'sleep', c: '#b794ff', v: last7.map((o) => getDay(hd, o).sleep), fmt: (n: number) => String(Math.round(n * 10) / 10), unit: 'hours a night' },
     { t: 'Mood', k: 'mood', c: '#ff8fab', v: last7.map((o) => { const m = getDay(hd, o).mood; return m >= 0 ? m + 1 : 0; }), fmt: (n: number) => { const lg = last7.map((o) => getDay(hd, o).mood).filter((m) => m >= 0); if (!lg.length) return 'None'; return MOODS[Math.max(0, Math.min(4, Math.round(lg.reduce((a, b) => a + b, 0) / lg.length)))][0]; }, unit: 'on average' },
-    { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => 'RM ' + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'in 7 days', sum: true },
+    { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'in 7 days', sum: true },
   ];
   const tot: Record<string, number> = u.mods;
   const ranked = MODS.map((m) => ({ ...m, n: tot[m.k] || 0 })).filter((m) => m.n > 0).sort((a, b) => b.n - a.n);
@@ -282,7 +284,7 @@ export default function Stats() {
               const hm = healthMonths((fin && (fin as any).spends) || []); const mx = Math.max(...hm.map((m) => m.v), 1); const tot = hm.reduce((a, m) => a + m.v, 0);
               return (<>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Health spending</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 6 months</Text></View>
-                <Text style={{ color: '#ff9db5', fontSize: 20, fontWeight: '800', marginTop: 8 }}>RM {(Math.round(hm[hm.length - 1].v * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>  this month</Text></Text>
+                <Text style={{ color: '#ff9db5', fontSize: 20, fontWeight: '800', marginTop: 8 }}>{cs()}{(Math.round(hm[hm.length - 1].v * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>  this month</Text></Text>
                 {tot > 0 ? (<>
                   <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 60, marginTop: 12 }}>
                     {hm.map((m, i) => <View key={m.ym} style={{ flex: 1, height: 60, justifyContent: 'flex-end' }}><View style={{ height: Math.max(4, Math.round((m.v / mx) * 56)), borderRadius: 5, backgroundColor: i === hm.length - 1 ? '#ff8fab' : 'rgba(255,255,255,.35)' }} /></View>)}
@@ -357,7 +359,7 @@ export default function Stats() {
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {
               const rows = monthRows(core, 6); const cur = rows[rows.length - 1]; const any = rows.some((r) => r.has);
-              const fm = (n: number) => 'RM ' + Math.round(Math.abs(n)).toLocaleString('en-MY');
+              const fm = (n: number) => cs() + Math.round(Math.abs(n)).toLocaleString('en-MY');
               const mxL = Math.max(...rows.map((r) => Math.abs(r.left)), 1); const mxS = Math.max(...rows.map((r) => r.savings), 1);
               const totS = rows.reduce((a, r) => a + r.savings, 0); const rate = cur.income > 0 ? Math.round((cur.savings / cur.income) * 100) : 0;
               const best = rows.filter((r) => r.income > 0).sort((a, b) => b.left - a.left)[0];
@@ -400,7 +402,7 @@ export default function Stats() {
               const nGoals = ((core.sav && core.sav.goals) || []).length; const totS = rows.reduce((a, r) => a + r.savings, 0);
               return (<>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Savings</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 6 months</Text></View>
-                <Text style={{ color: '#7df0c6', fontSize: 20, fontWeight: '800', marginTop: 8 }}>RM {Math.round(cur.savings).toLocaleString('en-MY')}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>{'  saved this month' + (cur.income > 0 && cur.savings > 0 ? ' (' + rate + '% of income)' : '')}</Text></Text>
+                <Text style={{ color: '#7df0c6', fontSize: 20, fontWeight: '800', marginTop: 8 }}>{cs()}{Math.round(cur.savings).toLocaleString('en-MY')}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>{'  saved this month' + (cur.income > 0 && cur.savings > 0 ? ' (' + rate + '% of income)' : '')}</Text></Text>
                 {nGoals > 0 ? (<>
                   {totS > 0 ? (<>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 60, marginTop: 12 }}>
@@ -408,7 +410,7 @@ export default function Stats() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>{rows.map((r) => <Text key={r.ym} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{r.label}</Text>)}</View>
                   </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Nothing saved in the last 6 months. Choose Savings in the Spending Tracker to start.</Text>}
-                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{'All goals together: RM ' + Math.round(goalsSaved).toLocaleString('en-MY') + ' across ' + nGoals + (nGoals === 1 ? ' goal.' : ' goals.')}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{'All goals together: ' + cs() + Math.round(goalsSaved).toLocaleString('en-MY') + ' across ' + nGoals + (nGoals === 1 ? ' goal.' : ' goals.')}</Text>
                 </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Create a goal in My Finance, Savings Goals, then put money into it from the Spending Tracker or a monthly commitment.</Text>}
               </>);
             })()}
@@ -452,7 +454,7 @@ export default function Stats() {
             <Rise i={4}>
             <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
               <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Where your income goes</Text>
-              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{incNow > 0 ? 'This month, out of RM ' + Math.round(incNow).toLocaleString() : 'Add this month\'s income in My Finance to see the full split.'}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{incNow > 0 ? 'This month, out of ' + cs() + Math.round(incNow).toLocaleString() : 'Add this month\'s income in My Finance to see the full split.'}</Text>
               <View style={{ flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', marginTop: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
                 {segs.map((g) => <View key={g.n} style={{ width: (g.v / base) * 100 + '%', backgroundColor: g.c }} />)}
                 {freeAmt > 0 ? <View style={{ width: (freeAmt / base) * 100 + '%', backgroundColor: '#34d399' }} /> : null}
@@ -463,7 +465,7 @@ export default function Stats() {
                     <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
                     <Text style={{ flex: 1, color: '#fff', fontSize: 12.5 }}>{g.n}</Text>
                     <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{Math.round((g.v / base) * 100)}%</Text>
-                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', minWidth: 78, textAlign: 'right' }}>RM {Math.round(g.v).toLocaleString()}</Text>
+                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', minWidth: 78, textAlign: 'right' }}>{cs()}{Math.round(g.v).toLocaleString()}</Text>
                   </View>
                 ))}
               </View>
@@ -476,7 +478,7 @@ export default function Stats() {
             <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Debt remaining</Text>
-                <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>RM {Math.round(ds.totalLeft).toLocaleString()}</Text>
+                <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>{cs()}{Math.round(ds.totalLeft).toLocaleString()}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 90, marginTop: 14 }}>
                 {dm6.map((x, i) => (

@@ -7,6 +7,7 @@ import { Glass } from './Glass';
 import { buildRecordHtml } from '../lib/recordPdf';
 import { useName } from '../lib/store';
 import { Inp, DateField, todayStr, W } from './Ui';
+import { cs, cu } from '../lib/region';
 
 export type Fu = { id: number; date: string; liters: number; amt: number; odo: number };
 export type Pt = { id: number; name: string; date: string; odo: number; life: number };
@@ -118,17 +119,17 @@ export function FuelCard({ d, upd }: P<Ext>) {
   const sp = (k: string) => list.filter((x) => x.date.slice(0, 7) === k).reduce((s, x) => s + x.amt, 0);
   const add = () => { const l = f(li), a = f(rm), o = parseInt(od, 10); if (!(l > 0) || !(a > 0)) return; upd((x) => ({ ...x, fuel: [...(x.fuel || []), { id: Date.now(), date: dt || todayStr(), liters: l, amt: a, odo: o >= 0 ? o : 0 }] })); setLi(''); setRm(''); setOd(''); };
   return (
-    <Card title="Fuel Log" sub="Fuel economy and cost per km" right={<Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>RM {dec(list.reduce((s, x) => s + x.amt, 0))}</Text>}>
+    <Card title="Fuel Log" sub="Fuel economy and cost per km" right={<Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{dec(list.reduce((s, x) => s + x.amt, 0))}</Text>}>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
         <Stat l="Average km/L" v={avg ? dec(avg, 1) : '-'} />
         <Stat l="Last fill km/L" v={last ? dec(last, 1) : '-'} />
-        <Stat l="Cost / km" v={avgR ? 'RM ' + dec(avgR) : '-'} />
+        <Stat l="Cost / km" v={avgR ? cs() + dec(avgR) : '-'} />
       </View>
-      <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 6 }}>{eff.length ? 'Based on ' + eff.length + ' fill-up' + (eff.length > 1 ? 's' : '') + '. This month RM ' + num(sp(cur)) + ', last month RM ' + num(sp(prev)) + '.' : 'Add at least two fill-ups with odometer readings to see km per litre. Fill the tank each time for the best result.'}</Text>
+      <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 6 }}>{eff.length ? 'Based on ' + eff.length + ' fill-up' + (eff.length > 1 ? 's' : '') + '. This month ' + cs() + num(sp(cur)) + ', last month ' + cs() + num(sp(prev)) + '.' : 'Add at least two fill-ups with odometer readings to see km per litre. Fill the tank each time for the best result.'}</Text>
       <DateField value={dt} onChange={setDt} style={{ marginTop: 12 }} />
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
         <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={li} onChangeText={setLi} placeholder="Litres" />
-        <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={rm} onChangeText={setRm} placeholder="RM" />
+        <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={rm} onChangeText={setRm} placeholder={cu()} />
         <Inp style={{ flex: 1.2 }} keyboardType="number-pad" value={od} onChangeText={setOd} placeholder="Odometer" />
       </View>
       <View style={{ marginTop: 8, alignItems: 'flex-end' }}><Btn t="+ Add fill-up" onPress={add} /></View>
@@ -138,7 +139,7 @@ export function FuelCard({ d, upd }: P<Ext>) {
           return (
             <Row key={x.id} last={i === a.length - 1}>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14 }}>{fd(x.date)}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 1 }}>{dec(x.liters, 1)} L{x.odo > 0 ? ' · ' + num(x.odo) + ' km' : ''}{e ? ' · ' + dec(e.kml, 1) + ' km/L' : ''}</Text></View>
-              <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>RM {dec(x.amt)}</Text>
+              <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{dec(x.amt)}</Text>
               <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => upd((y) => ({ ...y, fuel: (y.fuel || []).filter((z: Fu) => z.id !== x.id) }))} />
             </Row>
           );

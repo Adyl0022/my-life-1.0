@@ -4,6 +4,7 @@ import * as F from './fasting';
 import { upcomingMy } from './myEvents';
 import * as DB from './debts';
 import { think, fix } from './assistantBrain';
+import { cs } from './region';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 export class AssistantBase extends React.Component<any, any> {
   render(): any { return null; }
@@ -87,19 +88,19 @@ export class AssistantBase extends React.Component<any, any> {
     const D = this.D(); let patch = { pending: null }; let m;
     if (!yes) m = this.mk(L('Okay, I did not save it.', 'Baik, saya tidak simpan.'));
     else if (p.type === 'undoSpend') {
-      m = this.mk(L('Removed "' + p.name + '" (RM ' + this.rm(p.amt) + ') from My Finance.', 'Dah buang "' + p.name + '" (RM ' + this.rm(p.amt) + ') daripada My Finance.'), { label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
+      m = this.mk(L('Removed "' + p.name + '" (' + cs() + this.rm(p.amt) + ') from My Finance.', 'Dah buang "' + p.name + '" (' + cs() + this.rm(p.amt) + ') daripada My Finance.'), { label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
     } else if (p.type === 'spend') {
       const tdy = D.spendToday + (p.date === this.todayStr() ? p.amt : 0);
-      m = this.mk(L('Saved RM ' + this.rm(p.amt) + ' under ' + p.cat + ' in My Finance. You have spent RM ' + this.rm(tdy) + ' today.', 'Dah disimpan RM ' + this.rm(p.amt) + ' di bawah ' + p.cat + ' dalam My Finance. Awak dah belanja RM ' + this.rm(tdy) + ' hari ini.'), { big: 'RM ' + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
+      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
     } else if (p.type === 'mtc') {
       patch.mtcMonth = s.mtcMonth + p.amt;
       let extra = '';
       if (p.odo && p.odo > s.odo) { patch.kmMonth = s.kmMonth + (p.odo - s.odo); patch.odo = p.odo; extra = L(' Odometer updated to ' + this.num(p.odo) + ' km.', ' Odometer dikemas kini kepada ' + this.num(p.odo) + ' km.'); }
       if (p.name === 'Service' || p.name === 'Oil change') { patch.nextSvc = (patch.odo || s.odo) + 3000; extra += L(' Next service is at ' + this.num(patch.nextSvc) + ' km.', ' Servis seterusnya pada ' + this.num(patch.nextSvc) + ' km.'); }
-      m = this.mk(L('Saved ' + p.name + ' RM ' + this.rm(p.amt) + ' in My Record. Maintenance this month is RM ' + this.rm(s.mtcMonth + p.amt) + '.', 'Dah disimpan ' + p.name + ' RM ' + this.rm(p.amt) + ' dalam My Record. Penyelenggaraan bulan ini RM ' + this.rm(s.mtcMonth + p.amt) + '.') + extra, { big: 'RM ' + this.rm(p.amt), bigLbl: p.name, color: '#ffc46b', label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' });
+      m = this.mk(L('Saved ' + p.name + ' ' + cs() + this.rm(p.amt) + ' in My Record. Maintenance this month is ' + cs() + this.rm(s.mtcMonth + p.amt) + '.', 'Dah disimpan ' + p.name + ' ' + cs() + this.rm(p.amt) + ' dalam My Record. Penyelenggaraan bulan ini ' + cs() + this.rm(s.mtcMonth + p.amt) + '.') + extra, { big: cs() + this.rm(p.amt), bigLbl: p.name, color: '#ffc46b', label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' });
     } else if (p.type === 'inc') {
       patch.income = s.income + p.amt;
-      m = this.mk(L('Saved ' + p.name + ' RM ' + this.rm(p.amt) + ' in Monthly Income. This month total is RM ' + this.num(s.income + p.amt) + '.', 'Dah disimpan ' + p.name + ' RM ' + this.rm(p.amt) + ' dalam Pendapatan Bulanan. Jumlah bulan ini RM ' + this.num(s.income + p.amt) + '.'), { big: 'RM ' + this.num(s.income + p.amt), bigLbl: L('income this month', 'pendapatan bulan ini'), color: '#34d399', label: L('Open Monthly Income', 'Buka Pendapatan Bulanan'), href: 'Finance.dc.html' });
+      m = this.mk(L('Saved ' + p.name + ' ' + cs() + this.rm(p.amt) + ' in Monthly Income. This month total is ' + cs() + this.num(s.income + p.amt) + '.', 'Dah disimpan ' + p.name + ' ' + cs() + this.rm(p.amt) + ' dalam Pendapatan Bulanan. Jumlah bulan ini ' + cs() + this.num(s.income + p.amt) + '.'), { big: cs() + this.num(s.income + p.amt), bigLbl: L('income this month', 'pendapatan bulan ini'), color: '#34d399', label: L('Open Monthly Income', 'Buka Pendapatan Bulanan'), href: 'Finance.dc.html' });
     } else if (p.type === 'odo') {
       const diff = p.val - s.odo; patch.odo = p.val; patch.kmMonth = s.kmMonth + diff;
       m = this.mk(L('Odometer saved: ' + this.num(p.val) + ' km. That is ' + diff + ' km since the last reading, so this month is ' + (s.kmMonth + diff) + ' km.', 'Odometer disimpan: ' + this.num(p.val) + ' km. Itu ' + diff + ' km sejak bacaan terakhir, jadi bulan ini ' + (s.kmMonth + diff) + ' km.'), { big: this.num(p.val), bigLbl: 'km', color: '#ff8fab', label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' });
@@ -230,9 +231,9 @@ export class AssistantBase extends React.Component<any, any> {
       if (act.type === 'spend' || act.type === 'mtc' || act.type === 'inc' || act.type === 'odo') {
         patch.pending = Object.assign({ id: id }, act); patch.pid = id;
         if (act.type === 'odo' && act.val <= s.odo) { patch.pending = null; m = mk(L('That is not higher than your last reading (' + this.num(s.odo) + ' km). Please check the number.', 'Itu tidak lebih tinggi daripada bacaan terakhir (' + this.num(s.odo) + ' km). Sila semak nombor itu.')); }
-        else if (act.type === 'spend') m = mk(L('Got it. Save this spending?\n• ' + act.name + '\n• Category: ' + act.cat + '\n• Date: ' + (act.ydy ? 'yesterday' : 'today'), 'Faham. Simpan perbelanjaan ini?\n• ' + act.name + '\n• Kategori: ' + act.cat + '\n• Tarikh: ' + (act.ydy ? 'semalam' : 'hari ini')), { pid: id, big: 'RM ' + this.rm(act.amt), bigLbl: act.cat, color: '#ffc46b' });
-        else if (act.type === 'mtc') m = mk(L('Got it. Save this motorcycle record?\n• ' + act.name + (act.odo ? '\n• Odometer: ' + this.num(act.odo) + ' km' : '') + '\n• Date: today', 'Faham. Simpan rekod motosikal ini?\n• ' + act.name + (act.odo ? '\n• Odometer: ' + this.num(act.odo) + ' km' : '') + '\n• Tarikh: hari ini'), { pid: id, big: 'RM ' + this.rm(act.amt), bigLbl: act.name, color: '#ff8fab' });
-        else if (act.type === 'inc') m = mk(L('Got it. Save this income to this month?\n• ' + act.name, 'Faham. Simpan pendapatan ini untuk bulan ini?\n• ' + act.name), { pid: id, big: 'RM ' + this.rm(act.amt), bigLbl: act.name, color: '#34d399' });
+        else if (act.type === 'spend') m = mk(L('Got it. Save this spending?\n• ' + act.name + '\n• Category: ' + act.cat + '\n• Date: ' + (act.ydy ? 'yesterday' : 'today'), 'Faham. Simpan perbelanjaan ini?\n• ' + act.name + '\n• Kategori: ' + act.cat + '\n• Tarikh: ' + (act.ydy ? 'semalam' : 'hari ini')), { pid: id, big: cs() + this.rm(act.amt), bigLbl: act.cat, color: '#ffc46b' });
+        else if (act.type === 'mtc') m = mk(L('Got it. Save this motorcycle record?\n• ' + act.name + (act.odo ? '\n• Odometer: ' + this.num(act.odo) + ' km' : '') + '\n• Date: today', 'Faham. Simpan rekod motosikal ini?\n• ' + act.name + (act.odo ? '\n• Odometer: ' + this.num(act.odo) + ' km' : '') + '\n• Tarikh: hari ini'), { pid: id, big: cs() + this.rm(act.amt), bigLbl: act.name, color: '#ff8fab' });
+        else if (act.type === 'inc') m = mk(L('Got it. Save this income to this month?\n• ' + act.name, 'Faham. Simpan pendapatan ini untuk bulan ini?\n• ' + act.name), { pid: id, big: cs() + this.rm(act.amt), bigLbl: act.name, color: '#34d399' });
         else m = mk(L('Got it. Save this odometer reading?', 'Faham. Simpan bacaan odometer ini?'), { pid: id, big: this.num(act.val), bigLbl: 'km', color: '#ff8fab' });
       } else if (act.type === 'steps') {
         doAct = act; patch.steps = s.steps + act.n; const pp = Math.min(100, Math.round(patch.steps / D.goal * 100));
@@ -333,8 +334,8 @@ export class AssistantBase extends React.Component<any, any> {
         case 'debt': {
           const ds = DB.debtSummary(R.debts || DB.DEBT_EMPTY);
           if (!ds.list.length) { m = mk(L('You have not added any commitments or debts yet. You can add them in My Finance.', 'Awak belum tambah komitmen atau hutang. Boleh tambah dalam My Finance.'), { label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' }); break; }
-          const un = ds.unpaid.slice(0, 4).map(x => '• ' + x.name + ' RM ' + this.rm(DB.amountDue(x, ds.ym)) + ' (' + L('day ', 'hari ') + x.due + ')').join('\n');
-          m = mk(L('This month: RM ' + this.rm(ds.paid) + ' paid of RM ' + this.rm(ds.commit) + '. ' + (ds.toPay > 0.004 ? 'Still to pay RM ' + this.rm(ds.toPay) + ':\n' + un : 'All settled.') + (ds.totalLeft > 0 ? '\nDebt balance left: RM ' + this.num(this.rm(ds.totalLeft)) + '.' : ''), 'Bulan ini: RM ' + this.rm(ds.paid) + ' dibayar daripada RM ' + this.rm(ds.commit) + '. ' + (ds.toPay > 0.004 ? 'Belum bayar RM ' + this.rm(ds.toPay) + ':\n' + un : 'Semua selesai.') + (ds.totalLeft > 0 ? '\nBaki hutang: RM ' + this.num(this.rm(ds.totalLeft)) + '.' : '')), { big: 'RM ' + this.rm(ds.toPay), bigLbl: L('left to pay', 'belum dibayar'), pct: ds.commit > 0 ? Math.round(ds.paid / ds.commit * 100) : -1, color: '#ff8fab', label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
+          const un = ds.unpaid.slice(0, 4).map(x => '• ' + x.name + ' ' + cs() + this.rm(DB.amountDue(x, ds.ym)) + ' (' + L('day ', 'hari ') + x.due + ')').join('\n');
+          m = mk(L('This month: ' + cs() + this.rm(ds.paid) + ' paid of ' + cs() + this.rm(ds.commit) + '. ' + (ds.toPay > 0.004 ? 'Still to pay ' + cs() + this.rm(ds.toPay) + ':\n' + un : 'All settled.') + (ds.totalLeft > 0 ? '\nDebt balance left: ' + cs() + this.num(this.rm(ds.totalLeft)) + '.' : ''), 'Bulan ini: ' + cs() + this.rm(ds.paid) + ' dibayar daripada ' + cs() + this.rm(ds.commit) + '. ' + (ds.toPay > 0.004 ? 'Belum bayar ' + cs() + this.rm(ds.toPay) + ':\n' + un : 'Semua selesai.') + (ds.totalLeft > 0 ? '\nBaki hutang: ' + cs() + this.num(this.rm(ds.totalLeft)) + '.' : '')), { big: cs() + this.rm(ds.toPay), bigLbl: L('left to pay', 'belum dibayar'), pct: ds.commit > 0 ? Math.round(ds.paid / ds.commit * 100) : -1, color: '#ff8fab', label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
           break;
         }
         case 'lock': {
@@ -351,22 +352,22 @@ export class AssistantBase extends React.Component<any, any> {
           m = mk(L('You can export all your data from Settings, Export all my data, as Excel, PDF, CSV or a full backup. It includes your savings goals, category limits and Money Left for each month. For a motorcycle PDF, open My Record and tap Export Report. Keep a backup before you change phones.', 'Awak boleh eksport semua data di Settings, Export all my data, dalam Excel, PDF, CSV atau backup penuh. Ia termasuk tabung, had kategori dan baki wang setiap bulan. Untuk PDF motosikal, buka My Record dan tekan Export Report. Simpan backup sebelum tukar telefon.'), { label: L('Open Export', 'Buka Export'), href: 'Export.dc.html' });
           break;
         case 'spend':
-          m = mk(L('You spent RM ' + D.spendToday + ' today. Your month so far is RM ' + D.spendMonth + '.', 'Awak belanja RM ' + D.spendToday + ' hari ini. Bulan ini setakat ini RM ' + D.spendMonth + '.'), { big: 'RM ' + D.spendToday, bigLbl: L('spent today', 'belanja hari ini'), label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
+          m = mk(L('You spent ' + cs() + D.spendToday + ' today. Your month so far is ' + cs() + D.spendMonth + '.', 'Awak belanja ' + cs() + D.spendToday + ' hari ini. Bulan ini setakat ini ' + cs() + D.spendMonth + '.'), { big: cs() + D.spendToday, bigLbl: L('spent today', 'belanja hari ini'), label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
           break;
         case 'spendM':
-          m = mk(L('You have spent RM ' + D.spendMonth + ' this month. Your biggest category is ' + D.topCat + ' at RM ' + D.topAmt + '.', 'Awak dah belanja RM ' + D.spendMonth + ' bulan ini. Kategori terbesar ialah ' + D.topCat + ' sebanyak RM ' + D.topAmt + '.'), { big: 'RM ' + D.spendMonth, bigLbl: L('this month', 'bulan ini'), pct: Math.round(D.spendMonth / D.income * 100), color: '#ffc46b', label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
+          m = mk(L('You have spent ' + cs() + D.spendMonth + ' this month. Your biggest category is ' + D.topCat + ' at ' + cs() + D.topAmt + '.', 'Awak dah belanja ' + cs() + D.spendMonth + ' bulan ini. Kategori terbesar ialah ' + D.topCat + ' sebanyak ' + cs() + D.topAmt + '.'), { big: cs() + D.spendMonth, bigLbl: L('this month', 'bulan ini'), pct: Math.round(D.spendMonth / D.income * 100), color: '#ffc46b', label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
           break;
         case 'income':
-          m = mk(L('Your income this month is RM ' + this.num(D.income) + '. You can edit each line (salary, overtime, claim) in My Finance.', 'Pendapatan awak bulan ini RM ' + this.num(D.income) + '. Awak boleh ubah setiap baris (gaji, overtime, tuntutan) dalam My Finance.'), { big: 'RM ' + this.num(D.income), bigLbl: L('this month', 'bulan ini'), label: L('Open Monthly Income', 'Buka Pendapatan Bulanan'), href: 'Finance.dc.html' });
+          m = mk(L('Your income this month is ' + cs() + this.num(D.income) + '. You can edit each line (salary, overtime, claim) in My Finance.', 'Pendapatan awak bulan ini ' + cs() + this.num(D.income) + '. Awak boleh ubah setiap baris (gaji, overtime, tuntutan) dalam My Finance.'), { big: cs() + this.num(D.income), bigLbl: L('this month', 'bulan ini'), label: L('Open Monthly Income', 'Buka Pendapatan Bulanan'), href: 'Finance.dc.html' });
           break;
         case 'balance': {
           const left = D.income - D.spendMonth;
-          m = mk(L('Income RM ' + this.num(D.income) + ' minus spending RM ' + D.spendMonth + ' leaves RM ' + this.num(left) + ' this month.', 'Pendapatan RM ' + this.num(D.income) + ' tolak belanja RM ' + D.spendMonth + ' tinggal RM ' + this.num(left) + ' bulan ini.'), { big: 'RM ' + this.num(left), bigLbl: L('left this month', 'baki bulan ini'), pct: Math.round(left / D.income * 100), color: '#34d399', label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
+          m = mk(L('Income ' + cs() + this.num(D.income) + ' minus spending ' + cs() + D.spendMonth + ' leaves ' + cs() + this.num(left) + ' this month.', 'Pendapatan ' + cs() + this.num(D.income) + ' tolak belanja ' + cs() + D.spendMonth + ' tinggal ' + cs() + this.num(left) + ' bulan ini.'), { big: cs() + this.num(left), bigLbl: L('left this month', 'baki bulan ini'), pct: Math.round(left / D.income * 100), color: '#34d399', label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' });
           break;
         }
         case 'top':
           if (!D.topCat) { m = mk(L('No spending logged this month yet.', 'Belum ada belanja direkod bulan ini.'), { label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' }); break; }
-          m = mk(L('Your top spending category this month is ' + D.topCat + ': RM ' + D.topAmt + ', about ' + Math.round(D.topAmt / D.spendMonth * 100) + '% of your spending.', 'Kategori belanja tertinggi bulan ini ialah ' + D.topCat + ': RM ' + D.topAmt + ', kira-kira ' + Math.round(D.topAmt / D.spendMonth * 100) + '% daripada belanja awak.'), { big: 'RM ' + D.topAmt, bigLbl: D.topCat, pct: Math.round(D.topAmt / D.spendMonth * 100), color: '#ffc46b', label: L('See Spending by Category', 'Lihat Belanja ikut Kategori'), href: 'Finance.dc.html' });
+          m = mk(L('Your top spending category this month is ' + D.topCat + ': ' + cs() + D.topAmt + ', about ' + Math.round(D.topAmt / D.spendMonth * 100) + '% of your spending.', 'Kategori belanja tertinggi bulan ini ialah ' + D.topCat + ': ' + cs() + D.topAmt + ', kira-kira ' + Math.round(D.topAmt / D.spendMonth * 100) + '% daripada belanja awak.'), { big: cs() + D.topAmt, bigLbl: D.topCat, pct: Math.round(D.topAmt / D.spendMonth * 100), color: '#ffc46b', label: L('See Spending by Category', 'Lihat Belanja ikut Kategori'), href: 'Finance.dc.html' });
           break;
         case 'mmonth':
         case 'mcmp':
@@ -383,7 +384,7 @@ export class AssistantBase extends React.Component<any, any> {
           else if (id === 'svc') {
             if (D.nextSvc == null || !D.nextSvc) m = mk(L('No service is set up yet. Add a part in My Record, for example Engine oil with the odometer when you changed it and how long it lasts.', 'Belum ada servis ditetapkan. Tambah bahagian dalam My Record, contohnya Minyak enjin dengan odometer semasa tukar dan jangka hayatnya.'), rec);
             else { const left = D.nextSvc - D.odo; m = mk(left > 0 ? L(D.nextSvcName + ' is due at ' + this.num(D.nextSvc) + ' km, which is ' + this.num(left) + ' km away.', D.nextSvcName + ' perlu ditukar pada ' + this.num(D.nextSvc) + ' km, lagi ' + this.num(left) + ' km.') : L(D.nextSvcName + ' is overdue by ' + this.num(-left) + ' km.', D.nextSvcName + ' sudah lewat ' + this.num(-left) + ' km.'), Object.assign({ big: this.num(Math.abs(left)), bigLbl: left > 0 ? L('km to go', 'km lagi') : L('km overdue', 'km lewat'), color: left > 0 ? '#ff8fab' : '#ffb3a0' }, rec)); }
-          } else m = mk(L('You spent RM ' + this.rm(D.mtcMonth) + ' on motorcycle maintenance this month.', 'Awak belanja RM ' + this.rm(D.mtcMonth) + ' untuk penyelenggaraan motosikal bulan ini.'), Object.assign({ big: 'RM ' + this.rm(D.mtcMonth), bigLbl: L('maintenance', 'penyelenggaraan'), color: '#ffc46b' }, rec));
+          } else m = mk(L('You spent ' + cs() + this.rm(D.mtcMonth) + ' on motorcycle maintenance this month.', 'Awak belanja ' + cs() + this.rm(D.mtcMonth) + ' untuk penyelenggaraan motosikal bulan ini.'), Object.assign({ big: cs() + this.rm(D.mtcMonth), bigLbl: L('maintenance', 'penyelenggaraan'), color: '#ffc46b' }, rec));
           break;
         }
         case 'tasks': {
@@ -410,7 +411,7 @@ export class AssistantBase extends React.Component<any, any> {
           break;
         }
         case 'summary':
-          m = mk(L('Your day so far:\nSteps ' + this.num(D.steps) + ' (' + pc + '%)\nWater ' + s.cups + '/' + D.cupGoal + ' · Sleep ' + D.sleep + 'h\nSpent RM ' + D.spendToday + '\nOpen tasks ' + open.length, 'Hari awak setakat ini:\nLangkah ' + this.num(D.steps) + ' (' + pc + '%)\nAir ' + s.cups + '/' + D.cupGoal + ' · Tidur ' + D.sleep + 'j\nBelanja RM ' + D.spendToday + '\nTugasan belum siap ' + open.length), { big: avg + '%', bigLbl: L('daily goal', 'sasaran harian'), pct: avg, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' });
+          m = mk(L('Your day so far:\nSteps ' + this.num(D.steps) + ' (' + pc + '%)\nWater ' + s.cups + '/' + D.cupGoal + ' · Sleep ' + D.sleep + 'h\nSpent ' + cs() + D.spendToday + '\nOpen tasks ' + open.length, 'Hari awak setakat ini:\nLangkah ' + this.num(D.steps) + ' (' + pc + '%)\nAir ' + s.cups + '/' + D.cupGoal + ' · Tidur ' + D.sleep + 'j\nBelanja ' + cs() + D.spendToday + '\nTugasan belum siap ' + open.length), { big: avg + '%', bigLbl: L('daily goal', 'sasaran harian'), pct: avg, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' });
           break;
         case 'advice': {
           const a = [];

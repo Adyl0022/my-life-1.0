@@ -1,6 +1,7 @@
 import { Stack, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { trackModule } from '../lib/modules';
+import { useRegion } from '../lib/region';
 import { warmKey } from '../lib/secure';
 warmKey();
 import { StatusBar } from 'expo-status-bar';
@@ -68,6 +69,7 @@ function Checking() {
 export { ErrorBoundary } from 'expo-router';
 function Tracker() { const p = usePathname(); useEffect(() => { trackModule(p); }, [p]); return null; }
 export default function Root() {
+  useRegion(); // keeps the chosen currency ready for every screen and notification
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);

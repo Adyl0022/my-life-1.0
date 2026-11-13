@@ -10,6 +10,7 @@ import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import { calcLeft, commitFor, monthSummary, MONTHS, Sp } from '../lib/moneyLeft';
 import { setup } from '../lib/adhan';
 import { BUDGET_EMPTY, BudgetCfg, checkBudget } from '../lib/budgetAlert';
+import { cs } from '../lib/region';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
@@ -22,7 +23,7 @@ const Row = ({ c, l, v, minus, bold }: { c?: string; l: string; v: string; minus
   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 }}>
     {c ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c }} /> : <View style={{ width: 10 }} />}
     <Text style={{ flex: 1, color: bold ? W : 'rgba(255,255,255,.82)', fontSize: 13.5, fontWeight: bold ? '800' : '600' }}>{l}</Text>
-    <Text style={{ color: W, fontSize: 14, fontWeight: bold ? '800' : '700' }}>{(minus ? '- ' : '') + 'RM ' + v}</Text>
+    <Text style={{ color: W, fontSize: 14, fontWeight: bold ? '800' : '700' }}>{(minus ? '- ' : '') + cs() + v}</Text>
   </View>
 );
 const Tile = ({ l, v, sub, c }: { l: string; v: string; sub?: string; c?: string }) => (
@@ -57,11 +58,11 @@ export function MoneyLeft({ ym, income, spends }: Props) {
 
   let tip = '';
   if (state === 'none') tip = 'Add this month\'s income above and I will show how much is left after your commitments and spending.';
-  else if (state === 'over') tip = 'You have gone RM ' + rnd(-left) + ' past what you earned this month. Hold off on non-essential spending.';
-  else if (!isCur) tip = left > 0 ? 'You finished this month with RM ' + rnd(left) + ' left. Well done.' : 'This month ended exactly on budget.';
-  else if (spent === 0) tip = 'No spending recorded yet. You can spend about RM ' + rnd(allowance) + ' a day and stay on track.';
-  else if (projLeft < 0) tip = 'At your usual pace of RM ' + rnd(pace) + ' a day, your money runs out around the ' + (runOutDay || dimDays) + 'th. Try to keep to RM ' + rnd(allowance) + ' a day.';
-  else tip = 'At your usual pace you would finish the month with about RM ' + rnd(projLeft) + ' left. Keep to RM ' + rnd(allowance) + ' a day or less.';
+  else if (state === 'over') tip = 'You have gone ' + cs() + rnd(-left) + ' past what you earned this month. Hold off on non-essential spending.';
+  else if (!isCur) tip = left > 0 ? 'You finished this month with ' + cs() + rnd(left) + ' left. Well done.' : 'This month ended exactly on budget.';
+  else if (spent === 0) tip = 'No spending recorded yet. You can spend about ' + cs() + rnd(allowance) + ' a day and stay on track.';
+  else if (projLeft < 0) tip = 'At your usual pace of ' + cs() + rnd(pace) + ' a day, your money runs out around the ' + (runOutDay || dimDays) + 'th. Try to keep to ' + cs() + rnd(allowance) + ' a day.';
+  else tip = 'At your usual pace you would finish the month with about ' + cs() + rnd(projLeft) + ' left. Keep to ' + cs() + rnd(allowance) + ' a day or less.';
 
   return (
     <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
@@ -84,8 +85,8 @@ export function MoneyLeft({ ym, income, spends }: Props) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{over ? 'Over by' : 'Left to spend'}</Text>
-          <Text style={{ color: income <= 0 ? 'rgba(255,255,255,.5)' : over ? COL.over : W, fontSize: narrow ? 21 : 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 1 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>RM {money(income <= 0 ? 0 : Math.abs(left))}</Text>
-          <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 2 }}>{income > 0 ? 'from RM ' + money(income) + ' income' : 'No income saved yet'}</Text>
+          <Text style={{ color: income <= 0 ? 'rgba(255,255,255,.5)' : over ? COL.over : W, fontSize: narrow ? 21 : 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 1 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{cs()}{money(income <= 0 ? 0 : Math.abs(left))}</Text>
+          <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 2 }}>{income > 0 ? 'from ' + cs() + money(income) + ' income' : 'No income saved yet'}</Text>
         </View>
       </View>
 
@@ -106,24 +107,24 @@ export function MoneyLeft({ ym, income, spends }: Props) {
 
           {isCur ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-              <Tile l="Per day" v={'RM ' + rnd(allowance)} sub={daysLeft + (daysLeft === 1 ? ' day left' : ' days left')} c={allowance > 0 ? W : COL.over} />
-              <Tile l="Today" v={'RM ' + rnd(today)} sub={allowance > 0 ? (today <= allowance ? 'within limit' : 'over limit') : ''} c={allowance > 0 && today > allowance ? COL.over : W} />
-              {!over ? <Tile l="Month end" v={(projLeft < 0 ? '-' : '') + 'RM ' + rnd(Math.abs(projLeft))} sub="at usual pace" c={projLeft < 0 ? COL.over : COL.left} /> : null}
+              <Tile l="Per day" v={cs() + rnd(allowance)} sub={daysLeft + (daysLeft === 1 ? ' day left' : ' days left')} c={allowance > 0 ? W : COL.over} />
+              <Tile l="Today" v={cs() + rnd(today)} sub={allowance > 0 ? (today <= allowance ? 'within limit' : 'over limit') : ''} c={allowance > 0 && today > allowance ? COL.over : W} />
+              {!over ? <Tile l="Month end" v={(projLeft < 0 ? '-' : '') + cs() + rnd(Math.abs(projLeft))} sub="at usual pace" c={projLeft < 0 ? COL.over : COL.left} /> : null}
             </View>
           ) : null}
         </>
       ) : null}
 
       <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>{tip}</Text>
-      {isCur && income > 0 && spent > 0 && oneOff > 0 ? <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15, marginTop: 4 }}>{'Usual pace leaves out bills and big one-off buys (RM ' + rnd(oneOff) + ' so far), because they do not repeat every day.'}</Text> : null}
+      {isCur && income > 0 && spent > 0 && oneOff > 0 ? <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15, marginTop: 4 }}>{'Usual pace leaves out bills and big one-off buys (' + cs() + rnd(oneOff) + ' so far), because they do not repeat every day.'}</Text> : null}
 
       {sm ? (
         <View style={{ marginTop: 14, borderRadius: 16, padding: 12, backgroundColor: 'rgba(0,0,0,.2)' }}>
           <Text style={{ color: '#ffd593', fontSize: 11, fontWeight: '700', letterSpacing: 1.2 }}>{isCur ? 'MONTH SO FAR' : 'MONTH SUMMARY'}</Text>
-          <Text style={{ color: sm.ok ? COL.left : COL.over, fontSize: 15, fontWeight: '800', marginTop: 6 }}>{sm.ok ? 'Left over RM ' + money(sm.saved) + (isCur ? ' so far' : '') : 'Overspent by RM ' + money(-sm.saved)}</Text>
-          {sm.topCat ? <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, marginTop: 6 }}>{'Biggest category: ' + sm.topCat + ' RM ' + rnd(sm.topAmt) + ' (' + sm.topShare + '% of spending)'}</Text> : null}
-          {sm.biggest ? <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, marginTop: 3 }}>{'Biggest single spend: ' + sm.biggest.name + ' RM ' + rnd(sm.biggest.amt)}</Text> : null}
-          {sm.vsPrev !== null ? <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, marginTop: 3 }}>{'Spending was ' + (sm.vsPrev === 0 ? 'the same as' : Math.abs(sm.vsPrev) + '% ' + (sm.vsPrev > 0 ? 'higher than' : 'lower than')) + ' ' + MONTHS[prev.getMonth()] + ' (RM ' + rnd(sm.prevSpent) + ').'}</Text> : null}
+          <Text style={{ color: sm.ok ? COL.left : COL.over, fontSize: 15, fontWeight: '800', marginTop: 6 }}>{sm.ok ? 'Left over ' + cs() + money(sm.saved) + (isCur ? ' so far' : '') : 'Overspent by ' + cs() + money(-sm.saved)}</Text>
+          {sm.topCat ? <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, marginTop: 6 }}>{'Biggest category: ' + sm.topCat + ' ' + cs() + rnd(sm.topAmt) + ' (' + sm.topShare + '% of spending)'}</Text> : null}
+          {sm.biggest ? <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, marginTop: 3 }}>{'Biggest single spend: ' + sm.biggest.name + ' ' + cs() + rnd(sm.biggest.amt)}</Text> : null}
+          {sm.vsPrev !== null ? <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, marginTop: 3 }}>{'Spending was ' + (sm.vsPrev === 0 ? 'the same as' : Math.abs(sm.vsPrev) + '% ' + (sm.vsPrev > 0 ? 'higher than' : 'lower than')) + ' ' + MONTHS[prev.getMonth()] + ' (' + cs() + rnd(sm.prevSpent) + ').'}</Text> : null}
           {sm.tip ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 18, marginTop: 8 }}>{'Next month: ' + sm.tip}</Text> : null}
         </View>
       ) : null}

@@ -3,10 +3,11 @@ import * as Notifications from 'expo-notifications';
 import { getItem, getItemStrict, setItem } from './store';
 import { DEBT_EMPTY } from './debts';
 import { calcLeft, commitFor, ymKey } from './moneyLeft';
+import { cs } from './region';
 
 export type BudgetCfg = { on: boolean; sent: Record<string, number> };
 export const BUDGET_EMPTY: BudgetCfg = { on: true, sent: {} };
-const rm = (n: number) => 'RM ' + Math.round(n).toLocaleString('en-MY');
+const rm = (n: number) => cs() + Math.round(n).toLocaleString('en-MY');
 
 // Looks at this month after any spending or income is saved and sends one alert for each warning, once.
 export async function checkBudget(): Promise<void> {

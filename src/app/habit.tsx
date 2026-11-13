@@ -15,6 +15,7 @@ import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
 import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
+import { useRegion } from '../lib/region';
 
 const T = '#5ee7df';
 const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '600' }}>{t}</Text>;
@@ -46,6 +47,7 @@ function Bars({ vals, labels, max, goal, color, hi }: { vals: number[]; labels: 
 }
 
 export default function Habit() {
+  useRegion();
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'today' | 'progress' | 'body'>('today');

@@ -14,6 +14,7 @@ import { Glass } from '../../components/Glass';
 import { getDay, cupsGoal, goalPctOf, keyOfDate, dateOf } from '../../lib/habit';
 import { useCore, scoreParts, lifeScore, tips, weekly, patterns, hideTip, tipCat } from '../../lib/insights';
 import { TOP } from '../../lib/layout';
+import { cs, useRegion } from '../../lib/region';
 
 const ACirc: any = Animated.createAnimatedComponent(Circle);
 type Sp = { amt: number; date: string };
@@ -24,6 +25,7 @@ const Wallet = ({ s = 30 }: { s?: number }) => (
 );
 
 export default function Insights() {
+  useRegion();
   const router = useRouter();
   const [week, setWeek] = useState(false);
   const core0 = useCore();
@@ -42,7 +44,7 @@ export default function Insights() {
   const anyData = scoreParts(core0, week).length > 0;
   const parts = scoreParts(core0, week);
   const score = lifeScore(parts);
-  const rm = (n: number) => 'RM ' + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const rm = (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   let metrics: { l: string; v: string; p: number; c: string; ic: React.ReactNode }[];
   if (week) {
     let st = 0, sl = 0, sn = 0, wd = 0;
