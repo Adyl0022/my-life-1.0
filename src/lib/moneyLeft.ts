@@ -1,6 +1,7 @@
 // One shared calculation for "Money Left", used by the card, the budget alerts and the Assistant,
 // so all of them always show the same numbers.
 import { DebtData, isActive, amountDue } from './debts';
+import { cs } from './region';
 
 export type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number };
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -65,7 +66,7 @@ export function monthSummary(o: { ym: string; income: number; commit: number; sp
   let tip = '';
   if (c.income <= 0) tip = '';
   else if (c.over) tip = 'Next month, plan a limit before the month starts' + (topCat ? ' and watch ' + topCat + ', your biggest category.' : '.');
-  else if (topCat && ['Food', 'Shopping', 'Other', 'Petrol'].indexOf(topCat) >= 0) tip = 'Trimming ' + topCat + ' by 10% would free about RM ' + Math.round(topAmt * 0.1) + ' next month.';
+  else if (topCat && ['Food', 'Shopping', 'Other', 'Petrol'].indexOf(topCat) >= 0) tip = 'Trimming ' + topCat + ' by 10% would free about ' + cs() + Math.round(topAmt * 0.1) + ' next month.';
   else tip = 'Good month. Keep the same pace next month.';
   return { saved: c.left, ok: !c.over, topCat, topAmt, topShare: c.spent > 0 ? Math.round((topAmt / c.spent) * 100) : 0, prevSpent, vsPrev, biggest, tip };
 }

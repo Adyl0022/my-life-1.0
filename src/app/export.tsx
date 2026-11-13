@@ -11,6 +11,7 @@ import { TOP } from '../lib/layout';
 
 const W = '#fff';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { packReceipts } from '../lib/storage';
 import { MODS, buildReport, collect, toCsv, toHtml, toXlsxBase64, deliver, deliverPdf, stamp, fileStamp, Report } from '../lib/exporter';
 const IC: Record<string, React.ReactNode> = {
   planner: <><Rect x="4" y="5" width="16" height="15" rx="3" /><Path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4" /></>,
@@ -61,18 +62,23 @@ export default function Export() {
     setPhase(1); setMsg('');
     const k = FMT[fmt].k;
     try {
-      let ok = true;
+      let ok = true; let bkNote = '';
       if (k === 'json') {
         const data = await collect(sel);
-        ok = await deliver(file, 'application/json', JSON.stringify({ app: 'My Life 1.0', version: '1.0', created: stamp(), createdAt: new Date().toISOString(), period: 'All time', data }, null, 2));
+        let pk: { images: Record<string, string>; skipped: number } = { images: {}, skipped: 0 };
+        try { pk = await packReceipts(data); } catch (e) {}
+        const out: any = { app: 'My Life 1.0', version: '1.0', created: stamp(), createdAt: new Date().toISOString(), period: 'All time', data };
+        if (Object.keys(pk.images).length) out.images = pk.images;
+        ok = await deliver(file, 'application/json', JSON.stringify(out, null, 2));
         setBkLast(Date.now());
+        if (pk.skipped > 0) bkNote = pk.skipped + (pk.skipped === 1 ? ' receipt photo' : ' receipt photos') + ' did not fit in the backup and stay only on this phone.';
       } else {
         const r = await buildReport(sel, per);
         if (k === 'xlsx') ok = await deliver(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', await toXlsxBase64(r), true);
         else if (k === 'pdf') ok = await deliverPdf(toHtml(r), file);
         else ok = await deliver(file, 'text/csv', toCsv(r));
       }
-      setMsg(ok ? (k === 'pdf' ? 'Your PDF is ready.' : 'Saved as ' + file) : 'The file was created, but this phone has no way to share it.'); setPhase(ok ? 2 : 3);
+      setMsg(ok ? (k === 'pdf' ? 'Your PDF is ready.' : 'Saved as ' + file + (bkNote ? '. ' + bkNote : '')) : 'The file was created, but this phone has no way to share it.'); setPhase(ok ? 2 : 3);
     } catch (e) { setMsg('Could not create the file. Please try again.'); setPhase(3); }
   };
 

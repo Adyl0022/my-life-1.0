@@ -8,15 +8,22 @@ export const TG_DEFAULT: Toggles = { ev: true, pr: true, zk: true, qh: true };
 export const readToggles = async (): Promise<Toggles> => ({ ...TG_DEFAULT, ...(await getItem<Partial<Toggles>>('ml_toggles', {})) });
 // Quiet hours: nothing rings between 12 am and 5 am.
 export const inQuiet = (at: Date, tg: Toggles) => !!tg.qh && at.getHours() < 5;
-const OWN = ['debt-', 'event-', 'zikir-', 'backup-'];
+const OWN = ['debt-', 'event-', 'zikir-', 'backup-', 'fam-'];
 
 export type Alert = { key: string; name: string; at: Date };
 let ready = false;
+let handled = false;
+// Lets a notification show as a banner while the app is open. Needed by anything that rings right away (budget alerts, test).
+export function ensureHandler() {
+  if (handled || Platform.OS === 'web') return;
+  handled = true;
+  try { Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }) }); } catch (e) {}
+}
 export async function setup(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   try {
     if (!ready) {
-      Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }) });
+      ensureHandler();
       if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('prayer', { name: 'Prayer times', importance: Notifications.AndroidImportance.HIGH, vibrationPattern: [0, 250, 150, 250], lightColor: '#6a4df0' });
       ready = true;
     }

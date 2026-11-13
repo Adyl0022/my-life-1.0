@@ -7,6 +7,7 @@ import { Glass } from './Glass';
 import { Inp } from './Ui';
 import { useStored } from '../lib/store';
 import { HData, GLASS, cupsGoal, latestKg, avgOf, keyOfDate, dateOf } from '../lib/habit';
+import { cs, cu } from '../lib/region';
 
 const W = '#fff'; const T = '#5ee7df';
 const dim = 'rgba(255,255,255,.65)';
@@ -200,7 +201,7 @@ export function DailyNeeds({ h, setH }: { h: HData; setH: (v: HData) => void }) 
 type FSp = { id: number; name: string; cat: string; amt: number; date: string };
 const MS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ymKey = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-const rmh = (n: number) => 'RM ' + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rmh = (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const HEALTH_CAT = 'Health';
 export function healthMonths(spends: { cat?: string; amt: number; date: string }[], n = 6, now = new Date()) {
   const out: { ym: string; label: string; v: number }[] = [];
@@ -234,7 +235,7 @@ export function HealthSpend() {
         <View style={{ marginTop: 12, gap: 8 }}>
           <Inp value={nm} onChangeText={setNm} placeholder="What for? e.g. Clinic consultation" />
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder="Amount (RM)" onSubmitEditing={add} />
+            <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={add} />
             <Pressable onPress={add}><LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 13, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
           </View>
         </View>

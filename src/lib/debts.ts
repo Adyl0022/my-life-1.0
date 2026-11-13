@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { setup } from './adhan';
+import { cs } from './region';
 
 export type Debt = { id: number; name: string; bal: number; monthly: number; due: number; since: string; paid: Record<string, number>; remind: boolean; fixed?: boolean; goal?: number };
 export type DebtData = { debts: Debt[]; nextId: number; notify: boolean; ahead: number; food?: number };
@@ -36,7 +37,7 @@ export async function syncDebtAlerts(data: DebtData): Promise<boolean> {
         left--;
         const at = new Date(t.getFullYear(), t.getMonth(), dueDay(d, t.getFullYear(), t.getMonth()) - (data.ahead || 0), 9, 0, 0);
         if (at.getTime() <= now + 5000) continue;
-        const amt = 'RM ' + (d.fixed ? d.monthly : Math.min(d.monthly, remaining(d))).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const amt = cs() + (d.fixed ? d.monthly : Math.min(d.monthly, remaining(d))).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         await Notifications.scheduleNotificationAsync({
           identifier: 'debt-' + d.id + '-' + ym,
           content: { title: d.name + (data.ahead === 0 ? ' is due today' : data.ahead === 1 ? ' is due tomorrow' : ' is due in ' + data.ahead + ' days'), body: 'Payment of ' + amt + '. Open My Finance to mark it paid.', sound: true },

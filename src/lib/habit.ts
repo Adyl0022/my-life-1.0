@@ -15,9 +15,13 @@ export const cupsGoal = (h: HData) => { const k = latestKg(h); return k > 0 ? Ma
 export const goalPctOf = (x: HDay, goal: number, cg = 8) => Math.round(((Math.min(x.cups / cg, 1)) + Math.min(x.sleep / 7, 1) + Math.min(x.steps / goal, 1)) / 3 * 100);
 export const actOf = (x: HDay, goal: number) => Math.round(Math.min(x.steps / goal, 1) * 5);
 export const scoreOf = (x: HDay, goal: number, cg = 8) => Math.round(((Math.min(x.cups / cg, 1)) + (actOf(x, goal) / 5) + Math.min(x.sleep / 7, 1)) / 3 * 4);
+// Keeps only digits (max 4) and puts the colon in for the person: 0830 -> 08:30.
+export const fmtTime = (s: string) => { const d = s.replace(/\D/g, '').slice(0, 4); return d.length > 2 ? d.slice(0, 2) + ':' + d.slice(2) : d; };
 export const hoursBetween = (bed: string, wake: string) => {
   const re = /^([01]?\d|2[0-3]):([0-5]\d)$/; const a = re.exec(bed), b = re.exec(wake); if (!a || !b) return 0;
   let m = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]); if (m <= 0) m += 1440; return Math.round(m / 6) / 10;
 };
+// Days in a row that reached 70% of the goal. If today is not there yet, counting starts from yesterday.
+export const curStreak = (h: HData) => { const cg = cupsGoal(h), g = h.goal || 8000; let n = 0; for (let o = goalPctOf(getDay(h, 0), g, cg) >= 70 ? 0 : -1; o > -400; o--) { if (goalPctOf(getDay(h, o), g, cg) >= 70) n++; else break; } return n; };
 export const bestStreakAll = (h: HData) => { const cg = cupsGoal(h); let best = 0, run = 0; for (let o = -400; o <= 0; o++) { if (goalPctOf(getDay(h, o), h.goal || 8000, cg) >= 70) { run++; best = Math.max(best, run); } else run = 0; } return best; };
 export const avgOf = (h: HData, from: number, to: number, f: (x: HDay) => number) => { const l = []; for (let o = from; o <= to; o++) { const x = getDay(h, o); if (x.cups > 0 || x.sleep > 0 || x.steps > 0) l.push(f(x)); } return l.length ? l.reduce((a, b) => a + b, 0) / l.length : 0; };

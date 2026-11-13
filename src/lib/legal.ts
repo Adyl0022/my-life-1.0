@@ -1,5 +1,12 @@
 export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
+  { h: 'Version 1.0.1', p: 'A big update with Family Planner, more countries and currencies, and a calmer Settings.' },
+  { h: 'Family Planner', p: '•  Share tasks, activities and a shopping list with your family\n•  Repeating tasks and reminders for everyone\n•  Anything deleted can be brought back for 7 days\n•  The family owner can turn the invite code off or on, or delete the family' },
+  { h: 'Region and currency', p: 'Public holidays, currency symbols and money words now follow the country you choose. New countries: Cambodia, Laos, Myanmar, Nepal, Sri Lanka, Maldives, Taiwan, Kuwait, Oman, Bahrain and Jordan.' },
+  { h: 'Islamic Hub settings', p: 'Prayer times, daily zikir and prayer alert timing moved from Settings into the Islamic Hub (tap the gear icon). You can also hide modules you do not use.' },
+  { h: 'Quran and zikir', p: 'Read with translation, Arabic only, or continuous. The same choices are in Tahlil, Mathurat and dhikr.' },
+  { h: 'Dashboard and backup', p: 'The bottom Dashboard card can be tapped to switch views, and Dashboard cards can be reordered. Backups now include My Record receipt photos.' },
+  { h: 'Fixes', p: '•  Sleep tracker times type and clear properly\n•  Budget alerts show while the app is open\n•  Reminder settings now sync between your devices\n•  Clearer steps to connect Honor Health or Samsung Health' },
   { h: 'Version 1.0.0', p: 'The first release of My Life, with everything you need for your day in one app.' },
   { h: 'What you can do', p: '•  Plan tasks and events\n•  Prayer times, Quran and zikir\n•  Track money in Finance\n•  Keep vehicle records (motorcycle, car and more)\n•  Log habits, sleep and steps\n•  Ask the Assistant or use Search\n•  See progress in Stats and Insights' },
   { h: 'Private by design', p: 'Your data lives on your phone and is encrypted there. When you are signed in, a private copy is backed up to your own account so you can use it on other devices. You can add an optional PIN or fingerprint lock.' },
@@ -21,7 +28,7 @@ export const PRIVACY: Sec[] = [
 export const TERMS: Sec[] = [
   { h: 'Using My Life', p: 'My Life is a personal organiser for your own use. Keep your phone and your PIN private. You are responsible for what is done on your device.' },
   { h: 'Your content', p: 'Everything you add belongs to you. We only store and show it back to you.' },
-  { h: 'Religious content', p: 'Quran text, zikir and prayer times are provided as a convenience. Prayer times follow JAKIM. Please confirm with your local authority where it matters.' },
+  { h: 'Religious content', p: 'Quran text, zikir and prayer times are provided as a convenience. Prayer times follow JAKIM and are only accurate in Malaysia. Please confirm with your local authority where it matters.' },
   { h: 'Assistant', p: 'My Life Assistant answers from your own data and is not a financial, medical or religious adviser.' },
   { h: 'No warranty', p: 'The app is provided as is. Keep a backup using Export. We are not liable for loss of data.' },
   { h: 'Changes', p: 'These terms may change as the app grows. The latest version is always in Settings, under About.' },
@@ -36,7 +43,7 @@ export const PRIVACY_URL = 'https://adyl0022.github.io/my-life-1.0/privacy.html'
 export const HOWTO: Sec[] = [
   { h: '1. Start on Home', p: 'The Dashboard shows your day: next prayer, tasks, spending and habits. Use the bottom bar to move between Home, Stats, Insights and Settings.' },
   { h: '2. Plan your days', p: 'Planner holds your tasks and events. Add an event and choose when to be reminded.' },
-  { h: '3. Islamic Hub', p: 'Prayer times, Quran, zikir, fasting log and more. Allow location once so prayer times are right for where you are.' },
+  { h: '3. Islamic Hub', p: 'Prayer times, Quran, zikir, fasting log and more. Prayer times use official Malaysian (JAKIM) zones, so they are only accurate in Malaysia. Allow location once so the right zone is found.' },
   { h: '4. Money and vehicles', p: 'My Finance tracks spending, income and commitments. My Record keeps mileage, service and fuel for your vehicles.' },
   { h: '5. Habit and Health', p: 'Log steps, sleep, mood and water. Your streaks and score show up in Stats and Insights.' },
   { h: '6. Ask the Assistant', p: 'Type things like "I spent RM10 on lunch". It answers from your own data and can save entries for you after you confirm.' },
@@ -46,10 +53,10 @@ export const FAQ: Sec[] = [
   { h: 'How do I activate the app?', p: 'Create an account, then enter the activation code you receive from the developer after payment. Each code works once and unlocks your account on all your devices.' },
   { h: 'Where is my data?', p: 'On your phone, encrypted, and backed up to your account online when you are signed in. Each account can only read its own data. The online copy is not end-to-end encrypted, so the developer could technically access it, but does not read it.' },
   { h: 'Can I use it on a new phone?', p: 'Yes. Install My Life, sign in with the same email and password, and your data comes back. Receipt photos are not included.' },
-  { h: 'I changed phone. How do I move my data?', p: 'On the old phone, go to Settings, Export, choose Backup (JSON) and keep the file. On the new phone, open Settings, Security, Backup and restore, then Restore from a file. Photos such as receipts are not included.' },
+  { h: 'I changed phone. How do I move my data?', p: 'On the old phone, go to Settings, Export, choose Backup (JSON) and keep the file. On the new phone, open Settings, Security, Backup and restore, then Restore from a file. Receipt photos in My Record come along in the backup file (up to 25 photos).' },
   { h: 'I forgot my PIN.', p: 'On the lock screen tap Forgot PIN. You can use your fingerprint or your account password to set a new PIN, or erase the app data and start fresh.' },
   { h: 'Notifications do not ring.', p: 'Use Settings, General, Send a test notification. If nothing shows, allow notifications for My Life in your phone settings and turn off battery saving for the app.' },
-  { h: 'Prayer times look wrong.', p: 'Open Islamic Hub and refresh your location. Times follow JAKIM. Please confirm with your local authority.' },
+  { h: 'Prayer times look wrong.', p: 'Open Islamic Hub and refresh your location. Times follow JAKIM and are only accurate in Malaysia. Please confirm with your local authority.' },
 ];
 
 export const COPYRIGHT: Sec[] = [

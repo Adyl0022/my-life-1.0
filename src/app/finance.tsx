@@ -14,6 +14,7 @@ import { useStored } from '../lib/store';
 import { Commitments } from '../components/Commitments';
 import { MoneyLeft } from '../components/MoneyLeft';
 import { TOP } from '../lib/layout';
+import { cs, cu, cw, useRegion } from '../lib/region';
 
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
@@ -40,7 +41,7 @@ const Coin = () => (
   <Svg width={44} height={44} viewBox="0 0 44 44">
     <Ellipse cx="22" cy="34" rx="15" ry="5" fill="#d98f1f" /><Rect x="7" y="26" width="30" height="8" fill="#f4b13d" /><Ellipse cx="22" cy="26" rx="15" ry="5" fill="#ffd27a" />
     <Ellipse cx="22" cy="19" rx="15" ry="5" fill="#d98f1f" /><Rect x="7" y="12" width="30" height="7" fill="#f4b13d" /><Ellipse cx="22" cy="12" rx="15" ry="5" fill="#ffe3a0" />
-    <SvgText x="22" y="15" textAnchor="middle" fontSize="7" fontWeight="800" fill="#a86a00">RM</SvgText>
+    <SvgText x="22" y="15" textAnchor="middle" fontSize="7" fontWeight="800" fill="#a86a00">{cu().slice(0, 3)}</SvgText>
   </Svg>
 );
 const Chip = ({ t, on, c, onPress }: { t: string; on: boolean; c?: string; onPress: () => void }) => (
@@ -55,6 +56,7 @@ const Stat = ({ l, v, bg, vc }: { l: string; v: string; bg?: string; vc?: string
 );
 
 export default function Finance() {
+  useRegion();
   const router = useRouter();
   const [d, setD] = useStored<Data>('ml_finance', EMPTY);
   const now = new Date(); const curY = now.getFullYear(); const curKey = keyOf(curY, now.getMonth());
@@ -106,7 +108,7 @@ export default function Finance() {
     setFName(''); setFAmt(''); setFGoal(0); setFPre('');
   };
   const dateText = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MON[parseInt(p[1], 10) - 1] : ''; };
-  const diffTxt = gc === 0 && gp === 0 ? '-' : gd === 0 ? 'Same' : (gd > 0 ? '+' : '-') + 'RM ' + rnd(Math.abs(gd));
+  const diffTxt = gc === 0 && gp === 0 ? '-' : gd === 0 ? 'Same' : (gd > 0 ? '+' : '-') + cs() + rnd(Math.abs(gd));
   const note = gc === 0 && gp === 0 ? 'Add your spending to see how this month compares with last month.' : gd === 0 ? 'Same spending as last month.' : gp > 0 ? (gd > 0 ? 'Up ' : 'Down ') + gPct + '% compared with last month.' : 'No spending recorded last month to compare with.';
   const dim = 'rgba(255,255,255,.65)';
 
@@ -127,7 +129,7 @@ export default function Finance() {
           <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <Coin />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every ringgit</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Income and spending at a glance</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Income and spending at a glance</Text></View>
           </Glass>
 
           <MoneyLeft ym={ym} income={total} spends={d.spends} />
@@ -138,7 +140,7 @@ export default function Finance() {
               <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(94,231,181,.25)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>💰</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Savings Goals</Text>
-                <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>{sav.goals.length === 0 ? 'Save for a motorcycle, wedding, travel and more' : 'RM ' + rnd(sav.goals.reduce((a, g) => a + goalSaved(g, d.spends, dbt), 0)) + ' saved across ' + sav.goals.length + (sav.goals.length === 1 ? ' goal' : ' goals')}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>{sav.goals.length === 0 ? 'Save for a motorcycle, wedding, travel and more' : cs() + rnd(sav.goals.reduce((a, g) => a + goalSaved(g, d.spends, dbt), 0)) + ' saved across ' + sav.goals.length + (sav.goals.length === 1 ? ' goal' : ' goals')}</Text>
               </View>
               <Text style={{ color: W, fontSize: 22 }}>›</Text>
             </Glass>
@@ -168,8 +170,8 @@ export default function Finance() {
                 );
               })}
             </View>
-            <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>Pick any month to add or edit its income, for example Jul to Oct. Days and hours are only recorded and never added to the RM total.</Text>
-            <Text style={{ color: total > 0 ? W : 'rgba(255,255,255,.55)', fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginTop: 8 }}>RM {money(total)}</Text>
+            <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>Pick any month to add or edit its income, for example Jul to Oct. Days and hours are only recorded and never added to the {cu()} total.</Text>
+            <Text style={{ color: total > 0 ? W : 'rgba(255,255,255,.55)', fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginTop: 8 }}>{cs()}{money(total)}</Text>
             <View style={{ marginTop: 6 }}>
               {DEFS.map(([k, label, color], i) => {
                 const v = incM[k] || 0; const c = cntM[k] || 0; const un = UN[k]; const editing = editKey === k;
@@ -182,7 +184,7 @@ export default function Finance() {
                       <Text style={{ flex: 1, color: W, fontSize: 14, fontWeight: '600' }}>{label}</Text>
                       {has ? (<>
                         <View style={{ alignItems: 'flex-end' }}>
-                          {v > 0 ? <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>RM {money(v)}</Text> : null}
+                          {v > 0 ? <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(v)}</Text> : null}
                           {c > 0 && un ? <Text style={{ color: '#ffd593', fontSize: 12, fontWeight: '700' }}>{c + ' ' + un[1] + (c === 1 ? '' : 's')}</Text> : null}
                         </View>
                         <Pressable accessibilityLabel="Edit" onPress={() => open(k, un && c > 0 && !(v > 0) ? 'cnt' : 'rm')} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffd593', fontSize: 15 }}>✎</Text></Pressable>
@@ -200,12 +202,12 @@ export default function Finance() {
                       <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{label}</Text>
                       {un ? (
                         <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)' }}>
-                          <Pressable onPress={() => open(k, 'rm')} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: unit === 'rm' ? '#ffc46b' : 'transparent' }}><Text style={{ color: unit === 'rm' ? '#2a1030' : W, fontSize: 12.5, fontWeight: '800' }}>RM</Text></Pressable>
+                          <Pressable onPress={() => open(k, 'rm')} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: unit === 'rm' ? '#ffc46b' : 'transparent' }}><Text style={{ color: unit === 'rm' ? '#2a1030' : W, fontSize: 12.5, fontWeight: '800' }}>{cu()}</Text></Pressable>
                           <Pressable onPress={() => open(k, 'cnt')} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: unit === 'cnt' ? '#8b7cff' : 'transparent' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{un[0]}</Text></Pressable>
                         </View>
                       ) : null}
                       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                        <Inp style={{ flex: 1 }} autoFocus keyboardType="decimal-pad" value={editVal} onChangeText={setEditVal} placeholder={unit === 'cnt' && un ? un[2] : label + ' (RM)'} onSubmitEditing={() => saveLine(k)} />
+                        <Inp style={{ flex: 1 }} autoFocus keyboardType="decimal-pad" value={editVal} onChangeText={setEditVal} placeholder={unit === 'cnt' && un ? un[2] : label + ' (' + cu() + ')'} onSubmitEditing={() => saveLine(k)} />
                         <Pressable onPress={() => saveLine(k)}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
                         <Pressable accessibilityLabel="Cancel" onPress={() => { setEditKey(''); setEditVal(''); }} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14 }}>✕</Text></Pressable>
                       </View>
@@ -221,8 +223,8 @@ export default function Finance() {
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending Tracker</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-              <Stat l="This month" v={'RM ' + rnd(gc)} />
-              <Stat l="Last month" v={'RM ' + rnd(gp)} />
+              <Stat l="This month" v={cs() + rnd(gc)} />
+              <Stat l="Last month" v={cs() + rnd(gp)} />
               <Stat l="Change" v={diffTxt} vc={gd > 0 ? '#ffb3a0' : gd < 0 ? '#7df0c6' : W} bg={gd > 0 ? 'rgba(255,143,107,.16)' : gd < 0 ? 'rgba(94,231,181,.16)' : undefined} />
             </View>
             <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 6 }}>{note}</Text>
@@ -241,11 +243,11 @@ export default function Finance() {
                 );
               })}
             </View>
-            <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 6 }}>Last 6 months, in RM. Under each month: ▲ orange means you spent that much more than the month before, ▼ green means that much less.</Text>
+            <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 6 }}>Last 6 months, in {cu()}. Under each month: ▲ orange means you spent that much more than the month before, ▼ green means that much less.</Text>
             <DateField value={fDate} onChange={setFDate} style={{ marginTop: 12 }} />
             <Inp style={{ marginTop: 8 }} value={fName} onChangeText={setFName} placeholder="What did you buy?" />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-              <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder="Amount (RM)" onSubmitEditing={addSpend} />
+              <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
               <Pressable onPress={addSpend}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>+ Add</Text></LinearGradient></Pressable>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
@@ -267,7 +269,7 @@ export default function Finance() {
                 <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, borderBottomWidth: i === d.spends.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
                   <Text style={{ flex: 1, color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}<Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, fontWeight: '400' }}>{'  · ' + p.cat + ' · ' + dateText(p.date)}</Text></Text>
-                  <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>RM {money(p.amt)}</Text>
+                  <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(p.amt)}</Text>
                   <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>
                 </View>
               ))}
@@ -292,19 +294,19 @@ export default function Finance() {
                   <View key={n}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                       <Text style={{ color: W, fontSize: 13, fontWeight: '600' }}>{n}</Text>
-                      <Text style={{ color: lim > 0 && ratio > 1 ? '#ff9aa9' : 'rgba(255,255,255,.8)', fontSize: 12, fontWeight: '600' }}>{'RM ' + money(t) + (lim > 0 ? ' of RM ' + rnd(lim) : '')}</Text>
+                      <Text style={{ color: lim > 0 && ratio > 1 ? '#ff9aa9' : 'rgba(255,255,255,.8)', fontSize: 12, fontWeight: '600' }}>{cs() + money(t) + (lim > 0 ? ' of ' + cs() + rnd(lim) : '')}</Text>
                     </View>
                     <View style={{ marginTop: 5, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.12)', overflow: 'hidden' }}><View style={{ width: w + '%', height: '100%', borderRadius: 4, backgroundColor: col }} /></View>
                     {editing ? (
                       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8 }}>
-                        <Inp style={{ flex: 1 }} autoFocus keyboardType="decimal-pad" value={limVal} onChangeText={setLimVal} placeholder={n + ' limit per month (RM)'} onSubmitEditing={() => saveLimit(n)} />
+                        <Inp style={{ flex: 1 }} autoFocus keyboardType="decimal-pad" value={limVal} onChangeText={setLimVal} placeholder={n + ' limit per month (' + cu() + ')'} onSubmitEditing={() => saveLimit(n)} />
                         <Pressable onPress={() => saveLimit(n)}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
                         <Pressable accessibilityLabel="Cancel" onPress={() => { setLimKey(''); setLimVal(''); }} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14 }}>✕</Text></Pressable>
                       </View>
                     ) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5 }}>
                         <Text style={{ color: lim > 0 ? (ratio > 1 ? '#ff9aa9' : ratio >= 0.8 ? '#ffd24a' : dim) : dim, fontSize: 11.5, fontWeight: lim > 0 ? '700' : '400' }}>
-                          {lim > 0 ? (ratio > 1 ? 'RM ' + rnd(t - lim) + ' over the limit' : ratio >= 0.8 ? 'Close to the limit, RM ' + rnd(lim - t) + ' left' : 'RM ' + rnd(lim - t) + ' left · ' + Math.round(ratio * 100) + '% used') : (monthSpent > 0 ? w + '% of this month' : 'No limit set')}
+                          {lim > 0 ? (ratio > 1 ? cs() + rnd(t - lim) + ' over the limit' : ratio >= 0.8 ? 'Close to the limit, ' + cs() + rnd(lim - t) + ' left' : cs() + rnd(lim - t) + ' left · ' + Math.round(ratio * 100) + '% used') : (monthSpent > 0 ? w + '% of this month' : 'No limit set')}
                         </Text>
                         <Pressable onPress={() => { setLimKey(n); setLimVal(lim > 0 ? String(lim) : ''); }}>
                           <Text style={{ color: '#ffd593', fontSize: 12, fontWeight: '800' }}>{lim > 0 ? 'Edit limit' : '+ Set limit'}</Text>

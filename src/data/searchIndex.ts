@@ -378,7 +378,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "About",
-  "s": "Version 1.0.0 and licences",
+  "s": "Version 1.0.1 and licences",
   "m": "System",
   "c": "#5ee7df",
   "h": "Settings.dc.html",

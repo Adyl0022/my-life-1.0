@@ -11,6 +11,7 @@ import { Inp, DateField, Sheet, SBtn, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { Ext, ProfileCard, RenewCard, FuelCard, PartsCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
 import { TOP } from '../lib/layout';
+import { cs, cu, useRegion } from '../lib/region';
 
 type Rd = { id: number; date: string; odo: number };
 type Ex = { id: number; name: string; amt: number; date: string };
@@ -107,6 +108,7 @@ const Bars = ({ bars, height = 158, noteH = 13 }: { bars: Bar[]; height?: number
 };
 
 export default function Record() {
+  useRegion();
   const router = useRouter();
   const [st, setSt] = useStored<Data>('ml_record', EMPTY);
   const [mPage, setMPage] = useState<number | null>(null); const [sPage, setSPage] = useState<number | null>(null); const [selYear, setSelYear] = useState<string | null>(null); const [allExp, setAllExp] = useState(false); const [yPage, setYPage] = useState<number | null>(null);
@@ -189,7 +191,7 @@ export default function Record() {
       else sg.push({ p: 5, kind: 'good', title: 'Your distance is steady', text: 'About the same as last month (' + num(curKmV) + ' km this month).', tag: 'Mileage' });
     }
   }
-  if (sPrevV > 0 && sCurV > sPrevV * 1.3) sg.push({ p: 2, kind: 'warn', title: 'Maintenance spending is up ' + Math.round(((sCurV - sPrevV) / sPrevV) * 100) + '%', text: 'You spent RM ' + num(sCurV - sPrevV) + ' more than last month. Check if it was a one-off or a part to keep an eye on.', tag: 'Spending' });
+  if (sPrevV > 0 && sCurV > sPrevV * 1.3) sg.push({ p: 2, kind: 'warn', title: 'Maintenance spending is up ' + Math.round(((sCurV - sPrevV) / sPrevV) * 100) + '%', text: 'You spent ' + cs() + num(sCurV - sPrevV) + ' more than last month. Check if it was a one-off or a part to keep an eye on.', tag: 'Spending' });
   if (d.exps.length === 0) sg.push({ p: 4, kind: 'info', title: 'No maintenance recorded yet', text: 'Note oil changes, tyres and repairs so you can see the real cost of keeping your ' + word + ' running.', tag: 'Spending', act: 'exp', actText: '+ Add spending' });
   if (latest > 0) sg.push({ p: 6, kind: 'info', title: 'Plan your next service', text: 'Odometer is ' + num(latest) + ' km. Compare it with the service interval in your owner\'s manual.', tag: 'Service' });
   ([['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Driving licence']] as const).forEach(([k, l]) => {
@@ -213,7 +215,7 @@ export default function Record() {
   const doRename = () => { const n = renIn.trim().slice(0, 30); const old = st.cats[st.sel]; if (!n || n === old || st.cats.includes(n)) { setRenaming(false); return; } const dd = { ...st.data }; if (dd[old]) { dd[n] = dd[old]; delete dd[old]; } setSt({ ...st, cats: st.cats.map((c, i) => (i === st.sel ? n : c)), data: dd }); setRenaming(false); };
   const doDel = () => { if (st.sel < 1) return; const nm = st.cats[st.sel]; const dd = { ...st.data }; delete dd[nm]; setSt({ ...st, cats: st.cats.filter((_, i) => i !== st.sel), data: dd, sel: st.sel - 1 }); setDelAsk(false); };
   const qOk = !!quick && (quick.type === 'odo' ? parseInt(quick.odo, 10) >= 0 && !!quick.date : parseFloat(quick.amt.replace(',', '.')) > 0);
-  const diffS = sCurV === 0 && sPrevV === 0 ? '-' : sd === 0 ? 'Same' : (sd > 0 ? '+' : '-') + 'RM ' + num(Math.abs(sd));
+  const diffS = sCurV === 0 && sPrevV === 0 ? '-' : sd === 0 ? 'Same' : (sd > 0 ? '+' : '-') + cs() + num(Math.abs(sd));
   const sNote = sCurV === 0 && sPrevV === 0 ? 'Add maintenance spending to see how this month compares with last month.' : sd === 0 ? 'Same spending as last month.' : sPrevV > 0 ? (sd > 0 ? 'Up ' : 'Down ') + sPct + '% compared with last month.' : 'No spending recorded last month to compare with.';
   const dim = 'rgba(255,255,255,.65)';
   const Row = ({ children, last }: { children: React.ReactNode; last?: boolean }) => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: last ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>{children}</View>;
@@ -341,16 +343,16 @@ export default function Record() {
 
           {/* Maintenance spending */}
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Maintenance Spending</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>RM {money(expTotal)}</Text></View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Maintenance Spending</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(expTotal)}</Text></View>
             <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11, marginTop: 2 }}>All time total</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}><Stat l="This month" v={'RM ' + num(sCurV)} /><Stat l="Last month" v={'RM ' + num(sPrevV)} /><Stat l="vs last month" v={diffS} vc={sd > 0 ? '#ffb3a0' : sd < 0 ? '#7df0c6' : W} bg={sd > 0 ? 'rgba(255,143,107,.16)' : sd < 0 ? 'rgba(94,231,181,.16)' : undefined} /></View>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}><Stat l="This month" v={cs() + num(sCurV)} /><Stat l="Last month" v={cs() + num(sPrevV)} /><Stat l="vs last month" v={diffS} vc={sd > 0 ? '#ffb3a0' : sd < 0 ? '#7df0c6' : W} bg={sd > 0 ? 'rgba(255,143,107,.16)' : sd < 0 ? 'rgba(94,231,181,.16)' : undefined} /></View>
             <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 6 }}>{sNote}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
               <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, fontWeight: '700' }}>{M[sMonths[0].m] + ' ' + sMonths[0].y + ' – ' + M[sMonths[5].m] + ' ' + sMonths[5].y}</Text>
               <View style={{ flexDirection: 'row', gap: 6 }}><Arrow t="‹" label="Earlier months" op={sPg > sMinPg ? 1 : 0.35} onPress={() => setSPage(Math.max(sMinPg, sPg - 1))} /><Arrow t="›" label="Later months" op={sPg < mAuto ? 1 : 0.35} onPress={() => setSPage(Math.min(mAuto, sPg + 1))} /></View>
             </View>
             <Bars bars={sBars} noteH={26} />
-            <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>Under each month is what you spent most on. Use the arrows to see earlier months. Amounts are in RM.</Text>
+            <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>Under each month is what you spent most on. Use the arrows to see earlier months. Amounts are in {cu()}.</Text>
             {Object.keys(byYear).length ? (() => {
               const cy = String(now.getFullYear()); const ys = Object.keys(byYear);
               const order = [...ys.filter((y) => y >= cy).sort(), ...ys.filter((y) => y < cy).sort().reverse()];
@@ -364,23 +366,23 @@ export default function Record() {
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {order.map((y) => { const on = selYear === y; return (
                       <Pressable key={y} onPress={() => setSelYear(on ? null : y)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, backgroundColor: on ? '#b06ad8' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: on ? 'rgba(255,255,255,.5)' : 'transparent' }}>
-                        <Text style={{ color: on ? W : 'rgba(255,255,255,.65)', fontSize: 11 }}>{y + (y === cy ? ' · this year' : '') + (on ? ' ▴' : ' ▾')}</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{'RM ' + num(byYear[y])}</Text>
+                        <Text style={{ color: on ? W : 'rgba(255,255,255,.65)', fontSize: 11 }}>{y + (y === cy ? ' · this year' : '') + (on ? ' ▴' : ' ▾')}</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs() + num(byYear[y])}</Text>
                       </Pressable>
                     ); })}
                   </View>
                   {selYear ? (
                     <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(0,0,0,.22)' }}>
-                      <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{selYear + ' · RM ' + num(byYear[selYear] || 0)}</Text>
+                      <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{selYear + ' · ' + cs() + num(byYear[selYear] || 0)}</Text>
                       {monthsOf.map((mo) => {
                         const items = inYear.filter((e) => e.date.slice(5, 7) === mo).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id));
                         const tot = items.reduce((a, e) => a + e.amt, 0);
                         return (
                           <View key={mo} style={{ marginTop: 12 }}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#ffc46b', fontSize: 12.5, fontWeight: '800' }}>{FULL[parseInt(mo, 10) - 1]}</Text><Text style={{ color: '#ffc46b', fontSize: 12.5, fontWeight: '800' }}>{'RM ' + num(tot)}</Text></View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#ffc46b', fontSize: 12.5, fontWeight: '800' }}>{FULL[parseInt(mo, 10) - 1]}</Text><Text style={{ color: '#ffc46b', fontSize: 12.5, fontWeight: '800' }}>{cs() + num(tot)}</Text></View>
                             {items.map((e) => (
                               <View key={e.id} style={{ flexDirection: 'row', gap: 8, paddingVertical: 5, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)', marginTop: 4 }}>
                                 <Text style={{ flex: 1, color: W, fontSize: 13 }} numberOfLines={1}>{e.name}<Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5 }}>{'  · ' + fmtDate(e.date)}</Text></Text>
-                                <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{'RM ' + num(e.amt)}</Text>
+                                <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{cs() + num(e.amt)}</Text>
                               </View>
                             ))}
                           </View>
@@ -394,7 +396,7 @@ export default function Record() {
             <DateField value={eDate} onChange={setEDate} style={{ marginTop: 12 }} />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
               <Inp style={{ flex: 1.3 }} value={eName} onChangeText={setEName} placeholder="e.g. Engine oil" />
-              <Inp style={{ flex: 0.8 }} keyboardType="decimal-pad" value={eAmt} onChangeText={setEAmt} placeholder="RM" onSubmitEditing={addExp} />
+              <Inp style={{ flex: 0.8 }} keyboardType="decimal-pad" value={eAmt} onChangeText={setEAmt} placeholder={cu()} onSubmitEditing={addExp} />
               <AddB t="+ Add" onPress={addExp} w={14} />
             </View>
             {d.exps.length === 0 ? <Text style={{ marginTop: 10, color: dim, fontSize: 12 }}>No spending recorded yet.</Text> : null}
@@ -405,7 +407,7 @@ export default function Record() {
                 <>
                   {d.exps.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, fontWeight: '700', marginTop: 12 }}>{allExp || sorted.length <= 5 ? 'All records, newest first' : 'Latest 5 records'}</Text> : null}
                   <View style={{ marginTop: 2 }}>
-                    {shown.map((e, i) => <Row key={e.id} last={i === shown.length - 1}><Text style={{ flex: 1, color: W, fontSize: 14 }} numberOfLines={1}>{e.name}<Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12 }}>{'  · ' + fmtDate(e.date)}</Text></Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>RM {money(e.amt)}</Text><Del onPress={() => upd((x) => ({ ...x, exps: x.exps.filter((y) => y.id !== e.id) }))} /></Row>)}
+                    {shown.map((e, i) => <Row key={e.id} last={i === shown.length - 1}><Text style={{ flex: 1, color: W, fontSize: 14 }} numberOfLines={1}>{e.name}<Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12 }}>{'  · ' + fmtDate(e.date)}</Text></Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(e.amt)}</Text><Del onPress={() => upd((x) => ({ ...x, exps: x.exps.filter((y) => y.id !== e.id) }))} /></Row>)}
                   </View>
                   {sorted.length > 5 ? <Pressable onPress={() => setAllExp(!allExp)} style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 8, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{allExp ? 'Show fewer' : 'Show all ' + sorted.length + ' records'}</Text></Pressable> : null}
                 </>
@@ -431,7 +433,7 @@ export default function Record() {
                 <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>Used for Monthly and Yearly Mileage. Any date from 2024 works.</Text>
               </>) : (<>
                 <Inp style={{ marginTop: 12 }} value={quick.name} onChangeText={(v: string) => setQuick({ ...quick, name: v })} placeholder="e.g. Engine oil" />
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}><DateField value={quick.date} onChange={(v) => setQuick({ ...quick, date: v })} style={{ flex: 1 }} /><Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={quick.amt} onChangeText={(v: string) => setQuick({ ...quick, amt: v })} placeholder="RM" /></View>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}><DateField value={quick.date} onChange={(v) => setQuick({ ...quick, date: v })} style={{ flex: 1 }} /><Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={quick.amt} onChangeText={(v: string) => setQuick({ ...quick, amt: v })} placeholder={cu()} /></View>
               </>)}
               <Pressable onPress={saveQuick} style={{ marginTop: 16, opacity: qOk ? 1 : 0.5 }}><LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{quick.type === 'exp' ? 'Add spending' : 'Add reading'}</Text></LinearGradient></Pressable>
             </View>

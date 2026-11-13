@@ -1,9 +1,11 @@
+import { modOn, Mod } from './hidden';
 import { useStored } from './store';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram } from './fasting';
 import { DEBT_EMPTY, DebtData, remaining, isActive, ymOf, dueDay, amountDue, debtSummary, monthsLeft, yearsMonths, payoffLabel } from './debts';
 import { SAV_EMPTY, SavData, goalSaved, perMonth } from './savings';
 import { calcLeft, commitFor } from './moneyLeft';
 import { HEMPTY, HData, getDay, cupsGoal, goalPctOf, keyOfDate, dateOf, MOODS, WD, bestStreakAll } from './habit';
+import { cs } from './region';
 
 export type Sp = { amt: number; date: string; cat?: string; name?: string; id?: number; goal?: number };
 export type Fin = { inc: Record<string, Record<string, number>>; spends: Sp[]; limits?: Record<string, number> };
@@ -39,7 +41,7 @@ export const dayPct = (c: Core, o: number) => goalPctOf(getDay(c.hd, o), c.hd.go
 export const avgPct = (c: Core, from: number, to: number) => { let n = 0, t = 0; for (let o = from; o <= to; o++) if (hasData(c, o)) { n++; t += dayPct(c, o); } return n ? Math.round(t / n) : 0; };
 const daysTo = (s: string) => { const a = new Date(s + 'T00:00:00').getTime(); const n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((a - n.getTime()) / 86400000); };
 export const incomeOf = (c: Core) => Object.values((c.fin && c.fin.inc && c.fin.inc[ymOf(new Date())]) || {}).reduce((a: number, b: any) => a + (b || 0), 0) as number;
-const rmf = (n: number) => 'RM ' + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rmf = (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // Everyday spending guide: average of days that had spending in the last 30 days.
 const usualSpend = (c: Core) => { let t = 0, n = 0; for (let o = -30; o <= -1; o++) { const v = spendOn(c, o); if (v > 0) { t += v; n++; } } return n >= 3 ? t / n : 0; };
@@ -63,7 +65,8 @@ export function scoreParts(c: Core, week: boolean): Part[] {
     const rs = ramadanState(c.puasa || PUASA_EMPTY, new Date());
     if (rs.phase === 'during') { const past = Math.max(1, rs.day - 1 - rs.excused); parts.push({ k: 'faith', label: 'Ramadan', pct: Math.min(100, Math.round((rs.fasted / past) * 100)), detail: rs.fasted + ' days fasted of ' + rs.day, c: '#34d399' }); }
   } catch (e) {}
-  return parts;
+  const need: Record<string, Mod> = { habit: 'habit', tasks: 'planner', bills: 'finance', spend: 'finance', faith: 'islamic' };
+  return parts.filter((p) => !need[p.k] || modOn(need[p.k]));
 }
 export const lifeScore = (p: Part[]) => (p.length ? Math.round(p.reduce((a, b) => a + b.pct, 0) / p.length) : 0);
 
@@ -91,6 +94,7 @@ export function weekly(c: Core) {
 }
 
 export function patterns(c: Core): string[] {
+  if (!modOn('habit')) return [];
   const out: string[] = [];
   const cg = cupsGoal(c.hd), goal = c.hd.goal || 8000;
   const days: ReturnType<typeof getDay>[] = [];
@@ -217,8 +221,8 @@ export function tips(c: Core, week: boolean): Tip[] {
   const dym = ymOf(now);
   ((c.debts && c.debts.debts) || []).filter((x) => isActive(x, dym) && !((x.paid || {})[dym] > 0)).forEach((x) => {
     const dd = dueDay(x, now.getFullYear(), now.getMonth()) - now.getDate();
-    if (dd < 0) add({ id: 'debt-' + x.id, title: x.name + ' is ' + -dd + (dd === -1 ? ' day' : ' days') + ' overdue', sub: 'RM ' + Math.round(amountDue(x, dym)).toLocaleString() + ' is still unpaid this month.', why: 'The due day has passed and this month is not ticked as paid in My Finance.', go: '/finance', k: 'goal', pri: 92 });
-    else if (dd <= 3) add({ id: 'debt-' + x.id, title: x.name + (dd === 0 ? ' is due today' : dd === 1 ? ' is due tomorrow' : ' is due in ' + dd + ' days'), sub: 'RM ' + Math.round(amountDue(x, dym)).toLocaleString() + '. Tick it off in My Finance once paid.', why: 'Based on the due day you saved for this debt.', go: '/finance', k: 'goal', pri: 89 });
+    if (dd < 0) add({ id: 'debt-' + x.id, title: x.name + ' is ' + -dd + (dd === -1 ? ' day' : ' days') + ' overdue', sub: cs() + Math.round(amountDue(x, dym)).toLocaleString() + ' is still unpaid this month.', why: 'The due day has passed and this month is not ticked as paid in My Finance.', go: '/finance', k: 'goal', pri: 92 });
+    else if (dd <= 3) add({ id: 'debt-' + x.id, title: x.name + (dd === 0 ? ' is due today' : dd === 1 ? ' is due tomorrow' : ' is due in ' + dd + ' days'), sub: cs() + Math.round(amountDue(x, dym)).toLocaleString() + '. Tick it off in My Finance once paid.', why: 'Based on the due day you saved for this debt.', go: '/finance', k: 'goal', pri: 89 });
   });
   // Commitments
   {
@@ -239,7 +243,7 @@ export function tips(c: Core, week: boolean): Tip[] {
     if (ds.debts.length >= 1) {
       const big = ds.debts.slice().sort((a, b) => remaining(b) - remaining(a))[0];
       const extra = Math.max(20, Math.round((big.monthly * 0.2) / 10) * 10); const was = monthsLeft(big), now2 = Math.ceil(remaining(big) / (big.monthly + extra));
-      if (was - now2 >= 1) add({ id: 'cm-extra', title: 'Pay RM ' + extra + ' extra on ' + big.name, sub: 'You would finish ' + (was - now2) + (was - now2 === 1 ? ' month' : ' months') + ' sooner.', why: 'Works out how long the balance lasts at ' + rmf(big.monthly + extra) + ' a month instead of ' + rmf(big.monthly) + '. Extra payments often save interest too.', go: '/finance', k: 'goal', pri: 47 });
+      if (was - now2 >= 1) add({ id: 'cm-extra', title: 'Pay ' + cs() + extra + ' extra on ' + big.name, sub: 'You would finish ' + (was - now2) + (was - now2 === 1 ? ' month' : ' months') + ' sooner.', why: 'Works out how long the balance lasts at ' + rmf(big.monthly + extra) + ' a month instead of ' + rmf(big.monthly) + '. Extra payments often save interest too.', go: '/finance', k: 'goal', pri: 47 });
       add({ id: 'cm-free-date', title: 'Debt-free by ' + payoffLabel(ds.worst, ds.unpaid.every((x) => x.fixed) || ds.debts.every((x) => (x.paid || {})[ds.ym] > 0)), sub: 'About ' + yearsMonths(ds.worst) + ' to go, ' + rmf(ds.totalLeft) + ' remaining.', why: 'Based on your balances and monthly payments if you keep paying every month.', go: '/finance', k: 'badge', pri: 24 });
     }
     if (ds.unpaid.length > 0 && dmonth - now.getDate() <= 5) add({ id: 'cm-left', title: ds.unpaid.length + (ds.unpaid.length === 1 ? ' payment is' : ' payments are') + ' not ticked yet', sub: rmf(ds.toPay) + ' with ' + (dmonth - now.getDate()) + (dmonth - now.getDate() === 1 ? ' day' : ' days') + ' left this month.', why: 'Tick each payment in My Finance once paid so your balances stay right.', go: '/finance', k: 'goal', pri: 70 });
@@ -265,7 +269,7 @@ export function tips(c: Core, week: boolean): Tip[] {
   if (vs.length && anyReading && !hadOdo && dm >= 25) add({ id: 'odo', title: 'Add this month\'s odometer reading', sub: 'Keep your mileage and suggestions in My Record up to date.', why: 'No reading has been saved yet this month.', go: '/record', k: 'insight', pri: 44 });
   else if (vs.length && !anyReading) add({ id: 'odo0', title: 'Add your first odometer reading', sub: 'My Record can then track mileage and service needs.', why: 'No odometer reading is saved yet.', go: '/record', k: 'insight', pri: 26 });
   const today = tk(0);
-  return L.filter((t) => !(c.off && c.off[t.id] && c.off[t.id] >= today)).sort((a, b) => b.pri - a.pri);
+  return L.filter((t) => tipMods(t.id).every((m) => modOn(m))).filter((t) => !(c.off && c.off[t.id] && c.off[t.id] >= today)).sort((a, b) => b.pri - a.pri);
 }
 export const hideTip = (c: Core, id: string, days = 7) => { const d = dateOf(days); c.setOff({ ...(c.off || {}), [id]: keyOfDate(d) }); };
 
@@ -280,6 +284,14 @@ export function records(c: Core) {
   return { streak: bestStreakAll(c.hd), steps: bs, stepsDate: bsd, water: bw, waterDate: bwd, score: bsc, scoreDate: bscd };
 }
 
+// Which modules a tip needs. A tip is shown only when all of them are on.
+export const tipMods = (id: string): Mod[] => {
+  if (id === 'hspend') return ['habit', 'finance'];
+  if (id === 'ramwater' || id === 'ramsleep') return ['habit', 'islamic'];
+  if (/^(fast|fastnext)$/.test(id)) return ['islamic'];
+  const cat = tipCat(id);
+  return [cat === 'Health' ? 'habit' : cat === 'Faith' ? 'islamic' : cat === 'Tasks' ? 'planner' : cat === 'Vehicle' ? 'record' : 'finance'];
+};
 export const tipCat = (id: string): string => {
   if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend)$/.test(id)) return 'Health';
   if (/^(fast|fastnext|kahfi|zikir|tasbih|ramtoday|qadha|ramsoon|sunat|ramgap)$/.test(id)) return 'Faith';

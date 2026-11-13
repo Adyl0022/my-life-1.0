@@ -7,6 +7,7 @@ import { Inp, W } from './Ui';
 import { useStored } from '../lib/store';
 import { SAV_EMPTY, SavData } from '../lib/savings';
 import { DEBT_EMPTY, DebtData, Debt, remaining, monthsLeft, dueDay, isActive, amountDue, yearsMonths, payoffLabel, ymOf, syncDebtAlerts } from '../lib/debts';
+import { cs, cu } from '../lib/region';
 
 const WARM = ['#ffc46b', '#ff8fab'] as [string, string];
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -93,7 +94,7 @@ export function Commitments({ income }: { income: number }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
           <Text style={{ color: '#ffd593', fontSize: 11, fontWeight: '700', letterSpacing: 1.4 }}>MONTHLY COMMITMENTS</Text>
-          <Text style={{ color: W, fontSize: 24, fontWeight: '800', marginTop: 3 }}>RM {money(commit + food)}</Text>
+          <Text style={{ color: W, fontSize: 24, fontWeight: '800', marginTop: 3 }}>{cs()}{money(commit + food)}</Text>
         </View>
         <Pressable onPress={() => { if (adding) reset(); else setAdding(true); }}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>{adding ? 'Close' : '+ Add'}</Text></LinearGradient></Pressable>
       </View>
@@ -101,17 +102,17 @@ export function Commitments({ income }: { income: number }) {
       {list.length > 0 ? (
         <>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            <Stat l="Bills paid" v={'RM ' + money(paid)} c="#7df0c6" />
-            <Stat l="Bills left to pay" v={'RM ' + money(toPay)} c={toPay > 0 ? '#ffd593' : '#7df0c6'} />
+            <Stat l="Bills paid" v={cs() + money(paid)} c="#7df0c6" />
+            <Stat l="Bills left to pay" v={cs() + money(toPay)} c={toPay > 0 ? '#ffd593' : '#7df0c6'} />
           </View>
           <View style={{ height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden', marginTop: 10 }}>
             <View style={{ width: (commit > 0 ? Math.round((paid / commit) * 100) : 0) + '%', height: '100%', borderRadius: 4, backgroundColor: '#7df0c6' }} />
           </View>
           {allPaidNow ? <Text style={{ color: '#7df0c6', fontSize: 12, fontWeight: '700', marginTop: 8 }}>All commitments settled for this month.</Text> : null}
-          {income > 0 ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>{after >= 0 ? 'Income left after commitments: RM ' + money(after) : 'Commitments are RM ' + money(-after) + ' more than this month\'s income.'}</Text> : null}
+          {income > 0 ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>{after >= 0 ? 'Income left after commitments: ' + cs() + money(after) : 'Commitments are ' + cs() + money(-after) + ' more than this month\'s income.'}</Text> : null}
           {debtsOnly.length > 0 ? <View style={{ marginTop: 10, borderRadius: 16, padding: 12, backgroundColor: 'rgba(0,0,0,.22)' }}>
             <Text style={{ color: dim, fontSize: 11 }}>Total debt remaining</Text>
-            <Text style={{ color: W, fontSize: 20, fontWeight: '800', marginTop: 1 }}>RM {money(totalLeft)}</Text>
+            <Text style={{ color: W, fontSize: 20, fontWeight: '800', marginTop: 1 }}>{cs()}{money(totalLeft)}</Text>
             <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 3 }}>{worst > 0 ? 'Debt-free in ' + yearsMonths(worst) + ' (' + payoffLabel(worst, allPaidNow || act.every((x) => (x.paid || {})[ym] > 0 || remaining(x) <= 0)) + ')' : 'You are debt-free. Well done.'}</Text>
           </View> : null}
         </>
@@ -136,9 +137,9 @@ export function Commitments({ income }: { income: number }) {
             </View>
           ) : null}
           <Inp value={n} onChangeText={setN} placeholder="Name, for example Motor loan" />
-          {!fixed ? <Inp keyboardType="decimal-pad" value={bal} onChangeText={setBal} placeholder="Balance left to pay (RM)" /> : null}
+          {!fixed ? <Inp keyboardType="decimal-pad" value={bal} onChangeText={setBal} placeholder={'Balance left to pay (' + cu() + ')'} /> : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={mo} onChangeText={setMo} placeholder="Monthly (RM)" />
+            <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={mo} onChangeText={setMo} placeholder={'Monthly (' + cu() + ')'} />
             <Inp style={{ flex: 1 }} keyboardType="number-pad" value={day} onChangeText={setDay} placeholder="Due day (1 to 31)" onSubmitEditing={submit} />
           </View>
           <Pressable onPress={submit}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 13, fontWeight: '800' }}>{edit ? 'Save changes' : fixed ? 'Add commitment' : 'Add debt'}</Text></LinearGradient></Pressable>
@@ -188,8 +189,8 @@ export function Commitments({ income }: { income: number }) {
                 </View>
                 <View style={{ marginLeft: 41, marginTop: 6, gap: 2 }}>
                   <Text style={{ color: late ? '#ffb3a0' : pd ? '#7df0c6' : '#ffd593', fontSize: 12.5, fontWeight: '700' }}>{status}</Text>
-                  <Text style={{ color: W, fontSize: 12.5 }}>{'RM ' + money(amountDue(x, ym)) + ' a month'}</Text>
-                  <Text style={{ color: dim, fontSize: 12 }}>{x.fixed ? 'Fixed monthly, no end date' : 'RM ' + money(remaining(x)) + ' left' + (remaining(x) > 0 ? ' · ' + yearsMonths(monthsLeft(x)) : ' · cleared')}</Text>
+                  <Text style={{ color: W, fontSize: 12.5 }}>{cs() + money(amountDue(x, ym)) + ' a month'}</Text>
+                  <Text style={{ color: dim, fontSize: 12 }}>{x.fixed ? 'Fixed monthly, no end date' : cs() + money(remaining(x)) + ' left' + (remaining(x) > 0 ? ' · ' + yearsMonths(monthsLeft(x)) : ' · cleared')}</Text>
                 </View>
               </View>
               {missed(x) ? (
@@ -212,10 +213,10 @@ export function Commitments({ income }: { income: number }) {
         <View style={{ marginTop: 12, borderRadius: 16, padding: 12, backgroundColor: 'rgba(0,0,0,.22)' }}>
           <Text style={{ color: '#ffd593', fontSize: 11, fontWeight: '700', letterSpacing: 1.2 }}>THIS MONTH'S PLAN</Text>
           {[['Income', income, 1] as [string, number, number]].concat(act.map((x) => [x.name, amountDue(x, ym), -1] as [string, number, number])).map(([l, v, sg]) => (
-            (v as number) > 0 ? <View key={(l as string) + sg} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}><Text style={{ color: dim, fontSize: 12.5 }}>{l as string}</Text><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{(sg as number) < 0 ? '- ' : ''}RM {money(v as number)}</Text></View> : null
+            (v as number) > 0 ? <View key={(l as string) + sg} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}><Text style={{ color: dim, fontSize: 12.5 }}>{l as string}</Text><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{(sg as number) < 0 ? '- ' : ''}{cs()}{money(v as number)}</Text></View> : null
           ))}
           <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 8 }} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{free >= 0 ? 'After commitments' : 'Short by'}</Text><Text style={{ color: free >= 0 ? '#7df0c6' : '#ffb3a0', fontSize: 14, fontWeight: '800' }}>RM {money(Math.abs(free))}</Text></View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{free >= 0 ? 'After commitments' : 'Short by'}</Text><Text style={{ color: free >= 0 ? '#7df0c6' : '#ffb3a0', fontSize: 14, fontWeight: '800' }}>{cs()}{money(Math.abs(free))}</Text></View>
           <Text style={{ color: dim, fontSize: 11, marginTop: 6 }}>Before your daily spending. See Money Left at the top for what is left after spending too.</Text>
         </View>
       ) : null}
