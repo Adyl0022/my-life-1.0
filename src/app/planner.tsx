@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, Animated } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
@@ -190,9 +190,21 @@ export default function Planner() {
             <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Plan your day</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 2 }}>Events and tasks, all planned</Text>
           </Glass>
 
+          <Pressable onPress={() => router.push('/notes' as any)} accessibilityLabel="Notes" style={{ marginTop: 12 }}>
+            <Glass radius={24}>
+              <LinearGradient colors={['rgba(255,149,0,.32)', 'rgba(255,31,90,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 }}>
+                <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 3h10l4 4v14H5z" /><Path d="M14 3v5h5M8 13h8M8 17h5" /></Svg>
+                </View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Notes</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 1 }}>Your quick notes and lists</Text></View>
+                <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 22 }}>›</Text>
+              </View>
+            </Glass>
+          </Pressable>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14, marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-            <Pill t="Notes" warm onPress={() => router.push('/notes' as any)} />
-            <Pill t="Family" fam onPress={() => router.push('/family' as any)} />
+            <Pill t="Family Planner" fam onPress={() => router.push('/family' as any)} />
             <Pill t="Date & Events" on={tab === 'events'} onPress={() => { setTab('events'); setEdit(null); }} />
             {d.cats.map((n, i) => <Pill key={n} t={n} on={tab === 'tasks' && i === cat} onPress={() => { setTab('tasks'); setCat(i); setEdit(null); setAddingCat(false); }} />)}
             {!addingCat && <Pill t="+ New category" onPress={() => { setAddingCat(true); setCatIn(''); }} />}
