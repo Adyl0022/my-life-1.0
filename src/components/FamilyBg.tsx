@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, Easing } from 'react-native';
+import { View, Animated, Easing, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Rect, G, Defs, Pattern, Circle } from 'react-native-svg';
+import Svg, { Path, Rect, G, Circle } from 'react-native-svg';
 import { Blob } from './Bg';
 
 // Background of the Family Planner pages: same night sky as the Islamic Hub, with a neighbourhood of lit houses,
-// string lights, twinkling stars and warm floating dots. Every animation is slow and runs on the native driver.
+// string lights, twinkling sparkles, small drifting asteroids and warm floating dots. Every animation is slow and runs on the native driver.
 const AG = Animated.createAnimatedComponent(G);
 
 function useLoop(from: number, to: number, dur: number, delay = 0) {
@@ -26,6 +26,59 @@ const STARS: [number, number, number][] = [[8, 12, 2], [22, 20, 1], [40, 9, 2], 
 function Star({ x, y, s, i }: { x: number; y: number; s: number; i: number }) {
   const v = useLoop(0.12, 1, 1400 + s * 380, i * 240);
   return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: (x + '%') as any, top: (y + '%') as any, width: s + 1.5, height: s + 1.5, borderRadius: 4, backgroundColor: '#fff', opacity: v }} />;
+}
+
+// Four-point sparkle that twinkles: grows, brightens and turns a little, then fades back.
+const SPARK: [number, number, number, string, number][] = [
+  [6, 9, 14, '#ffc46b', 0], [24, 5, 9, '#fff3d6', 1], [46, 12, 12, '#5ee7df', 2], [68, 6, 15, '#ff8fab', 3], [88, 11, 10, '#ffc46b', 4],
+  [12, 26, 9, '#5ee7df', 5], [36, 31, 13, '#ffc46b', 6], [60, 28, 9, '#fff3d6', 7], [84, 34, 13, '#ff8fab', 8],
+  [8, 46, 12, '#fff3d6', 9], [30, 52, 9, '#ff8fab', 10], [52, 47, 14, '#5ee7df', 11], [76, 55, 10, '#ffc46b', 12], [93, 48, 8, '#fff3d6', 13],
+  [18, 66, 13, '#ffc46b', 14], [44, 70, 9, '#5ee7df', 15], [70, 74, 12, '#fff3d6', 16], [90, 68, 9, '#ff8fab', 17],
+];
+function Sparkle({ x, y, s, c, i }: { x: number; y: number; s: number; c: string; i: number }) {
+  const v = useLoop(0.5, 1, 1300 + (i % 5) * 350, i * 260);
+  return (
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: (x + '%') as any, top: (y + '%') as any, width: s, height: s, opacity: v.interpolate({ inputRange: [0.5, 1], outputRange: [0.15, 1] }), transform: [{ scale: v }, { rotate: v.interpolate({ inputRange: [0.5, 1], outputRange: ['0deg', '18deg'] }) }] }}>
+      <Svg width={s} height={s} viewBox="-10 -10 20 20">
+        <Circle r={9} fill={c} opacity={0.12} />
+        <Path d="M0-10C.8-3 3-.8 10 0 3 .8.8 3 0 10-.8 3-3 .8-10 0-3-.8-.8-3 0-10z" fill={c} />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+// Small rocks that drift slowly across the sky while turning, each with a faint tail. Three depths: far = small and dim.
+const ROCKS = ['M2 -6 7 -3 6 3 1 6 -5 4 -7 -2z', 'M0 -9 8 -5 9 2 3 8 -6 6 -9 -1z', 'M-1 -12 9 -7 12 3 4 11 -8 9 -12 0z'];
+const ASTEROIDS: [number, number, number, number][] = [[60, 0, 0.1, 36000], [160, 1, 0.55, 28000], [260, 2, 0.3, 22000], [360, 0, 0.8, 38000], [470, 1, 0.2, 30000], [120, 2, 0.75, 24000], [560, 0, 0.45, 34000]];
+function Asteroid({ y0, kind, phase, dur, i }: { y0: number; kind: number; phase: number; dur: number; i: number }) {
+  const { width: W } = useWindowDimensions();
+  const v = useRef(new Animated.Value(phase)).current;
+  const r = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const m = Animated.sequence([
+      Animated.timing(v, { toValue: 1, duration: dur * (1 - phase), easing: Easing.linear, useNativeDriver: true }),
+      Animated.loop(Animated.timing(v, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: true })),
+    ]);
+    const spin = Animated.loop(Animated.timing(r, { toValue: 1, duration: 14000 + i * 3500, easing: Easing.linear, useNativeDriver: true }));
+    m.start(); spin.start();
+    return () => { m.stop(); spin.stop(); };
+  }, []);
+  const sz = [14, 20, 28][kind], o = [0.45, 0.7, 0.95][kind], tl = [30, 36, 44][kind];
+  return (
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, opacity: v.interpolate({ inputRange: [0, 0.08, 0.92, 1], outputRange: [0, o, o, 0] }), transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [-40, W + 40] }) }, { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [y0, y0 + (W + 80) * 0.42] }) }] }}>
+      <View style={{ position: 'absolute', right: sz / 2, top: sz / 2 - 1, width: tl, height: 2, transformOrigin: 'right center', transform: [{ rotate: '-23deg' }] }}>
+        <LinearGradient colors={['rgba(160,200,255,0)', 'rgba(160,200,255,.4)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flex: 1, borderRadius: 2 }} />
+      </View>
+      <Animated.View style={{ width: sz, height: sz, transform: [{ rotate: r.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
+        <Svg width={sz} height={sz} viewBox="-14 -14 28 28">
+          <Path d={ROCKS[kind]} fill="#8b9cc6" stroke="rgba(255,255,255,.4)" strokeWidth={0.7} strokeLinejoin="round" />
+          <Path d={ROCKS[kind]} fill="rgba(15,22,52,.38)" transform="translate(2.4 2.4) scale(.62)" />
+          <Circle cx={-2} cy={-1} r={1.5} fill="rgba(20,28,60,.5)" />
+          <Circle cx={3} cy={3} r={1} fill="rgba(20,28,60,.45)" />
+        </Svg>
+      </Animated.View>
+    </Animated.View>
+  );
 }
 function Shoot({ left, top, delay, gap }: { left: string; top: string; delay: number; gap: number }) {
   const v = useRef(new Animated.Value(0)).current;
@@ -106,17 +159,12 @@ export function FamilyBg() {
       <Blob size={320} color="rgba(255,143,171,.4)" style={{ left: -90, top: -50 }} />
       <Blob size={340} color="rgba(94,231,223,.3)" style={{ right: -120, top: 300 }} />
       <Blob size={280} color="rgba(255,196,107,.26)" style={{ left: -50, bottom: 60 }} />
-      <Svg pointerEvents="none" width="100%" height="100%" style={{ position: 'absolute', left: 0, top: 0 }}>
-        <Defs>
-          <Pattern id="hearts" width={56} height={56} patternUnits="userSpaceOnUse">
-            <Path d="M28 36s-9-5.2-9-11.5a5 5 0 0 1 9-2.6 5 5 0 0 1 9 2.6C37 30.800 28 36 28 36z" fill="none" stroke="#fff" strokeWidth={1} opacity={0.09} />
-          </Pattern>
-        </Defs>
-        <Rect width="100%" height="100%" fill="url(#hearts)" />
-      </Svg>
       {STARS.map((t, i) => <Star key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
+      {SPARK.map((t, i) => <Sparkle key={i} x={t[0]} y={t[1]} s={t[2]} c={t[3]} i={t[4]} />)}
+      {ASTEROIDS.map((a, i) => <Asteroid key={i} y0={a[0]} kind={a[1]} phase={a[2]} dur={a[3]} i={i} />)}
       <Shoot left="6%" top="14%" delay={1500} gap={4500} />
       <Shoot left="42%" top="22%" delay={5200} gap={6200} />
+      <Shoot left="-4%" top="40%" delay={9000} gap={7000} />
       <Mote left="14%" delay={0} dur={7000} size={4} color="#ff8fab" />
       <Mote left="36%" delay={2200} dur={8500} size={3} color="#ffc46b" />
       <Mote left="58%" delay={900} dur={7500} size={4} color="#5ee7df" />
@@ -128,7 +176,6 @@ export function FamilyBg() {
   );
 }
 
-// Little house with a beating heart, used in the page header.
 function Bird({ size, delay, y, w }: { size: number; delay: number; y: number; w: number }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
