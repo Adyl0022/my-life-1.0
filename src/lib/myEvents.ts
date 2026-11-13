@@ -47,7 +47,7 @@ const MOON = /raya|aidil|haji|adha|muharram|maulid|ramadan|nuzul|deepavali|diwal
 export async function fetchMy(cache: MyCache, today: string, force = false, cc = 'MY'): Promise<MyCache | null> {
   const week = 7 * 86400000;
   const same = (cache.cc || 'MY') === cc;
-  if (!force && same && Date.now() - cache.at < week) return null;
+  if (!force && same && Object.keys(cache.years).length > 0 && Date.now() - cache.at < week) return null; // an empty list is always asked for again
   const y0 = +today.slice(0, 4); const years: Record<string, MyEv[]> = same ? { ...cache.years } : {}; let got = 0;
   for (const y of [y0, y0 + 1]) {
     try {
@@ -58,15 +58,15 @@ export async function fetchMy(cache: MyCache, today: string, force = false, cc =
       for (const h of j) {
         const date = String(h.date || ''); const name = String(h.name || h.localName || '');
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !name) continue;
-        const wide = h.global === true || !h.counties || (Array.isArray(h.counties) && h.counties.length >= 10);
+        const wide = h.global === true || !h.counties || (Array.isArray(h.counties) && h.counties.length >= (cc === 'MY' ? 10 : 5)); // countries with states (Australia, Germany...) list most holidays per state: count the ones most states share
         if (!wide) continue;
         items.push({ date, name, kind: kindOf(name), moon: MOON.test(name) });
       }
-      if (items.length >= 8) { years[String(y)] = items; got++; }
+      if (items.length >= (cc === 'MY' ? 8 : 3)) { years[String(y)] = items; got++; }
     } catch (e) { /* offline: keep what we have */ }
   }
   if (got) return { at: Date.now(), years, cc };
-  return same ? null : { at: Date.now(), years: {}, cc }; // country changed and nothing came back: forget the old country's dates
+  return same ? null : { at: 0, years: {}, cc }; // country changed and nothing came back: forget the old country's dates, and ask again next time (at: 0 = not fresh)
 }
 
 export function upcomingMy(today: string, n = 6, cache: MyCache = EMPTY_CACHE, cc = 'MY'): (MyEv & { days: number })[] {

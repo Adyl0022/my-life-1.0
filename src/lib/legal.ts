@@ -2,7 +2,7 @@ export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
   { h: 'Version 1.0.1', p: 'A big update with Family Planner, more countries and currencies, and a calmer Settings.' },
   { h: 'Family Planner', p: '•  Share tasks, activities and a shopping list with your family\n•  Repeating tasks and reminders for everyone\n•  Anything deleted can be brought back for 7 days\n•  The family owner can turn the invite code off or on, or delete the family' },
-  { h: 'Region and currency', p: 'Public holidays, currency symbols and money words now follow the country you choose. New countries: Cambodia, Laos, Myanmar, Nepal, Sri Lanka, Maldives, Taiwan, Kuwait, Oman, Bahrain and Jordan.' },
+  { h: 'Region and currency', p: 'Public holidays, currency symbols and money words now follow the country you choose. New countries: Cambodia, Laos, Myanmar, United Kingdom, United States, Maldives, Taiwan, Kuwait, Bahrain, New Zealand and Germany.' },
   { h: 'Islamic Hub settings', p: 'Prayer times, daily zikir and prayer alert timing moved from Settings into the Islamic Hub (tap the gear icon). You can also hide modules you do not use.' },
   { h: 'Quran and zikir', p: 'Read with translation, Arabic only, or continuous. The same choices are in Tahlil, Mathurat and dhikr.' },
   { h: 'Dashboard and backup', p: 'The bottom Dashboard card can be tapped to switch views, and Dashboard cards can be reordered. Backups now include My Record receipt photos.' },

@@ -37,14 +37,20 @@ export async function checkBudget(): Promise<void> {
       if (c.daysLeft > 1 && c.allowance > 0 && c.today > c.allowance) out.push(['day:' + dk, 'Over today\'s limit', 'You spent ' + rm(c.today) + ' today. Your limit is about ' + rm(c.allowance) + ' a day to stay on track.']);
     }
     }
-    const todo = out.filter((x) => !cfg.sent[x[0]]); if (!todo.length) return;
+    // A warning that no longer applies (spending was deleted or income went up) is forgotten, so it can ring again if it comes back.
+    const active = new Set(out.map((x) => x[0]));
+    const keep: Record<string, number> = {}; Object.keys(cfg.sent).forEach((k) => { if (k.indexOf(ym) >= 0 && active.has(k)) keep[k] = 1; });
+    const todo = out.filter((x) => !keep[x[0]]);
+    if (!todo.length) { if (Object.keys(keep).length !== Object.keys(cfg.sent).length) await setItem('ml_budget', { ...cfg, sent: keep }); return; }
     const p = await Notifications.getPermissionsAsync(); if (p.status !== 'granted') return;
     ensureHandler();
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('budget', { name: 'Budget alerts', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ffc46b' });
-    const sent: Record<string, number> = {}; Object.keys(cfg.sent).forEach((k) => { if (k.indexOf(ym) >= 0) sent[k] = 1; });
+    const sent: Record<string, number> = { ...keep };
     for (const [k, title, body] of todo) {
-      await Notifications.scheduleNotificationAsync({ content: { title, body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2, channelId: 'budget' } as any });
-      sent[k] = 1;
+      try {
+        await Notifications.scheduleNotificationAsync({ content: { title, body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2, channelId: 'budget' } as any });
+        sent[k] = 1; // only marked as sent when it was really scheduled, so a failure is tried again next time
+      } catch (e) { /* try again on the next save */ }
     }
     await setItem('ml_budget', { ...cfg, sent });
   } catch (e) { /* ignore */ }

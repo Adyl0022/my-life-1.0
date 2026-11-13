@@ -49,7 +49,8 @@ class Chat extends AssistantBase {
     const ms = st.lang === 'ms';
     const empty = st.msgs.length === 0;
     const more = !!st.more;
-    const pick = [0, 4, 5, 7].map((i) => v.starters[i]);
+    // Four starter cards: the usual ones first, then any others that are left when some modules are turned off.
+    const pick = [0, 4, 5, 7, 1, 6, 8, 2, 3, 9].map((id) => v.starters.find((q: any) => q.id === id)).filter(Boolean).slice(0, 4);
     const pill = (on: boolean, t: string, f: any) => (
       <Pressable key={t} onPress={f}>
         {on ? (

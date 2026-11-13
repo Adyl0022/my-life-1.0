@@ -32,6 +32,7 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
   const [offline, setOffline] = useState(false);
   const alive = useRef(true);
   const timer = useRef<any>(null);
+  const uid = useRef(Math.random().toString(36).slice(2, 9)); // every screen gets its own channel name, so opening a screen again never clashes with one still closing
   const key = 'ml_famrows_' + table + '_' + (fid || '');
   useEffect(() => { alive.current = true; return () => { alive.current = false; clearTimeout(timer.current); }; }, []);
 
@@ -54,11 +55,14 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
     if (!fid) return;
     AsyncStorage.getItem(key).then((raw) => { if (raw && alive.current) { try { setRows((r) => (r.length ? r : JSON.parse(raw))); setReady(true); } catch (e) {} } }).catch(() => {});
     load();
-    const ch = supabase.channel('fam-' + table + '-' + fid)
-      .on('postgres_changes', { event: '*', schema: 'public', table, filter: 'family_id=eq.' + fid }, soon)
-      .subscribe();
+    let ch: any = null;
+    try {
+      ch = supabase.channel('fam-' + table + '-' + fid + '-' + uid.current)
+        .on('postgres_changes', { event: '*', schema: 'public', table, filter: 'family_id=eq.' + fid }, soon)
+        .subscribe();
+    } catch (e) { ch = null; } // live updates are a bonus: the list still loads and refreshes without them
     const st = AppState.addEventListener('change', (x) => { if (x === 'active') load(); });
-    return () => { supabase.removeChannel(ch); st.remove(); };
+    return () => { try { if (ch) supabase.removeChannel(ch); } catch (e) {} st.remove(); };
   }, [fid, key, load, soon, table]);
 
   const patch = useCallback((id: string, p: Partial<T>) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...p } : x))), []);
