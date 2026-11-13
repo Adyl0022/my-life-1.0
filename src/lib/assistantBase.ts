@@ -519,7 +519,7 @@ export class AssistantBase extends React.Component<any, any> {
       clear: () => this.setState({ msgs: [], typing: false }),
       welcome: this.clean(L('Hi ' + this.fn() + '! I am your My Life assistant. I answer from your own data, on this device, with no internet or AI service. You can type in your own words, like "how much did I spend last week?" or "remind me to call mom tomorrow". Tap a question below or type your own.', 'Hai ' + this.fn() + '! Saya pembantu My Life awak. Saya jawab berdasarkan data awak sendiri, dalam peranti ini, tanpa internet atau perkhidmatan AI. Taip dengan cara awak sendiri, contohnya "berapa belanja minggu lepas?" atau "ingatkan saya telefon mak esok". Tekan soalan di bawah atau taip sendiri.')),
       startDisp: s.msgs.length === 0 ? 'grid' : 'none',
-      starters: S.filter((x) => (!catMod[x[0]] || modOn(catMod[x[0]])) && qOk(Q[x[0]][x[1]][0])).map(x => { const q = Q[x[0]][x[1]][ix]; return { label: q, d: x[2], bg: x[3], go: () => this.ask(q) }; }),
+      starters: S.map((x, n) => [x, n]).filter((xn) => (!catMod[xn[0][0]] || modOn(catMod[xn[0][0]])) && qOk(Q[xn[0][0]][xn[0][1]][0])).map(xn => { const x = xn[0]; const q = Q[x[0]][x[1]][ix]; return { id: xn[1], label: q, d: x[2], bg: x[3], go: () => this.ask(q) }; }),
       msgs: msgs,
       typD: s.typing ? 'flex' : 'none',
       cats: order.map((i) => ({ name: catNames[i][ix], cls: i === cat ? 'cat on' : 'cat', go: () => this.setState({ cat: i }) })),

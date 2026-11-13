@@ -110,10 +110,10 @@ export default function Home() {
               <Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '700', letterSpacing: 0.3 }}>{period}{force >= 0 ? '' : ' · auto'}</Text>
             </Pressable>
           </View>
-          <View style={{ flex: 1, gap: 10, marginTop: 10 + UP }}>
+          <View style={{ flex: 1, gap: 10, marginTop: 10 + UP, justifyContent: 'center' }}>
             {mord.habitTop ? habitBanner : null}
             {(() => { const L = mord.order.map((k) => CARDS.find((c) => c.k.toLowerCase() === k)!).filter((c) => c && hid.on(c.k.toLowerCase() as any)); const R: typeof L[] = []; for (let i = 0; i < L.length; i += 2) R.push(L.slice(i, i + 2)); return R; })().map((row, ri) => (
-              <View key={ri} style={{ flex: 1, flexDirection: 'row', gap: 10, minHeight: 100 }}>
+              <View key={ri} style={{ flex: 1, flexDirection: 'row', gap: 10, minHeight: 100, maxHeight: 236 }}>
             {row.map((c) => (
               <Pressable key={c.k} onPress={() => go(c.k)} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
                 <Halo k={c.k} />
