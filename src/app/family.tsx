@@ -8,7 +8,7 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg, HouseHeart } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, Tile, W, DIM } from '../components/FamilyUi';
-import { useFamily, famCreate, famError, pickColor, isParent } from '../lib/family';
+import { useFamily, useAutoRefresh, famCreate, famError, pickColor, isParent } from '../lib/family';
 import { useFamTasks, useFamShop, useFamEvents, dayDiff, useReloadOnFocus } from '../lib/familyData';
 import { useLicense } from '../lib/license';
 import { useName } from '../lib/store';
@@ -17,6 +17,7 @@ export default function Family() {
   const router = useRouter();
   const lic = useLicense();
   const f = useFamily();
+  useAutoRefresh(f.refresh);
   const myName = useName();
   const [make, setMake] = useState(false);
   const [fname, setFname] = useState('');
@@ -59,7 +60,7 @@ export default function Family() {
             {make ? (
               <>
                 <Field label="Family name" value={fname} onChange={setFname} ph="e.g. The Rahman family" max={40} />
-                <Field label="Your name in the family" value={mine} onChange={setMine} ph={myName} />
+                <Field label="Your name in the family" value={mine} onChange={setMine} ph="Your name" />
                 {err ? <Text style={{ color: '#ffb3bf', fontSize: 12.5, marginTop: 10 }}>{err}</Text> : null}
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
                   <Btn t="Cancel" onPress={() => { setMake(false); setErr(''); }} flex />

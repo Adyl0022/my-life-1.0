@@ -24,14 +24,14 @@ export const Label = ({ t }: { t: string }) => (
   <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, fontWeight: '800', letterSpacing: 1.3, marginTop: 18, marginBottom: 8, marginLeft: 4 }}>{t.toUpperCase()}</Text>
 );
 
-export function Btn({ t, onPress, kind = 'ghost', busy, disabled, flex }: { t: string; onPress: () => void; kind?: 'main' | 'ghost' | 'danger' | 'good'; busy?: boolean; disabled?: boolean; flex?: boolean }) {
+export function Btn({ t, onPress, kind = 'ghost', busy, disabled, flex, solid }: { t: string; onPress: () => void; kind?: 'main' | 'ghost' | 'danger' | 'good'; busy?: boolean; disabled?: boolean; flex?: boolean; solid?: boolean }) {
   const off = disabled || busy;
   const inner = busy ? <ActivityIndicator color={kind === 'main' ? '#2a1030' : '#fff'} /> : <Text style={{ color: kind === 'main' ? '#2a1030' : kind === 'danger' ? '#ffb3bf' : kind === 'good' ? '#8ff0d4' : W, fontSize: 13.5, fontWeight: '800' }}>{t}</Text>;
   return (
     <Pressable onPress={off ? undefined : onPress} style={({ pressed }) => ({ flex: flex ? 1 : undefined, opacity: off ? 0.55 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
       {kind === 'main'
         ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center' }}>{inner}</LinearGradient>
-        : <View style={{ paddingVertical: 12, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', backgroundColor: kind === 'danger' ? 'rgba(255,107,129,.16)' : kind === 'good' ? 'rgba(52,211,153,.18)' : 'rgba(255,255,255,.12)', borderWidth: kind === 'danger' || kind === 'good' ? 1 : 0, borderColor: kind === 'good' ? 'rgba(52,211,153,.5)' : 'rgba(255,107,129,.45)' }}>{inner}</View>}
+        : <View style={{ paddingVertical: 12, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', backgroundColor: solid ? (kind === 'danger' ? '#3d2c4c' : kind === 'good' ? '#1c4252' : '#343d5a') : kind === 'danger' ? 'rgba(255,107,129,.16)' : kind === 'good' ? 'rgba(52,211,153,.18)' : 'rgba(255,255,255,.12)', borderWidth: kind === 'danger' || kind === 'good' ? 1 : 0, borderColor: kind === 'good' ? 'rgba(52,211,153,.5)' : 'rgba(255,107,129,.45)' }}>{inner}</View>}
     </Pressable>
   );
 }

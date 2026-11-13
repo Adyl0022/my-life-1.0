@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing, useWindowDimensions } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect, G, Circle } from 'react-native-svg';
 import { Blob } from './Bg';
@@ -152,13 +153,13 @@ function Houses() {
   );
 }
 
-export function FamilyBg() {
+// The sky is drawn in two steps so opening a screen stays smooth: the colours and glows at once, then the moving parts (stars, sparkles,
+// asteroids, lights, houses) once the screen has finished sliding in. A screen that is covered by another one stops drawing them.
+function Moving() {
+  const o = useRef(new Animated.Value(0)).current;
+  useEffect(() => { const a = Animated.timing(o, { toValue: 1, duration: 450, easing: Easing.out(Easing.quad), useNativeDriver: true }); a.start(); return () => a.stop(); }, []);
   return (
-    <>
-      <LinearGradient colors={['#0a0f2c', '#0f1f3d', '#0c3a3f']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      <Blob size={320} color="rgba(255,143,171,.4)" style={{ left: -90, top: -50 }} />
-      <Blob size={340} color="rgba(94,231,223,.3)" style={{ right: -120, top: 300 }} />
-      <Blob size={280} color="rgba(255,196,107,.26)" style={{ left: -50, bottom: 60 }} />
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: o }}>
       {STARS.map((t, i) => <Star key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
       {SPARK.map((t, i) => <Sparkle key={i} x={t[0]} y={t[1]} s={t[2]} c={t[3]} i={t[4]} />)}
       {ASTEROIDS.map((a, i) => <Asteroid key={i} y0={a[0]} kind={a[1]} phase={a[2]} dur={a[3]} i={i} />)}
@@ -172,6 +173,25 @@ export function FamilyBg() {
       <Mote left="90%" delay={1800} dur={6500} size={3} color="#ffc46b" />
       <Houses />
       <Lights />
+    </Animated.View>
+  );
+}
+export function FamilyBg() {
+  const [on, setOn] = useState(false);
+  const off = useRef<any>(null);
+  useFocusEffect(useCallback(() => {
+    clearTimeout(off.current);
+    const t = setTimeout(() => setOn(true), 380); // after the slide-in has finished
+    return () => { clearTimeout(t); off.current = setTimeout(() => setOn(false), 450); };
+  }, []));
+  useEffect(() => () => clearTimeout(off.current), []);
+  return (
+    <>
+      <LinearGradient colors={['#0a0f2c', '#0f1f3d', '#0c3a3f']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+      <Blob size={320} color="rgba(255,143,171,.4)" style={{ left: -90, top: -50 }} />
+      <Blob size={340} color="rgba(94,231,223,.3)" style={{ right: -120, top: 300 }} />
+      <Blob size={280} color="rgba(255,196,107,.26)" style={{ left: -50, bottom: 60 }} />
+      {on ? <Moving /> : null}
     </>
   );
 }

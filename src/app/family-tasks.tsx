@@ -78,7 +78,7 @@ export default function FamilyTasks() {
             </ScrollView>
           ) : null}
           {msg ? <View style={{ marginTop: 12 }}><Note warm t={msg} /></View> : null}
-          {t.offline ? <View style={{ marginTop: 12 }}><Note t="You are offline. Showing the last saved list. Changes need an internet connection." /></View> : null}
+          {t.offline ? <View style={{ marginTop: 12 }}><Note t={t.msg || "You are offline. Showing the last saved list."} /></View> : null}
           <Rise>
             <Group title="Today" list={today} />
             <Group title="Coming up" list={later} />

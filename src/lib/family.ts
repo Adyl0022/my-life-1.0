@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { useSession } from './auth';
+import { useFocusEffect } from 'expo-router';
 
 // Family Planner, stage A: the family space, its invite code and its members.
 // Every action goes through a server function (sql/family.sql) that checks the person and their licence.
@@ -45,7 +46,9 @@ export function famError(e: any): string {
   const m = String((e && (e.message || e.error)) || e || '');
   const k = Object.keys(MSG).find((x) => m.indexOf(x) >= 0);
   if (k) return MSG[k];
-  return /network|fetch|timeout/i.test(m) ? 'No internet connection. Please try again.' : 'Something went wrong. Please try again.';
+  if (/network|fetch|timeout/i.test(m)) return 'No internet connection. Please try again.';
+  const why = m.replace(/\s+/g, ' ').trim().slice(0, 110); // the real reason, so a problem can be reported and fixed
+  return 'Something went wrong. Please try again.' + (why ? ' (' + why + ')' : '');
 }
 export async function call<T = any>(fn: string, args: Record<string, any> = {}): Promise<T> {
   const { data, error } = await supabase.rpc(fn, args);
@@ -110,4 +113,16 @@ export function useFamily() {
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => { const s = AppState.addEventListener('change', (x) => { if (x === 'active') refresh(); }); return () => s.remove(); }, [refresh]);
   return { state, info, offline, refresh };
+}
+
+// For screens (never the root layout): while a family screen is in view, read the family again every few seconds, so a new member,
+// a role change or a new code shows up without leaving and coming back.
+export function useAutoRefresh(refresh: () => any, ms = 6000) {
+  const ref = useRef(refresh); ref.current = refresh;
+  useFocusEffect(useCallback(() => {
+    const run = () => { try { const r = ref.current(); if (r && r.catch) r.catch(() => {}); } catch (e) {} };
+    const id = setInterval(run, ms);
+    const st = AppState.addEventListener('change', (x) => { if (x === 'active') run(); });
+    return () => { clearInterval(id); st.remove(); };
+  }, [ms]));
 }

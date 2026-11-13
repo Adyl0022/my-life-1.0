@@ -92,7 +92,7 @@ export default function FamilyShop() {
               </Glass>
             </Rise>
           ) : msg ? <Note warm t={msg} /> : null}
-          {s.offline ? <View style={{ marginTop: 12 }}><Note t="You are offline. Showing the last saved list. Changes need an internet connection." /></View> : null}
+          {s.offline ? <View style={{ marginTop: 12 }}><Note t={s.msg || "You are offline. Showing the last saved list."} /></View> : null}
           {s.ready ? <Text style={{ color: DIM, fontSize: 12, marginTop: 14, marginLeft: 4 }}>{toBuy.length} to buy · {bought.length} bought</Text> : null}
           {cats.map((c) => { const l = toBuy.filter((x) => x.category === c); return l.length ? <View key={c}><Label t={c} />{l.map((x) => <Row key={x.id} x={x} />)}</View> : null; })}
           {bought.length ? (
