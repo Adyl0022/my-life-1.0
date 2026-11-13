@@ -122,14 +122,6 @@ export function Logo({ waves = true }: { waves?: boolean }) {
   useEffect(() => { const a = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })])); a.start(); return () => a.stop(); }, []);
   return (
     <View style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.22, 0.5] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.04] }) }] }}>
-        <Animated.View style={{ width: 150, height: 150, transform: [{ rotate: inner2 }] }}>
-          {([[-90, 'rgba(110,140,255,0.6)'], [30, 'rgba(200,110,230,0.5)'], [150, 'rgba(70,205,205,0.55)']] as const).map(([a, c]) => {
-            const r = (a * Math.PI) / 180;
-            return <View key={a} style={{ position: 'absolute', left: 75 - 45 + 34 * Math.cos(r), top: 75 - 45 + 34 * Math.sin(r) }}><Blob size={90} color={c} /></View>;
-          })}
-        </Animated.View>
-      </Animated.View>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit }] }}>
         <View style={{ position: 'absolute', left: 82, top: 2, width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff', shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
@@ -139,7 +131,7 @@ export function Logo({ waves = true }: { waves?: boolean }) {
       <View style={{ width: 112, height: 112, borderRadius: 28, backgroundColor: '#1e2255' }}>
       <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden' }}>
         {/* Same icon as the home screen, built in layers: the three colour lights turn slowly behind the raised glass tile. */}
-        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -28, top: -28, width: 168, height: 168, transform: [{ rotate: inner }] }}>
+        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -28, top: -28, width: 168, height: 168, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.75, 1] }), transform: [{ rotate: inner }] }}>
           <Image source={require('../../assets/android-icon-background.png')} style={{ width: 168, height: 168 }} />
         </Animated.View>
         <Image source={require('../../assets/android-icon-foreground.png')} style={{ position: 'absolute', left: -10, top: -10, width: 132, height: 132 }} />
