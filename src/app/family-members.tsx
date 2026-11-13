@@ -8,7 +8,7 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, W, DIM } from '../components/FamilyUi';
-import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famAddProfile, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
+import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famForget, famAddProfile, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
 
 const ROLE: Record<string, string> = { owner: 'Owner', parent: 'Parent', member: 'Member' };
 
@@ -36,6 +36,7 @@ export default function FamilyMembers() {
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}><FamilyBg /><SafeAreaView style={{ flex: 1 }}><Header title="Members" /><View style={{ padding: 20 }}><Note t={f.state === 'loading' ? 'Loading…' : 'You are not in a family yet.'} /></View></SafeAreaView></View>
   );
   const owner = info.role === 'owner';
+  const nextOwner = ([...info.members].filter((m) => m.user_id !== info.me).sort((a, b) => (a.role === 'parent' ? 0 : 1) - (b.role === 'parent' ? 0 : 1) || new Date(a.joined).getTime() - new Date(b.joined).getTime())[0] || { name: 'the next member' }).name;
   const parent = isParent(info.role);
   const share = () => Share.share({ message: 'Join our family on My Life. Open Daily Planner, then Family, then Join with a code. Code: ' + showCode(info.code) }).catch(() => {});
 
@@ -130,7 +131,7 @@ export default function FamilyMembers() {
 
           <Rise i={4}>
             <View style={{ marginTop: 22 }}>
-              <Btn solid t="Leave family" kind="danger" disabled={busy} onPress={() => ask('Leave this family?', owner && info.members.length > 1 ? 'You are the owner. Make someone else the owner first.' : owner ? 'You are the only member. The family will be removed.' : 'You lose access to the family. Your own data is not affected.', 'Leave', async () => { try { setBusy(true); await famLeave(); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); })} />
+              <Btn solid t="Leave family" kind="danger" disabled={busy} onPress={() => ask('Leave this family?', owner && info.members.length > 1 ? 'You are the owner. Ownership passes to ' + nextOwner + ', and you leave the family. Your own data is not affected.' : owner ? 'You are the only member. The family will be removed.' : 'You lose access to the family. Your own data is not affected.', 'Leave', async () => { try { setBusy(true); await famLeave(); famForget(); router.replace('/family' as any); } catch (e) { Alert.alert('Could not leave', famError(e)); } setBusy(false); })} />
             </View>
           </Rise>
           {owner ? (
@@ -143,7 +144,7 @@ export default function FamilyMembers() {
                     <Field label="" value={dn} onChange={setDn} ph={info.name} max={40} />
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
                       <Btn solid t="Cancel" onPress={() => { setDel(false); setDn(''); }} flex />
-                      <Btn solid t="Delete forever" kind="danger" busy={busy} disabled={!dn.trim()} flex onPress={async () => { try { setBusy(true); setMsg(''); await famDeleteAll(dn); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); }} />
+                      <Btn solid t="Delete forever" kind="danger" busy={busy} disabled={!dn.trim()} flex onPress={async () => { try { setBusy(true); setMsg(''); await famDeleteAll(dn); famForget(); router.replace('/family' as any); } catch (e) { Alert.alert('Could not delete', famError(e)); } setBusy(false); }} />
                     </View>
                   </Glass>
                 )}
