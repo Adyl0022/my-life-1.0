@@ -33,7 +33,7 @@ export function DateField({ value, onChange, style }: { value: string; onChange:
   );
 }
 // Faint family motifs behind the Family Planner pill: little houses, birds in flight, sparkles.
-const FP = 'rgba(255,255,255,.5)';
+const FP = 'rgba(255,255,255,.72)';
 const Mo = ({ k, s, st }: { k: 'house' | 'bird' | 'spark' | 'dot'; s: number; st: any }) => (
   <View pointerEvents="none" style={[{ position: 'absolute' }, st]}>
     <Svg width={s} height={s} viewBox="0 0 24 24" fill="none">
@@ -46,17 +46,18 @@ const Mo = ({ k, s, st }: { k: 'house' | 'bird' | 'spark' | 'dot'; s: number; st
 );
 const FamPattern = () => (
   <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}>
-    <Mo k="house" s={15} st={{ left: '5%', top: 3 }} />
-    <Mo k="bird" s={14} st={{ left: '21%', bottom: 2 }} />
-    <Mo k="spark" s={11} st={{ left: '44%', top: 3 }} />
-    <Mo k="house" s={13} st={{ left: '62%', bottom: 3 }} />
-    <Mo k="bird" s={13} st={{ left: '79%', top: 3 }} />
-    <Mo k="dot" s={13} st={{ right: '3%', bottom: 3 }} />
+    <Mo k="house" s={19} st={{ left: 9, bottom: 4 }} />
+    <Mo k="bird" s={13} st={{ left: 11, top: 3 }} />
+    <Mo k="spark" s={9} st={{ left: 30, top: 5 }} />
+    <Mo k="bird" s={14} st={{ right: 30, top: 3 }} />
+    <Mo k="spark" s={9} st={{ right: 52, bottom: 4 }} />
+    <Mo k="dot" s={17} st={{ right: 9, bottom: 4 }} />
+    <Mo k="dot" s={12} st={{ right: 27, bottom: 4 }} />
   </View>
 );
 export const Pill = ({ t, onPress, on, style, warm, fam }: { t: string; onPress: () => void; on?: boolean; style?: any; warm?: boolean; fam?: boolean }) => (
   <Pressable onPress={onPress} style={style}>
-    {fam ? <View style={{ borderRadius: 999, shadowColor: '#2dd4bf', shadowOpacity: 0.7, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 8 }}><LinearGradient colors={['#34d399', '#22b8c9', '#5b8def']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', borderWidth: 1.2, borderColor: 'rgba(190,255,240,.85)' }}><FamPattern /><Text style={{ color: W, fontSize: 13, fontWeight: '800', textShadowColor: 'rgba(20,120,140,.9)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }}>{t}</Text></LinearGradient></View>
+    {fam ? <View style={{ borderRadius: 999, shadowColor: '#2dd4bf', shadowOpacity: 0.7, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 8 }}><LinearGradient colors={['#34d399', '#22b8c9', '#5b8def']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingLeft: 40, paddingRight: 56, borderRadius: 999, alignItems: 'center', borderWidth: 1.2, borderColor: 'rgba(190,255,240,.85)' }}><FamPattern /><Text style={{ color: W, fontSize: 13, fontWeight: '800', textShadowColor: 'rgba(20,120,140,.9)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }}>{t}</Text></LinearGradient></View>
       : warm ? <View style={{ borderRadius: 999, shadowColor: '#ff4d2e', shadowOpacity: 0.85, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 8 }}><LinearGradient colors={['#ff9500', '#ff4d1f', '#ff1f5a']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', borderWidth: 1.2, borderColor: 'rgba(255,214,170,.9)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800', textShadowColor: 'rgba(255,60,30,.9)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }}>{t}</Text></LinearGradient></View>
       : on ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{t}</Text></LinearGradient>
       : <View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '600' }}>{t}</Text></View>}
