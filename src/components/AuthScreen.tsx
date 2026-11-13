@@ -132,9 +132,9 @@ export function Logo({ waves = true }: { waves?: boolean }) {
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit2 }] }}>
         <View style={{ position: 'absolute', left: 83, top: 160, width: 5, height: 5, borderRadius: 3, backgroundColor: '#ffd593', shadowColor: '#ffc46b', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
-      <View style={{ width: 112, height: 112, borderRadius: 33, overflow: 'hidden', backgroundColor: '#1e2255', borderWidth: 1.2, borderColor: 'rgba(255,255,255,.26)' }}>
-        {/* The real app icon, cropped to its glass tile, so the logo in the app matches the one on the home screen. */}
-        <Image source={require('../../assets/icon.png')} style={{ position: 'absolute', width: 188, height: 188, left: -39, top: -39 }} resizeMode="cover" />
+      <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden', backgroundColor: '#1e2255' }}>
+        {/* The full app icon, exactly as on the home screen (glass tile raised in the middle). */}
+        <Image source={require('../../assets/icon.png')} style={{ width: 112, height: 112 }} resizeMode="cover" />
       </View>
     </View>
   );
