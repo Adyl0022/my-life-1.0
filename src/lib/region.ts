@@ -90,8 +90,8 @@ export const regionCC = () => active.cc;
 export const regionCountry = () => countryOf(active.cc);
 
 /** Reads the saved choice and keeps the screen up to date when it changes. Call it once in any screen that writes money. */
-export function useRegion(): [Region, (r: Region) => void] {
-  const [r, set] = useStored<Region>('ml_region', REGION_DEFAULT);
+export function useRegion(): [Region, (r: Region) => void, boolean] {
+  const [r, set, ok] = useStored<Region>('ml_region', REGION_DEFAULT);
   active = clean(r);
-  return [active, (x: Region) => set(clean(x))];
+  return [active, (x: Region) => set(clean(x)), ok];
 }

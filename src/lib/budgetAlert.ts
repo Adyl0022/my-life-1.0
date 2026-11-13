@@ -5,6 +5,7 @@ import { getItem, getItemStrict, setItem } from './store';
 import { DEBT_EMPTY } from './debts';
 import { calcLeft, commitFor, ymKey } from './moneyLeft';
 import { cs } from './region';
+import { ensureHandler } from './adhan';
 
 export type BudgetCfg = { on: boolean; sent: Record<string, number> };
 export const BUDGET_EMPTY: BudgetCfg = { on: true, sent: {} };
@@ -38,6 +39,7 @@ export async function checkBudget(): Promise<void> {
     }
     const todo = out.filter((x) => !cfg.sent[x[0]]); if (!todo.length) return;
     const p = await Notifications.getPermissionsAsync(); if (p.status !== 'granted') return;
+    ensureHandler();
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('budget', { name: 'Budget alerts', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ffc46b' });
     const sent: Record<string, number> = {}; Object.keys(cfg.sent).forEach((k) => { if (k.indexOf(ym) >= 0) sent[k] = 1; });
     for (const [k, title, body] of todo) {

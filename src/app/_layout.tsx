@@ -33,8 +33,10 @@ function PrayerSync() {
 function DebtSync() {
   const [d, , ok] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
   const hid = useHidden(); const fin = hid.on('finance');
+  // The reminder text carries the currency, so wait until the chosen one is loaded and re-plan if it changes.
+  const [rg, , rok] = useRegion();
   // Finance turned off: the due reminders are cleared too.
-  useEffect(() => { if (ok && hid.ready && Platform.OS !== 'web') syncDebtAlerts(fin ? d : { ...d, notify: false }); }, [ok, hid.ready, fin, JSON.stringify(d)]);
+  useEffect(() => { if (ok && rok && hid.ready && Platform.OS !== 'web') syncDebtAlerts(fin ? d : { ...d, notify: false }); }, [ok, rok, rg.cur, hid.ready, fin, JSON.stringify(d)]);
   return null;
 }
 // Re-plans Planner event and daily zikir reminders when the app opens, or when events or the switches in Settings change.
