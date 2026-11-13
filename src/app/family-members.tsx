@@ -6,11 +6,13 @@ import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
 import { Glass } from '../components/Glass';
 import { Header } from '../components/IslamicUi';
+import { DateField } from '../components/Ui';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, W, DIM } from '../components/FamilyUi';
-import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famForget, famAddProfile, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
+import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famForget, famAddProfile, famSetBirthday, famProfileBirthday, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
 
+const bdText = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? Number(m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1] + ' ' + m[1] : v; };
 const ROLE: Record<string, string> = { owner: 'Owner', parent: 'Parent', member: 'Member' };
 
 export default function FamilyMembers() {
@@ -105,6 +107,27 @@ export default function FamilyMembers() {
             <Label t="Members" />
             <View style={{ gap: 10 }}>{info.members.map((m) => <Row key={m.user_id} m={m} />)}</View>
             {owner ? <Text style={{ color: DIM, fontSize: 11.5, marginTop: 8, marginLeft: 4 }}>Tap a member to change their role or remove them.</Text> : null}
+          </Rise>
+
+          <Rise i={2}>
+            <Label t="Birthdays" />
+            <Glass solid radius={24} style={{ padding: 14 }}>
+              <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginBottom: 6 }}>Shown in the family calendar every year. Everyone sets their own. A parent sets it for people without an account.</Text>
+              {[...info.members.map((m) => ({ id: m.user_id, name: m.name, color: m.color, bd: m.birthday || '', mine: m.user_id === info.me, prof: false })), ...info.profiles.map((p) => ({ id: p.id, name: p.name, color: p.color, bd: p.birthday || '', mine: false, prof: true }))].map((x) => {
+                const can = x.mine || (x.prof && parent);
+                const save = (v: string | null) => run(() => (x.prof ? famProfileBirthday(x.id, v) : famSetBirthday(v)));
+                return (
+                  <View key={x.id} style={{ paddingVertical: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Avatar name={x.name} color={x.color} size={30} />
+                      <Text style={{ flex: 1, color: W, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{x.name}{x.mine ? ' (You)' : ''}</Text>
+                      {x.bd && can ? <Pressable hitSlop={10} onPress={() => save(null)}><Text style={{ color: '#ffb3bf', fontSize: 12, fontWeight: '800' }}>Clear</Text></Pressable> : null}
+                    </View>
+                    {can ? <View style={{ marginTop: 6 }}><DateField value={x.bd} onChange={(v) => save(v)} /></View> : <Text style={{ color: DIM, fontSize: 12.5, marginTop: 4, marginLeft: 40 }}>{x.bd ? bdText(x.bd) : 'Not set'}</Text>}
+                  </View>
+                );
+              })}
+            </Glass>
           </Rise>
 
           <Rise i={2}>

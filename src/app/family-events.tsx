@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,9 @@ import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Ico, Label, NewBtn, Note, W, DIM } from '../components/FamilyUi';
 import { useFamily } from '../lib/family';
-import { useFamEvents, peopleOf, dayDiff, timeText, FEvent, useReloadOnFocus } from '../lib/familyData';
+import { useFamEvents, useFamTasks, peopleOf, dayDiff, timeText, FEvent, useReloadOnFocus } from '../lib/familyData';
+import { FamCalendar } from '../components/FamCalendar';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -20,11 +22,13 @@ export default function FamilyEvents() {
   const f = useFamily();
   const info = f.info;
   const e = useFamEvents(info?.id);
-  useReloadOnFocus(e.reload);
+  const tk = useFamTasks(info?.id);
+  const [tab, setTab] = useState<'list' | 'cal'>('list');
+  useReloadOnFocus(e.reload, tk.reload);
   const people = useMemo(() => peopleOf(info), [info]);
   const next = e.rows.filter((x) => dayDiff(x.starts_at) >= 0);
   const past = e.rows.filter((x) => dayDiff(x.starts_at) < 0).sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 10);
-  const edit = (id?: string) => router.push({ pathname: '/family-event-edit', params: id ? { id } : {} } as any);
+  const edit = (id?: string, date?: string) => router.push({ pathname: '/family-event-edit', params: id ? { id } : date ? { date } : {} } as any);
 
   const Row = ({ x, old }: { x: FEvent; old?: boolean }) => {
     const d = new Date(x.starts_at); const n = dayDiff(x.starts_at);
@@ -58,11 +62,21 @@ export default function FamilyEvents() {
         <Header title="Activities" sub="Plans the family does together" right={<NewBtn onPress={() => edit()} />} />
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
           {e.offline ? <Note t={e.msg || "You are offline. Showing the last saved list."} /> : null}
-          <Rise>
+          <View style={{ flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,.3)', borderRadius: 999, padding: 3, borderWidth: 1, borderColor: 'rgba(255,255,255,.15)', marginBottom: 14 }}>
+            {(['list', 'cal'] as const).map((k) => (
+              <Pressable key={k} onPress={() => setTab(k)}>
+                {tab === k
+                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingVertical: 7, paddingHorizontal: 18, borderRadius: 999 }}><Text style={{ color: '#2a1740', fontSize: 13, fontWeight: '800' }}>{k === 'list' ? 'List' : 'Calendar'}</Text></LinearGradient>
+                  : <View style={{ paddingVertical: 7, paddingHorizontal: 18 }}><Text style={{ color: DIM, fontSize: 13 }}>{k === 'list' ? 'List' : 'Calendar'}</Text></View>}
+              </Pressable>
+            ))}
+          </View>
+          {tab === 'cal' ? <FamCalendar info={info} events={e.rows} tasks={tk.rows} onEvent={(id) => edit(id)} onTask={(id) => router.push({ pathname: '/family-task-edit', params: { id } } as any)} onNew={(d) => edit(undefined, d)} /> : null}
+          {tab === 'list' ? <Rise>
             {next.length ? <><Label t="Coming up" />{next.map((x) => <Row key={x.id} x={x} />)}</> : null}
             {past.length ? <><Label t="Earlier" />{past.map((x) => <Row key={x.id} x={x} old />)}</> : null}
-          </Rise>
-          {e.ready && !e.rows.length ? <View style={{ marginTop: 18 }}><Note t="No activities yet. Tap + New to plan one, like a visit to grandma or a family trip." /></View> : null}
+          </Rise> : null}
+          {tab === 'list' && e.ready && !e.rows.length ? <View style={{ marginTop: 18 }}><Note t="No activities yet. Tap + New to plan one, like a visit to grandma or a family trip." /></View> : null}
         </ScrollView>
       </SafeAreaView>
     </View>

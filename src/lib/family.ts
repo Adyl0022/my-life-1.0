@@ -9,8 +9,8 @@ import { readCache } from './famCache';
 // Family Planner, stage A: the family space, its invite code and its members.
 // Every action goes through a server function (sql/family.sql) that checks the person and their licence.
 export type FRole = 'owner' | 'parent' | 'member';
-export type FMember = { user_id: string; name: string; color: string; role: FRole; joined: string };
-export type FProfile = { id: string; name: string; color: string };
+export type FMember = { user_id: string; name: string; color: string; role: FRole; joined: string; birthday?: string | null };
+export type FProfile = { id: string; name: string; color: string; birthday?: string | null };
 export type FInfo = { id: string; name: string; role: FRole; me: string; code: string | null; invites_open: boolean; max_members: number; max_profiles: number; members: FMember[]; profiles: FProfile[] };
 export type FState = 'loading' | 'none' | 'locked' | 'ready';
 
@@ -72,6 +72,8 @@ export const famTransfer = (uid: string) => call('family_transfer_owner', { p_us
 export const famRename = (name: string) => call('family_rename', { p_name: name });
 export const famSetMe = (name: string, color: string) => call('family_set_me', { p_display: name, p_color: color });
 export const famAddProfile = (name: string, color: string) => call('family_profile_add', { p_name: name, p_color: color });
+export const famSetBirthday = (d: string | null) => call('family_set_birthday', { p_date: d });
+export const famProfileBirthday = (id: string, d: string | null) => call('family_profile_birthday', { p_id: id, p_date: d });
 export const famRemoveProfile = (id: string) => call('family_profile_remove', { p_id: id });
 
 // Forget the saved copies of the family lists when the person is no longer in a family.

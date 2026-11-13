@@ -14,7 +14,7 @@ import { useFamEvents, peopleOf, eventSave, famDelete, REMINDS, dateText, timeTe
 // Add or edit one activity. Everyone in the family can do this (and delete, which is undoable for 7 days).
 export default function FamilyEventEdit() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, date } = useLocalSearchParams<{ id?: string; date?: string }>();
   const f = useFamily();
   const info = f.info;
   const ev = useFamEvents(info?.id);
@@ -25,7 +25,7 @@ export default function FamilyEventEdit() {
   const [place, setPlace] = useState('');
   const [note, setNote] = useState('');
   const [who, setWho] = useState<string[]>([]);
-  const [start, setStart] = useState<Date>(() => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d; });
+  const [start, setStart] = useState<Date>(() => { const m = date ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date)) : null; const d = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(); if (!m) d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d; });
   const [end, setEnd] = useState<Date | null>(null);
   const [remind, setRemind] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
