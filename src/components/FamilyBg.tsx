@@ -129,8 +129,26 @@ export function FamilyBg() {
 }
 
 // Little house with a beating heart, used in the page header.
+function Bird({ size, delay, y, w }: { size: number; delay: number; y: number; w: number }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const l = Animated.loop(Animated.sequence([
+      Animated.delay(delay),
+      Animated.timing(v, { toValue: 1, duration: 6000, easing: Easing.linear, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0, duration: 0, useNativeDriver: true }),
+    ]));
+    l.start();
+    return () => l.stop();
+  }, []);
+  return (
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: size * 0.8 * y, opacity: v.interpolate({ inputRange: [0, 0.1, 0.9, 1], outputRange: [0, 1, 1, 0] }), transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [size * 0.05, size * 0.95] }) }, { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [size * 0.2, -size * 0.05] }) }] }}>
+      <Svg width={w} height={w * 0.5} viewBox="0 0 16 8"><Path d="M0 6q4-6 8 0q4-6 8 0" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" /></Svg>
+    </Animated.View>
+  );
+}
+
+// House icon of the Family Planner header: the same lit house, with two birds flying slowly past the roof.
 export function HouseHeart({ size = 78 }: { size?: number }) {
-  const v = useLoop(1, 1.16, 650);
   return (
     <View pointerEvents="none" style={{ width: size, height: size * 0.8 }}>
       <Svg width={size} height={size * 0.8} viewBox="0 0 150 120">
@@ -138,10 +156,10 @@ export function HouseHeart({ size = 78 }: { size?: number }) {
         <Path d="M34 56v46h82V56" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.32)" strokeWidth={3} strokeLinejoin="round" />
         <Rect x={46} y={68} width={10} height={12} rx={2} fill="#ffc46b" opacity={0.85} />
         <Rect x={94} y={68} width={10} height={12} rx={2} fill="#ffc46b" opacity={0.85} />
+        <Rect x={68} y={80} width={14} height={22} rx={3} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.25)" strokeWidth={2} />
       </Svg>
-      <Animated.View style={{ position: 'absolute', left: size * 0.5 - 12, top: size * 0.8 * 0.5, transform: [{ scale: v }] }}>
-        <Svg width={24} height={22} viewBox="0 0 24 22"><Path d="M12 20s-9-5.400-9-11.500A4.800 4.800 0 0 1 12 6a4.800 4.800 0 0 1 9 2.500C21 14.600 12 20 12 20z" fill="#ff8fab" /></Svg>
-      </Animated.View>
+      <Bird size={size} delay={0} y={0.05} w={size * 0.14} />
+      <Bird size={size} delay={2600} y={0.18} w={size * 0.11} />
     </View>
   );
 }
