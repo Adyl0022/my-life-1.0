@@ -1,6 +1,7 @@
 // Big Malaysian events (federal public holidays + major Islamic dates), built into the app so it works offline.
 // Source: official Malaysian public holiday lists (2026–2027). Lunar dates (Raya, Haji, Awal Muharram, Maulidur Rasul,
 // Ramadan, Deepavali) can move by a day depending on moon sighting; the app shows a note for those.
+import { builtinYear } from './holidays';
 export type MyEv = { date: string; name: string; kind: 'islam' | 'national' | 'cultural'; moon?: boolean };
 
 const L: MyEv[] = [
@@ -71,8 +72,11 @@ export async function fetchMy(cache: MyCache, today: string, force = false, cc =
 export function upcomingMy(today: string, n = 6, cache: MyCache = EMPTY_CACHE, cc = 'MY'): (MyEv & { days: number })[] {
   const y0 = +today.slice(0, 4);
   const mine = (cache.cc || 'MY') === cc; const cy = mine ? cache.years : {};
-  if (cc !== 'MY') { // other countries: only what the online service gave us
-    const o = Object.values(cy).flat().filter((e) => e.date >= today).sort((a, b) => (a.date < b.date ? -1 : 1)).slice(0, n);
+  if (cc !== 'MY') { // other countries: the built-in table where we have one, otherwise what the online service gave us
+    const oAll: MyEv[] = [];
+    const ys = new Set<string>(Object.keys(cy)); for (let y = y0; y <= y0 + 2; y++) ys.add(String(y));
+    for (const y of ys) { const b = builtinYear(cc, +y); if (b && b.length) oAll.push(...b); else if (cy[y]) oAll.push(...cy[y]); }
+    const sn = new Set<string>(); const o = oAll.filter((e) => { const k = e.date + '|' + e.name; if (sn.has(k)) return false; sn.add(k); return e.date >= today; }).sort((a, b) => (a.date < b.date ? -1 : 1)).slice(0, n);
     const tt = new Date(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10)).getTime();
     return o.map((e) => ({ ...e, days: Math.round((new Date(+e.date.slice(0, 4), +e.date.slice(5, 7) - 1, +e.date.slice(8, 10)).getTime() - tt) / 86400000) }));
   }
