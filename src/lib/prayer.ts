@@ -86,6 +86,9 @@ async function whereAmI(fresh = false): Promise<{ lat: number; lon: number }> {
   return { lat: pos.coords.latitude, lon: pos.coords.longitude };
 }
 
+// Rough Malaysia box (Peninsular, Sabah, Sarawak). Used only to warn people who are clearly somewhere else.
+export const inMalaysia = (lat: number, lon: number) => lat >= 0.8 && lat <= 7.5 && lon >= 99.5 && lon <= 119.5;
+
 export type Mode = { auto: boolean; zone: string };
 export function usePrayer(passive = false) {
   const [mode, setMode] = useStored<Mode>('ml_prayer_mode', { auto: true, zone: 'WLY01' });

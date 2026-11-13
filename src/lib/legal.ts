@@ -21,7 +21,7 @@ export const PRIVACY: Sec[] = [
 export const TERMS: Sec[] = [
   { h: 'Using My Life', p: 'My Life is a personal organiser for your own use. Keep your phone and your PIN private. You are responsible for what is done on your device.' },
   { h: 'Your content', p: 'Everything you add belongs to you. We only store and show it back to you.' },
-  { h: 'Religious content', p: 'Quran text, zikir and prayer times are provided as a convenience. Prayer times follow JAKIM. Please confirm with your local authority where it matters.' },
+  { h: 'Religious content', p: 'Quran text, zikir and prayer times are provided as a convenience. Prayer times follow JAKIM and are only accurate in Malaysia. Please confirm with your local authority where it matters.' },
   { h: 'Assistant', p: 'My Life Assistant answers from your own data and is not a financial, medical or religious adviser.' },
   { h: 'No warranty', p: 'The app is provided as is. Keep a backup using Export. We are not liable for loss of data.' },
   { h: 'Changes', p: 'These terms may change as the app grows. The latest version is always in Settings, under About.' },
@@ -36,7 +36,7 @@ export const PRIVACY_URL = 'https://adyl0022.github.io/my-life-1.0/privacy.html'
 export const HOWTO: Sec[] = [
   { h: '1. Start on Home', p: 'The Dashboard shows your day: next prayer, tasks, spending and habits. Use the bottom bar to move between Home, Stats, Insights and Settings.' },
   { h: '2. Plan your days', p: 'Planner holds your tasks and events. Add an event and choose when to be reminded.' },
-  { h: '3. Islamic Hub', p: 'Prayer times, Quran, zikir, fasting log and more. Allow location once so prayer times are right for where you are.' },
+  { h: '3. Islamic Hub', p: 'Prayer times, Quran, zikir, fasting log and more. Prayer times use official Malaysian (JAKIM) zones, so they are only accurate in Malaysia. Allow location once so the right zone is found.' },
   { h: '4. Money and vehicles', p: 'My Finance tracks spending, income and commitments. My Record keeps mileage, service and fuel for your vehicles.' },
   { h: '5. Habit and Health', p: 'Log steps, sleep, mood and water. Your streaks and score show up in Stats and Insights.' },
   { h: '6. Ask the Assistant', p: 'Type things like "I spent RM10 on lunch". It answers from your own data and can save entries for you after you confirm.' },
@@ -49,7 +49,7 @@ export const FAQ: Sec[] = [
   { h: 'I changed phone. How do I move my data?', p: 'On the old phone, go to Settings, Export, choose Backup (JSON) and keep the file. On the new phone, open Settings, Security, Backup and restore, then Restore from a file. Photos such as receipts are not included.' },
   { h: 'I forgot my PIN.', p: 'On the lock screen tap Forgot PIN. You can use your fingerprint or your account password to set a new PIN, or erase the app data and start fresh.' },
   { h: 'Notifications do not ring.', p: 'Use Settings, General, Send a test notification. If nothing shows, allow notifications for My Life in your phone settings and turn off battery saving for the app.' },
-  { h: 'Prayer times look wrong.', p: 'Open Islamic Hub and refresh your location. Times follow JAKIM. Please confirm with your local authority.' },
+  { h: 'Prayer times look wrong.', p: 'Open Islamic Hub and refresh your location. Times follow JAKIM and are only accurate in Malaysia. Please confirm with your local authority.' },
 ];
 
 export const COPYRIGHT: Sec[] = [
