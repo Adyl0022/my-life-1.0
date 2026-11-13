@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { readCache } from './famCache';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { call, FInfo } from './family';
@@ -57,7 +58,7 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
 
   useEffect(() => {
     if (!fid) return;
-    AsyncStorage.getItem(key).then((raw) => { if (raw && alive.current) { try { setRows((r) => (r.length ? r : JSON.parse(raw))); setReady(true); } catch (e) {} } }).catch(() => {});
+    readCache<T[]>(key).then((c) => { if (c && Array.isArray(c) && alive.current) { setRows((r) => (r.length ? r : c)); setReady(true); } }).catch(() => {});
     load();
     let ch: any = null;
     try {

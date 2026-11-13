@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { useSession } from './auth';
 import { useFocusEffect } from 'expo-router';
+import { readCache } from './famCache';
 
 // Family Planner, stage A: the family space, its invite code and its members.
 // Every action goes through a server function (sql/family.sql) that checks the person and their licence.
@@ -100,7 +101,7 @@ export function useFamily() {
     } catch (e) {
       if (!alive.current) return;
       try {
-        const raw = await AsyncStorage.getItem(KEY); const c = raw ? JSON.parse(raw) : null;
+        const c: any = await readCache(KEY);
         if (c && c.uid === uid && c.info) { setInfo(c.info); setState('ready'); setOffline(true); return; }
       } catch (x) {}
       setOffline(true); setState((s) => (s === 'loading' ? 'none' : s));
@@ -110,7 +111,7 @@ export function useFamily() {
   // Show the saved copy straight away, then bring it up to date in the background.
   useEffect(() => {
     if (!uid || state !== 'loading') return;
-    AsyncStorage.getItem(KEY).then((raw) => { try { const c = raw ? JSON.parse(raw) : null; if (c && c.uid === uid && c.info && alive.current) { mem = { uid, info: c.info }; setInfo((i) => i || c.info); setState((x) => (x === 'loading' ? 'ready' : x)); } } catch (e) {} }).catch(() => {});
+    readCache<any>(KEY).then((c) => { if (c && c.uid === uid && c.info && alive.current) { mem = { uid, info: c.info }; setInfo((i) => i || c.info); setState((x) => (x === 'loading' ? 'ready' : x)); } }).catch(() => {});
   }, [uid]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => { const s = AppState.addEventListener('change', (x) => { if (x === 'active') refresh(); }); return () => s.remove(); }, [refresh]);
