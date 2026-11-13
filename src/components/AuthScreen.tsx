@@ -128,9 +128,10 @@ export function Logo({ waves = true }: { waves?: boolean }) {
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit2 }] }}>
         <View style={{ position: 'absolute', left: 83, top: 160, width: 5, height: 5, borderRadius: 3, backgroundColor: '#ffd593', shadowColor: '#ffc46b', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
-      {/* A thin breathing halo hugging the icon (a few pixels of space, soft, no hard line). */}
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 128, height: 128, borderRadius: 36, backgroundColor: 'rgba(140,150,255,.20)', opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1.03] }) }] }} />
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 120, height: 120, borderRadius: 32, backgroundColor: 'rgba(150,170,255,.26)', opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }} />
+      {/* The same soft breathing glow as the old logo: one round purple light just beyond the icon. */}
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] }) }] }}>
+        <Blob size={150} color="rgba(138,123,255,0.55)" />
+      </Animated.View>
       <View style={{ width: 112, height: 112, borderRadius: 28, backgroundColor: '#1e2255' }}>
       <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden' }}>
         {/* Same icon as the home screen, built in layers: the three colour lights turn slowly behind the raised glass tile. */}
