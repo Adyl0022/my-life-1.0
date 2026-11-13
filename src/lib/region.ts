@@ -83,6 +83,8 @@ const clean = (r: Region | null | undefined): Region => ({ cc: countryOf((r && r
 export const cu = () => curOf(active.cur).sym;
 /** The symbol ready to go in front of an amount: "RM " or "S$ " for letter symbols, "$" or "£" for single marks. */
 export const cs = () => { const s = cu(); return /[A-Za-z]/.test(s) ? s + ' ' : s; };
+/** Currency code of the chosen currency, for example "MYR". */
+export const curCode = () => curOf(active.cur).code;
 /** Country code of the chosen country, for example "MY". */
 export const regionCC = () => active.cc;
 export const regionCountry = () => countryOf(active.cc);

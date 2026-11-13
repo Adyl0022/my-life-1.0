@@ -12,6 +12,7 @@ import Svg, { Circle, Defs, Path, LinearGradient as SvgGrad, Stop } from 'react-
 import { useRouter } from 'expo-router';
 import { Glass } from '../../components/Glass';
 import { getDay, cupsGoal, goalPctOf, keyOfDate, dateOf } from '../../lib/habit';
+import { useHidden } from '../../lib/hidden';
 import { useCore, scoreParts, lifeScore, tips, weekly, patterns, hideTip, tipCat } from '../../lib/insights';
 import { TOP } from '../../lib/layout';
 import { cs, useRegion } from '../../lib/region';
@@ -28,6 +29,7 @@ export default function Insights() {
   useRegion();
   const router = useRouter();
   const [week, setWeek] = useState(false);
+  const hid = useHidden();
   const core0 = useCore();
   const [showAll, setShowAll] = useState(false);
   const [why, setWhy] = useState('');
@@ -72,7 +74,7 @@ export default function Insights() {
   const habitPct = metrics.slice(0, 3).map((m) => Math.min(100, m.p));
   const low = habitPct.indexOf(Math.min(...habitPct));
   const title = !anyData ? 'Nothing logged yet' : score >= 80 ? (week ? 'A great week' : 'You are doing great today') : score >= 50 ? (week ? 'A steady week' : 'You are doing well today') : (week ? 'A quiet week' : 'A slow start today');
-  const hint = !anyData ? 'Log steps, water or sleep in Habit & Health and your score will appear here.' : (['Steps are the part to lift next.', 'A little more water would lift your score.', 'More sleep would lift your score.'])[low];
+  const hint = !anyData ? (hid.on('habit') ? 'Log steps, water or sleep in Habit & Health and your score will appear here.' : 'Use the modules you kept on and your score will appear here.') : !hid.on('habit') ? 'Keep logging in the modules you use.' : (['Steps are the part to lift next.', 'A little more water would lift your score.', 'More sleep would lift your score.'])[low];
 
   const core = core0;
   const allTips = tips(core, week);
@@ -196,7 +198,7 @@ export default function Insights() {
             </Rise>
           )}
 
-          {week && (
+          {week && hid.on('habit') && (
             <Rise i={4}>
               <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
                 <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '700', letterSpacing: 1.4 }}>WEEKLY REVIEW</Text>
@@ -236,7 +238,7 @@ export default function Insights() {
             </Rise>
           )}
 
-          <Rise i={5}>
+          {hid.on('habit') ? <><Rise i={5}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{week ? 'Score this week' : 'Score by week'}</Text>
@@ -254,7 +256,7 @@ export default function Insights() {
               ))}
             </View>
           </Glass>
-          </Rise>
+          </Rise></> : null}
 
           <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 17, marginTop: 14, marginHorizontal: 4 }}>Calculated from your own habits, tasks, spending, records and zikir on this device.</Text>
         </ScrollView>

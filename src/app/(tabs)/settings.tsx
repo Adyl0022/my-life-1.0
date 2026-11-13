@@ -19,6 +19,8 @@ import { useLicense } from '../../lib/license';
 import { supabase } from '../../lib/supabase';
 import { Announcement } from '../../components/Announcement';
 import { RegionCard } from '../../components/RegionCard';
+import { ModulesCard } from '../../components/ModulesCard';
+import { useHidden } from '../../lib/hidden';
 import { markSeen, useAnnouncement } from '../../lib/announcement';
 import { useSession, signOut, checkPassword, setNewPassword, deleteAccount } from '../../lib/auth';
 import { syncNow, syncState, wipeCloud } from '../../lib/sync';
@@ -199,6 +201,8 @@ export default function Settings() {
   const close = () => { setDlg(''); setTyped(''); setPwv(''); setP1(''); setP2(''); setP3(''); setPwErr(''); };
 
   const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['pr', 'Prayer times', 'Alert at each solat time'], ['zk', 'Daily zikir', "Morning and evening Al-Ma'thurat"], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
+  const hid = useHidden();
+  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : k === 'pr' || k === 'zk' ? hid.on('islamic') : true));
   const isDel = dlg === 'delete';
   const canGo = isDel ? typed.trim().toUpperCase() === 'DELETE' && pwv.length > 0 : typed.trim().toUpperCase() === 'RESET';
 
@@ -248,17 +252,18 @@ export default function Settings() {
             <View style={{ gap: 12, marginTop: 14 }}>
               <Announcement />
               <RegionCard />
+              <ModulesCard />
               <Glass style={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                 <View style={{ paddingTop: 8 }}><Ttl t="Reminders and notifications" /></View>
-                {TOG.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOG.length - 1} onPress={() => setTg({ ...tg, [k]: !tg[k] })} right={<Sw on={!!tg[k]} />} />)}
+                {TOGSHOW.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOGSHOW.length - 1} onPress={() => setTg({ ...tg, [k]: !tg[k] })} right={<Sw on={!!tg[k]} />} />)}
               </Glass>
 
               <Glass style={{ padding: 16 }}>
-                <Ttl t="Prayer alert timing" />
+                {hid.on('islamic') ? <><Ttl t="Prayer alert timing" />
                 <Lbl t="When to ring, relative to the solat time" style={{ marginBottom: 8 }} />
                 <View style={{ flexDirection: 'row', gap: 6 }}>{([[0, 'On time'], [5, '5 min'], [10, '10 min'], [15, '15 min']] as const).map(([v, n]) => (
                   <Pressable key={v} onPress={() => setLead(v)} style={{ flex: 1, paddingVertical: 8, borderRadius: 12, alignItems: 'center', backgroundColor: lead === v ? 'rgba(124,156,255,.45)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{n}</Text></Pressable>))}</View>
-                {lead ? <Lbl t={'Rings ' + lead + ' minutes before each prayer'} style={{ marginTop: 8 }} /> : null}
+                {lead ? <Lbl t={'Rings ' + lead + ' minutes before each prayer'} style={{ marginTop: 8 }} /> : null}</> : <Ttl t="Notifications" />}
                 <View style={{ flexDirection: 'row', marginTop: 12 }}><Btn t="Send a test notification" onPress={testNotif} /></View>
               </Glass>
 

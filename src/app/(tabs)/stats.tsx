@@ -15,6 +15,7 @@ import { HeadIcon } from '../../components/HabitIcons';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useStored } from '../../lib/store';
 import { MODS } from '../../lib/modules';
+import { useHidden } from '../../lib/hidden';
 import { HEMPTY, getDay, cupsGoal, dateOf, keyOfDate, MOODS } from '../../lib/habit';
 import { useCore, weekly, records, hasData as hasHab, dayPct, incomeOf } from '../../lib/insights';
 import { debtSummary, remainingAt, amountDue, yearsMonths, payoffLabel } from '../../lib/debts';
@@ -45,7 +46,10 @@ const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.6
 
 export default function Stats() {
   useRegion();
-  const [tab, setTab] = useState<'use' | 'health' | 'money'>('use');
+  const hid = useHidden();
+  const [tab0, setTab] = useState<'use' | 'health' | 'money'>('use');
+  // A tab whose module was turned off falls back to App use.
+  const tab: 'use' | 'health' | 'money' = tab0 === 'health' && !hid.on('habit') ? 'use' : tab0 === 'money' && !hid.on('finance') ? 'use' : tab0;
   const u = useUsage(16);
   const [metric, setMetric] = useState<'time' | 'opens'>('time');
   const days = u.days;
@@ -91,7 +95,7 @@ export default function Stats() {
     { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'in 7 days', sum: true },
   ];
   const tot: Record<string, number> = u.mods;
-  const ranked = MODS.map((m) => ({ ...m, n: tot[m.k] || 0 })).filter((m) => m.n > 0).sort((a, b) => b.n - a.n);
+  const ranked = MODS.map((m) => ({ ...m, n: tot[m.k] || 0 })).filter((m) => m.n > 0 && hid.on(m.k as any)).sort((a, b) => b.n - a.n);
   const topN = ranked.length ? ranked[0].n : 1;
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
@@ -102,7 +106,7 @@ export default function Stats() {
         <ScrollView onScroll={navScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 130 }}>
           <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Stats</Text>
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 14 }}>
-            {([['use', 'App use'], ['health', 'Health'], ['money', 'Money']] as ['use' | 'health' | 'money', string][]).map(([k, n]) => (
+            {(([['use', 'App use'], ['health', 'Health'], ['money', 'Money']] as ['use' | 'health' | 'money', string][]).filter(([k]) => k === 'use' || (k === 'health' ? hid.on('habit') : hid.on('finance')))).map(([k, n]) => (
               <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
                 {tab === k ? (
                   <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>

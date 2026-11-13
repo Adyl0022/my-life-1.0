@@ -4,7 +4,8 @@ import * as F from './fasting';
 import { upcomingMy } from './myEvents';
 import * as DB from './debts';
 import { think, fix } from './assistantBrain';
-import { cs } from './region';
+import { cs, cu, curCode } from './region';
+import { modOn } from './hidden';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 export class AssistantBase extends React.Component<any, any> {
   render(): any { return null; }
@@ -44,7 +45,10 @@ export class AssistantBase extends React.Component<any, any> {
   parseAct(q, qn) {
     const ql = q.toLowerCase(); const has = (l) => this.has(qn, l);
     if (has(['berapa', 'how much', 'how many', 'what', 'apa', 'bila', 'when', 'macam mana', 'how', 'siapa', 'adakah', 'is my', 'are my'])) return null;
-    let money = null; const mm = ql.match(/rm\s*([\d,]+(?:\.\d+)?)/) || ql.match(/([\d,]+(?:\.\d+)?)\s*(?:ringgit|rm\b)/);
+    // Money can be written with RM, the chosen currency's symbol or code ("$10", "10 usd") or "ringgit".
+    const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const sy = esc(cu().toLowerCase()), cd = curCode().toLowerCase();
+    let money = null; const mm = ql.match(new RegExp('(?:rm|' + sy + '|' + cd + ')\\s*([\\d,]+(?:\\.\\d+)?)')) || ql.match(new RegExp('([\\d,]+(?:\\.\\d+)?)\\s*(?:ringgit|rm\\b|' + sy + '|' + cd + '\\b)'));
     if (mm) { const v = parseFloat(mm[1].replace(/,/g, '')); if (v > 0) money = v; }
     const kmm = ql.match(/([\d,]{4,7})\s*km/) || ql.match(/(?:odometer|odo|mileage|milage|meter)\D{0,15}?([\d,]{4,7})/);
     const kmv = kmm ? parseInt(kmm[1].replace(/,/g, ''), 10) : null;
@@ -439,10 +443,10 @@ export class AssistantBase extends React.Component<any, any> {
           m = mk(L('Your data is encrypted on this phone and backed up to your own account when you are signed in. I work offline, and nothing is sent to an AI service. You can also lock the app with a PIN or fingerprint in Settings, Security.', 'Data awak disulitkan dalam telefon ini dan disimpan ke akaun awak sendiri bila awak log masuk. Saya berfungsi tanpa internet, dan tiada apa dihantar ke perkhidmatan AI. Awak juga boleh kunci app dengan PIN atau cap jari di Settings, Security.'), { label: L('Open Security', 'Buka Security'), href: 'Settings.dc.html' });
           break;
         case 'help':
-          m = mk(L('You can ask me about:\n• Health: steps, distance, sleep, water, mood\n• Faith: next prayer, prayer times, Quran, zikir, fasting\n• Money: spending, income, money left, category limits, budget alerts, commitments and debts\n• Savings goals: how much saved, progress, what is left to reach a goal\n• Motorcycle: mileage, service, odometer\n• Tasks: open tasks, due soon, events\n• App: reminders, app lock, export (includes savings goals and Money Left)\nI can save for you: "spent RM10 on lunch", "service motor RM120", "add mileage 18500 km", "I slept 7 hours", "add task buy milk".', 'Awak boleh tanya saya tentang:\n• Kesihatan: langkah, jarak, tidur, air, mood\n• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha\n• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang\n• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran\n• Motosikal: jarak, servis, odometer\n• Tugasan: tugasan, hampir tarikh, acara\n• App: peringatan, kunci app, eksport (termasuk tabung dan baki wang)\nSaya boleh simpankan: "belanja RM10 untuk makan", "servis motor RM120", "tambah milage 18500 km", "saya tidur 7 jam", "tambah tugasan beli susu".'));
+          m = mk(L('You can ask me about:\n• Health: steps, distance, sleep, water, mood\n• Faith: next prayer, prayer times, Quran, zikir, fasting\n• Money: spending, income, money left, category limits, budget alerts, commitments and debts\n• Savings goals: how much saved, progress, what is left to reach a goal\n• Motorcycle: mileage, service, odometer\n• Tasks: open tasks, due soon, events\n• App: reminders, app lock, export (includes savings goals and Money Left)\nI can save for you: "spent ' + cu() + '10 on lunch", "service motor ' + cu() + '120", "add mileage 18500 km", "I slept 7 hours", "add task buy milk".', 'Awak boleh tanya saya tentang:\n• Kesihatan: langkah, jarak, tidur, air, mood\n• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha\n• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang\n• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran\n• Motosikal: jarak, servis, odometer\n• Tugasan: tugasan, hampir tarikh, acara\n• App: peringatan, kunci app, eksport (termasuk tabung dan baki wang)\nSaya boleh simpankan: "belanja ' + cu() + '10 untuk makan", "servis motor ' + cu() + '120", "tambah milage 18500 km", "saya tidur 7 jam", "tambah tugasan beli susu".'));
           break;
         default:
-          m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford RM300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli RM300?"'));
+          m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford ' + cu() + '300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli ' + cu() + '300?"'));
       }
     }
     if (!patch.ctx) { const mkm = { steps: 'steps', dist: 'steps', sleep: 'sleep', water: 'water', mood: 'mood' }; const idd = this.pick(this.norm(fix(q))); patch.ctx = mkm[idd] ? { intent: 'metric', mkey: mkm[idd] } : (idd === 'spend' || idd === 'spendM') ? { intent: 'spend' } : {}; }
@@ -472,11 +476,17 @@ export class AssistantBase extends React.Component<any, any> {
       3: [['What did I spend today?', 'Berapa saya belanja hari ini?'], ['What did I spend this month?', 'Belanja bulan ini?'], ['My income this month', 'Pendapatan saya bulan ini'], ['How much is left?', 'Berapa baki saya?'], ['Top spending category', 'Kategori belanja paling banyak'], ['My commitments and debts', 'Komitmen dan hutang saya']],
       4: [['Motorcycle mileage this month', 'Jarak motor bulan ini'], ['Compare with last month', 'Banding dengan bulan lepas'], ['What is my odometer?', 'Bacaan odometer saya?'], ['When is my next service?', 'Bila servis seterusnya?'], ['Maintenance spending', 'Belanja penyelenggaraan']],
       5: [['My open tasks', 'Tugasan saya'], ['What is due soon?', 'Apa yang hampir tarikh?'], ['Upcoming events', 'Acara akan datang'], ['Add task buy milk', 'Tambah tugasan beli susu'], ['Add task call mom', 'Tambah tugasan call mak']],
-      7: [['I spent RM10 on lunch', 'Saya belanja RM10 untuk makan'], ['Paid RM50 for petrol', 'Bayar RM50 untuk minyak'], ['Service motorcycle RM120', 'Servis motor RM120'], ['Add mileage 18500 km', 'Tambah milage 18500 km'], ['Overtime received RM180', 'Overtime masuk RM180'], ['Add 2 glasses of water', 'Tambah 2 gelas air'], ['Add 1000 steps', 'Tambah 1000 langkah'], ['I slept 7 hours', 'Saya tidur 7 jam'], ['My mood is good', 'Mood saya baik'], ['Add task buy milk', 'Tambah tugasan beli susu']],
+      7: [['I spent ' + cu() + '10 on lunch', 'Saya belanja ' + cu() + '10 untuk makan'], ['Paid ' + cu() + '50 for petrol', 'Bayar ' + cu() + '50 untuk minyak'], ['Service motorcycle ' + cu() + '120', 'Servis motor ' + cu() + '120'], ['Add mileage 18500 km', 'Tambah milage 18500 km'], ['Overtime received ' + cu() + '180', 'Overtime masuk ' + cu() + '180'], ['Add 2 glasses of water', 'Tambah 2 gelas air'], ['Add 1000 steps', 'Tambah 1000 langkah'], ['I slept 7 hours', 'Saya tidur 7 jam'], ['My mood is good', 'Mood saya baik'], ['Add task buy milk', 'Tambah tugasan beli susu']],
       6: [['What can I ask?', 'Apa boleh saya tanya?'], ['Is my data safe?', 'Adakah data saya selamat?'], ['Are my reminders on?', 'Peringatan saya hidup?'], ['Is app lock on?', 'Kunci app hidup?'], ['Who are you?', 'Siapa awak?'], ['Hello', 'Hai']]
     };
     const catNames = [['Today', 'Hari ini'], ['Health', 'Kesihatan'], ['Faith', 'Ibadah'], ['Money', 'Wang'], ['Motor', 'Motor'], ['Tasks', 'Tugasan'], ['Help', 'Bantuan'], ['Save record', 'Simpan rekod']];
-    const order = [0, 7, 1, 2, 3, 4, 5, 6];
+    // Categories of a module that is turned off are left out.
+    const catMod = { 1: 'habit', 2: 'islamic', 3: 'finance', 4: 'record', 5: 'planner' };
+    const order = [0, 7, 1, 2, 3, 4, 5, 6].filter((i) => !catMod[i] || modOn(catMod[i]));
+    const cat = order.indexOf(s.cat) < 0 ? 0 : s.cat;
+    // Example questions about a module that is turned off are left out.
+    const qMod = [['habit', /steps|water|sleep|slept|mood|habit|walk/i], ['planner', /task|event/i], ['finance', /spent|spend|petrol|income|overtime|money|saving|budget|commit|bill/i], ['record', /motorcycle|mileage|service|motor/i], ['islamic', /prayer|fasting|quran|zikir|solat/i]];
+    const qOk = (label) => qMod.every((m) => modOn(m[0]) || !m[1].test(label));
     const ix = ms ? 1 : 0;
     const S = [
       [0, 0, 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z', 'linear-gradient(140deg,#8fe9e2,#7c9cff)'],
@@ -509,13 +519,13 @@ export class AssistantBase extends React.Component<any, any> {
       clear: () => this.setState({ msgs: [], typing: false }),
       welcome: this.clean(L('Hi ' + this.fn() + '! I am your My Life assistant. I answer from your own data, on this device, with no internet or AI service. You can type in your own words, like "how much did I spend last week?" or "remind me to call mom tomorrow". Tap a question below or type your own.', 'Hai ' + this.fn() + '! Saya pembantu My Life awak. Saya jawab berdasarkan data awak sendiri, dalam peranti ini, tanpa internet atau perkhidmatan AI. Taip dengan cara awak sendiri, contohnya "berapa belanja minggu lepas?" atau "ingatkan saya telefon mak esok". Tekan soalan di bawah atau taip sendiri.')),
       startDisp: s.msgs.length === 0 ? 'grid' : 'none',
-      starters: S.map(x => { const q = Q[x[0]][x[1]][ix]; return { label: q, d: x[2], bg: x[3], go: () => this.ask(q) }; }),
+      starters: S.filter((x) => (!catMod[x[0]] || modOn(catMod[x[0]])) && qOk(Q[x[0]][x[1]][0])).map(x => { const q = Q[x[0]][x[1]][ix]; return { label: q, d: x[2], bg: x[3], go: () => this.ask(q) }; }),
       msgs: msgs,
       typD: s.typing ? 'flex' : 'none',
-      cats: order.map((i) => ({ name: catNames[i][ix], cls: i === s.cat ? 'cat on' : 'cat', go: () => this.setState({ cat: i }) })),
-      chips: Q[s.cat].map(x => ({ label: x[ix], go: () => this.ask(x[ix]) })),
+      cats: order.map((i) => ({ name: catNames[i][ix], cls: i === cat ? 'cat on' : 'cat', go: () => this.setState({ cat: i }) })),
+      chips: Q[cat].filter((x) => qOk(x[0])).map(x => ({ label: x[ix], go: () => this.ask(x[ix]) })),
       draft: s.draft,
-      ph: L('Ask or say "spent RM10 on lunch"...', 'Tanya atau cakap "belanja RM10 makan"...'),
+      ph: L('Ask or say "spent ' + cu() + '10 on lunch"...', 'Tanya atau cakap "belanja ' + cu() + '10 makan"...'),
       onDraft: (e) => this.setState({ draft: e.target.value }),
       onKey: (e) => { if (e && e.key === 'Enter') this.ask(e.target.value); },
       send: () => this.ask(this.state.draft)

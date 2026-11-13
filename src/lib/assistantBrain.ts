@@ -5,6 +5,7 @@
 import * as DB from './debts';
 import { calcLeft } from './moneyLeft';
 import { cs } from './region';
+import { modOn } from './hidden';
 
 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WD_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -290,6 +291,13 @@ export function think(A, q, lang) {
   const isSpend = has(['belanja', 'spend', 'spent', 'spending', 'habis', 'perbelanjaan', 'expense', 'expenses', 'kos', 'cost', 'bayar', 'paid', 'duit keluar']);
   let cat = null; CATK.forEach((c) => { if (!cat && c[1].some((w) => (' ' + qn + ' ').indexOf(' ' + w + ' ') >= 0)) cat = c[0]; });
   const intent = A.pick(qn);
+  // A module that is turned off in Settings is not answered here.
+  const offAns = (name, nameBm) => done(mk(L(name + ' is turned off. You can turn it on again in Settings, Modules.', nameBm + ' dimatikan. Hidupkan semula di Settings, Modules.')));
+  if (!modOn('habit') && ['steps', 'dist', 'sleep', 'water', 'mood'].indexOf(intent) >= 0) return offAns('Habit & Health', 'Habit & Health');
+  if (!modOn('planner') && ['tasks', 'due', 'events'].indexOf(intent) >= 0) return offAns('Daily Planner', 'Daily Planner');
+  if (!modOn('finance') && (isSpend || ['spend', 'income', 'left'].indexOf(intent) >= 0 || has(['tabung', 'simpanan', 'savings goal', 'savings goals', 'bajet', 'budget', 'hutang', 'komitmen', 'commitment', 'gaji', 'salary']))) return offAns('My Finance', 'My Finance');
+  if (!modOn('islamic') && has(['solat', 'prayer', 'subuh', 'zohor', 'asar', 'maghrib', 'isyak', 'quran', 'tahlil', 'zikir', 'tasbih', 'puasa', 'fasting', 'qadha', 'kiblat', 'mathurat'])) return offAns('Islamic Hub', 'Islamic Hub');
+  if (!modOn('record') && has(['motor', 'motosikal', 'servis', 'service', 'odometer', 'mileage', 'milage', 'cukai jalan', 'road tax', 'insurans', 'insurance', 'kenderaan', 'vehicle'])) return offAns('My Record', 'My Record');
 
   if (has(['tabung', 'simpanan', 'savings goal', 'saving goal', 'savings goals', 'my savings', 'goal saya', 'matlamat simpanan', 'down payment', 'deposit motor', 'dana kahwin', 'wedding fund', 'travel fund', 'emergency fund', 'emergency savings']) && !has(['belanja', 'spend'])) {
     const G = R.goals || [];
@@ -428,7 +436,7 @@ export function think(A, q, lang) {
     const flex = ['Food', 'Shopping', 'Other', 'Petrol'].filter((k) => o[k]).sort((a, b) => o[b] - o[a]);
     const out = [L('Based on what you logged this month (' + rm(tc) + '):', 'Berdasarkan apa yang awak rekod bulan ini (' + rm(tc) + '):')];
     flex.slice(0, 2).forEach((k) => out.push(L('• ' + k + ' is ' + rm(o[k]) + '. Cutting it by 10% saves about ' + rm(o[k] * 0.1) + ' a month.', '• ' + k + ' ialah ' + rm(o[k]) + '. Kurangkan 10% jimat kira-kira ' + rm(o[k] * 0.1) + ' sebulan.')));
-    const small = cur.filter((x) => x.amt <= 15); if (small.length >= 5) out.push(L('• ' + small.length + ' small spends of ' + cs() + '15 or less add up to ' + rm(sum(small, (x) => x.amt)) + '. Small things add up.', '• ' + small.length + ' belanja kecil RM15 ke bawah berjumlah ' + rm(sum(small, (x) => x.amt)) + '. Yang kecil pun terkumpul.'));
+    const small = cur.filter((x) => x.amt <= 15); if (small.length >= 5) out.push(L('• ' + small.length + ' small spends of ' + cs() + '15 or less add up to ' + rm(sum(small, (x) => x.amt)) + '. Small things add up.', '• ' + small.length + ' belanja kecil ' + cs() + '15 ke bawah berjumlah ' + rm(sum(small, (x) => x.amt)) + '. Yang kecil pun terkumpul.'));
     if (s.income) out.push(L('• You have spent ' + Math.round(tc / s.income * 100) + '% of this month\'s income. A common goal is to keep ' + '20% for savings.', '• Awak dah belanja ' + Math.round(tc / s.income * 100) + '% pendapatan bulan ini. Sasaran biasa ialah simpan 20%.'));
     return mk(out.join('\n'), FIN);
   }

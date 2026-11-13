@@ -1,3 +1,4 @@
+import { modOn, Mod } from './hidden';
 import { useStored } from './store';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram } from './fasting';
 import { DEBT_EMPTY, DebtData, remaining, isActive, ymOf, dueDay, amountDue, debtSummary, monthsLeft, yearsMonths, payoffLabel } from './debts';
@@ -64,7 +65,8 @@ export function scoreParts(c: Core, week: boolean): Part[] {
     const rs = ramadanState(c.puasa || PUASA_EMPTY, new Date());
     if (rs.phase === 'during') { const past = Math.max(1, rs.day - 1 - rs.excused); parts.push({ k: 'faith', label: 'Ramadan', pct: Math.min(100, Math.round((rs.fasted / past) * 100)), detail: rs.fasted + ' days fasted of ' + rs.day, c: '#34d399' }); }
   } catch (e) {}
-  return parts;
+  const need: Record<string, Mod> = { habit: 'habit', tasks: 'planner', bills: 'finance', spend: 'finance', faith: 'islamic' };
+  return parts.filter((p) => !need[p.k] || modOn(need[p.k]));
 }
 export const lifeScore = (p: Part[]) => (p.length ? Math.round(p.reduce((a, b) => a + b.pct, 0) / p.length) : 0);
 
@@ -92,6 +94,7 @@ export function weekly(c: Core) {
 }
 
 export function patterns(c: Core): string[] {
+  if (!modOn('habit')) return [];
   const out: string[] = [];
   const cg = cupsGoal(c.hd), goal = c.hd.goal || 8000;
   const days: ReturnType<typeof getDay>[] = [];
@@ -266,7 +269,7 @@ export function tips(c: Core, week: boolean): Tip[] {
   if (vs.length && anyReading && !hadOdo && dm >= 25) add({ id: 'odo', title: 'Add this month\'s odometer reading', sub: 'Keep your mileage and suggestions in My Record up to date.', why: 'No reading has been saved yet this month.', go: '/record', k: 'insight', pri: 44 });
   else if (vs.length && !anyReading) add({ id: 'odo0', title: 'Add your first odometer reading', sub: 'My Record can then track mileage and service needs.', why: 'No odometer reading is saved yet.', go: '/record', k: 'insight', pri: 26 });
   const today = tk(0);
-  return L.filter((t) => !(c.off && c.off[t.id] && c.off[t.id] >= today)).sort((a, b) => b.pri - a.pri);
+  return L.filter((t) => tipMods(t.id).every((m) => modOn(m))).filter((t) => !(c.off && c.off[t.id] && c.off[t.id] >= today)).sort((a, b) => b.pri - a.pri);
 }
 export const hideTip = (c: Core, id: string, days = 7) => { const d = dateOf(days); c.setOff({ ...(c.off || {}), [id]: keyOfDate(d) }); };
 
@@ -281,6 +284,14 @@ export function records(c: Core) {
   return { streak: bestStreakAll(c.hd), steps: bs, stepsDate: bsd, water: bw, waterDate: bwd, score: bsc, scoreDate: bscd };
 }
 
+// Which modules a tip needs. A tip is shown only when all of them are on.
+export const tipMods = (id: string): Mod[] => {
+  if (id === 'hspend') return ['habit', 'finance'];
+  if (id === 'ramwater' || id === 'ramsleep') return ['habit', 'islamic'];
+  if (/^(fast|fastnext)$/.test(id)) return ['islamic'];
+  const cat = tipCat(id);
+  return [cat === 'Health' ? 'habit' : cat === 'Faith' ? 'islamic' : cat === 'Tasks' ? 'planner' : cat === 'Vehicle' ? 'record' : 'finance'];
+};
 export const tipCat = (id: string): string => {
   if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend)$/.test(id)) return 'Health';
   if (/^(fast|fastnext|kahfi|zikir|tasbih|ramtoday|qadha|ramsoon|sunat|ramgap)$/.test(id)) return 'Faith';

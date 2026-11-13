@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bg, Blob } from '../../components/Bg';
 import { Glass } from '../../components/Glass';
+import { useHidden } from '../../lib/hidden';
 import { PlannerArt, IslamicArt, FinanceArt, RecordArt, HabitArt, HabitBanner, ChipIcon, CARDS } from '../../components/dashArt';
 import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
@@ -38,6 +39,7 @@ function Drift({ dur, delay = 0, children }: { dur: number; delay?: number; chil
 
 export default function Home() {
   const router = useRouter();
+  const hid = useHidden();
   const name = useName();
   const [hd] = useStored<HData>('ml_habit', HEMPTY); const ht = getDay(hd, 0); const hcg = cupsGoal(hd);
   const go = (k: string) => { const r = ({ Planner: '/planner', Islamic: '/islamic', Finance: '/finance', Record: '/record', Habit: '/habit' } as Record<string, string>)[k]; if (r) router.push(r as any); };
@@ -87,7 +89,7 @@ export default function Home() {
             </Pressable>
           </View>
           <View style={{ flex: 1, gap: 10, marginTop: 10 + UP }}>
-            {(() => { const L = CARDS.filter((c) => c.k !== 'Habit'); return [L.slice(0, 2), L.slice(2)]; })().map((row, ri) => (
+            {(() => { const L = CARDS.filter((c) => c.k !== 'Habit' && hid.on(c.k.toLowerCase() as any)); const R: typeof L[] = []; for (let i = 0; i < L.length; i += 2) R.push(L.slice(i, i + 2)); return R; })().map((row, ri) => (
               <View key={ri} style={{ flex: 1, flexDirection: 'row', gap: 10, minHeight: 100 }}>
             {row.map((c) => (
               <Pressable key={c.k} onPress={() => go(c.k)} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
@@ -108,7 +110,7 @@ export default function Home() {
             ))}
               </View>
             ))}
-            <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+            {hid.on('habit') ? <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
               <Halo k="Habit" />
               <Glass style={{ height: 132 }}>
                 <LinearGradient colors={['rgba(183,148,255,.55)', 'rgba(94,231,223,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
@@ -129,7 +131,7 @@ export default function Home() {
                   </View>
                 </View>
               </Glass>
-            </Pressable>
+            </Pressable> : null}
           </View>
           <Glass style={{ marginTop: 12, height: 90, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 16 }}>
             <View>

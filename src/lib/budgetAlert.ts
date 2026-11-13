@@ -1,3 +1,4 @@
+import { modOn } from './hidden';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { getItem, getItemStrict, setItem } from './store';
@@ -11,6 +12,7 @@ const rm = (n: number) => cs() + Math.round(n).toLocaleString('en-MY');
 
 // Looks at this month after any spending or income is saved and sends one alert for each warning, once.
 export async function checkBudget(): Promise<void> {
+  if (!modOn('finance')) return; // My Finance is turned off
   if (Platform.OS === 'web') return;
   try {
     const cfg = await getItemStrict<BudgetCfg>('ml_budget', BUDGET_EMPTY, 1); if (!cfg || !cfg.on) return;

@@ -2,6 +2,7 @@ import { Stack, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { trackModule } from '../lib/modules';
 import { useRegion } from '../lib/region';
+import { useHidden } from '../lib/hidden';
 import { warmKey } from '../lib/secure';
 warmKey();
 import { StatusBar } from 'expo-status-bar';
@@ -31,16 +32,20 @@ function PrayerSync() {
 // Re-plans debt due reminders whenever the app opens or the debts change.
 function DebtSync() {
   const [d, , ok] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
-  useEffect(() => { if (ok && Platform.OS !== 'web') syncDebtAlerts(d); }, [ok, JSON.stringify(d)]);
+  const hid = useHidden(); const fin = hid.on('finance');
+  // Finance turned off: the due reminders are cleared too.
+  useEffect(() => { if (ok && hid.ready && Platform.OS !== 'web') syncDebtAlerts(fin ? d : { ...d, notify: false }); }, [ok, hid.ready, fin, JSON.stringify(d)]);
   return null;
 }
 // Re-plans Planner event and daily zikir reminders when the app opens, or when events or the switches in Settings change.
 function AlertSync() {
   const [pl, , ok] = useStored<{ events: PEvent[] }>('ml_planner', { events: [] });
   const [tg, , ok2] = useStored<Partial<Toggles>>('ml_toggles', {});
-  const t = { ...TG_DEFAULT, ...tg };
-  useEffect(() => { if (ok && ok2 && Platform.OS !== 'web') syncEventAlerts(pl.events || [], t); }, [ok, ok2, JSON.stringify(pl.events || []), t.ev, t.qh]);
-  useEffect(() => { if (ok2 && Platform.OS !== 'web') syncZikirAlerts(t); }, [ok2, t.zk, t.qh]);
+  const hid = useHidden();
+  // A module that is turned off also stops its reminders.
+  const t = { ...TG_DEFAULT, ...tg }; t.ev = t.ev && hid.on('planner'); t.zk = t.zk && hid.on('islamic');
+  useEffect(() => { if (ok && ok2 && hid.ready && Platform.OS !== 'web') syncEventAlerts(pl.events || [], t); }, [ok, ok2, hid.ready, JSON.stringify(pl.events || []), t.ev, t.qh]);
+  useEffect(() => { if (ok2 && hid.ready && Platform.OS !== 'web') syncZikirAlerts(t); }, [ok2, hid.ready, t.zk, t.qh]);
   const [bk, , okb] = useStored<number>('ml_backup_last', 0);
   const [bo, , okc] = useStored<boolean>('ml_backup_rem', false);
   useEffect(() => { if (okb && okc && Platform.OS !== 'web') syncBackupAlert(!!bo, bk); }, [okb, okc, bk, bo]);

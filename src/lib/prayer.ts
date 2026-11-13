@@ -1,3 +1,4 @@
+import { useHidden } from './hidden';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -102,6 +103,7 @@ export function usePrayer(passive = false) {
   const [tgRaw] = useStored<Partial<Toggles>>('ml_toggles', {});
   const tgs = { ...TG_DEFAULT, ...tgRaw };
   const [alarms] = useStored<Record<string, boolean>>('ml_prayer_alerts', { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true });
+  const hid = useHidden();
   const [clock, setClock] = useState(0);
   const dayId = myNow().toISOString().slice(0, 10);
   // Re-check the location when the app comes back after being away for 5+ minutes (never on permission dialogs, which only blink the app).
@@ -158,7 +160,8 @@ export function usePrayer(passive = false) {
   }, [mode.auto, mode.zone, tick, dayId]);
 
   useEffect(() => {
-    if (passive || Platform.OS === 'web' || !month || !place) return;
+    if (passive || Platform.OS === 'web' || !month || !place || !hid.ready) return;
+    if (!hid.on('islamic')) { clearPrayerAlerts(); return; } // Islamic Hub is off: no prayer alerts
     const list: Alert[] = [];
     for (let i = 0; i < 12; i++) {
       const d = new Date(Date.now() + 8 * 3600 * 1000 + i * 86400000);
@@ -169,7 +172,7 @@ export function usePrayer(passive = false) {
     }
     const zn = ZONES.find((x) => x.code === place.zone)?.name.split(' (')[0] || place.zone;
     if (list.length) syncPrayerAlerts(list, zn); else clearPrayerAlerts();
-  }, [month, month2, place, JSON.stringify(alarms), tgs.pr, tgs.qh, lead]);
+  }, [month, month2, place, JSON.stringify(alarms), tgs.pr, tgs.qh, lead, hid.ready, hid.on('islamic')]);
 
   const nd = myNow(); const mins = nd.getUTCHours() * 60 + nd.getUTCMinutes();
   const pick = (list: PT[]) => { let i = list.findIndex((p) => p.h * 60 + p.m > mins); const tomorrow = i < 0 && list.length > 0; if (tomorrow) i = 0; return list.length ? { ...list[i], tomorrow, idx: i, diff: list[i].h * 60 + list[i].m - mins + (tomorrow ? 1440 : 0) } : null; };

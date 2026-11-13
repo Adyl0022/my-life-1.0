@@ -10,6 +10,7 @@ import { Blob } from '../components/Bg';
 import { SEARCH_INDEX } from '../data/searchIndex';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
+import { useHidden, modOnName } from '../lib/hidden';
 
 const MODS = ['All', 'Planner', 'Islamic', 'Finance', 'Record', 'Habit', 'System'];
 
@@ -17,9 +18,10 @@ export default function Search() {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [mod, setMod] = useState('All');
+  const hid = useHidden();
   const [note, setNote] = useState('');
   const ql = q.trim().toLowerCase();
-  const res = useMemo(() => { const w = ql.split(/\s+/).filter(Boolean); return SEARCH_INDEX.filter((x) => { if (mod !== 'All' && x.m !== mod) return false; const hay = (x.t + ' ' + x.s + ' ' + x.k + ' ' + x.m).toLowerCase(); return w.every((t) => hay.indexOf(t) >= 0); }); }, [ql, mod]);
+  const res = useMemo(() => { const w = ql.split(/\s+/).filter(Boolean); return SEARCH_INDEX.filter((x) => { if (!modOnName(x.m)) return false; if (mod !== 'All' && x.m !== mod) return false; const hay = (x.t + ' ' + x.s + ' ' + x.k + ' ' + x.m).toLowerCase(); return w.every((t) => hay.indexOf(t) >= 0); }); }, [ql, mod, hid.off.join(',')]);
   const open = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }
@@ -44,7 +46,7 @@ export default function Search() {
             <TextInput value={q} onChangeText={setQ} autoFocus placeholder="Search planner, surah, finance, records..." placeholderTextColor="rgba(255,255,255,.5)" style={{ height: 50, borderRadius: 18, paddingLeft: 44, paddingRight: 14, color: '#fff', fontSize: 15, fontWeight: '600', backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', outlineStyle: 'none' } as any} />
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, flexGrow: 0 }} contentContainerStyle={{ gap: 8 }}>
-            {MODS.map((n) => (
+            {MODS.filter((n) => modOnName(n)).map((n) => (
               <Pressable key={n} onPress={() => setMod(n)}>
                 {mod === n ? (
                   <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{n}</Text></LinearGradient>
