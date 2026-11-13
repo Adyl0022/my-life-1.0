@@ -60,6 +60,8 @@ export async function call<T = any>(fn: string, args: Record<string, any> = {}):
 export const famCreate = (name: string, display: string, color: string) => call<{ id: string; code: string }>('family_create', { p_name: name, p_display: display, p_color: color });
 export const famJoin = (code: string, display: string, color: string) => call('family_join', { p_code: code, p_display: display, p_color: color });
 export const famLeave = () => call('family_leave');
+// After leaving or deleting a family: forget the saved copy, so the Family screen never shows the old family again.
+export function famForget() { mem = null; AsyncStorage.removeItem(KEY).catch(() => {}); clearRows(); }
 export const famRemove = (uid: string) => call('family_remove_member', { p_user: uid });
 export const famNewCode = () => call<string>('family_new_code');
 export const famSetRole = (uid: string, role: 'parent' | 'member') => call('family_set_role', { p_user: uid, p_role: role });

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Alert, Platform } from 'react-native';
+import { View, ScrollView, Pressable, TextInput, Platform } from 'react-native';
+import { showAlert } from '../lib/dialog';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -62,7 +63,7 @@ export default function FamilyTaskEdit() {
       router.back();
     } catch (e) { setErr(famError(e)); setBusy(false); }
   };
-  const del = () => Alert.alert('Delete this task?', 'It moves to Recently deleted for 7 days. Anyone in the family can bring it back.', [
+  const del = () => showAlert('Delete this task?', 'It moves to Recently deleted for 7 days. Anyone in the family can bring it back.', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Delete', style: 'destructive', onPress: async () => { setBusy(true); try { await famDelete('task', old!.id); router.back(); } catch (e) { setErr(famError(e)); setBusy(false); } } },
   ]);
