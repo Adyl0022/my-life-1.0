@@ -16,6 +16,8 @@ import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fa
 import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
 import { useRegion } from '../lib/region';
+import { sensorSync, setStepSource } from '../lib/stepSensor';
+import { stepTotal } from '../../modules/step-counter';
 
 const T = '#5ee7df';
 const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '600' }}>{t}</Text>;
@@ -84,7 +86,7 @@ export default function Habit() {
   const [hcOn, setHcOn] = useState(false); const [retry, setRetry] = useState(0); const [stepIn, setStepIn] = useState('');
   const setSteps = (n: number) => { const x = getDay(hRef.current, 0); put({ steps: n, ...(x.hc != null ? { adj: n - x.hc } : {}) }); };
   useEffect(() => {
-    if (!h.auto || Platform.OS === 'web') { setHcOn(false); setAutoMsg(''); return; }
+    if (!h.auto || Platform.OS === 'web') { setHcOn(false); setAutoMsg(''); setStepSource('off'); return; }
     let sub: { remove: () => void } | null = null; let alive = true; let timer: any = null; let last = 0;
     const saveToday = (f: (td: HDay) => HDay) => { const cur = hRef.current; const key = keyOfDate(dateOf(0)); const td = { ...BLANKD, ...(cur.days[key] || {}) }; setH({ ...cur, days: { ...cur.days, [key]: f(td) } }); };
     const startSensor = async (why: string) => {
@@ -93,6 +95,13 @@ export default function Habit() {
         if (!(await Pedometer.isAvailableAsync())) { setAutoMsg(why + ' This phone has no step sensor.'); return; }
         const perm: any = await withNavBar(() => Pedometer.requestPermissionsAsync());
         if (!perm.granted) { setAutoMsg('Allow Physical activity permission in phone settings to count steps.'); setH({ ...hRef.current, auto: false }); return; }
+        if ((await stepTotal()) >= 0) {
+          // The phone counts all day on its own: read that total now, while this screen is open and a few times a day in the background.
+          await setStepSource('sensor'); if (!alive) return;
+          setAutoMsg('Counting with your phone\'s step sensor. Steps are added when you open My Life and a few times a day in the background.');
+          await sensorSync(); timer = setInterval(sensorSync, 30000);
+          return;
+        }
         setAutoMsg(why);
         sub = Pedometer.watchStepCount((r: { steps: number }) => { if (!alive) return; const d = r.steps - last; last = r.steps; if (d > 0) saveToday((td) => ({ ...td, steps: td.steps + d })); });
       } catch (e) { setAutoMsg('Step counting is not available on this device.'); }
@@ -114,7 +123,7 @@ export default function Habit() {
         const n0 = await read();
         if (!alive) return;
         if (n0 <= 0) { await startSensor('No steps in Health Connect yet. In Honor Health or Samsung Health, turn on sharing to Health Connect for Steps, then tap Check again. For now steps count while this app is open.'); return; }
-        setHcOn(true); setAutoMsg('');
+        await setStepSource('hc'); setHcOn(true); setAutoMsg('');
         const sync = async () => { try { const n = await read(); if (alive) saveToday((td) => ({ ...td, hc: n, steps: Math.max(0, n + (td.adj || 0)) })); } catch (e) {} };
         await sync(); timer = setInterval(sync, 60000);
       } catch (e) { await startSensor('Health Connect is not available, so steps count while this app is open.'); }

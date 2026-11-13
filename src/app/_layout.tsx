@@ -4,6 +4,7 @@ import { trackModule } from '../lib/modules';
 import { useRegion } from '../lib/region';
 import { useHidden } from '../lib/hidden';
 import { warmKey } from '../lib/secure';
+import '../lib/stepSensor';
 warmKey();
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
