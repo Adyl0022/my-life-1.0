@@ -172,8 +172,7 @@ export default function Settings() {
       setUpd(m[1] === cur ? 'latest' : 'new');
     } catch (e) { await wait; setUpd('err'); }
   };
-  const [lead, setLead] = useStored<number>('ml_prayer_lead', 0);
-  const [bkRem, setBkRem] = useStored<boolean>('ml_backup_rem', false);
+    const [bkRem, setBkRem] = useStored<boolean>('ml_backup_rem', false);
   const [bkLast] = useStored<number>('ml_backup_last', 0);
   const mail = (subj: string, body: string) => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body)).catch(() => say('No email app found. Write to ' + SUPPORT_EMAIL + ' or ' + SUPPORT_EMAIL2));
   const info = 'App: My Life 1.0 (1.0.0, build 1)\nPhone: ' + Platform.OS + ' ' + String(Platform.Version) + '\n\n';
@@ -201,9 +200,9 @@ export default function Settings() {
   const say = (t: string) => { setToast(t); setTimeout(() => setToast(''), 2200); };
   const close = () => { setDlg(''); setTyped(''); setPwv(''); setP1(''); setP2(''); setP3(''); setPwErr(''); };
 
-  const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['pr', 'Prayer times', 'Alert at each solat time'], ['zk', 'Daily zikir', "Morning and evening Al-Ma'thurat"], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
+  const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
   const hid = useHidden();
-  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : k === 'pr' || k === 'zk' ? hid.on('islamic') : true));
+  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : true));
   const isDel = dlg === 'delete';
   const [fam, setFam] = useState<{ name: string; role: string; n: number } | null>(null);
   const askDelete = () => {
@@ -265,11 +264,7 @@ export default function Settings() {
               </Glass>
 
               <Glass style={{ padding: 16 }}>
-                {hid.on('islamic') ? <><Ttl t="Prayer alert timing" />
-                <Lbl t="When to ring, relative to the solat time" style={{ marginBottom: 8 }} />
-                <View style={{ flexDirection: 'row', gap: 6 }}>{([[0, 'On time'], [5, '5 min'], [10, '10 min'], [15, '15 min']] as const).map(([v, n]) => (
-                  <Pressable key={v} onPress={() => setLead(v)} style={{ flex: 1, paddingVertical: 8, borderRadius: 12, alignItems: 'center', backgroundColor: lead === v ? 'rgba(124,156,255,.45)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{n}</Text></Pressable>))}</View>
-                {lead ? <Lbl t={'Rings ' + lead + ' minutes before each prayer'} style={{ marginTop: 8 }} /> : null}</> : <Ttl t="Notifications" />}
+                <Ttl t="Notifications" />
                 <View style={{ flexDirection: 'row', marginTop: 12 }}><Btn t="Send a test notification" onPress={testNotif} /></View>
               </Glass>
 
