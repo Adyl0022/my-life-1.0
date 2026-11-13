@@ -5,7 +5,7 @@ import { getItem, getItemStrict, setItem } from './store';
 import { DEBT_EMPTY } from './debts';
 import { calcLeft, commitFor, ymKey } from './moneyLeft';
 import { cs } from './region';
-import { ensureHandler } from './adhan';
+import { ensureHandler, setup } from './adhan';
 
 export type BudgetCfg = { on: boolean; sent: Record<string, number> };
 export const BUDGET_EMPTY: BudgetCfg = { on: true, sent: {} };
@@ -42,7 +42,7 @@ export async function checkBudget(): Promise<void> {
     const keep: Record<string, number> = {}; Object.keys(cfg.sent).forEach((k) => { if (k.indexOf(ym) >= 0 && active.has(k)) keep[k] = 1; });
     const todo = out.filter((x) => !keep[x[0]]);
     if (!todo.length) { if (Object.keys(keep).length !== Object.keys(cfg.sent).length) await setItem('ml_budget', { ...cfg, sent: keep }); return; }
-    const p = await Notifications.getPermissionsAsync(); if (p.status !== 'granted') return;
+    if (!(await setup())) return; // asks for notification permission if it was never asked (before, no permission meant silence)
     ensureHandler();
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('budget', { name: 'Budget alerts', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ffc46b' });
     const sent: Record<string, number> = { ...keep };
