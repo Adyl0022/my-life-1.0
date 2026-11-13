@@ -8,8 +8,10 @@ create table if not exists public.families (
   name text not null check (char_length(name) between 1 and 40),
   owner_id uuid not null references auth.users(id) on delete cascade,
   code text not null unique,
+  invites_open boolean not null default true,     -- the owner can switch the invite code off
   created_at timestamptz not null default now()
 );
+alter table public.families add column if not exists invites_open boolean not null default true;
 
 create table if not exists public.family_members (
   family_id uuid not null references public.families(id) on delete cascade,
@@ -86,7 +88,7 @@ begin
   select * into f from public.families where id = m.family_id;
   return jsonb_build_object(
     'state', 'ready', 'id', f.id, 'name', f.name, 'role', m.role, 'me', uid,
-    'code', case when m.role in ('owner', 'parent') then f.code else null end,
+    'code', case when m.role in ('owner', 'parent') and f.invites_open then f.code else null end, 'invites_open', f.invites_open,
     'max_members', 15, 'max_profiles', 10,
     'members', (select coalesce(jsonb_agg(jsonb_build_object('user_id', x.user_id, 'name', x.display_name, 'color', x.color, 'role', x.role, 'joined', x.joined_at) order by x.joined_at), '[]'::jsonb)
                 from public.family_members x where x.family_id = f.id),
@@ -124,7 +126,7 @@ begin
     raise exception 'too_many_attempts';
   end if;
   if exists (select 1 from public.family_members where user_id = uid) then raise exception 'already_in_family'; end if;
-  select * into f from public.families where code = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'));
+  select * into f from public.families where invites_open and code = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'));
   if not found then
     insert into public.family_attempts(user_id) values (uid);    -- return instead of raising, so the try is saved
     return jsonb_build_object('error', 'invalid_code');
@@ -171,8 +173,36 @@ declare c text;
 begin
   if public.family_my_role() is distinct from 'owner' then raise exception 'not_allowed'; end if;
   c := public.family_gen_code();
-  update public.families set code = c where owner_id = auth.uid();
+  update public.families set code = c, invites_open = true where owner_id = auth.uid();
   return c;
+end $$;
+
+-- Switch the invite code off (nobody can join) or on again (a fresh code is made, so an old shared code stays dead).
+create or replace function public.family_set_invites(p_open boolean) returns text
+language plpgsql security definer set search_path = public as $$
+declare c text;
+begin
+  if public.family_my_role() is distinct from 'owner' then raise exception 'not_allowed'; end if;
+  if p_open then
+    c := public.family_gen_code();
+    update public.families set code = c, invites_open = true where owner_id = auth.uid();
+    return c;
+  end if;
+  update public.families set invites_open = false where owner_id = auth.uid();
+  return null;
+end $$;
+
+-- Delete the whole family for everyone. Only the owner, and only after typing the family name.
+-- Members, people without an account and every task, activity and shopping item of the family go with it.
+create or replace function public.family_delete_all(p_name text) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare f public.families;
+begin
+  if public.family_my_role() is distinct from 'owner' then raise exception 'not_allowed'; end if;
+  select * into f from public.families where owner_id = auth.uid();
+  if lower(trim(coalesce(p_name, ''))) <> lower(trim(f.name)) then raise exception 'name_mismatch'; end if;
+  delete from public.families where id = f.id;
+  return true;
 end $$;
 
 create or replace function public.family_set_role(p_user uuid, p_role text) returns boolean
@@ -244,11 +274,11 @@ end $$;
 -- Only signed-in people may call these ---------------------------------------------------------------------
 revoke all on function public.family_ok(uuid), public.family_my_role(), public.family_gen_code(), public.family_info(),
   public.family_create(text, text, text), public.family_join(text, text, text), public.family_leave(),
-  public.family_remove_member(uuid), public.family_new_code(), public.family_set_role(uuid, text),
+  public.family_remove_member(uuid), public.family_new_code(), public.family_set_invites(boolean), public.family_delete_all(text), public.family_set_role(uuid, text),
   public.family_transfer_owner(uuid), public.family_rename(text), public.family_set_me(text, text),
   public.family_profile_add(text, text), public.family_profile_remove(uuid) from public, anon;
 grant execute on function public.family_ok(uuid), public.family_my_role(), public.family_info(),
   public.family_create(text, text, text), public.family_join(text, text, text), public.family_leave(),
-  public.family_remove_member(uuid), public.family_new_code(), public.family_set_role(uuid, text),
+  public.family_remove_member(uuid), public.family_new_code(), public.family_set_invites(boolean), public.family_delete_all(text), public.family_set_role(uuid, text),
   public.family_transfer_owner(uuid), public.family_rename(text), public.family_set_me(text, text),
   public.family_profile_add(text, text), public.family_profile_remove(uuid) to authenticated;

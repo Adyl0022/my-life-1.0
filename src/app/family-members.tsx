@@ -8,7 +8,7 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, W, DIM } from '../components/FamilyUi';
-import { useFamily, famError, famNewCode, famRemove, famSetRole, famTransfer, famLeave, famAddProfile, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
+import { useFamily, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famAddProfile, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
 
 const ROLE: Record<string, string> = { owner: 'Owner', parent: 'Parent', member: 'Member' };
 
@@ -20,6 +20,8 @@ export default function FamilyMembers() {
   const [msg, setMsg] = useState('');
   const [pname, setPname] = useState('');
   const [rn, setRn] = useState('');
+  const [del, setDel] = useState(false);
+  const [dn, setDn] = useState('');
   const [busy, setBusy] = useState(false);
 
   const run = async (fn: () => Promise<any>, ok?: string) => {
@@ -69,12 +71,22 @@ export default function FamilyMembers() {
             <Rise>
               <Glass radius={24} style={{ padding: 16 }}>
                 <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Invite code</Text>
-                <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 3 }}>Share it with your family. Everyone who joins needs an active My Life subscription.</Text>
-                <Text style={{ color: W, fontSize: 28, fontWeight: '900', letterSpacing: 6, textAlign: 'center', paddingVertical: 14, marginTop: 12, borderRadius: 16, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}>{showCode(info.code)}</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                  <Btn t="Share code" kind="main" onPress={share} flex />
-                  {owner ? <Btn t="New code" onPress={() => ask('Make a new code?', 'The old code stops working. People already in the family stay.', 'New code', () => run(famNewCode))} disabled={busy} flex /> : null}
-                </View>
+                {info.invites_open ? (
+                  <>
+                    <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 3 }}>Share it with your family. Everyone who joins needs an active My Life subscription.</Text>
+                    <Text style={{ color: W, fontSize: 28, fontWeight: '900', letterSpacing: 6, textAlign: 'center', paddingVertical: 14, marginTop: 12, borderRadius: 16, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}>{showCode(info.code)}</Text>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                      <Btn t="Share code" kind="main" onPress={share} flex />
+                      {owner ? <Btn t="New code" onPress={() => ask('Make a new code?', 'The old code stops working. People already in the family stay.', 'New code', () => run(famNewCode))} disabled={busy} flex /> : null}
+                    </View>
+                    {owner ? <View style={{ marginTop: 8 }}><Btn t="Turn off code" onPress={() => ask('Turn off the code?', 'Nobody can join until you turn it on again. People already in the family stay.', 'Turn off', () => run(() => famSetInvites(false), 'Code turned off.'))} disabled={busy} /></View> : null}
+                  </>
+                ) : (
+                  <>
+                    <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 3 }}>The code is turned off, so nobody can join right now.{owner ? ' Turn it on to get a fresh code. Old codes stay dead.' : ' Ask the owner to turn it on.'}</Text>
+                    {owner ? <View style={{ marginTop: 12 }}><Btn t="Turn on code" kind="main" onPress={() => run(() => famSetInvites(true), 'New code ready.')} disabled={busy} /></View> : null}
+                  </>
+                )}
               </Glass>
             </Rise>
           ) : null}
@@ -120,6 +132,23 @@ export default function FamilyMembers() {
               <Btn t="Leave family" kind="danger" disabled={busy} onPress={() => ask('Leave this family?', owner && info.members.length > 1 ? 'You are the owner. Make someone else the owner first.' : owner ? 'You are the only member. The family will be removed.' : 'You lose access to the family. Your own data is not affected.', 'Leave', async () => { try { setBusy(true); await famLeave(); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); })} />
             </View>
           </Rise>
+          {owner ? (
+            <Rise i={5}>
+              <View style={{ marginTop: 10 }}>
+                {!del ? <Btn t="Delete family" kind="danger" disabled={busy} onPress={() => setDel(true)} /> : (
+                  <Glass radius={24} style={{ padding: 16 }}>
+                    <Text style={{ color: '#ffb3bf', fontSize: 15, fontWeight: '800' }}>Delete this family?</Text>
+                    <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>This removes the family for everyone: all members, tasks, activities and shopping items. It cannot be undone. To confirm, type the family name: {info.name}</Text>
+                    <Field label="" value={dn} onChange={setDn} ph={info.name} max={40} />
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                      <Btn t="Cancel" onPress={() => { setDel(false); setDn(''); }} flex />
+                      <Btn t="Delete forever" kind="danger" busy={busy} disabled={!dn.trim()} flex onPress={async () => { try { setBusy(true); setMsg(''); await famDeleteAll(dn); router.replace('/family' as any); } catch (e) { setMsg(famError(e)); } setBusy(false); }} />
+                    </View>
+                  </Glass>
+                )}
+              </View>
+            </Rise>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </View>

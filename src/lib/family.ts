@@ -9,7 +9,7 @@ import { useSession } from './auth';
 export type FRole = 'owner' | 'parent' | 'member';
 export type FMember = { user_id: string; name: string; color: string; role: FRole; joined: string };
 export type FProfile = { id: string; name: string; color: string };
-export type FInfo = { id: string; name: string; role: FRole; me: string; code: string | null; max_members: number; max_profiles: number; members: FMember[]; profiles: FProfile[] };
+export type FInfo = { id: string; name: string; role: FRole; me: string; code: string | null; invites_open: boolean; max_members: number; max_profiles: number; members: FMember[]; profiles: FProfile[] };
 export type FState = 'loading' | 'none' | 'locked' | 'ready';
 
 export const FAM_COLORS = ['#ff8fab', '#ffc46b', '#5ee7df', '#b794ff', '#8fe9e2', '#7c9cff'];
@@ -36,6 +36,7 @@ const MSG: Record<string, string> = {
   bad_people: 'One of the chosen people is no longer in the family.',
   bad_date: 'Please check the date and time.',
   repeat_needs_date: 'A repeating task needs a date.',
+  name_mismatch: 'The name does not match. Type the family name exactly.',
   list_full: 'This list is full. Delete some old items first.',
   not_found: 'That item was already changed or deleted by someone else.',
 };
@@ -58,6 +59,8 @@ export const famLeave = () => call('family_leave');
 export const famRemove = (uid: string) => call('family_remove_member', { p_user: uid });
 export const famNewCode = () => call<string>('family_new_code');
 export const famSetRole = (uid: string, role: 'parent' | 'member') => call('family_set_role', { p_user: uid, p_role: role });
+export const famSetInvites = (open: boolean) => call<string | null>('family_set_invites', { p_open: open });
+export const famDeleteAll = (name: string) => call('family_delete_all', { p_name: name });
 export const famTransfer = (uid: string) => call('family_transfer_owner', { p_user: uid });
 export const famRename = (name: string) => call('family_rename', { p_name: name });
 export const famSetMe = (name: string, color: string) => call('family_set_me', { p_display: name, p_color: color });
