@@ -208,7 +208,7 @@ export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number;
 // 5. Documents and receipts ----------------------------------------------------
 async function pickImage(): Promise<string | null> {
   const IP = await import('expo-image-picker');
-  const r = await IP.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, base64: Platform.OS === 'web' });
+  const r = await IP.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.4, base64: Platform.OS === 'web' });
   if (r.canceled || !r.assets || !r.assets[0]) return null;
   const a: any = r.assets[0];
   if (Platform.OS === 'web') return a.base64 ? 'data:' + (a.mimeType || 'image/jpeg') + ';base64,' + a.base64 : a.uri;
@@ -238,6 +238,7 @@ export function DocsCard({ d, upd }: P<Ext>) {
         <Btn t={busy ? 'Opening…' : '+ Photo'} onPress={add} />
       </View>
       {msg ? <Text style={{ color: '#ffb3c6', fontSize: 12, marginTop: 6 }}>{msg}</Text> : null}
+      <Text style={{ marginTop: 10, color: dim, fontSize: 11.5, lineHeight: 16 }}>Photos stay on this phone and are not synced to a server. To keep them, save a backup in Settings (Backup JSON file). The backup carries up to 25 photos.</Text>
       {list.length === 0 ? <Text style={{ marginTop: 10, color: dim, fontSize: 12 }}>No documents yet. Type a title, tap + Photo and pick a picture from your gallery.</Text> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
         {list.map((x) => (

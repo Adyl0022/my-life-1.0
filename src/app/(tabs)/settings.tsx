@@ -441,10 +441,10 @@ export default function Settings() {
             {bk.created ? <Text style={{ color: '#8fe9e2', fontSize: 12.5, marginTop: 4 }}>Saved {bk.created}</Text> : null}
             <Text style={{ color: DIM, fontSize: 13, lineHeight: 19, marginTop: 8 }}>This backup holds:</Text>
             {bk.parts.map((n) => <Text key={n} style={{ color: W, fontSize: 13.5, marginTop: 3 }}>•  {n}</Text>)}
-            <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>These parts will be replaced with what is in the file. Anything else on this phone stays as it is. Photos such as receipts are not part of a backup.</Text>
+            <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>These parts will be replaced with what is in the file. Anything else on this phone stays as it is.{bk.images ? ' Receipt photos in the file are restored too.' : ''}</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
               <Btn t="Cancel" onPress={close} />
-              <Btn t="Restore" kind="primary" onPress={async () => { await applyBackup(bk); setDoneMsg('Your backup has been restored: ' + bk.parts.join(', ') + '.'); setBk(null); setDlg('done'); }} />
+              <Btn t="Restore" kind="primary" onPress={async () => { const np = await applyBackup(bk); setDoneMsg('Your backup has been restored: ' + bk.parts.join(', ') + '.' + (np > 0 ? ' ' + np + (np === 1 ? ' receipt photo' : ' receipt photos') + ' restored.' : '')); setBk(null); setDlg('done'); }} />
             </View>
           </View></Overlay>
         )}
