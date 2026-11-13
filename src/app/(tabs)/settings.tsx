@@ -175,7 +175,7 @@ export default function Settings() {
     const [bkRem, setBkRem] = useStored<boolean>('ml_backup_rem', false);
   const [bkLast] = useStored<number>('ml_backup_last', 0);
   const mail = (subj: string, body: string) => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body)).catch(() => say('No email app found. Write to ' + SUPPORT_EMAIL + ' or ' + SUPPORT_EMAIL2));
-  const info = 'App: My Life 1.0 (1.0.0, build 1)\nPhone: ' + Platform.OS + ' ' + String(Platform.Version) + '\n\n';
+  const info = 'App: My Life 1.0 (1.0.1, build 1)\nPhone: ' + Platform.OS + ' ' + String(Platform.Version) + '\n\n';
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');
     try {
@@ -352,10 +352,10 @@ export default function Settings() {
                 {upd === 'new' ? <Pressable onPress={() => Linking.openURL('https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest')} style={{ marginTop: 8 }}><LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999 }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Download the new version</Text></LinearGradient></Pressable> : null}
               </View>
               <Glass style={{ paddingHorizontal: 16 }}>
-                {[['Version', '1.0.0'], ['Build', '1'], ['Developed', 'November 2026'], ['Developer', 'Adli Syahmi']].map(([a, b], i) => <Row key={a} t={a} last={i === 3} right={<Text style={{ color: DIM, fontSize: 13 }}>{b}</Text>} />)}
+                {[['Version', '1.0.1'], ['Build', '1'], ['Developed', 'November 2026'], ['Developer', 'Adli Syahmi']].map(([a, b], i) => <Row key={a} t={a} last={i === 3} right={<Text style={{ color: DIM, fontSize: 13 }}>{b}</Text>} />)}
               </Glass>
               <Glass style={{ paddingHorizontal: 16 }}>
-                <Row t="What's new in 1.0.0" onPress={() => setDlg('new')} right={<Chev />} />
+                <Row t="What's new in 1.0.1" onPress={() => setDlg('new')} right={<Chev />} />
                 <Row t="Privacy Policy" onPress={() => setDlg('privacy')} right={<Chev />} />
                 <Row t="Privacy Policy on the web" onPress={() => Linking.openURL(PRIVACY_URL)} right={<Chev />} />
                 <Row t="Terms of Use" onPress={() => setDlg('terms')} right={<Chev />} />
@@ -397,7 +397,7 @@ export default function Settings() {
         {dlg === 'privacy' && <Doc title="Privacy Policy" secs={PRIVACY} onClose={close} />}
         {dlg === 'terms' && <Doc title="Terms of Use" secs={TERMS} onClose={close} />}
         {dlg === 'copy' && <Doc title="Copyright and licence" secs={COPYRIGHT} onClose={close} />}
-        {dlg === 'new' && <Doc title="What's new in 1.0.0" secs={WHATS_NEW} onClose={close} />}
+        {dlg === 'new' && <Doc title="What's new in 1.0.1" secs={WHATS_NEW} onClose={close} />}
         {dlg === 'done' && (
           <Overlay onClose={() => { close(); router.replace('/' as any); }}><View style={{ padding: 22, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', alignItems: 'center' }}>
             <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: 'rgba(94,231,181,.25)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#5ee7b5', fontSize: 28, fontWeight: '800' }}>✓</Text></View>
