@@ -62,10 +62,9 @@ export default function FamilyEventEdit() {
   const save = async () => {
     setErr('');
     if (!title.trim()) { setErr('Please type a title.'); return; }
-    if (end && end < start) { setErr('The end time is before the start time.'); return; }
     setBusy(true);
     try {
-      await eventSave({ id: old ? old.id : null, title, place, note, starts: start.toISOString(), ends: end ? end.toISOString() : null, attendees: who, remind });
+      await eventSave({ id: old ? old.id : null, title, place, note, starts: start.toISOString(), ends: null, attendees: who, remind });
       router.back();
     } catch (e) { setErr(famError(e)); setBusy(false); }
   };
@@ -89,10 +88,6 @@ export default function FamilyEventEdit() {
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable style={{ flex: 1.3, ...box }} onPress={() => pick('date')}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{dateText(start)}</Text></Pressable>
             <Pressable style={{ flex: 1, ...box }} onPress={() => pick('start')}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{timeText(start)}</Text></Pressable>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 }}>
-            <Pressable style={{ flex: 1, ...box }} onPress={() => pick('end')}><Text style={{ color: end ? W : DIM, fontSize: 14, fontWeight: '700' }}>{end ? 'Ends ' + timeText(end) : 'Add an end time'}</Text></Pressable>
-            {end ? <Pressable onPress={() => setEnd(null)} hitSlop={8}><Text style={{ color: '#ffb3bf', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable> : null}
           </View>
 
           <Label t="Who is going" />
