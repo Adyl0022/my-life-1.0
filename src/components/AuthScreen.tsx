@@ -136,16 +136,18 @@ export function Logo({ waves = true }: { waves?: boolean }) {
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit2 }] }}>
         <View style={{ position: 'absolute', left: 83, top: 160, width: 5, height: 5, borderRadius: 3, backgroundColor: '#ffd593', shadowColor: '#ffc46b', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
-      <View style={{ width: 112, height: 112, borderRadius: 28, backgroundColor: '#1e2255', shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 10 }}>
-      <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden', borderWidth: 1.2, borderColor: 'rgba(255,255,255,.3)' }}>
+      <View style={{ width: 112, height: 112, borderRadius: 28, backgroundColor: '#1e2255' }}>
+      <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden' }}>
         {/* Same icon as the home screen, built in layers: the three colour lights turn slowly behind the raised glass tile. */}
         <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -28, top: -28, width: 168, height: 168, transform: [{ rotate: inner }] }}>
           <Image source={require('../../assets/android-icon-background.png')} style={{ width: 168, height: 168 }} />
         </Animated.View>
         <Image source={require('../../assets/android-icon-foreground.png')} style={{ position: 'absolute', left: -10, top: -10, width: 132, height: 132 }} />
-        <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,.34)', 'rgba(255,255,255,.08)', 'rgba(255,255,255,0)']} locations={[0, 0.35, 0.6]} start={{ x: 0.15, y: 0 }} end={{ x: 0.6, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112 }} />
-        <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,0)', 'rgba(8,10,40,.28)']} start={{ x: 0.5, y: 0.6 }} end={{ x: 0.5, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', left: 6, right: 6, top: 1, height: 1.5, borderRadius: 1, backgroundColor: 'rgba(255,255,255,.55)' }} />
+        {/* Glass sheen on the raised tile only (the icon's own background stays as it is). */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 21, top: 21, width: 70, height: 70, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' }}>
+          <LinearGradient colors={['rgba(255,255,255,.3)', 'rgba(255,255,255,.06)', 'rgba(255,255,255,0)']} locations={[0, 0.4, 0.7]} start={{ x: 0.1, y: 0 }} end={{ x: 0.7, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, width: 70, height: 70 }} />
+          <View style={{ position: 'absolute', left: 8, right: 8, top: 0.5, height: 1.2, borderRadius: 1, backgroundColor: 'rgba(255,255,255,.5)' }} />
+        </View>
       </View>
       </View>
     </View>
