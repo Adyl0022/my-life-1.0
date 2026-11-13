@@ -122,9 +122,13 @@ export function Logo({ waves = true }: { waves?: boolean }) {
   useEffect(() => { const a = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })])); a.start(); return () => a.stop(); }, []);
   return (
     <View style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}>
-      {waves ? <><Wave delay={0} /><Wave delay={1600} /></> : null}
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] }) }] }}>
-        <Blob size={150} color="rgba(138,123,255,0.55)" />
+        <Animated.View style={{ width: 150, height: 150, transform: [{ rotate: inner2 }] }}>
+          {([[-90, 'rgba(110,140,255,0.6)'], [30, 'rgba(200,110,230,0.5)'], [150, 'rgba(70,205,205,0.55)']] as const).map(([a, c]) => {
+            const r = (a * Math.PI) / 180;
+            return <View key={a} style={{ position: 'absolute', left: 75 - 45 + 34 * Math.cos(r), top: 75 - 45 + 34 * Math.sin(r) }}><Blob size={90} color={c} /></View>;
+          })}
+        </Animated.View>
       </Animated.View>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit }] }}>
         <View style={{ position: 'absolute', left: 82, top: 2, width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff', shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }} />
@@ -133,8 +137,11 @@ export function Logo({ waves = true }: { waves?: boolean }) {
         <View style={{ position: 'absolute', left: 83, top: 160, width: 5, height: 5, borderRadius: 3, backgroundColor: '#ffd593', shadowColor: '#ffc46b', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
       <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden', backgroundColor: '#1e2255' }}>
-        {/* The full app icon, exactly as on the home screen (glass tile raised in the middle). */}
-        <Image source={require('../../assets/icon.png')} style={{ width: 112, height: 112 }} resizeMode="cover" />
+        {/* Same icon as the home screen, built in layers: the three colour lights turn slowly behind the raised glass tile. */}
+        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -28, top: -28, width: 168, height: 168, transform: [{ rotate: inner }] }}>
+          <Image source={require('../../assets/android-icon-background.png')} style={{ width: 168, height: 168 }} />
+        </Animated.View>
+        <Image source={require('../../assets/android-icon-foreground.png')} style={{ position: 'absolute', left: -10, top: -10, width: 132, height: 132 }} />
       </View>
     </View>
   );
