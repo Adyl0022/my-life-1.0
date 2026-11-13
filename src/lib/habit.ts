@@ -15,6 +15,8 @@ export const cupsGoal = (h: HData) => { const k = latestKg(h); return k > 0 ? Ma
 export const goalPctOf = (x: HDay, goal: number, cg = 8) => Math.round(((Math.min(x.cups / cg, 1)) + Math.min(x.sleep / 7, 1) + Math.min(x.steps / goal, 1)) / 3 * 100);
 export const actOf = (x: HDay, goal: number) => Math.round(Math.min(x.steps / goal, 1) * 5);
 export const scoreOf = (x: HDay, goal: number, cg = 8) => Math.round(((Math.min(x.cups / cg, 1)) + (actOf(x, goal) / 5) + Math.min(x.sleep / 7, 1)) / 3 * 4);
+// Keeps only digits (max 4) and puts the colon in for the person: 0830 -> 08:30.
+export const fmtTime = (s: string) => { const d = s.replace(/\D/g, '').slice(0, 4); return d.length > 2 ? d.slice(0, 2) + ':' + d.slice(2) : d; };
 export const hoursBetween = (bed: string, wake: string) => {
   const re = /^([01]?\d|2[0-3]):([0-5]\d)$/; const a = re.exec(bed), b = re.exec(wake); if (!a || !b) return 0;
   let m = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]); if (m <= 0) m += 1440; return Math.round(m / 6) / 10;

@@ -13,7 +13,7 @@ import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
-import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, bestStreakAll, avgOf } from '../lib/habit';
+import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
 
 const T = '#5ee7df';
@@ -64,7 +64,7 @@ export default function Habit() {
   const [edit, setEdit] = useState(false); const [gv, setGv] = useState('');
   const hRef = useRef(h); hRef.current = h;
   const [autoMsg, setAutoMsg] = useState('');
-  const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState(''); const [wake, setWake] = useState('');
+  const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState<string | null>(null); const [wake, setWake] = useState<string | null>(null);
   const goal = h.goal || 8000;
   const cg = cupsGoal(h); const kg = latestKg(h);
   const t = getDay(h, 0);
@@ -211,11 +211,11 @@ export default function Habit() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed || t.bed || ''} onChangeText={setBed} placeholder="e.g. 08:30" style={{ marginTop: 4 }} /></View>
-              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake || t.wake || ''} onChangeText={setWake} placeholder="e.g. 15:30" style={{ marginTop: 4 }} /></View>
-              <Pressable onPress={() => { const b = bed || t.bed || '', w = wake || t.wake || ''; const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(''); setWake(''); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
+              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed ?? t.bed ?? ''} onChangeText={(x: string) => setBed(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 08:30" style={{ marginTop: 4 }} /></View>
+              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake ?? t.wake ?? ''} onChangeText={(x: string) => setWake(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 15:30" style={{ marginTop: 4 }} /></View>
+              <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
             </View>
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time like 08:30 and the hours fill in for you.</Text>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={6} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 2 }}>{tip[1]}</Text></View>
           </Glass>
