@@ -32,6 +32,17 @@ export const CURRENCIES: Cur[] = [
   { code: 'TRY', sym: '₺', name: 'Turkish lira', where: 'Türkiye', flag: '🇹🇷', grp: 'More' },
   { code: 'EGP', sym: 'E£', name: 'Egyptian pound', where: 'Egypt', flag: '🇪🇬', grp: 'More' },
   { code: 'ZAR', sym: 'R', name: 'South African rand', where: 'South Africa', flag: '🇿🇦', grp: 'More' },
+  { code: 'KHR', sym: '៛', name: 'Cambodian riel', where: 'Cambodia', flag: '🇰🇭', grp: 'Nearby' },
+  { code: 'LAK', sym: '₭', name: 'Lao kip', where: 'Laos', flag: '🇱🇦', grp: 'Nearby' },
+  { code: 'MMK', sym: 'K', name: 'Myanmar kyat', where: 'Myanmar', flag: '🇲🇲', grp: 'Nearby' },
+  { code: 'NPR', sym: 'Rs', name: 'Nepalese rupee', where: 'Nepal', flag: '🇳🇵', grp: 'More' },
+  { code: 'LKR', sym: 'Rs', name: 'Sri Lankan rupee', where: 'Sri Lanka', flag: '🇱🇰', grp: 'More' },
+  { code: 'MVR', sym: 'Rf', name: 'Maldivian rufiyaa', where: 'Maldives', flag: '🇲🇻', grp: 'More' },
+  { code: 'TWD', sym: 'NT$', name: 'New Taiwan dollar', where: 'Taiwan', flag: '🇹🇼', grp: 'More' },
+  { code: 'KWD', sym: 'KWD', name: 'Kuwaiti dinar', where: 'Kuwait', flag: '🇰🇼', grp: 'More' },
+  { code: 'OMR', sym: 'OMR', name: 'Omani rial', where: 'Oman', flag: '🇴🇲', grp: 'More' },
+  { code: 'BHD', sym: 'BHD', name: 'Bahraini dinar', where: 'Bahrain', flag: '🇧🇭', grp: 'More' },
+  { code: 'JOD', sym: 'JOD', name: 'Jordanian dinar', where: 'Jordan', flag: '🇯🇴', grp: 'More' },
 ];
 
 export type Country = { cc: string; name: string; flag: string; cur: string };
@@ -67,6 +78,17 @@ export const COUNTRIES: Country[] = [
   { cc: 'TR', name: 'Türkiye', flag: '🇹🇷', cur: 'TRY' },
   { cc: 'EG', name: 'Egypt', flag: '🇪🇬', cur: 'EGP' },
   { cc: 'ZA', name: 'South Africa', flag: '🇿🇦', cur: 'ZAR' },
+  { cc: 'KH', name: 'Cambodia', flag: '🇰🇭', cur: 'KHR' },
+  { cc: 'LA', name: 'Laos', flag: '🇱🇦', cur: 'LAK' },
+  { cc: 'MM', name: 'Myanmar', flag: '🇲🇲', cur: 'MMK' },
+  { cc: 'NP', name: 'Nepal', flag: '🇳🇵', cur: 'NPR' },
+  { cc: 'LK', name: 'Sri Lanka', flag: '🇱🇰', cur: 'LKR' },
+  { cc: 'MV', name: 'Maldives', flag: '🇲🇻', cur: 'MVR' },
+  { cc: 'TW', name: 'Taiwan', flag: '🇹🇼', cur: 'TWD' },
+  { cc: 'KW', name: 'Kuwait', flag: '🇰🇼', cur: 'KWD' },
+  { cc: 'OM', name: 'Oman', flag: '🇴🇲', cur: 'OMR' },
+  { cc: 'BH', name: 'Bahrain', flag: '🇧🇭', cur: 'BHD' },
+  { cc: 'JO', name: 'Jordan', flag: '🇯🇴', cur: 'JOD' },
 ];
 
 export type Region = { cc: string; cur: string };
