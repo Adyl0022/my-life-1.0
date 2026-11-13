@@ -31,3 +31,22 @@ export function useHidden(): { off: string[]; on: (k: Mod) => boolean; toggle: (
   };
   return { off, on, toggle, ready: ok };
 }
+
+// Order of the four small Dashboard cards, and whether the wide Habit & Health banner sits above or below them.
+export type ModOrder = { order: Mod[]; habitTop: boolean };
+export const ORDER_DEFAULT: ModOrder = { order: ['planner', 'islamic', 'finance', 'record'], habitTop: false };
+const cleanOrder = (o: any): ModOrder => {
+  const base = ORDER_DEFAULT.order; const got: Mod[] = Array.isArray(o && o.order) ? o.order.filter((x: any) => base.indexOf(x) >= 0) : [];
+  const seen = got.filter((x, i) => got.indexOf(x) === i);
+  return { order: [...seen, ...base.filter((x) => seen.indexOf(x) < 0)], habitTop: !!(o && o.habitTop) };
+};
+/** The saved Dashboard order. move() shifts a small card up or down one place; setHabitTop() puts the banner above or below. */
+export function useModOrder(): { order: Mod[]; habitTop: boolean; move: (k: Mod, dir: -1 | 1) => void; setHabitTop: (top: boolean) => void } {
+  const [o, setO] = useStored<ModOrder>('ml_morder', ORDER_DEFAULT);
+  const v = cleanOrder(o);
+  const move = (k: Mod, dir: -1 | 1) => {
+    const i = v.order.indexOf(k); const j = i + dir; if (i < 0 || j < 0 || j >= v.order.length) return;
+    const n = v.order.slice(); [n[i], n[j]] = [n[j], n[i]]; setO({ ...v, order: n });
+  };
+  return { order: v.order, habitTop: v.habitTop, move, setHabitTop: (top: boolean) => setO({ ...v, habitTop: top }) };
+}

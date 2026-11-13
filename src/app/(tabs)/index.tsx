@@ -8,7 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bg, Blob } from '../../components/Bg';
 import { Glass } from '../../components/Glass';
-import { useHidden } from '../../lib/hidden';
+import { useHidden, useModOrder } from '../../lib/hidden';
 import { PlannerArt, IslamicArt, FinanceArt, RecordArt, HabitArt, HabitBanner, ChipIcon, CARDS } from '../../components/dashArt';
 import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
@@ -39,7 +39,7 @@ function Drift({ dur, delay = 0, children }: { dur: number; delay?: number; chil
 
 export default function Home() {
   const router = useRouter();
-  const hid = useHidden();
+  const hid = useHidden(); const mord = useModOrder();
   const name = useName();
   const [hd] = useStored<HData>('ml_habit', HEMPTY); const ht = getDay(hd, 0); const hcg = cupsGoal(hd);
   const go = (k: string) => { const r = ({ Planner: '/planner', Islamic: '/islamic', Finance: '/finance', Record: '/record', Habit: '/habit' } as Record<string, string>)[k]; if (r) router.push(r as any); };
@@ -49,6 +49,28 @@ export default function Home() {
   const now = new Date();
   const [force, setForce] = React.useState(-1);
   const insets = useSafeAreaInsets();
+  const habitBanner = (hid.on('habit') ? <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+              <Halo k="Habit" />
+              <Glass style={{ height: 132 }}>
+                <LinearGradient colors={['rgba(183,148,255,.55)', 'rgba(94,231,223,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+                <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: 0, bottom: 0, width: '36%' }}>{HabitBanner()}</View>
+                <View style={{ flex: 1, width: '62%', paddingLeft: 20, paddingVertical: 16, justifyContent: 'space-between' }}>
+                  <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)', alignItems: 'center', justifyContent: 'center' }}><ChipIcon k="Habit" /></View>
+                      <Text numberOfLines={1} style={{ flex: 1, color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: -0.2 }}>Habit & Health</Text>
+                    </View>
+                    <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 8 }}>Mood · Sleep · Water · Goals</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 5 }}>
+                    {[['💧', ht.cups + '/' + hcg], ['🌙', ht.sleep > 0 ? ht.sleep.toFixed(1) + 'h' : '–'], ['👟', ht.steps > 0 ? ht.steps.toLocaleString('en-MY') : '–']].map((x) => (
+                      <View key={x[0]} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.25)' }}>
+                        <Text style={{ fontSize: 11 }}>{x[0]}</Text><Text style={{ color: '#fff', fontSize: 11.5, fontWeight: '700' }}>{x[1]}</Text>
+                      </View>))}
+                  </View>
+                </View>
+              </Glass>
+            </Pressable> : null);
   const HEAD = insets.top > 0 ? insets.top + 30 : 56;
   const UP = Platform.OS === 'web' ? 12 : 0; // web (iPhone) only: lift the header a little away from the cards
   const NAMES = ['Morning', 'Afternoon', 'Evening', 'Night'] as const;
@@ -89,7 +111,8 @@ export default function Home() {
             </Pressable>
           </View>
           <View style={{ flex: 1, gap: 10, marginTop: 10 + UP }}>
-            {(() => { const L = CARDS.filter((c) => c.k !== 'Habit' && hid.on(c.k.toLowerCase() as any)); const R: typeof L[] = []; for (let i = 0; i < L.length; i += 2) R.push(L.slice(i, i + 2)); return R; })().map((row, ri) => (
+            {mord.habitTop ? habitBanner : null}
+            {(() => { const L = mord.order.map((k) => CARDS.find((c) => c.k.toLowerCase() === k)!).filter((c) => c && hid.on(c.k.toLowerCase() as any)); const R: typeof L[] = []; for (let i = 0; i < L.length; i += 2) R.push(L.slice(i, i + 2)); return R; })().map((row, ri) => (
               <View key={ri} style={{ flex: 1, flexDirection: 'row', gap: 10, minHeight: 100 }}>
             {row.map((c) => (
               <Pressable key={c.k} onPress={() => go(c.k)} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
@@ -110,28 +133,7 @@ export default function Home() {
             ))}
               </View>
             ))}
-            {hid.on('habit') ? <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-              <Halo k="Habit" />
-              <Glass style={{ height: 132 }}>
-                <LinearGradient colors={['rgba(183,148,255,.55)', 'rgba(94,231,223,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
-                <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: 0, bottom: 0, width: '36%' }}>{HabitBanner()}</View>
-                <View style={{ flex: 1, width: '62%', paddingLeft: 20, paddingVertical: 16, justifyContent: 'space-between' }}>
-                  <View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)', alignItems: 'center', justifyContent: 'center' }}><ChipIcon k="Habit" /></View>
-                      <Text numberOfLines={1} style={{ flex: 1, color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: -0.2 }}>Habit & Health</Text>
-                    </View>
-                    <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 8 }}>Mood · Sleep · Water · Goals</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', gap: 5 }}>
-                    {[['💧', ht.cups + '/' + hcg], ['🌙', ht.sleep > 0 ? ht.sleep.toFixed(1) + 'h' : '–'], ['👟', ht.steps > 0 ? ht.steps.toLocaleString('en-MY') : '–']].map((x) => (
-                      <View key={x[0]} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.25)' }}>
-                        <Text style={{ fontSize: 11 }}>{x[0]}</Text><Text style={{ color: '#fff', fontSize: 11.5, fontWeight: '700' }}>{x[1]}</Text>
-                      </View>))}
-                  </View>
-                </View>
-              </Glass>
-            </Pressable> : null}
+            {!mord.habitTop ? habitBanner : null}
           </View>
           <Glass style={{ marginTop: 12, height: 90, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 16 }}>
             <View>
