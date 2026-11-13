@@ -37,9 +37,9 @@ const MyRow = ({ leaving, fresh, children }: { leaving: boolean; fresh: boolean;
 };
 const Sec = ({ t, hint, right, c = '#8ea8ff', n }: { t: string; hint: string; right?: React.ReactNode; c?: string; n?: number }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 8, marginHorizontal: 2 }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, paddingLeft: 10, paddingRight: 12, borderRadius: 999, backgroundColor: c + '30', borderWidth: 1, borderColor: c + '66' }}>
+    <View style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, paddingLeft: 10, paddingRight: 12, borderRadius: 999, backgroundColor: c + '30', borderWidth: 1, borderColor: c + '66' }}>
       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: c, shadowColor: c, shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 }, elevation: 3 }} />
-      <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{t}</Text>
+      <Text numberOfLines={1} style={{ color: W, fontSize: 13.5, fontWeight: '800', flexShrink: 1 }}>{t}</Text>
       {n != null ? <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: c, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0b1030', fontSize: 11, fontWeight: '800' }}>{n}</Text></View> : null}
     </View>
     <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginLeft: 10, flex: 1 }}>{hint}</Text>{right}
@@ -205,7 +205,7 @@ export default function Planner() {
 
           {tab === 'events' ? (
             <View style={{ gap: 8 }}>
-              <Sec t={'Public holidays · ' + regionCountry().name} hint="auto · official calendar" c="#ffd27d" n={my.length} />
+              <Sec t={regionCountry().flag + ' ' + regionCountry().name + ' events'} hint="auto · official calendar" c="#ffd27d" n={my.length} />
               <Glass radius={22} style={{ padding: 12, paddingBottom: 4 }}>
                 {shown.length === 0 ? <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12.5, paddingBottom: 10, lineHeight: 18 }}>No public holidays found for {regionCountry().name} yet. Connect to the internet once and they will appear here.</Text> : null}
                 {shown.map((sx) => {
