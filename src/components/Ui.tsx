@@ -4,10 +4,15 @@ import { View, TextInput, Pressable, Modal, Platform, Keyboard, Dimensions, Scro
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
+import { useNextInput } from '../lib/nextInput';
 
 export const W = '#fff';
 export const GP = ['#7c9cff', '#b794ff'] as [string, string];
-export const Inp = (p: any) => <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...p} style={[{ minWidth: 0, color: W, fontSize: 14, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', outlineStyle: 'none' } as any, p.style]} />;
+export const Inp = (p: any) => {
+  const n = useNextInput(p);
+  const setRef = (el: any) => { n.ref.current = el; if (typeof p.ref === 'function') p.ref(el); else if (p.ref) p.ref.current = el; };
+  return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...p} {...n.extra} ref={setRef} style={[{ minWidth: 0, color: W, fontSize: 14, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', outlineStyle: 'none' } as any, p.style]} />;
+};
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const nice = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? Number(m[3]) + ' ' + MON[Number(m[2]) - 1] + ' ' + m[1] : v; };
 export function DateField({ value, onChange, style }: { value: string; onChange: (v: string) => void; style?: any }) {
