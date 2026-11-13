@@ -14,7 +14,7 @@ import { useStored } from '../lib/store';
 import { Commitments } from '../components/Commitments';
 import { MoneyLeft } from '../components/MoneyLeft';
 import { TOP } from '../lib/layout';
-import { cs, cu, useRegion } from '../lib/region';
+import { cs, cu, cw, useRegion } from '../lib/region';
 
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
@@ -129,7 +129,7 @@ export default function Finance() {
           <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <Coin />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every ringgit</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Income and spending at a glance</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Income and spending at a glance</Text></View>
           </Glass>
 
           <MoneyLeft ym={ym} income={total} spends={d.spends} />

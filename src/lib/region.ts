@@ -83,6 +83,8 @@ const clean = (r: Region | null | undefined): Region => ({ cc: countryOf((r && r
 export const cu = () => curOf(active.cur).sym;
 /** The symbol ready to go in front of an amount: "RM " or "S$ " for letter symbols, "$" or "£" for single marks. */
 export const cs = () => { const s = cu(); return /[A-Za-z]/.test(s) ? s + ' ' : s; };
+/** The everyday word for one unit of the chosen currency, for example "ringgit", "dollar" or "yen". */
+export const cw = () => { const n = curOf(active.cur).name; return /sterling$/i.test(n) ? 'pound' : n.split(' ').pop()!.toLowerCase(); };
 /** Currency code of the chosen currency, for example "MYR". */
 export const curCode = () => curOf(active.cur).code;
 /** Country code of the chosen country, for example "MY". */
