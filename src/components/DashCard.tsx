@@ -7,13 +7,13 @@ import { Text } from './Txt';
 import { Glass } from './Glass';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
-import { useCore, scoreParts, lifeScore, tips, tipCat } from '../lib/insights';
+import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
+import { HeadIcon } from './HabitIcons';
 import { curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
 type Kind = 'usage' | 'streak' | 'score' | 'tip';
 const ORDER: Kind[] = ['usage', 'streak', 'score', 'tip'];
-const TIPIC: Record<string, string> = { Health: '💧', Money: '💰', Faith: '🕌', Tasks: '✅', Vehicle: '🚗' };
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -97,7 +97,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   } else {
     const t = tp[0];
     body = (<>
-      <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'rgba(255,196,107,.25)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20 }}>{TIPIC[tipCat(t.id)] || '💡'}</Text></View>
+      <HeadIcon k={t.k} size={40} />
       <View style={{ flex: 1 }}>
         <Text numberOfLines={1} style={{ color: '#fff', fontSize: 13.5, fontWeight: '700' }}>{t.title}</Text>
         <Text numberOfLines={2} style={{ color: dim, fontSize: 11, marginTop: 3, lineHeight: 15 }}>{t.sub}</Text>
