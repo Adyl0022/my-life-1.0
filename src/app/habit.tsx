@@ -113,7 +113,7 @@ export default function Habit() {
         };
         const n0 = await read();
         if (!alive) return;
-        if (n0 <= 0) { await startSensor('No steps in Health Connect yet. Install Samsung Health or Google Fit for all-day counting. For now steps count while this app is open.'); return; }
+        if (n0 <= 0) { await startSensor('No steps in Health Connect yet. In Honor Health or Samsung Health, turn on sharing to Health Connect for Steps, then tap Check again. For now steps count while this app is open.'); return; }
         setHcOn(true); setAutoMsg('');
         const sync = async () => { try { const n = await read(); if (alive) saveToday((td) => ({ ...td, hc: n, steps: Math.max(0, n + (td.adj || 0)) })); } catch (e) {} };
         await sync(); timer = setInterval(sync, 60000);
@@ -271,7 +271,7 @@ export default function Habit() {
             {!!autoMsg && !hcOn && Platform.OS !== 'web' && (
               <View style={{ marginTop: 8, padding: 10, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.22)' }}>
                 <Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>Connect your health app</Text>
-                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, lineHeight: 16, marginTop: 3 }}>1. Open Samsung Health, then Settings and Health Connect, and allow it to share Steps.{'\n'}2. Come back here and tap Check again.{'\n'}Honor Health may not support Health Connect. Samsung Health is the best choice.</Text>
+                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, lineHeight: 16, marginTop: 3 }}>1. Open your health app (Honor Health or Samsung Health), then Settings and Health Connect, and allow it to share Steps.{'\n'}2. Open Health Connect and check that today's steps show there. If not, pull down on the health app to sync first.{'\n'}3. Come back here and tap Check again.</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                   <Pressable onPress={() => { try { require('react-native-health-connect').openHealthConnectSettings(); } catch (e) {} }} style={{ flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Open Health Connect</Text></Pressable>
                   <Pressable onPress={() => setRetry(retry + 1)} style={{ flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: T, alignItems: 'center' }}><Text style={{ color: '#0d1030', fontSize: 12.5, fontWeight: '800' }}>Check again</Text></Pressable>
