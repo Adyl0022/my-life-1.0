@@ -66,12 +66,20 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
     return () => { try { if (ch) supabase.removeChannel(ch); } catch (e) {} st.remove(); };
   }, [fid, key, load, soon, table]);
 
-  // Coming back to a screen (for example after saving a task) always reads the list again, even if no live update arrived.
-  const first = useRef(true);
-  useFocusEffect(useCallback(() => { if (first.current) { first.current = false; return; } load(); const t = setTimeout(load, 900); return () => clearTimeout(t); }, [load]));
-
   const patch = useCallback((id: string, p: Partial<T>) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...p } : x))), []);
   return { rows, ready, offline, reload: load, patch };
+}
+// Call this on a screen (never in the root layout, which has no navigation yet): reads the list again every time the screen
+// comes back into view, for example after saving a task, even if no live update arrived.
+export function useReloadOnFocus(...reloads: (() => any)[]) {
+  const first = useRef(true);
+  const ref = useRef(reloads); ref.current = reloads;
+  useFocusEffect(useCallback(() => {
+    if (first.current) { first.current = false; return; }
+    const run = () => ref.current.forEach((r) => { try { r(); } catch (e) {} });
+    run(); const t = setTimeout(run, 900);
+    return () => clearTimeout(t);
+  }, []));
 }
 export const useFamTasks = (fid?: string) => useRows<FTask>('family_tasks', fid, 'due_at', true);
 export const useFamEvents = (fid?: string) => useRows<FEvent>('family_events', fid, 'starts_at', true);

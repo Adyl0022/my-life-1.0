@@ -9,7 +9,7 @@ import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Ico, Label, NewBtn, Note, W, DIM } from '../components/FamilyUi';
 import { useFamily } from '../lib/family';
-import { useFamEvents, peopleOf, dayDiff, timeText, FEvent } from '../lib/familyData';
+import { useFamEvents, peopleOf, dayDiff, timeText, FEvent, useReloadOnFocus } from '../lib/familyData';
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -20,6 +20,7 @@ export default function FamilyEvents() {
   const f = useFamily();
   const info = f.info;
   const e = useFamEvents(info?.id);
+  useReloadOnFocus(e.reload);
   const people = useMemo(() => peopleOf(info), [info]);
   const next = e.rows.filter((x) => dayDiff(x.starts_at) >= 0);
   const past = e.rows.filter((x) => dayDiff(x.starts_at) < 0).sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 10);
