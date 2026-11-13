@@ -13,6 +13,7 @@ import { PlannerArt, IslamicArt, FinanceArt, RecordArt, HabitArt, HabitBanner, C
 import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
 import { useUsage } from '../../lib/usage';
+import { DashCard } from '../../components/DashCard';
 import { useName, useStored } from '../../lib/store';
 import { HData, HEMPTY, getDay, cupsGoal } from '../../lib/habit';
 import { THEMES, LINES, periodOf } from '../../lib/theme';
@@ -45,7 +46,6 @@ export default function Home() {
   const go = (k: string) => { const r = ({ Planner: '/planner', Islamic: '/islamic', Finance: '/finance', Record: '/record', Habit: '/habit' } as Record<string, string>)[k]; if (r) router.push(r as any); };
   const usage = useUsage(16);
   const mins = Math.floor(usage.today.sec / 60);
-  const maxM = Math.max(...usage.series, 1);
   const now = new Date();
   const [force, setForce] = React.useState(-1);
   const insets = useSafeAreaInsets();
@@ -135,20 +135,7 @@ export default function Home() {
             ))}
             {!mord.habitTop ? habitBanner : null}
           </View>
-          <Glass style={{ marginTop: 12, height: 90, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 16 }}>
-            <View>
-              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>App Usage <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· 30 days</Text></Text>
-              <View style={{ flexDirection: 'row', gap: 16, marginTop: 6 }}>
-                <View><Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{mins} min</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11 }}>Today</Text></View>
-                <View><Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{usage.today.opens} {usage.today.opens === 1 ? 'open' : 'opens'}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11 }}>Today</Text></View>
-              </View>
-            </View>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 60 }}>
-              {usage.series.map((m, i) => (
-                <LinearGradient key={i} colors={m > 0 ? ['#8fe9e2', '#7c9cff'] : ['rgba(255,255,255,.25)', 'rgba(255,255,255,.25)']} style={{ flex: 1, height: m > 0 ? Math.max(8, Math.round((m / maxM) * 52)) : 4, borderTopLeftRadius: 3, borderTopRightRadius: 3, borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
-              ))}
-            </View>
-          </Glass>
+          <DashCard mins={mins} opens={usage.today.opens} series={usage.series} />
         </View>
       </SafeAreaView>
       </PageIn>
