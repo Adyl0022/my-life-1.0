@@ -45,7 +45,9 @@ export function famError(e: any): string {
   const m = String((e && (e.message || e.error)) || e || '');
   const k = Object.keys(MSG).find((x) => m.indexOf(x) >= 0);
   if (k) return MSG[k];
-  return /network|fetch|timeout/i.test(m) ? 'No internet connection. Please try again.' : 'Something went wrong. Please try again.';
+  if (/network|fetch|timeout/i.test(m)) return 'No internet connection. Please try again.';
+  const why = m.replace(/\s+/g, ' ').trim().slice(0, 110); // the real reason, so a problem can be reported and fixed
+  return 'Something went wrong. Please try again.' + (why ? ' (' + why + ')' : '');
 }
 export async function call<T = any>(fn: string, args: Record<string, any> = {}): Promise<T> {
   const { data, error } = await supabase.rpc(fn, args);
