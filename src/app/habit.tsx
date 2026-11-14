@@ -301,7 +301,7 @@ export default function Habit() {
                 </View>
               </View>
             )}
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect and your phone's step sensor. Open My Life to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect and your phone\'s step sensor. Open My Life to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="mood" t="Mood" /><Text style={{ color: t.mood >= 0 ? MOODS[t.mood][1] : 'rgba(255,255,255,.6)', fontSize: 13, fontWeight: '800' }}>{t.mood >= 0 ? MOODS[t.mood][0] : 'How do you feel?'}</Text></View>
