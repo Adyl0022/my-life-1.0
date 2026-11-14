@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
@@ -30,6 +30,8 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [ok, setOk] = useState('');
+  // The "Added to the shopping list" note only confirms the tap, so it goes away by itself after a few seconds.
+  useEffect(() => { if (!ok) return; const t = setTimeout(() => setOk(''), 3500); return () => clearTimeout(t); }, [ok]);
 
   const base = parse(day); const monday = new Date(base.getFullYear(), base.getMonth(), base.getDate() - ((base.getDay() + 6) % 7));
   const week = Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
@@ -92,8 +94,8 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
         </View>
       </LinearGradient>
       <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginLeft: 4, marginBottom: 10 }}>{DAYN[base.getDay()]}{day === today ? ' · Today' : ''}</Text>
-      {msg ? <Note warm t={msg} /> : null}
-      {ok ? <Note t={ok} /> : null}
+      {msg ? <View style={{ marginBottom: 12 }}><Note warm t={msg} /></View> : null}
+      {ok ? <View style={{ marginBottom: 12 }}><Note t={ok} /></View> : null}
       {SLOTS.map((s) => {
         const x = at(s.k); const c = x?.cook ? people.find((p) => p.id === x.cook) : null; const open2 = slot === s.k;
         return (
