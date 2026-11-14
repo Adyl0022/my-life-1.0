@@ -121,6 +121,22 @@ export default function Home() {
                   <LinearGradient colors={[c.c1, c.c2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
                     {ARTS[c.k]()}
                   </LinearGradient>
+                  {c.k === 'Family' ? (
+                    <View style={{ paddingHorizontal: 11, paddingTop: 2, paddingBottom: 9 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flex: 1, color: '#fff', fontSize: 14.5, fontWeight: '700' }}>{c.title}</Text>
+                        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.35)', alignItems: 'center', justifyContent: 'center' }}><ChipIcon k={c.k} /></View>
+                      </View>
+                      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: 'rgba(255,255,255,.82)', fontSize: 11, marginTop: 1 }}>Together, everything in one place</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                        {[['Tasks', '#5ee7df'], ['Shopping', '#ffc46b'], ['Calendar', '#ff8fab']].map((x) => (
+                          <View key={x[0]} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: x[1] }} />
+                            <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.88)', fontSize: 10.5 }}>{x[0]}</Text>
+                          </View>))}
+                      </View>
+                    </View>
+                  ) : (
                   <View style={{ height: 42, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <View style={{ flex: 1 }}>
                       <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: '#fff', fontSize: 14.5, fontWeight: '700' }}>{c.title}</Text>
@@ -128,6 +144,7 @@ export default function Home() {
                     </View>
                     <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.35)', alignItems: 'center', justifyContent: 'center' }}><ChipIcon k={c.k} /></View>
                   </View>
+                  )}
                 </Glass>
               </Pressable>
             ))}

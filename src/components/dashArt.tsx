@@ -118,7 +118,7 @@ export const CARDS = [
   { k: 'Islamic', title: 'Islamic Hub', sub: 'Surah · Doa · Zikir', c1: 'rgba(52,211,153,.5)', c2: 'rgba(94,231,223,.3)' },
   { k: 'Finance', title: 'My Finance', sub: 'Income · Spending', c1: 'rgba(255,196,107,.55)', c2: 'rgba(255,143,171,.3)' },
   { k: 'Record', title: 'My Record', sub: 'Logs & records', c1: 'rgba(255,143,171,.55)', c2: 'rgba(183,148,255,.35)' },
-  { k: 'Family', title: 'Family Planner', sub: 'Shared · Chores', c1: 'rgba(94,231,223,.5)', c2: 'rgba(255,143,171,.38)' },
+  { k: 'Family', title: 'Family Planner', sub: 'Together, everything in one place', c1: 'rgba(94,231,223,.5)', c2: 'rgba(255,143,171,.38)' },
   { k: 'Habit', title: 'Habit Tracker & Health', sub: 'Mood · Sleep · Water · Goals', c1: 'rgba(183,148,255,.55)', c2: 'rgba(94,231,223,.3)' },
 ];
 
