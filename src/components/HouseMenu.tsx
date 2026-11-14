@@ -33,6 +33,7 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
   const base = parse(day); const monday = new Date(base.getFullYear(), base.getMonth(), base.getDate() - ((base.getDay() + 6) % 7));
   const week = Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
   const today = localDay();
+  const planned = week.filter((d) => m.rows.some((x) => x.day === ymd(d))).length;
   const at = (s: FMenu['slot']) => m.rows.find((x) => x.day === day && x.slot === s);
   const toBuy = sh.rows.filter((x) => !x.bought).map((x) => x.name.toLowerCase());
 
@@ -55,30 +56,37 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
 
   return (
     <View>
-      <Glass solid radius={26} style={{ paddingTop: 12, paddingBottom: 12, paddingHorizontal: 10, marginTop: 6, marginBottom: 18 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, marginBottom: 10 }}>
+      <LinearGradient colors={['rgba(94,231,223,.30)', 'rgba(183,148,255,.34)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 26, paddingTop: 12, paddingBottom: 14, paddingHorizontal: 10, marginTop: 6, marginBottom: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, marginBottom: 12 }}>
           <Text style={{ color: W, fontSize: 17, fontWeight: '900', flex: 1 }}>{MON[week[0].getMonth()]}{week[6].getMonth() !== week[0].getMonth() ? ' / ' + MON[week[6].getMonth()] : ''} {week[6].getFullYear()}</Text>
           <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7)))} style={({ pressed }) => ({ paddingHorizontal: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>‹</Text></Pressable>
           <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 7)))} style={({ pressed }) => ({ paddingLeft: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>›</Text></Pressable>
         </View>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
+        <View style={{ flexDirection: 'row', gap: 4 }}>
           {week.map((d) => { const k = ymd(d); const on = k === day; const has = m.rows.some((x) => x.day === k);
             const inner = (
               <>
-                <Text style={{ color: on ? '#2a1740' : DIM, fontSize: 10.5, fontWeight: '800' }}>{'MTWTFSS'[(d.getDay() + 6) % 7]}</Text>
-                <Text style={{ color: on ? '#2a1740' : W, fontSize: 16, fontWeight: '900', marginTop: 3 }}>{d.getDate()}</Text>
-                <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 5, backgroundColor: has ? (on ? '#2a1740' : '#5ee7df') : 'transparent' }} />
+                <Text style={{ color: on ? '#2a1740' : 'rgba(255,255,255,.75)', fontSize: 10.5, fontWeight: '800' }}>{'MTWTFSS'[(d.getDay() + 6) % 7]}</Text>
+                <Text style={{ color: on ? '#2a1740' : W, fontSize: 15, fontWeight: '900', marginTop: 2 }}>{d.getDate()}</Text>
               </>
             );
             return (
               <Pressable key={k} onPress={() => { setDay(k); setSlot(''); setOk(''); }} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+                {on ? <View pointerEvents="none" style={{ position: 'absolute', left: -3, right: -3, top: -3, bottom: -3, borderRadius: 999, backgroundColor: 'rgba(255,143,171,.38)' }} /> : null}
                 {on
-                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16 }}>{inner}</LinearGradient>
-                  : <View style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: k === today ? 1.5 : 0, borderColor: 'rgba(255,196,107,.85)' }}>{inner}</View>}
+                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} style={{ alignItems: 'center', paddingVertical: 9, borderRadius: 999 }}>{inner}</LinearGradient>
+                  : <LinearGradient colors={['rgba(255,255,255,.26)', 'rgba(255,255,255,.07)']} style={{ alignItems: 'center', paddingVertical: 7, borderRadius: 999, borderWidth: has ? 1.5 : 1, borderColor: has ? '#5ee7df' : k === today ? 'rgba(255,196,107,.9)' : 'rgba(255,255,255,.35)' }}>{inner}</LinearGradient>}
               </Pressable>
             ); })}
         </View>
-      </Glass>
+        <View style={{ marginTop: 14, marginHorizontal: 6 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+            <Text style={{ color: DIM, fontSize: 10.5 }}>Menu planned</Text>
+            <Text style={{ color: DIM, fontSize: 10.5 }}>{planned} of 7 days</Text>
+          </View>
+          <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.18)' }}><LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ width: (planned / 7 * 100) + '%', height: 4, borderRadius: 2 }} /></View>
+        </View>
+      </LinearGradient>
       <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginLeft: 4, marginBottom: 10 }}>{DAYN[base.getDay()]}{day === today ? ' · Today' : ''}</Text>
       {msg ? <Note warm t={msg} /> : null}
       {ok ? <Note t={ok} /> : null}
