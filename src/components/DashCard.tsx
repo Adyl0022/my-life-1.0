@@ -80,7 +80,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     </>);
   } else if (kind === 'score') {
     const sc = lifeScore(parts); const R = 24, C = 2 * Math.PI * R;
-    const top = parts.slice().sort((a, b) => b.pct - a.pct).slice(0, 3).map((p) => p.label + ' ' + p.pct + '%');
+    const top = parts.slice().sort((a, b) => b.pct - a.pct).slice(0, 3);
     body = (<>
       <View style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={60} height={60} style={{ position: 'absolute' }}>
@@ -91,7 +91,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Life Score <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· today</Text></Text>
-        <Text numberOfLines={2} style={{ color: dim, fontSize: 11, marginTop: 4, lineHeight: 15 }}>{top.join(' · ')}</Text>
+        <Text numberOfLines={2} style={{ color: dim, fontSize: 11, marginTop: 4, lineHeight: 15 }}>{top.map((p, i) => { const over = p.k === 'spend' && /over budget$/.test(p.detail); const near = p.k === 'spend' && /nearly used$/.test(p.detail); return <Text key={p.k + i}>{i ? ' · ' : ''}{p.label + ' ' + p.pct + '%'}{over || near ? <Text style={{ color: over ? '#ff8a9b' : '#ffc46b', fontWeight: '800' }}>{over ? ' · over' : ' · low'}</Text> : null}</Text>; })}</Text>
       </View>
     </>);
   } else {
