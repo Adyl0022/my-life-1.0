@@ -22,7 +22,7 @@ import { useLicense, refreshLicense } from '../lib/license';
 import { ActivationScreen } from '../components/ActivationScreen';
 import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
-import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, PEvent } from '../lib/alerts';
+import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncWeekAlert, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles } from '../lib/adhan';
 import { useFamily } from '../lib/family';
 import { useFamTasks, useFamEvents } from '../lib/familyData';
@@ -53,6 +53,7 @@ function AlertSync() {
   const t = { ...TG_DEFAULT, ...tg }; t.ev = t.ev && hid.on('planner'); t.zk = t.zk && hid.on('islamic');
   useEffect(() => { if (ok && ok2 && hid.ready && Platform.OS !== 'web') syncEventAlerts(pl.events || [], t); }, [ok, ok2, hid.ready, JSON.stringify(pl.events || []), t.ev, t.qh]);
   useEffect(() => { if (ok2 && hid.ready && Platform.OS !== 'web') syncZikirAlerts(t); }, [ok2, hid.ready, t.zk, t.qh]);
+  useEffect(() => { if (ok2 && Platform.OS !== 'web') syncWeekAlert({ ...t, ev: tg.ev !== false }); }, [ok2, tg.ev]);
   const [rc, , okr] = useStored<{ data?: Record<string, any> }>('ml_record', { data: {} });
   useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncRenewAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify((rc && rc.data) || {}), tg.ev, t.qh]);
   const [bk, , okb] = useStored<number>('ml_backup_last', 0);

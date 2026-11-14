@@ -104,3 +104,19 @@ export async function syncRenewAlerts(rec: RenData, tg: Toggles, on: boolean): P
     }
   } catch (e) { /* ignore */ }
 }
+
+// Every Sunday at 8 pm: a nudge to look at the weekly review in Insights. Only when notifications are already allowed.
+export async function syncWeekAlert(tg: Toggles): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('week-');
+    if (!tg.ev) return;
+    const p = await Notifications.getPermissionsAsync(); if (p.status !== 'granted') return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('week', { name: 'Weekly review', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#7c9cff' });
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'week-review',
+      content: { title: 'Your week in My Life', body: 'See how your week went. Open Insights and tap Week.', sound: false },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 20, minute: 0, channelId: 'week' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}
