@@ -121,7 +121,7 @@ export default function Home() {
                   <LinearGradient colors={[c.c1, c.c2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
                     {ARTS[c.k]()}
                   </LinearGradient>
-                  <View style={{ height: c.k === 'Family' ? 56 : 42, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ height: c.k === 'Family' ? 64 : 42, paddingHorizontal: c.k === 'Family' ? 16 : 11, paddingBottom: c.k === 'Family' ? 8 : 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <View style={{ flex: 1 }}>
                       <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: '#fff', fontSize: 14.5, fontWeight: '700' }}>{c.title}</Text>
                       <Text numberOfLines={c.k === 'Family' ? 2 : 1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: 'rgba(255,255,255,.78)', fontSize: 11, marginTop: 0, lineHeight: c.k === 'Family' ? 13.5 : undefined }}>{c.k === 'Family' ? 'Together, everything\nin one place' : c.sub}</Text>
