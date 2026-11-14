@@ -140,6 +140,9 @@ class Chat extends AssistantBase {
                 {m.linkD === 'block' && (
                   <Pressable onPress={() => go(m.href)} style={{ marginTop: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{m.label}</Text></Pressable>
                 )}
+                {m.undoD === 'flex' && (
+                  <Pressable onPress={m.undo} style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{m.undoL}</Text></Pressable>
+                )}
                 <Text style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', marginTop: 6, textAlign: 'right' }}>{m.time}</Text>
               </>
             );

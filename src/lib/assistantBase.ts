@@ -50,6 +50,7 @@ export class AssistantBase extends React.Component<any, any> {
     const sy = esc(cu().toLowerCase()), cd = curCode().toLowerCase();
     let money = null; const mm = ql.match(new RegExp('(?:rm|' + sy + '|' + cd + ')\\s*([\\d,]+(?:\\.\\d+)?)')) || ql.match(new RegExp('([\\d,]+(?:\\.\\d+)?)\\s*(?:ringgit|rm\\b|' + sy + '|' + cd + '\\b)'));
     if (mm) { const v = parseFloat(mm[1].replace(/,/g, '')); if (v > 0) money = v; }
+    if (money == null) { const bm = ql.match(/\b(?:spent|spend|paid|belanja|bayar|bought|beli)\s+(\d+(?:\.\d{1,2})?)\b(?!\s*(?:jam|hours?|hrs?|km|langkah|steps?|gelas|glass|min|minit|minutes?|hari|days?|kali|times|x\b))/); if (bm) { const v = parseFloat(bm[1]); if (v > 0 && v < 100000) money = v; } }
     const kmm = ql.match(/([\d,]{4,7})\s*km/) || ql.match(/(?:odometer|odo|mileage|milage|meter)\D{0,15}?([\d,]{4,7})/);
     const kmv = kmm ? parseInt(kmm[1].replace(/,/g, ''), 10) : null;
     const svc = [['tukar minyak', 'Oil change'], ['oil', 'Oil change'], ['servis', 'Service'], ['service', 'Service'], ['tayar', 'Tyres'], ['tyre', 'Tyres'], ['tire', 'Tyres'], ['brek', 'Brakes'], ['brake', 'Brakes'], ['rantai', 'Chain'], ['chain', 'Chain'], ['bateri', 'Battery'], ['battery', 'Battery'], ['baiki', 'Repair'], ['repair', 'Repair']];
@@ -76,7 +77,9 @@ export class AssistantBase extends React.Component<any, any> {
     if (sh && has(['tidur', 'sleep', 'slept']) && parseFloat(sh[1]) <= 14) return { type: 'sleep', h: parseFloat(sh[1]) };
     if (has(['mood', 'perasaan', 'rasa', 'feel', 'feeling'])) {
       const v = has(['awful', 'teruk', 'terrible', 'bad']) ? 1 : has(['low', 'sedih', 'sad', 'rendah']) ? 2 : has(['great', 'hebat', 'excellent', 'bagus', 'best']) ? 5 : has(['good', 'baik', 'happy', 'gembira', 'seronok']) ? 4 : has(['okay', 'biasa', 'ok']) ? 3 : 0;
-      if (v) return { type: 'mood', v: v };
+      const neg = /\b(kurang|tak|tidak|not|xde)\b/.test(qn);
+      const v2 = v && neg ? (v >= 4 ? (v === 5 ? 3 : 2) : v === 3 ? 2 : 3) : v;
+      if (v2) return { type: 'mood', v: v2 };
     }
     const sm = qn.match(/(\d{2,6})/);
     if (sm && has(['langkah', 'step', 'steps']) && has(['tambah', 'add', 'log', 'rekod', 'jalan', 'walked', 'dah', 'took'])) return { type: 'steps', n: parseInt(sm[1], 10) };
@@ -109,8 +112,29 @@ export class AssistantBase extends React.Component<any, any> {
       const diff = p.val - s.odo; patch.odo = p.val; patch.kmMonth = s.kmMonth + diff;
       m = this.mk(L('Odometer saved: ' + this.num(p.val) + ' km. That is ' + diff + ' km since the last reading, so this month is ' + (s.kmMonth + diff) + ' km.', 'Odometer disimpan: ' + this.num(p.val) + ' km. Itu ' + diff + ' km sejak bacaan terakhir, jadi bulan ini ' + (s.kmMonth + diff) + ' km.'), { big: this.num(p.val), bigLbl: 'km', color: '#ff8fab', label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' });
     }
+    if (yes && p.type === 'spend') { m.uid = Date.now(); patch.lastUndo = { id: m.uid, askSpend: true }; }
     this.setState(Object.assign({ msgs: s.msgs.concat([m]) }, patch));
     if (yes && this.props.persist) this.props.persist(p.type === 'undoSpend' ? { type: 'undoSpend', id: p.sid } : p);
+    this.scroll();
+  }
+  // What puts a saved action back as it was. Spending is undone through the usual "remove your latest spending" question.
+  undoFor(a) {
+    const s = this.state; const R = this.R();
+    if (a.type === 'cups') return { type: 'cups', c: s.cups || 0 };
+    if (a.type === 'mood') return { type: 'mood', v: s.mood || 0 };
+    if (a.type === 'steps') return { type: 'steps', n: -a.n };
+    if (a.type === 'sleep') return { type: 'sleep', h: s.sleep || 0 };
+    if (a.type === 'task') return { type: 'undoTask', name: a.name };
+    if (a.type === 'event') return { type: 'undoEvent', name: a.name, date: a.date };
+    if (a.type === 'taskdone') { const t = (R.plTasks || []).find((x) => x.id === a.id); return { type: 'taskstatus', id: a.id, status: (t && t.status && t.status !== 'done') ? t.status : 'todo' }; }
+    return null;
+  }
+  undoLast() {
+    const s = this.state; const u = s.lastUndo; if (!u) return;
+    const L = (en, ms) => (s.lang === 'ms' ? ms : en);
+    if (u.askSpend) { this.setState({ lastUndo: null }); this.ask(L('undo last spending', 'padam belanja terakhir')); return; }
+    this.setState({ lastUndo: null, msgs: s.msgs.concat([this.mk(L('Done, I undid that.', 'Siap, saya dah buat asal.'))]) });
+    if (this.props.persist) this.props.persist(u.act);
     this.scroll();
   }
   hm() { const d = new Date(); let h = d.getHours(); const m = String(d.getMinutes()).padStart(2, '0'); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + m + ' ' + ap; }
@@ -173,7 +197,7 @@ export class AssistantBase extends React.Component<any, any> {
       { id: 'tasks', k: ['tugasan', 'tugas', 'task', 'tasks', 'todo', 'to do', 'kerja'] },
       { id: 'due', k: ['hampir', 'due', 'tarikh', 'deadline', 'tamat', 'urgent', 'lewat', 'overdue'] },
       { id: 'events', k: ['acara', 'event', 'events', 'birthday', 'hari lahir', 'kalendar', 'calendar', 'upcoming', 'cuti', 'holiday', 'public holiday', 'hari raya', 'deepavali', 'cuti umum', 'malaysia events'] },
-      { id: 'summary', k: ['ringkasan', 'summary', 'overview', 'rumusan', 'laporan', 'how am i doing', 'macam mana hari', 'my day'] },
+      { id: 'summary', k: ['brief', 'briefing', 'ringkasan', 'summary', 'overview', 'rumusan', 'laporan', 'how am i doing', 'macam mana hari', 'my day'] },
       { id: 'advice', k: ['patut', 'should', 'cadang', 'suggest', 'nasihat', 'advice', 'buat sekarang', 'tips', 'do next', 'what next'] },
       { id: 'greet', k: ['hi', 'hello', 'hai', 'salam', 'assalamualaikum', 'hey', 'helo'] },
       { id: 'thanks', k: ['terima kasih', 'thanks', 'thank', 'tq', 'makasih', 'thx'] },
@@ -219,7 +243,8 @@ export class AssistantBase extends React.Component<any, any> {
     const offHit = MODQ.find((x) => !modOn(x[0]) && x[2].test(q));
     if (offHit) return { m: mk(L('That needs the ' + offHit[1] + ' module, and it is turned off. Turn it on in Settings, Modules, then ask me again. Your data is still saved.', 'Itu memerlukan modul ' + offHit[1] + ', dan ia dimatikan. Hidupkan di Settings, Modules, kemudian tanya saya semula. Data awak masih tersimpan.')), patch: {}, act: null };
     const cmdTask = q.trim().match(/^(tambah|add|buat|create|new)\s+(tugasan|tugas|task|todo)\b\s*:?\s*(.*)$/i);
-    const cmdWater = /^(tambah|add|log|minum|drink)\b/.test(qn) && /(air|water|gelas|segelas|glass|cup)/.test(qn);
+    const qf = this.norm(fix(q)); // spelling repaired ("sy tdo 6 jam semlm" -> "saya tidur 6 jam semalam"), used to read the meaning
+    const cmdWater = (/^(tambah|add|log|minum|drink)\b/.test(qf) || /^((i|saya|sy|dah|sudah|telah|just|baru)\s+)*(had|drank|minum)\b/.test(qf)) && /(air|water|gelas|segelas|glass|cup)/.test(qf) && !/\b(how|berapa|many|much)\b/.test(qf);
     const pc = Math.round(D.steps / D.goal * 100);
     const cps = this.comps(); // (was named cs, which hid the currency helper cs() used in many answers below)
     const avg = Math.round(cps.reduce((a, c) => a + c.r, 0) / cps.length * 100);
@@ -229,7 +254,7 @@ export class AssistantBase extends React.Component<any, any> {
     const open = s.tasks.filter(t => t.s !== 'done');
     const dnow = s.tasks.filter(t => t.s === 'done').length;
     const isAfford = /(mampu|afford|boleh ke|boleh saya beli|patut ke|should i buy|can i buy|worth it)/i.test(q);
-    const act = isAfford ? null : this.parseAct(q, qn);
+    const act = isAfford ? null : this.parseAct(q, qf);
     if (!act && !cmdWater) {
       let th = null;
       try { th = think(this, q, lang); } catch (e) { th = null; }
@@ -265,7 +290,7 @@ export class AssistantBase extends React.Component<any, any> {
         m = mk(L('Done. I added "' + name + '" to your Daily Planner tasks. You now have ' + (open.length + 1) + ' open tasks.', 'Siap. Saya dah tambah "' + name + '" dalam tugasan Daily Planner. Awak ada ' + (open.length + 1) + ' tugasan belum siap.'), { big: String(open.length + 1), bigLbl: L('open tasks', 'tugasan belum siap'), color: '#7c9cff', label: L('Open Daily Planner', 'Buka Daily Planner'), href: 'Planner.dc.html' });
       }
     } else if (cmdWater) {
-      const wn = (qn.match(/(\d+)\s*(gelas|glass|cup)/) || [0, 1])[1]; const c = Math.min(D.cupGoal, s.cups + Number(wn));
+      const wn = (qf.match(/(\d+)\s*(gelas|glass|cup)/) || [0, 1])[1]; const c = Math.min(D.cupGoal, s.cups + Number(wn));
       patch.cups = c; doAct = { type: 'cups', c: c };
       m = mk(c === s.cups ? L('You already reached your water goal today. Well done.', 'Awak dah capai sasaran air hari ini. Syabas.') : L('Logged. That is ' + c + ' of ' + D.cupGoal + ' glasses today.', 'Dah direkod. Sekarang ' + c + ' daripada ' + D.cupGoal + ' gelas hari ini.'), { big: c + '/' + D.cupGoal, bigLbl: L('glasses', 'gelas'), pct: Math.round(c / D.cupGoal * 100), color: '#5ee7df', label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
     } else {
@@ -286,7 +311,7 @@ export class AssistantBase extends React.Component<any, any> {
           break;
         case 'sleep': {
           if (!D.sleep) { m = mk(L('You have not logged last night\'s sleep yet. Tell me, for example, "I slept 7 hours".', 'Awak belum rekod tidur semalam. Beritahu saya, contohnya "saya tidur 7 jam".'), { label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' }); break; }
-          const gap = Math.max(0, D.sleepGoal - D.sleep);
+          const gap = Math.round(Math.max(0, D.sleepGoal - D.sleep) * 10) / 10;
           m = mk(L('You slept ' + D.sleep + ' hours, ' + gap + ' hours short of your ' + D.sleepGoal + ' hour goal. ' + (gap > 1 ? 'Short sleep lowers focus and mood. Try to be in bed 1 to 2 hours earlier tonight.' : 'That is close to your goal. Keep it up.'), 'Awak tidur ' + D.sleep + ' jam, kurang ' + gap + ' jam daripada sasaran ' + D.sleepGoal + ' jam. ' + (gap > 1 ? 'Tidur kurang menjejaskan fokus dan mood. Cuba berbaring 1 hingga 2 jam lebih awal malam ini.' : 'Hampir capai sasaran. Teruskan.')), { big: D.sleep + 'h', bigLbl: L('of ' + D.sleepGoal + 'h goal', 'daripada ' + D.sleepGoal + 'j'), pct: Math.round(Math.min(D.sleep / D.sleepGoal, 1) * 100), color: '#b794ff', label: L('Open Sleep tracker', 'Buka penjejak tidur'), href: 'Habit.dc.html' });
           break;
         }
@@ -420,15 +445,23 @@ export class AssistantBase extends React.Component<any, any> {
           break;
         }
         case 'summary': {
-          const hb = modOn('habit'), fi = modOn('finance'), pl = modOn('planner');
+          const hb = modOn('habit'), fi = modOn('finance'), pl = modOn('planner'), isl = modOn('islamic');
           const en = [], my = [];
+          const hr = new Date().getHours();
+          const gEn = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening'; const gMs = hr < 12 ? 'Selamat pagi' : hr < 18 ? 'Selamat petang' : 'Selamat malam';
+          if (isl && np) { en.push('Next prayer ' + np.name + ' at ' + np.time); my.push('Solat seterusnya ' + np.name + ' pada ' + np.time); }
+          if (pl) { const due = open.filter((t) => { const n = this.daysTo(t.d); return n !== null && n <= 0; }).length; en.push('Open tasks ' + open.length + (due ? ' (' + due + ' due or overdue)' : '')); my.push('Tugasan belum siap ' + open.length + (due ? ' (' + due + ' hampir atau lewat)' : '')); }
           if (hb) { en.push('Steps ' + this.num(D.steps) + ' (' + pc + '%)', 'Water ' + s.cups + '/' + D.cupGoal + ' · Sleep ' + D.sleep + 'h'); my.push('Langkah ' + this.num(D.steps) + ' (' + pc + '%)', 'Air ' + s.cups + '/' + D.cupGoal + ' · Tidur ' + D.sleep + 'j'); }
-          if (fi) { en.push('Spent ' + cs() + D.spendToday); my.push('Belanja ' + cs() + D.spendToday); }
-          if (pl) { en.push('Open tasks ' + open.length); my.push('Tugasan belum siap ' + open.length); }
+          if (fi) {
+            const al = R.allow || 0;
+            if (al > 0) { const lf = Math.round((al - D.spendToday) * 100) / 100; en.push('Budget today ' + cs() + this.rm(Math.max(0, lf)) + ' left of ' + cs() + this.rm(al) + (lf < 0 ? ' (over by ' + cs() + this.rm(-lf) + ')' : '')); my.push('Bajet hari ini baki ' + cs() + this.rm(Math.max(0, lf)) + ' daripada ' + cs() + this.rm(al) + (lf < 0 ? ' (lebih ' + cs() + this.rm(-lf) + ')' : '')); }
+            else { en.push('Spent ' + cs() + D.spendToday); my.push('Belanja ' + cs() + D.spendToday); }
+          }
+          if (D.score > 0) { en.push('Life Score ' + D.score); my.push('Skor Life ' + D.score); }
           const offN = [['habit', 'Habit & Health'], ['finance', 'My Finance'], ['planner', 'Daily Planner']].filter((x) => !modOn(x[0])).map((x) => x[1]);
           const tailEn = offN.length ? '\n\n' + offN.join(', ') + (offN.length > 1 ? ' are' : ' is') + ' turned off. Turn it on in Settings, Modules to include it.' : '';
           const tailMs = offN.length ? '\n\n' + offN.join(', ') + ' dimatikan. Hidupkan di Settings, Modules untuk dimasukkan.' : '';
-          m = mk(L('Your day so far:\n' + en.join('\n') + tailEn, 'Hari awak setakat ini:\n' + my.join('\n') + tailMs), hb ? { big: avg + '%', bigLbl: L('daily goal', 'sasaran harian'), pct: avg, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' } : {});
+          m = mk(L(gEn + '. Your day so far:\n' + en.join('\n') + tailEn, gMs + '. Hari awak setakat ini:\n' + my.join('\n') + tailMs), hb ? { big: avg + '%', bigLbl: L('daily goal', 'sasaran harian'), pct: avg, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' } : {});
           break;
         }
         case 'advice': {
@@ -460,7 +493,7 @@ export class AssistantBase extends React.Component<any, any> {
           m = mk(L('Family Planner is shared online with your family, so I cannot read it. Open it from the Family Planner button in Daily Planner, or turn it on as a Dashboard module in Settings, Modules. There you share Tasks (chores and rewards), Household (shopping, menu and wishes) and Activities (calendar with holidays and birthdays). The owner shares the invite code from the Members page.', 'Family Planner dikongsi dalam talian dengan keluarga awak, jadi saya tak boleh membacanya. Buka dari butang Family Planner di Daily Planner, atau hidupkan sebagai modul Dashboard di Settings, Modules. Di sana awak kongsi Tasks (tugas rumah dan ganjaran), Household (senarai belanja, menu dan wishes) dan Activities (kalendar dengan cuti dan hari lahir). Pemilik berkongsi kod jemputan dari halaman Members.'), { label: L('Open Family Planner', 'Buka Family Planner'), href: 'Family.dc.html' });
           break;
         case 'help':
-          m = mk(L('You can ask me about:\n• Health: steps, distance, sleep, water, mood\n• Faith: next prayer, prayer times, Quran, zikir, fasting\n• Money: spending, income, money left, category limits, budget alerts, commitments and debts\n• Savings goals: how much saved, progress, what is left to reach a goal\n• Motorcycle: mileage, service, odometer\n• Tasks: open tasks, due soon, events\n• Family Planner: how to open it\n• App: reminders, app lock, export (includes savings goals and Money Left)\nI can save for you: "spent ' + cu() + '10 on lunch", "service motor ' + cu() + '120", "add mileage 18500 km", "I slept 7 hours", "add task buy milk".', 'Awak boleh tanya saya tentang:\n• Kesihatan: langkah, jarak, tidur, air, mood\n• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha\n• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang\n• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran\n• Motosikal: jarak, servis, odometer\n• Tugasan: tugasan, hampir tarikh, acara\n• Family Planner: cara membukanya\n• App: peringatan, kunci app, eksport (termasuk tabung dan baki wang)\nSaya boleh simpankan: "belanja ' + cu() + '10 untuk makan", "servis motor ' + cu() + '120", "tambah milage 18500 km", "saya tidur 7 jam", "tambah tugasan beli susu".'));
+          m = mk(L('You can ask me about:\n• Health: steps, distance, sleep, water, mood\n• Faith: next prayer, prayer times, Quran, zikir, fasting\n• Money: spending, income, money left, category limits, budget alerts, commitments and debts\n• Savings goals: how much saved, progress, what is left to reach a goal\n• Motorcycle: mileage, service, odometer\n• Tasks: open tasks, due soon, events\n• Family Planner: how to open it\n• Life Score: what it is made of and what lifts it. Money: how much you can spend today\n• Say \"undo\" to take back the last thing I saved\n• App: reminders, app lock, export (includes savings goals and Money Left)\nI can save for you: "spent ' + cu() + '10 on lunch", "service motor ' + cu() + '120", "add mileage 18500 km", "I slept 7 hours", "add task buy milk".', 'Awak boleh tanya saya tentang:\n• Kesihatan: langkah, jarak, tidur, air, mood\n• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha\n• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang\n• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran\n• Motosikal: jarak, servis, odometer\n• Tugasan: tugasan, hampir tarikh, acara\n• Family Planner: cara membukanya\n• Skor Life: apa yang membentuknya dan cara menaikkannya. Wang: berapa boleh dibelanjakan hari ini\n• Sebut \"buat asal\" untuk batalkan benda terakhir yang saya simpan\n• App: peringatan, kunci app, eksport (termasuk tabung dan baki wang)\nSaya boleh simpankan: "belanja ' + cu() + '10 untuk makan", "servis motor ' + cu() + '120", "tambah milage 18500 km", "saya tidur 7 jam", "tambah tugasan beli susu".'));
           break;
         default:
           m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford ' + cu() + '300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli ' + cu() + '300?"'));
@@ -481,6 +514,8 @@ export class AssistantBase extends React.Component<any, any> {
       try { r = this.reply(q, lang); } catch (e) {
         r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
+      // Anything saved from here can be undone with one tap (or by typing "undo").
+      if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
       this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
@@ -490,7 +525,7 @@ export class AssistantBase extends React.Component<any, any> {
     const s = this.state; const ms = s.lang === 'ms';
     const L = (en, bm) => (ms ? bm : en);
     const Q = {
-      0: [['Summary of my day', 'Ringkasan hari ini'], ['How am I doing today?', 'Macam mana hari saya setakat ini?'], ['What should I do next?', 'Apa patut saya buat sekarang?'], ['My Life Score', 'Skor Life saya'], ['My habit streak', 'Streak habit saya']],
+      0: [[new Date().getHours() < 12 ? 'Morning brief' : 'Summary of my day', new Date().getHours() < 12 ? 'Ringkasan pagi' : 'Ringkasan hari ini'], ['How am I doing today?', 'Macam mana hari saya setakat ini?'], ['What should I do next?', 'Apa patut saya buat sekarang?'], ['My Life Score', 'Skor Life saya'], ['My habit streak', 'Streak habit saya']],
       1: [['How many steps today?', 'Berapa step saya hari ini?'], ['How far did I walk?', 'Berapa jauh saya jalan?'], ['How is my health now?', 'Macam mana tahap kesihatan saya sekarang?'], ['How did I sleep?', 'Berapa jam saya tidur?'], ['How much water have I had?', 'Berapa air saya minum?'], ['How is my mood?', 'Mood saya hari ini?'], ['Add a glass of water', 'Tambah segelas air']],
       2: [['When is the next prayer?', 'Bila waktu solat seterusnya?'], ['My fasting', 'Puasa dan qadha saya'], ['Prayer times today', 'Waktu solat hari ini'], ['Continue my Quran reading', 'Sambung bacaan Quran saya'], ['Suggest a zikir', 'Cadangan zikir untuk saya'], ['Qibla direction', 'Arah kiblat']],
       3: [['What did I spend today?', 'Berapa saya belanja hari ini?'], ['What did I spend this month?', 'Belanja bulan ini?'], ['My income this month', 'Pendapatan saya bulan ini'], ['How much is left?', 'Berapa baki saya?'], ['Top spending category', 'Kategori belanja paling banyak'], ['My commitments and debts', 'Komitmen dan hutang saya']],
@@ -529,6 +564,7 @@ export class AssistantBase extends React.Component<any, any> {
         bigD: m.big ? 'block' : 'none', barD: m.pct >= 0 ? 'block' : 'none',
         big: m.big, bigLbl: m.bigLbl, pct: m.pct < 0 ? 0 : m.pct, color: m.color || '#8fe9e2',
         text: m.text, time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
+        undoD: m.uid && s.lastUndo && s.lastUndo.id === m.uid ? 'flex' : 'none', undo: () => this.undoLast(), undoL: L('Undo', 'Buat asal'),
         btnD: m.pid && s.pending && s.pending.id === m.pid ? 'flex' : 'none', yes: () => this.confirm(true), no: () => this.confirm(false), yesL: L('Save', 'Simpan'), noL: L('Cancel', 'Batal')
       };
     });

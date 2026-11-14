@@ -17,6 +17,7 @@ const SLANG = {
   blm: 'belum', dh: 'dah', sdh: 'sudah', knp: 'kenapa', kenape: 'kenapa', camne: 'macam mana', cmne: 'macam mana', macamana: 'macam mana', macamne: 'macam mana', smlm: 'semalam', esk: 'esok', bsk: 'esok', besok: 'esok', tgk: 'tengok', hrini: 'hari ini', harini: 'hari ini',
   ni: 'ini', nie: 'ini', tu: 'itu', jgn: 'jangan', tlg: 'tolong', pls: 'please', plz: 'please', btw: 'by the way', gaji: 'gaji', duitt: 'duit', wang: 'duit', ringgit: 'rm', bajet: 'budget', kt: 'kat', lg: 'lagi', jer: 'je', jek: 'je', spt: 'seperti', byk: 'banyak', sket: 'sikit', skit: 'sikit', kje: 'kerja', kerjaa: 'kerja', mkn: 'makan', mkan: 'makan', sleeep: 'sleep', thx: 'thanks', tq: 'terima kasih', tqvm: 'terima kasih',
 };
+Object.assign(SLANG, { scor: 'score', scre: 'score', spnt: 'spent', spnd: 'spend', blja: 'belanja', slpt: 'slept', wtr: 'water', stps: 'steps', tsk: 'task', tsks: 'tasks', mkn: 'makan', mnggu: 'minggu', hri: 'hari', tdr: 'tidur', lngkh: 'langkah', lngkah: 'langkah', gelaas: 'gelas', mnum: 'minum', mnm: 'minum', smlm: 'semalam', skrg: 'sekarang', skrang: 'sekarang', xpe: 'tak apa', tkpe: 'tak apa', brpe: 'berapa', brape: 'berapa' });
 const VOC = ('siapa berapa bulan minggu semalam kelmarin esok lusa belanja perbelanjaan pendapatan gaji tidur langkah tugasan acara solat puasa hutang servis motosikal odometer kesihatan makan petrol minyak elektrik kenapa bagaimana macam mana boleh tambah padam buang catat nota ingatkan jangan lupa tandakan selesai siap sudah belum kategori paling banyak jimat bajet baki simpan bandingkan banding ringkasan cadangan nasihat penting segera tolong terima kasih hari ini tahun lepas depan sikit tinggi rendah purata jumlah jumpa doktor temujanji bengkel '
   + 'spending spent income salary budget savings steps sleep water mood tasks events prayer fasting debts service mileage motorcycle summary weekly week month year yesterday tomorrow today average total biggest expensive cheaper higher lower compare comparison reminder remind note delete remove undo done finished complete mark afford priority progress review advice suggest why reduce cut fuel lunch dinner breakfast coffee groceries shopping bills health appointment doctor meeting birthday').split(' ');
 const VSET = {}; VOC.forEach((w) => { VSET[w] = 1; });
@@ -212,6 +213,47 @@ export function think(A, q, lang) {
     if (tie) return done(mk(L('I found more than one task like that. Please say a bit more of the task name.', 'Ada lebih daripada satu tugasan seakan itu. Sila sebut sedikit lagi nama tugasan.')));
     if (open.length && has(['tandakan', 'mark']) ) return done(mk(L('I could not find that task. Your open tasks:\n', 'Saya tak jumpa tugasan itu. Tugasan belum siap:\n') + open.slice(0, 5).map((t) => '• ' + t.name).join('\n')));
   }
+  // undo: the last thing saved (water, mood, steps, sleep, task, event, task done) or the latest spending
+  if (has(['undo', 'buat asal', 'tarik balik', 'revert', 'batalkan']) && qn.split(' ').length <= 4 && !has(['belanja', 'spending', 'spend', 'rekod', 'record'])) {
+    const u = s.lastUndo;
+    if (!u) return done(mk(L('There is nothing to undo right now. I can undo the last thing I saved for you, like water, mood, steps, sleep, a task or an event. For spending, say "remove my last spending".', 'Tiada apa untuk dibuat asal sekarang. Saya boleh buat asal benda terakhir yang saya simpan, seperti air, mood, langkah, tidur, tugasan atau event. Untuk belanja, sebut "padam belanja terakhir".')));
+    if (u.askSpend) return think(A, L('undo last spending', 'padam belanja terakhir'), lang);
+    return done(mk(L('Done, I undid that.', 'Siap, saya dah buat asal.')), { lastUndo: null }, u.act);
+  }
+  // how much can I spend today (the daily amount from My Finance, less what is already spent today)
+  if (modOn('finance') && !/\d/.test(qn) && !/(mampu|afford|worth)/.test(qn) && ((has(['boleh', 'can', 'able', 'berapa lagi', 'how much more']) && has(['belanja', 'spend', 'guna', 'habiskan'])) || has(['baki hari ini', 'baki harini', 'left today', 'remaining today', 'budget today', 'bajet hari ini', 'today budget', 'budget left', 'baki bajet', 'baki budget', 'budget baki', 'bajet tinggal', 'budget tinggal']))) {
+    const m1 = ML(); const al = m1.allowance; const td = D.spendToday;
+    if (!(m1.income > 0)) return done(mk(L('I need your income to work out a daily amount. Add it in My Finance, Monthly Income.', 'Saya perlukan pendapatan awak untuk kira jumlah harian. Masukkan di My Finance, Monthly Income.'), FIN), {}, null, { intent: 'left' });
+    if (!(al > 0)) return done(mk(L('Nothing is left to spend this month after commitments and spending, so today\'s amount is ' + rm(0) + '.', 'Tiada baki untuk dibelanjakan bulan ini selepas komitmen dan belanja, jadi jumlah hari ini ialah ' + rm(0) + '.'), FIN), {}, null, { intent: 'left' });
+    const lf = al - td; const over = lf < 0; const pct = Math.max(0, Math.min(100, Math.round((lf / al) * 100)));
+    const text = over
+      ? L('You can spend about ' + rm(al) + ' a day. Today you have spent ' + rm(td) + ', which is ' + rm(-lf) + ' over.', 'Awak boleh belanja kira-kira ' + rm(al) + ' sehari. Hari ini awak dah belanja ' + rm(td) + ', lebih ' + rm(-lf) + '.')
+      : L('You can spend about ' + rm(al) + ' a day. Today you have spent ' + rm(td) + ', so about ' + rm(lf) + ' is left for today.', 'Awak boleh belanja kira-kira ' + rm(al) + ' sehari. Hari ini awak dah belanja ' + rm(td) + ', jadi baki lebih kurang ' + rm(lf) + ' untuk hari ini.');
+    return done(mk(text, { big: rm(Math.max(0, lf)), bigLbl: L('left today', 'baki hari ini'), pct, color: over ? '#ff6b81' : pct <= 25 ? '#ffc46b' : '#7df0c6', label: FIN.label, href: FIN.href }), {}, null, { intent: 'left' });
+  }
+  // Life Score: what it is made of, and what would lift it
+  if (has(['life score', 'skor life', 'skor hidup', 'markah life', 'my score', 'skor saya']) && (R.parts || []).length) {
+    const parts = R.parts.slice().sort((a, b) => a.pct - b.pct); const low = parts[0];
+    const TIP = {
+      habit: L('Log your water and sleep, and take a short walk.', 'Rekod air dan tidur, dan jalan kaki sebentar.'),
+      tasks: L('Finish the tasks that are due or overdue in Daily Planner.', 'Siapkan tugasan yang hampir tarikh atau lewat di Daily Planner.'),
+      bills: L('Tick your commitments as paid in My Finance when you pay them.', 'Tanda komitmen sebagai dah bayar di My Finance bila awak bayar.'),
+      spend: L('Keep today\'s spending under your daily amount from My Finance.', 'Kekalkan belanja hari ini di bawah jumlah harian daripada My Finance.'),
+      faith: L('A few minutes of tasbih lifts this one.', 'Beberapa minit tasbih akan menaikkan bahagian ini.'),
+    };
+    const lines = parts.slice().reverse().map((p) => '• ' + p.label + ' ' + p.pct + '%');
+    const why = has(['kenapa', 'why', 'rendah', 'low', 'naik', 'improve', 'tingkat', 'tambah', 'increase', 'bagaimana', 'macam mana', 'how', 'lift', 'better']);
+    const tail = why && low ? L('\n\nThe lowest part is ' + low.label + ' at ' + low.pct + '% (' + low.detail + '). ' + (TIP[low.k] || ''), '\n\nBahagian paling rendah ialah ' + low.label + ' pada ' + low.pct + '% (' + low.detail + '). ' + (TIP[low.k] || '')) : '';
+    return done(mk(L('Your Life Score is ' + D.score + ' out of 100. It is the average of what you have logged today:\n' + lines.join('\n') + tail, 'Skor Life awak ialah ' + D.score + ' daripada 100. Ia purata apa yang awak dah rekod hari ini:\n' + lines.join('\n') + tail), { big: String(D.score), bigLbl: L('Life Score', 'Skor Life'), pct: D.score, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' }), {}, null, { intent: 'score' });
+  }
+  // where the steps come from
+  if (modOn('habit') && has(['langkah', 'step', 'steps']) && has(['dari mana', 'sumber', 'source', 'macam mana dikira', 'how are steps counted', 'how do you count', 'how does step', 'how is step', 'dikira macam mana', 'counted'])) {
+    const hc = ((R.days || {})[todayS] || {}).hc;
+    return done(mk(hc != null
+      ? L('Your steps are counted automatically from Health Connect or your phone\'s own step sensor, whichever is higher, plus anything you added by hand. Open My Life now and then to refresh the total.', 'Langkah awak dikira automatik daripada Health Connect atau sensor langkah telefon, mana yang lebih tinggi, ditambah apa yang awak masukkan sendiri. Buka My Life sekali-sekala untuk kemas kini jumlah.')
+      : L('Right now your steps are only what you typed in. Turn on Count steps automatically in Habit & Health to count them from your phone.', 'Setakat ini langkah awak hanya yang awak taip. Hidupkan Count steps automatically di Habit & Health untuk kira daripada telefon.'),
+      { label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' }), {}, null, { intent: 'steps' });
+  }
   // undo the last spending
   if (has(['padam', 'buang', 'delete', 'remove', 'undo', 'batalkan']) && has(['belanja', 'spending', 'spend', 'rekod terakhir', 'last record', 'terakhir', 'last', 'tadi'])) {
     const last = spends.slice().sort((a, b) => b.id - a.id)[0];
@@ -362,7 +404,7 @@ export function think(A, q, lang) {
     const v = R.incomeLast || 0; return done(mk(v ? L('Last month your income was ' + rm(v) + '.', 'Pendapatan bulan lepas ialah ' + rm(v) + '.') : L('No income was logged last month.', 'Tiada pendapatan direkod bulan lepas.'), Object.assign({ big: v ? rm(v) : '', bigLbl: L('last month', 'bulan lepas'), color: '#34d399' }, FIN)));
   }
   // tasks / events on a day or week
-  if ((intent === 'tasks' || intent === 'due' || intent === 'events' || has(['agenda', 'jadual', 'schedule', 'apa ada', 'what do i have', 'plan', 'rancangan'])) && (findDate(ql) || per)) {
+  if ((intent === 'tasks' || intent === 'due' || intent === 'events' || has(['agenda', 'jadual', 'schedule', 'apa ada', 'ada apa', 'whats on', 'what is on', 'apa yang ada', 'what do i have', 'plan', 'rancangan'])) && (findDate(ql) || per)) {
     const fd = findDate(ql); let from, to, lab;
     if (fd && !(per && per.k === 'week')) { from = fd.date; to = iso(addDays(new Date(fd.date + 'T12:00:00'), 1)); lab = fmt(fd.date); } else { const p = per || period(' this week '); from = p.from; to = p.to; lab = L(p.en, p.ms); }
     if (!fd && per && (per.k === 'week')) { to = iso(addDays(new Date(per.from + 'T12:00:00'), 7)); }
@@ -372,7 +414,7 @@ export function think(A, q, lang) {
     return done(mk(lines.length ? L('On your list for ' + lab + ':\n', 'Dalam senarai awak untuk ' + lab + ':\n') + lines.join('\n') : L('Nothing planned for ' + lab + '. A clear day.', 'Tiada rancangan untuk ' + lab + '. Hari yang lapang.'), { label: L('Open Daily Planner', 'Buka Daily Planner'), href: 'Planner.dc.html' }));
   }
   // follow-up questions that rely on the last topic
-  if (ctx.intent && short && (follow || per || cat) && (!hasOwn || ((per || cat) && ['mmonth', 'mcmp', 'spend', 'spendM', 'steps', 'sleep', 'water', 'mood', 'dist', 'income'].indexOf(intent) >= 0) || has(['pula', 'pulak', 'how about', 'what about', 'macam mana dengan']))) {
+  if (ctx.intent && short && (follow || per || cat) && (!hasOwn || ((per || cat) && ['mmonth', 'mcmp', 'spend', 'spendM', 'steps', 'sleep', 'water', 'mood', 'dist'].indexOf(intent) >= 0) || has(['pula', 'pulak', 'how about', 'what about', 'macam mana dengan']))) {
     const p = per || ctx.pObj || null;
     if (ctx.intent === 'spend') { const pp = per || ctx.pObj || period(' bulan ini '); return done(spendAnswer(pp, cat || ctx.cat || null, false), {}, null, { intent: 'spend', period: pp.k, pObj: pp, cat: cat || ctx.cat || null }); }
     if (ctx.intent === 'metric' && p) return done(metricAnswer(ctx.mkey, p), {}, null, { intent: 'metric', mkey: ctx.mkey, pObj: p });
