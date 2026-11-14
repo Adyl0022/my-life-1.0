@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { THEMES, periodOf } from '../../lib/theme';
 import { Glass } from '../../components/Glass';
 import { useAnnouncement } from '../../lib/announcement';
+import { useWhatsNew } from '../../components/WhatsNewPop';
 
 const ITEMS: { name: string; label: string }[] = [
   { name: 'index', label: 'Home' }, { name: 'stats', label: 'Stats' }, { name: 'insights', label: 'Insights' }, { name: 'settings', label: 'Settings' },
@@ -41,7 +42,7 @@ function iconAnim(name: string, v: Animated.Value): any {
   return { transform: [{ rotate: m([0, 0.6, 0.8, 1], ['0deg', '110deg', '88deg', '90deg']) }] };
 }
 function Bar({ state }: any) {
-  const router = useRouter(); const { unread } = useAnnouncement();
+  const router = useRouter(); const { unread: annUnread } = useAnnouncement(); const wn = useWhatsNew(); const unread = annUnread || wn.show;
   const home = state.index === 0;
   const period = periodOf(new Date());
   const th = THEMES[period];
