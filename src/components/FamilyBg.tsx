@@ -155,7 +155,7 @@ function Houses() {
 
 // The sky is drawn in two steps so opening a screen stays smooth: the colours and glows at once, then the moving parts (stars, sparkles,
 // asteroids, lights, houses) once the screen has finished sliding in. A screen that is covered by another one stops drawing them.
-// Fades its children in slowly, so the asteroids drift into view instead of popping up.
+// Fades its children in slowly, so the asteroids, lights and houses drift into view instead of popping up.
 function FadeIn({ children }: { children: React.ReactNode }) {
   const o = useRef(new Animated.Value(0)).current;
   useEffect(() => { const a = Animated.timing(o, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.quad), useNativeDriver: true }); a.start(); return () => a.stop(); }, []);
@@ -183,9 +183,9 @@ function Moving() {
         <Mote left="58%" delay={900} dur={7500} size={4} color="#5ee7df" />
         <Mote left="78%" delay={3600} dur={8000} size={3} color="#ff8fab" />
         <Mote left="90%" delay={1800} dur={6500} size={3} color="#ffc46b" />
-        <Lights />
       </> : null}
-      {st >= 5 ? <Houses /> : null}
+      {st >= 4 ? <FadeIn><Lights /></FadeIn> : null}
+      {st >= 5 ? <FadeIn><Houses /></FadeIn> : null}
       {st >= 6 ? <FadeIn>
         {ASTEROIDS.map((a, i) => <Asteroid key={i} y0={a[0]} kind={a[1]} phase={a[2]} dur={a[3]} i={i} />)}
         <Shoot left="6%" top="14%" delay={1500} gap={4500} />
