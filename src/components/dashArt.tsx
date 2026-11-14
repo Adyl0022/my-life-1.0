@@ -85,6 +85,7 @@ export const FamilyArt = () => (
 <Svg width="100%" height="100%" viewBox="0 -8 170 98" preserveAspectRatio="xMidYMid meet">
 <Defs>
 <LinearGradient id="fsk" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#241f66"/><Stop offset=".35" stopColor="#5a3c97"/><Stop offset=".6" stopColor="#c8628f"/><Stop offset=".78" stopColor="#ff9c8a"/><Stop offset="1" stopColor="#ffc58a"/></LinearGradient>
+<LinearGradient id="fmet" x1="0" y1="0" x2="1" y2="1"><Stop offset="0" stopColor="#fff" stopOpacity="0"/><Stop offset="1" stopColor="#fff" stopOpacity=".95"/></LinearGradient>
 <RadialGradient id="fsun" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#ffe2a8" stopOpacity=".85"/><Stop offset="1" stopColor="#ffb08a" stopOpacity="0"/></RadialGradient>
 <RadialGradient id="fwin" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#fff3c4"/><Stop offset="1" stopColor="#ffc46b"/></RadialGradient>
 <RadialGradient id="flamp" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#ffd98a" stopOpacity=".7"/><Stop offset="1" stopColor="#ffd98a" stopOpacity="0"/></RadialGradient>
@@ -94,7 +95,10 @@ export const FamilyArt = () => (
 <Circle cx="85" cy="64" r="15" fill="#ffd9a0" opacity=".9"/>
 <G fill="#fff" opacity=".55"><Ellipse cx="30" cy="30" rx="22" ry="4"/><Ellipse cx="42" cy="26" rx="14" ry="3.5"/><Ellipse cx="136" cy="36" rx="20" ry="3.6"/><Ellipse cx="148" cy="32" rx="12" ry="3"/></G>
 <G fill="#ffc7b8" opacity=".55"><Ellipse cx="70" cy="48" rx="18" ry="2.6"/><Ellipse cx="110" cy="52" rx="16" ry="2.4"/></G>
-<Path d="M150 -2a8 8 0 1 0 5 14 6.4 6.4 0 1 1-5-14z" fill="#fff6d8"/>
+<Line x1="120" y1="-8" x2="156" y2="12" stroke="url(#fmet)" strokeWidth="2.2" strokeLinecap="round"/>
+<Circle cx="156" cy="12" r="4.5" fill="#fff" opacity=".25"/><Circle cx="156" cy="12" r="2.1" fill="#fff"/>
+<Line x1="26" y1="-4" x2="42" y2="4" stroke="url(#fmet)" strokeWidth="1.2" strokeLinecap="round" opacity=".55"/>
+<Circle cx="42" cy="4" r="1.2" fill="#fff" opacity=".8"/>
 <G fill="#fff"><Circle cx="14" cy="2" r="1.3" opacity=".9"/><Circle cx="52" cy="-2" r="1.4" opacity=".85"/><Circle cx="118" cy="-3" r="1" opacity=".7"/><Circle cx="104" cy="8" r="1.1" opacity=".7"/><Path d="M70 10l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" opacity=".85"/></G>
 <G fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><Path d="M28 24q3-4 6 0q3-4 6 0" opacity=".9"/><Path d="M48 14q2.5-3 5 0q2.5-3 5 0" opacity=".8"/><Path d="M104 28q2-3 4 0q2-3 4 0" opacity=".7"/></G>
 <Rect x="-60" y="76" width="290" height="60" fill="#1c4a5e" opacity=".5"/><Ellipse cx="85" cy="77" rx="82" ry="8" fill="#3e8f7a" opacity=".8"/>
