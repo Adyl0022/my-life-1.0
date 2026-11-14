@@ -239,7 +239,7 @@ export class AssistantBase extends React.Component<any, any> {
     const mk = (text, x) => Object.assign({ me: false, text: text, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, x || {});
     let patch = {}; let m = null; let doAct = null;
     // A question about a module that is turned off gets a short answer asking to turn it on, never an error.
-    const MODQ = [['habit', 'Habit & Health', /steps|walk|water|sleep|slept|mood|habit|langkah|jalan kaki|air minum|tidur/i], ['planner', 'Daily Planner', /\btasks?\b|\bevents?\b|todo|tugas|acara/i], ['finance', 'My Finance', /spent|spend|petrol|income|overtime|money left|saving|budget|commit|bill|debt|belanja|gaji|pendapatan|simpan|hutang/i], ['record', 'My Record', /motorcycle|mileage|odometer|service|motor|milage|servis/i], ['islamic', 'Islamic Hub', /prayer|pray|fasting|quran|zikir|solat|puasa|doa|waktu/i]];
+    const MODQ = [['habit', 'Habit & Health', /steps|walk|water|sleep|slept|mood|habit|langkah|jalan kaki|air minum|tidur/i], ['planner', 'Daily Planner', /\btasks?\b|\bevents?\b|todo|tugas|acara/i], ['finance', 'My Finance', /spent|spend|petrol|income|overtime|money left|saving|budget|commit|bill|debt|belanja|gaji|pendapatan|simpan|hutang/i], ['record', 'My Record', /motorcycle|mileage|odometer|service|motor|milage|servis/i], ['islamic', 'Islamic Hub', /prayer|pray|fasting|quran|zikir|zikr|dhikr|tasbih|tahlil|mathurat|yasin|surah|kahfi|mulk|fatihah|qibla|kiblat|azan|adhan|ramadan|ramadhan|qadha|qada|wirid|solat|puasa|doa|waktu|islamic/i]];
     const offHit = MODQ.find((x) => !modOn(x[0]) && x[2].test(q));
     if (offHit) return { m: mk(L('That needs the ' + offHit[1] + ' module, and it is turned off. Turn it on in Settings, Modules, then ask me again. Your data is still saved.', 'Itu memerlukan modul ' + offHit[1] + ', dan ia dimatikan. Hidupkan di Settings, Modules, kemudian tanya saya semula. Data awak masih tersimpan.')), patch: {}, act: null };
     const cmdTask = q.trim().match(/^(tambah|add|buat|create|new)\s+(tugasan|tugas|task|todo)\b\s*:?\s*(.*)$/i);
@@ -299,7 +299,7 @@ export class AssistantBase extends React.Component<any, any> {
       if (id === 'mmonth' && /(banding|compare|lepas|last)/.test(qn)) id = 'mcmp';
       switch (id) {
         case 'steps':
-          m = mk(L('You have walked ' + this.num(D.steps) + ' steps today, ' + pc + '% of your ' + this.num(D.goal) + ' goal. ' + this.num(Math.max(0, D.goal - D.steps)) + ' to go. A relaxed 30 minute walk after Asar would get you close.', 'Hari ini awak dah jalan ' + this.num(D.steps) + ' langkah, ' + pc + '% daripada sasaran ' + this.num(D.goal) + '. Tinggal ' + this.num(Math.max(0, D.goal - D.steps)) + ' langkah lagi. Jalan santai 30 minit lepas Asar boleh hampirkan awak ke sasaran.'), { big: this.num(D.steps), bigLbl: L('steps · ' + pc + '% of goal', 'langkah · ' + pc + '% sasaran'), pct: pc, color: '#5ee7df', label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
+          m = mk(L('You have walked ' + this.num(D.steps) + ' steps today, ' + pc + '% of your ' + this.num(D.goal) + ' goal. ' + this.num(Math.max(0, D.goal - D.steps)) + ' to go. A relaxed 30 minute walk' + (modOn('islamic') ? ' after Asar' : '') + ' would get you close.', 'Hari ini awak dah jalan ' + this.num(D.steps) + ' langkah, ' + pc + '% daripada sasaran ' + this.num(D.goal) + '. Tinggal ' + this.num(Math.max(0, D.goal - D.steps)) + ' langkah lagi. Jalan santai 30 minit' + (modOn('islamic') ? ' lepas Asar' : '') + ' boleh hampirkan awak ke sasaran.'), { big: this.num(D.steps), bigLbl: L('steps · ' + pc + '% of goal', 'langkah · ' + pc + '% sasaran'), pct: pc, color: '#5ee7df', label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
           break;
         case 'dist': {
           const km = (D.steps * 0.00075).toFixed(1);
@@ -325,7 +325,7 @@ export class AssistantBase extends React.Component<any, any> {
           break;
         }
         case 'score':
-          m = mk(D.score > 0 ? L('Your Life Score is ' + D.score + ' out of 100. It blends your habits, tasks, commitments, spending, zikir and fasting, using only what you have logged.', 'Skor Life awak ' + D.score + ' daripada 100. Ia gabungan habit, tugasan, komitmen, belanja, zikir dan puasa, berdasarkan apa yang awak dah rekod.') : L('There is not enough logged yet to give a Life Score. Log steps, water or sleep, and it will appear.', 'Belum cukup rekod untuk skor Life. Rekod langkah, air atau tidur dan ia akan muncul.'), { big: D.score > 0 ? String(D.score) : '', bigLbl: L('of 100', 'daripada 100'), pct: D.score > 0 ? D.score : -1, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' });
+          m = mk(D.score > 0 ? L('Your Life Score is ' + D.score + ' out of 100. It blends the parts of My Life you use, using only what you have logged.', 'Skor Life awak ' + D.score + ' daripada 100. Ia gabungan bahagian My Life yang awak guna, berdasarkan apa yang awak dah rekod.') : L('There is not enough logged yet to give a Life Score. Log steps, water or sleep, and it will appear.', 'Belum cukup rekod untuk skor Life. Rekod langkah, air atau tidur dan ia akan muncul.'), { big: D.score > 0 ? String(D.score) : '', bigLbl: L('of 100', 'daripada 100'), pct: D.score > 0 ? D.score : -1, color: '#8fe9e2', label: L('Open Insights', 'Buka Insights'), href: 'Insights.dc.html' });
           break;
         case 'streak':
           m = mk(D.streak > 0 ? L('Your best habit streak is ' + D.streak + ' days in a row (days at 70% or more of your goals).', 'Streak habit terbaik awak ' + D.streak + ' hari berturut-turut (hari dengan 70% atau lebih sasaran).') : L('No streak yet. A day counts when you reach 70% of your steps, water and sleep goals.', 'Belum ada streak. Satu hari dikira bila awak capai 70% sasaran langkah, air dan tidur.'), { big: D.streak > 0 ? D.streak + ' d' : '', bigLbl: L('streak', 'streak'), color: '#ffc46b', label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
@@ -379,7 +379,13 @@ export class AssistantBase extends React.Component<any, any> {
         }
         case 'remind': {
           const tg = R.tg || {}; const on = (b) => (b ? L('on', 'hidup') : L('off', 'mati'));
-          m = mk(L('Reminders:\n• Prayer times: ' + on(tg.pr) + '\n• Planner events: ' + on(tg.ev) + '\n• Daily zikir: ' + on(tg.zk) + '\n• Quiet hours (12 am to 5 am): ' + on(tg.qh), 'Peringatan:\n• Waktu solat: ' + on(tg.pr) + '\n• Acara Planner: ' + on(tg.ev) + '\n• Zikir harian: ' + on(tg.zk) + '\n• Waktu senyap (12 pagi hingga 5 pagi): ' + on(tg.qh)), { label: L('Open Settings', 'Buka Settings'), href: 'Settings.dc.html' });
+          const isl = modOn('islamic'), pln = modOn('planner');
+          const rEn = [], rMs = [];
+          if (isl) { rEn.push('• Prayer times: ' + on(tg.pr)); rMs.push('• Waktu solat: ' + on(tg.pr)); }
+          if (pln) { rEn.push('• Planner events: ' + on(tg.ev)); rMs.push('• Acara Planner: ' + on(tg.ev)); }
+          if (isl) { rEn.push('• Daily zikir: ' + on(tg.zk)); rMs.push('• Zikir harian: ' + on(tg.zk)); }
+          rEn.push('• Quiet hours (12 am to 5 am): ' + on(tg.qh)); rMs.push('• Waktu senyap (12 pagi hingga 5 pagi): ' + on(tg.qh));
+          m = mk(L('Reminders:\n' + rEn.join('\n'), 'Peringatan:\n' + rMs.join('\n')), { label: L('Open Settings', 'Buka Settings'), href: 'Settings.dc.html' });
           break;
         }
         case 'export':
@@ -466,19 +472,22 @@ export class AssistantBase extends React.Component<any, any> {
         }
         case 'advice': {
           const a = [];
-          if (np && np.mins <= 45) a.push(L('Get ready for ' + np.name + ' in ' + np.mins + ' minutes.', 'Bersedia untuk ' + np.name + ' dalam ' + np.mins + ' minit.'));
+          if (modOn('islamic') && np && np.mins <= 45) a.push(L('Get ready for ' + np.name + ' in ' + np.mins + ' minutes.', 'Bersedia untuk ' + np.name + ' dalam ' + np.mins + ' minit.'));
           a.push(L(weak.tipEn + ' Your ' + weak.en + ' is the lowest today.', weak.tipMs + ' ' + weak.ms.charAt(0).toUpperCase() + weak.ms.slice(1) + ' awak paling rendah hari ini.'));
           const soon = open.filter(t => t.d && this.daysTo(t.d) <= 2).sort((x, y) => this.daysTo(x.d) - this.daysTo(y.d))[0];
           if (soon) a.push(L('Finish "' + soon.n + '" (' + this.dueText(soon.d, L) + ').', 'Siapkan "' + soon.n + '" (' + this.dueText(soon.d, L) + ').'));
           const h = new Date().getHours();
-          if (h >= 16 && h < 20) a.push(L('Read evening Al-Ma\'thurat.', 'Baca Al-Ma\'thurat petang.'));
+          if (!modOn('islamic')) { /* no Islamic Hub: no zikir tips */ }
+          else if (h >= 16 && h < 20) a.push(L('Read evening Al-Ma\'thurat.', 'Baca Al-Ma\'thurat petang.'));
           else if (h >= 5 && h < 10) a.push(L('Read morning Al-Ma\'thurat.', 'Baca Al-Ma\'thurat pagi.'));
-          if (D.nextSvc && D.nextSvc - D.odo < 2000) a.push(L('Plan your motorcycle service soon.', 'Rancang servis motosikal tidak lama lagi.'));
+          if (modOn('record') && D.nextSvc && D.nextSvc - D.odo < 2000) a.push(L('Plan your motorcycle service soon.', 'Rancang servis motosikal tidak lama lagi.'));
           m = mk(L('Here is what I would do next:\n', 'Ini yang saya cadang seterusnya:\n') + a.slice(0, 3).map((x, i) => (i + 1) + '. ' + x).join('\n'));
           break;
         }
         case 'greet':
-          m = mk(L('Hi ' + this.fn() + '! Ask me about your steps, sleep, prayers, spending, motorcycle or tasks.', 'Hai ' + this.fn() + '! Tanya saya tentang langkah, tidur, solat, belanja, motosikal atau tugasan.'));
+          { const gE = [], gM = []; if (modOn('habit')) { gE.push('your steps', 'sleep'); gM.push('langkah', 'tidur'); } if (modOn('islamic')) { gE.push('prayers'); gM.push('solat'); } if (modOn('finance')) { gE.push('spending'); gM.push('belanja'); } if (modOn('record')) { gE.push('motorcycle'); gM.push('motosikal'); } if (modOn('planner')) { gE.push('tasks'); gM.push('tugasan'); }
+          const jn = (a, w) => (a.length > 1 ? a.slice(0, -1).join(', ') + ' ' + w + ' ' + a[a.length - 1] : a.join(''));
+          m = mk(L('Hi ' + this.fn() + '! Ask me about ' + (gE.length ? jn(gE, 'or') : 'your day') + '.', 'Hai ' + this.fn() + '! Tanya saya tentang ' + (gM.length ? jn(gM, 'atau') : 'hari awak') + '.')); }
           break;
         case 'thanks':
           m = mk(L('You are welcome. I am here whenever you need me.', 'Sama-sama. Saya ada bila-bila masa awak perlukan.'));
@@ -492,9 +501,24 @@ export class AssistantBase extends React.Component<any, any> {
         case 'family':
           m = mk(L('Family Planner is shared online with your family, so I cannot read it. Open it from the Family Planner button in Daily Planner, or turn it on as a Dashboard module in Settings, Modules. There you share Tasks (chores and rewards), Household (shopping, menu and wishes) and Activities (calendar with holidays and birthdays). The owner shares the invite code from the Members page.', 'Family Planner dikongsi dalam talian dengan keluarga awak, jadi saya tak boleh membacanya. Buka dari butang Family Planner di Daily Planner, atau hidupkan sebagai modul Dashboard di Settings, Modules. Di sana awak kongsi Tasks (tugas rumah dan ganjaran), Household (senarai belanja, menu dan wishes) dan Activities (kalendar dengan cuti dan hari lahir). Pemilik berkongsi kod jemputan dari halaman Members.'), { label: L('Open Family Planner', 'Buka Family Planner'), href: 'Family.dc.html' });
           break;
-        case 'help':
-          m = mk(L('You can ask me about:\n• Health: steps, distance, sleep, water, mood\n• Faith: next prayer, prayer times, Quran, zikir, fasting\n• Money: spending, income, money left, category limits, budget alerts, commitments and debts\n• Savings goals: how much saved, progress, what is left to reach a goal\n• Motorcycle: mileage, service, odometer\n• Tasks: open tasks, due soon, events\n• Family Planner: how to open it\n• Life Score: what it is made of and what lifts it. Money: how much you can spend today\n• Say \"undo\" to take back the last thing I saved\n• App: reminders, app lock, export (includes savings goals and Money Left)\nI can save for you: "spent ' + cu() + '10 on lunch", "service motor ' + cu() + '120", "add mileage 18500 km", "I slept 7 hours", "add task buy milk".', 'Awak boleh tanya saya tentang:\n• Kesihatan: langkah, jarak, tidur, air, mood\n• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha\n• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang\n• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran\n• Motosikal: jarak, servis, odometer\n• Tugasan: tugasan, hampir tarikh, acara\n• Family Planner: cara membukanya\n• Skor Life: apa yang membentuknya dan cara menaikkannya. Wang: berapa boleh dibelanjakan hari ini\n• Sebut \"buat asal\" untuk batalkan benda terakhir yang saya simpan\n• App: peringatan, kunci app, eksport (termasuk tabung dan baki wang)\nSaya boleh simpankan: "belanja ' + cu() + '10 untuk makan", "servis motor ' + cu() + '120", "tambah milage 18500 km", "saya tidur 7 jam", "tambah tugasan beli susu".'));
+        case 'help': {
+          const hb = modOn('habit'), isl = modOn('islamic'), fi = modOn('finance'), rc = modOn('record'), pl = modOn('planner');
+          const hE = ['You can ask me about:'], hM = ['Awak boleh tanya saya tentang:'];
+          if (hb) { hE.push('• Health: steps, distance, sleep, water, mood'); hM.push('• Kesihatan: langkah, jarak, tidur, air, mood'); }
+          if (isl) { hE.push('• Faith: next prayer, prayer times, Quran, zikir, fasting'); hM.push('• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha'); }
+          if (fi) { hE.push('• Money: spending, income, money left, category limits, budget alerts, commitments and debts', '• Savings goals: how much saved, progress, what is left to reach a goal', '• How much you can spend today'); hM.push('• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang', '• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran', '• Berapa boleh dibelanjakan hari ini'); }
+          if (rc) { hE.push('• Motorcycle: mileage, service, odometer'); hM.push('• Motosikal: jarak, servis, odometer'); }
+          if (pl) { hE.push('• Tasks: open tasks, due soon, events'); hM.push('• Tugasan: tugasan, hampir tarikh, acara'); }
+          hE.push('• Family Planner: how to open it', '• Life Score: what it is made of and what lifts it', '• Say "undo" to take back the last thing I saved', '• App: reminders, app lock, export' + (fi ? ' (includes savings goals and Money Left)' : ''));
+          hM.push('• Family Planner: cara membukanya', '• Skor Life: apa yang membentuknya dan cara menaikkannya', '• Sebut "buat asal" untuk batalkan benda terakhir yang saya simpan', '• App: peringatan, kunci app, eksport' + (fi ? ' (termasuk tabung dan baki wang)' : ''));
+          const eg = [], egM = [];
+          if (fi) { eg.push('"spent ' + cu() + '10 on lunch"'); egM.push('"belanja ' + cu() + '10 untuk makan"'); }
+          if (rc) { eg.push('"service motor ' + cu() + '120"', '"add mileage 18500 km"'); egM.push('"servis motor ' + cu() + '120"', '"tambah milage 18500 km"'); }
+          if (hb) { eg.push('"I slept 7 hours"'); egM.push('"saya tidur 7 jam"'); }
+          if (pl) { eg.push('"add task buy milk"'); egM.push('"tambah tugasan beli susu"'); }
+          m = mk(L(hE.join('\n') + (eg.length ? '\nI can save for you: ' + eg.join(', ') + '.' : ''), hM.join('\n') + (egM.length ? '\nSaya boleh simpankan: ' + egM.join(', ') + '.' : '')));
           break;
+        }
         default:
           m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford ' + cu() + '300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli ' + cu() + '300?"'));
       }

@@ -284,10 +284,10 @@ export function think(A, q, lang) {
   if (/(selamat pagi|good morning|selamat tengah hari|selamat petang|good afternoon|good evening|selamat malam|good night)/.test(ql)) {
     const h = todayD.getHours(); const night = /(selamat malam|good night)/.test(ql);
     const pg = /pagi|morning/.test(ql), tg = /tengah hari|afternoon/.test(ql);
-    const g = night ? L('Good night, ' + A.fn() + '. Rest well. Fajr is not far away.', 'Selamat malam, ' + A.fn() + '. Rehat secukupnya. Subuh pun tak lama lagi.')
+    const g = night ? L('Good night, ' + A.fn() + '. Rest well.' + (modOn('islamic') ? ' Fajr is not far away.' : ''), 'Selamat malam, ' + A.fn() + '. Rehat secukupnya.' + (modOn('islamic') ? ' Subuh pun tak lama lagi.' : ''))
       : (pg || (!tg && h < 12)) ? L('Good morning, ' + A.fn() + '!', 'Selamat pagi, ' + A.fn() + '!') : h < 18 ? L('Good afternoon, ' + A.fn() + '!', 'Selamat petang, ' + A.fn() + '!') : L('Good evening, ' + A.fn() + '!', 'Selamat petang, ' + A.fn() + '!');
     const np = A.nextPrayer(); const open = s.tasks.filter((t) => t.s !== 'done');
-    const bits = []; if (!night) { if (np) bits.push(L('Next prayer: ' + np.name + ' at ' + np.time + '.', 'Solat seterusnya: ' + np.name + ' pada ' + np.time + '.')); if (open.length) bits.push(L('You have ' + open.length + ' open tasks.', 'Awak ada ' + open.length + ' tugasan belum siap.')); }
+    const bits = []; if (!night) { if (np && modOn('islamic')) bits.push(L('Next prayer: ' + np.name + ' at ' + np.time + '.', 'Solat seterusnya: ' + np.name + ' pada ' + np.time + '.')); if (open.length && modOn('planner')) bits.push(L('You have ' + open.length + ' open tasks.', 'Awak ada ' + open.length + ' tugasan belum siap.')); }
     return done(mk(g + (bits.length ? ' ' + bits.join(' ') : '')));
   }
   if (/(assalamualaikum|salam)\b/.test(ql) && !/(terima|kenapa)/.test(ql)) return done(mk(L('Waalaikumussalam, ' + A.fn() + '. How can I help you today?', 'Waalaikumussalam, ' + A.fn() + '. Apa yang boleh saya bantu hari ini?')));
