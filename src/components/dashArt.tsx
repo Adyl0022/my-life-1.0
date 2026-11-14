@@ -84,17 +84,20 @@ export const ChipIcon = ({ k }: { k: string }) => (
 export const FamilyArt = () => (
 <Svg width="100%" height="100%" viewBox="0 -8 170 98" preserveAspectRatio="xMidYMid meet">
 <Defs>
-<LinearGradient id="faur1" x1="0" y1="0" x2="1" y2="0"><Stop offset="0" stopColor="#5ee7df"/><Stop offset=".5" stopColor="#7dffb5"/><Stop offset="1" stopColor="#b794ff"/></LinearGradient>
-<LinearGradient id="faur2" x1="0" y1="0" x2="1" y2="0"><Stop offset="0" stopColor="#b794ff"/><Stop offset=".6" stopColor="#5ee7df"/><Stop offset="1" stopColor="#ff8fab"/></LinearGradient>
+<LinearGradient id="fsk" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#241f66"/><Stop offset=".35" stopColor="#5a3c97"/><Stop offset=".6" stopColor="#c8628f"/><Stop offset=".78" stopColor="#ff9c8a"/><Stop offset="1" stopColor="#ffc58a"/></LinearGradient>
+<RadialGradient id="fsun" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#ffe2a8" stopOpacity=".85"/><Stop offset="1" stopColor="#ffb08a" stopOpacity="0"/></RadialGradient>
 <RadialGradient id="fwin" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#fff3c4"/><Stop offset="1" stopColor="#ffc46b"/></RadialGradient>
 <RadialGradient id="flamp" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#ffd98a" stopOpacity=".7"/><Stop offset="1" stopColor="#ffd98a" stopOpacity="0"/></RadialGradient>
 </Defs>
-<Path d="M0 14Q28 -6 58 8T116 2T170 12L170 34Q142 20 112 28T52 24T0 34z" fill="url(#faur1)" opacity=".6"/>
-<Path d="M0 24Q34 8 66 20T128 14T170 26L170 38Q140 30 110 36T50 34T0 42z" fill="url(#faur2)" opacity=".45"/>
-<G opacity=".28"><Rect x="40" y="-4" width="2" height="30" fill="url(#faur1)"/><Rect x="76" y="-6" width="3" height="34" fill="url(#faur1)"/><Rect x="112" y="-4" width="2" height="28" fill="url(#faur2)"/><Rect x="140" y="-2" width="2.5" height="30" fill="url(#faur1)"/></G>
-<G fill="#fff"><Circle cx="14" cy="6" r="1.3" opacity=".9"/><Circle cx="30" cy="16" r="1" opacity=".7"/><Circle cx="52" cy="3" r="1.4" opacity=".85"/><Circle cx="118" cy="4" r="1" opacity=".7"/><Circle cx="104" cy="16" r="1.2" opacity=".8"/><Circle cx="8" cy="30" r="1" opacity=".6"/><Path d="M70 10l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" opacity=".85"/></G>
+<Rect x="-60" y="-70" width="290" height="170" fill="url(#fsk)"/>
+<Circle cx="85" cy="66" r="46" fill="url(#fsun)"/>
+<Circle cx="85" cy="64" r="15" fill="#ffd9a0" opacity=".9"/>
+<G fill="#fff" opacity=".55"><Ellipse cx="30" cy="30" rx="22" ry="4"/><Ellipse cx="42" cy="26" rx="14" ry="3.5"/><Ellipse cx="136" cy="36" rx="20" ry="3.6"/><Ellipse cx="148" cy="32" rx="12" ry="3"/></G>
+<G fill="#ffc7b8" opacity=".55"><Ellipse cx="70" cy="48" rx="18" ry="2.6"/><Ellipse cx="110" cy="52" rx="16" ry="2.4"/></G>
+<Path d="M150 -2a8 8 0 1 0 5 14 6.4 6.4 0 1 1-5-14z" fill="#fff6d8"/>
+<G fill="#fff"><Circle cx="14" cy="2" r="1.3" opacity=".9"/><Circle cx="52" cy="-2" r="1.4" opacity=".85"/><Circle cx="118" cy="-3" r="1" opacity=".7"/><Circle cx="104" cy="8" r="1.1" opacity=".7"/><Path d="M70 10l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" opacity=".85"/></G>
 <G fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><Path d="M28 24q3-4 6 0q3-4 6 0" opacity=".9"/><Path d="M48 14q2.5-3 5 0q2.5-3 5 0" opacity=".8"/><Path d="M104 28q2-3 4 0q2-3 4 0" opacity=".7"/></G>
-<Ellipse cx="85" cy="77" rx="82" ry="8" fill="#3e8f7a" opacity=".55"/>
+<Rect x="-60" y="76" width="290" height="60" fill="#1c4a5e"/><Ellipse cx="85" cy="77" rx="82" ry="8" fill="#3e8f7a" opacity=".8"/>
 <Ellipse cx="85" cy="76" rx="70" ry="5.5" fill="#6fcf97" opacity=".35"/>
 <Rect x="102" y="18" width="9" height="19" fill="#c8694f"/><Rect x="100.5" y="16" width="12" height="4" rx="1.5" fill="#a9503b"/>
 <Circle cx="108" cy="11" r="3.5" fill="#fff" opacity=".35"/><Circle cx="111" cy="5" r="2.5" fill="#fff" opacity=".22"/>
@@ -120,7 +123,7 @@ export const CARDS = [
   { k: 'Islamic', title: 'Islamic Hub', sub: 'Surah · Doa · Zikir', c1: 'rgba(52,211,153,.5)', c2: 'rgba(94,231,223,.3)' },
   { k: 'Finance', title: 'My Finance', sub: 'Income · Spending', c1: 'rgba(255,196,107,.55)', c2: 'rgba(255,143,171,.3)' },
   { k: 'Record', title: 'My Record', sub: 'Logs & records', c1: 'rgba(255,143,171,.55)', c2: 'rgba(183,148,255,.35)' },
-  { k: 'Family', title: 'Family Planner', sub: 'Tasks · Shopping · Calendar', c1: 'rgba(28,40,118,.72)', c2: 'rgba(94,231,223,.34)' },
+  { k: 'Family', title: 'Family Planner', sub: 'Together, everything in one place', c1: 'rgba(26,40,104,.9)', c2: 'rgba(20,72,92,.9)' },
   { k: 'Habit', title: 'Habit Tracker & Health', sub: 'Mood · Sleep · Water · Goals', c1: 'rgba(183,148,255,.55)', c2: 'rgba(94,231,223,.3)' },
 ];
 
