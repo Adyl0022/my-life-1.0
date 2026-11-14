@@ -124,7 +124,7 @@ export default function Home() {
                   <View style={{ height: c.k === 'Family' ? 70 : 42, paddingHorizontal: c.k === 'Family' ? 16 : 11, paddingBottom: c.k === 'Family' ? 18 : 0, borderTopWidth: c.k === 'Family' ? 1 : 0, borderTopColor: 'rgba(255,255,255,.2)', backgroundColor: c.k === 'Family' ? 'rgba(255,255,255,.05)' : undefined, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <View style={{ flex: 1 }}>
                       <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color: '#fff', fontSize: 14.5, fontWeight: '700' }}>{c.title}</Text>
-                      <Text numberOfLines={c.k === 'Family' ? 2 : 1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: 'rgba(255,255,255,.78)', fontSize: 11, marginTop: 0, lineHeight: c.k === 'Family' ? 13.5 : undefined }}>{c.k === 'Family' ? 'Together, everything\nin one place' : c.sub}</Text>
+                      <Text numberOfLines={c.k === 'Family' ? 2 : 1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: c.k === 'Family' ? 'rgba(255,255,255,.78)' : 'rgba(255,255,255,.72)', fontSize: 11, marginTop: 0, lineHeight: c.k === 'Family' ? 13.5 : undefined }}>{c.k === 'Family' ? 'Together, everything\nin one place' : c.sub}</Text>
                     </View>
                     <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.35)', alignItems: 'center', justifyContent: 'center' }}><ChipIcon k={c.k} /></View>
                   </View>
