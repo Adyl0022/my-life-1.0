@@ -24,4 +24,10 @@ export const ROUTES: Record<string, string> = {
   'Kahfi.dc.html': '/surah/kahfi',
   'Yasin.dc.html': '/surah/yasin',
   'Assistant.dc.html': '/assistant',
+  'Family.dc.html': '/family',
+  'FamilyTasks.dc.html': '/family-tasks',
+  'FamilyEvents.dc.html': '/family-events',
+  'FamilyShop.dc.html': '/family-shop',
+  'FamilyMembers.dc.html': '/family-members',
+  'FamilyTrash.dc.html': '/family-trash',
 };

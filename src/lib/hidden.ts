@@ -19,7 +19,7 @@ const clean = (l: any): string[] => (Array.isArray(l) ? l.filter((x) => ALL_MODS
 /** True when the module is switched on. Plain code (reminders, the assistant) reads it from here. */
 export const modOn = (k: Mod) => active.indexOf(k) < 0;
 /** Search uses names like "Planner", "Islamic". */
-export const modOnName = (n: string) => { const k = n.toLowerCase(); return ALL_MODS.some((m) => m.k === k) ? modOn(k as Mod) : true; };
+export const modOnName = (n: string) => { const k = n.toLowerCase(); if (k === 'family') return modOn('family') || modOn('planner'); /* reachable from Daily Planner too */ return ALL_MODS.some((m) => m.k === k) ? modOn(k as Mod) : true; };
 
 /** Reads the saved choice and keeps the screen up to date. Returns the off list, a helper and a switch function.
  *  Family Planner is the one module that starts off on the Dashboard (it is always reachable from Daily Planner).

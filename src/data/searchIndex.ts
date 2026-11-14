@@ -463,5 +463,53 @@ export const SEARCH_INDEX: SearchItem[] = [
   "c": "#ff8fab",
   "h": "Record.dc.html",
   "k": "export report pdf laporan record motosikal mileage yearly tahunan highest lowest tertinggi terendah km"
- }
+ },
+ {
+  "t": "Family Planner",
+  "s": "Shared tasks, shopping and calendar for your family",
+  "m": "Family",
+  "c": "#5ee7df",
+  "h": "Family.dc.html",
+  "k": "family planner keluarga rumah home together family code kod keluarga jemput invite pasangan"
+ },
+ {
+  "t": "Family Tasks",
+  "s": "Tasks, chores and rewards",
+  "m": "Family",
+  "c": "#5ee7df",
+  "h": "FamilyTasks.dc.html",
+  "k": "family tasks tugasan keluarga chores kerja rumah rewards ganjaran points mata assign berulang repeat"
+ },
+ {
+  "t": "Family Activities",
+  "s": "Plans the family does together, with a calendar",
+  "m": "Family",
+  "c": "#5ee7df",
+  "h": "FamilyEvents.dc.html",
+  "k": "family activities aktiviti calendar kalendar cuti holiday birthday hari lahir plan rancangan"
+ },
+ {
+  "t": "Household",
+  "s": "Shopping list, menu and wishes",
+  "m": "Family",
+  "c": "#5ee7df",
+  "h": "FamilyShop.dc.html",
+  "k": "household shopping list senarai belanja barang dapur grocery menu makan breakfast lunch dinner wishes wish list hajat"
+ },
+ {
+  "t": "Family Members",
+  "s": "Members, roles, birthdays and the invite code",
+  "m": "Family",
+  "c": "#5ee7df",
+  "h": "FamilyMembers.dc.html",
+  "k": "family members ahli keluarga roles owner parent kod jemputan invite code birthday hari lahir profile anak child leave delete family"
+ },
+ {
+  "t": "Recently deleted",
+  "s": "Family items you removed, kept for 7 days",
+  "m": "Family",
+  "c": "#5ee7df",
+  "h": "FamilyTrash.dc.html",
+  "k": "recently deleted trash dipadam restore pulih sampah family"
+ },
 ];

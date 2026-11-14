@@ -12,7 +12,7 @@ import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useHidden, modOnName } from '../lib/hidden';
 
-const MODS = ['All', 'Planner', 'Islamic', 'Finance', 'Record', 'Habit', 'System'];
+const MODS = ['All', 'Planner', 'Islamic', 'Finance', 'Record', 'Habit', 'Family', 'System'];
 
 export default function Search() {
   const router = useRouter();
