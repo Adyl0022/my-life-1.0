@@ -62,8 +62,10 @@ export function scoreParts(c: Core, week: boolean): Part[] {
   const spendToday = spendOn(c, 0), spendWeek = spendSum(c, -6, 0);
   if (ml.income > 0 && ml.allowance > 0) {
     const al = ml.allowance;
-    if (week) { if (spendWeek > 0) { const w = spendWeek / 7; parts.push({ k: 'spend', label: 'Spending', pct: Math.max(0, Math.min(100, Math.round((1 - w / al) * 100))), detail: rmf(w) + ' a day of ' + rmf(al) + ' you can spend', c: '#ffc46b' }); } }
-    else if (spendToday > 0) parts.push({ k: 'spend', label: 'Spending', pct: Math.max(0, Math.min(100, Math.round((1 - spendToday / al) * 100))), detail: rmf(spendToday) + ' of ' + rmf(al) + ' you can spend today', c: '#ffc46b' });
+    // "Budget left": 100% is the whole daily amount still free, 0% is used up or over. Colour and words say which one it is.
+    const bl = (spent: number, per: string) => { const pct = Math.max(0, Math.min(100, Math.round((1 - spent / al) * 100))); const over = spent >= al; const near = !over && pct <= 25; return { k: 'spend', label: 'Budget left', pct, detail: rmf(spent) + ' of ' + rmf(al) + ' spent ' + per + (over ? ' · over budget' : near ? ' · nearly used' : ' · on track'), c: over ? '#ff6b81' : near ? '#ffc46b' : '#7df0c6' }; };
+    if (week) { if (spendWeek > 0) parts.push(bl(spendWeek / 7, 'a day this week')); }
+    else if (spendToday > 0) parts.push(bl(spendToday, 'today'));
   } else if (us > 0 && (week ? spendWeek > 0 : spendToday > 0)) {
     if (week) { const w = spendWeek / 7; const pct = w <= us ? 100 : Math.max(20, Math.round(100 - ((w - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(w) + ' a day against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
     else { const t = spendToday; const pct = t <= us ? 100 : Math.max(20, Math.round(100 - ((t - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(t) + ' against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
