@@ -8,6 +8,9 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Btn, Chip, Field, Label, NewBtn, Note, Tick, W, DIM } from '../components/FamilyUi';
+import { HouseTabs } from '../components/HouseTabs';
+import { HouseMenu } from '../components/HouseMenu';
+import { HouseWishes } from '../components/HouseWishes';
 import { useFamily, famError } from '../lib/family';
 import { useFamShop, shopSave, shopBought, shopClear, famDelete, nameOf, SHOP_CATS, FShop, useReloadOnFocus } from '../lib/familyData';
 
@@ -17,6 +20,7 @@ export default function FamilyShop() {
   const info = f.info;
   const s = useFamShop(info?.id);
   useReloadOnFocus(s.reload);
+  const [tab, setTab] = useState<'shop' | 'menu' | 'wish'>('shop');
   const [panel, setPanel] = useState(false);
   const [eid, setEid] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -74,8 +78,10 @@ export default function FamilyShop() {
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
-        <Header title="Shopping list" sub="Shared with the whole family" right={<NewBtn onPress={() => (panel ? setPanel(false) : open())} t={panel ? 'Close' : '+ New'} />} />
+        <Header title="Household" sub="Shopping, menu and wishes for the family" right={tab === 'shop' ? <NewBtn onPress={() => (panel ? setPanel(false) : open())} t={panel ? 'Close' : '+ New'} /> : undefined} />
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <HouseTabs tabs={[['shop', 'Shopping'], ['menu', 'Menu'], ['wish', 'Wishes']]} v={tab} onChange={setTab} />
+          {tab === 'menu' ? <HouseMenu info={info} /> : tab === 'wish' ? <HouseWishes info={info} /> : <>
           {panel ? (
             <Rise>
               <Glass radius={24} style={{ padding: 16 }}>
@@ -106,6 +112,7 @@ export default function FamilyShop() {
             </>
           ) : null}
           {s.ready && !s.rows.length ? <View style={{ marginTop: 18 }}><Note t="The list is empty. Tap + New to add what the family needs." /></View> : null}
+          </>}
         </ScrollView>
       </SafeAreaView>
     </View>

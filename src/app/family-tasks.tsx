@@ -8,6 +8,8 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Chip, Ico, Label, NewBtn, Note, Tick, W, DIM } from '../components/FamilyUi';
+import { HouseTabs } from '../components/HouseTabs';
+import { HouseChores, HouseRewards } from '../components/HouseChores';
 import { useFamily, famError } from '../lib/family';
 import { useFamTasks, peopleOf, taskDone, dueText, dayDiff, FTask, useReloadOnFocus } from '../lib/familyData';
 
@@ -17,6 +19,7 @@ export default function FamilyTasks() {
   const info = f.info;
   const t = useFamTasks(info?.id);
   useReloadOnFocus(t.reload);
+  const [tab, setTab] = useState<'tasks' | 'chores' | 'rewards'>('tasks');
   const people = useMemo(() => peopleOf(info), [info]);
   const [who, setWho] = useState('all');
   const [msg, setMsg] = useState('');
@@ -69,8 +72,10 @@ export default function FamilyTasks() {
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
-        <Header title="Tasks" sub="Everyone in the family can edit" right={<NewBtn onPress={() => edit()} />} />
+        <Header title={tab === 'tasks' ? 'Tasks' : tab === 'chores' ? 'Chores' : 'Rewards'} sub={tab === 'tasks' ? 'Everyone in the family can edit' : tab === 'chores' ? 'Take turns and earn points' : 'Spend the points you earn'} right={tab === 'tasks' ? <NewBtn onPress={() => edit()} /> : undefined} />
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
+          <HouseTabs tabs={[['tasks', 'Tasks'], ['chores', 'Chores'], ['rewards', 'Rewards']]} v={tab} onChange={setTab} />
+          {tab === 'chores' ? <HouseChores info={info} /> : tab === 'rewards' ? <HouseRewards info={info} /> : <>
           {people.length > 1 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
               <Chip t="All" on={who === 'all'} onPress={() => setWho('all')} />
@@ -87,6 +92,7 @@ export default function FamilyTasks() {
           </Rise>
           {none ? <View style={{ marginTop: 18 }}><Note t="No tasks yet. Tap + New to add the first one. Everyone in the family sees it straight away." /></View> : null}
           {t.ready && t.rows.length && !mine.length ? <View style={{ marginTop: 18 }}><Note t="Nothing assigned to this person." /></View> : null}
+          </>}
         </ScrollView>
       </SafeAreaView>
     </View>

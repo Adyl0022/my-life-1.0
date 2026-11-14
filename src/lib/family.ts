@@ -42,6 +42,10 @@ const MSG: Record<string, string> = {
   name_mismatch: 'The name does not match. Type the family name exactly.',
   list_full: 'This list is full. Delete some old items first.',
   not_found: 'That item was already changed or deleted by someone else.',
+  already_claimed: 'Someone else is already getting this one.',
+  already_marked: 'This chore is already ticked for this turn.',
+  not_enough_points: 'Not enough points yet.',
+  bad_points: 'Points must be a number from 1 to 100 (rewards up to 1000).',
 };
 export function famError(e: any): string {
   const m = String((e && (e.message || e.error)) || e || '');

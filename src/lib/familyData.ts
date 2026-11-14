@@ -28,7 +28,7 @@ export const peopleOf = (i: FInfo | null): FPerson[] => i
   : [];
 
 // A list of rows from one table, kept fresh. Shows the last saved copy while offline.
-function useRows<T extends { id: string }>(table: string, fid: string | undefined, order: string, asc: boolean) {
+function useRows<T extends { id: string }>(table: string, fid: string | undefined, order: string, asc: boolean, soft = true) {
   const [rows, setRows] = useState<T[]>([]);
   const [ready, setReady] = useState(false);
   const [offline, setOffline] = useState(false);
@@ -42,7 +42,9 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
   const load = useCallback(async () => {
     if (!fid) return;
     try {
-      const { data, error } = await supabase.from(table).select('*').eq('family_id', fid).is('deleted_at', null).order(order, { ascending: asc }).limit(600);
+      let q: any = supabase.from(table).select('*').eq('family_id', fid);
+      if (soft) q = q.is('deleted_at', null);
+      const { data, error } = await q.order(order, { ascending: asc }).limit(600);
       if (error) throw error;
       if (!alive.current) return;
       setRows((data || []) as T[]); setReady(true); setOffline(false); setMsg('');
@@ -53,7 +55,7 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
       const m = String((e && (e.message || e.error)) || e || '');
       setMsg(/network|fetch|timeout/i.test(m) || !m ? 'You are offline. Showing the last saved list. Changes need an internet connection.' : 'The list could not be read (' + m.replace(/\s+/g, ' ').slice(0, 110) + '). Anything you add is saved, but cannot be shown yet.');
     }
-  }, [fid, table, order, asc, key]);
+  }, [fid, table, order, asc, key, soft]);
   const soon = useCallback(() => { clearTimeout(timer.current); timer.current = setTimeout(load, 250); }, [load]);
 
   useEffect(() => {
@@ -118,3 +120,63 @@ export function dueText(iso: string | null): string {
 }
 export const daysLeft = (deletedAt: string) => Math.max(0, 7 - Math.floor((Date.now() - new Date(deletedAt).getTime()) / 86400000));
 export const nameOf = (info: FInfo | null, uid: string | null) => (uid && info?.members.find((m) => m.user_id === uid)?.name) || 'A former member';
+
+
+// Stage D: Household (menu, wishes), chores, points and rewards (sql/family_f.sql) --------------------------------
+export type FMenu = { id: string; day: string; slot: 'breakfast' | 'lunch' | 'dinner'; dish: string; cook: string | null; needs: string | null };
+export type FWish = { id: string; owner: string; title: string; price: string | null; note: string | null; created_by: string | null };
+export type FClaim = { wish_id: string; claimer: string; id: string };
+export type FChore = { id: string; title: string; points: number; every: 'daily' | 'weekly'; rotate: string[]; anchor: string };
+export type FChoreLog = { id: string; chore_id: string; period: string; person: string; status: 'pending' | 'approved'; marked_by: string | null };
+export type FReward = { id: string; title: string; cost: number };
+export type FRedeem = { id: string; person: string; title: string; cost: number; status: 'pending' | 'approved' | 'declined'; created_at: string };
+
+export const useFamMenu = (fid?: string) => useRows<FMenu>('family_menu', fid, 'day', true, false);
+export const useFamWishes = (fid?: string) => useRows<FWish>('family_wishes', fid, 'created_at', true, false);
+// The claims table has no id of its own: wish_id is its key, so it is given as the id here. The person a wish belongs to gets no rows (the server hides them).
+export function useFamClaims(fid?: string) {
+  const r = useRows<any>('family_wish_claims', fid, 'created_at', true, false);
+  return { ...r, rows: r.rows.map((x: any) => ({ ...x, id: x.wish_id })) as FClaim[] };
+}
+export const useFamChores = (fid?: string) => useRows<FChore>('family_chores', fid, 'created_at', true, false);
+export const useFamChoreLog = (fid?: string) => useRows<FChoreLog>('family_chore_log', fid, 'created_at', false, false);
+export const useFamRewards = (fid?: string) => useRows<FReward>('family_rewards', fid, 'cost', true, false);
+export const useFamRedeems = (fid?: string) => useRows<FRedeem>('family_redeems', fid, 'created_at', false, false);
+
+export const menuSave = (day: string, slot: string, dish: string, cook: string | null, needs: string) => call('family_menu_save', { p_day: day, p_slot: slot, p_dish: dish, p_cook: cook, p_needs: needs || null });
+export const wishSave = (id: string | null, owner: string, title: string, price: string, note: string) => call<string>('family_wish_save', { p_id: id, p_owner: owner, p_title: title, p_price: price || null, p_note: note || null });
+export const wishDelete = (id: string) => call('family_wish_delete', { p_id: id });
+export const wishClaim = (id: string, on: boolean) => call('family_wish_claim', { p_id: id, p_on: on });
+export const choreSave = (id: string | null, title: string, points: number, every: 'daily' | 'weekly', rotate: string[]) => call<string>('family_chore_save', { p_id: id, p_title: title, p_points: points, p_every: every, p_rotate: rotate });
+export const choreDelete = (id: string) => call('family_chore_delete', { p_id: id });
+export const choreMark = (id: string, period: string) => call('family_chore_mark', { p_chore: id, p_period: period });
+export const choreDecide = (id: string, ok: boolean) => call('family_chore_decide', { p_log: id, p_ok: ok });
+export const rewardSave = (id: string | null, title: string, cost: number) => call<string>('family_reward_save', { p_id: id, p_title: title, p_cost: cost });
+export const rewardDelete = (id: string) => call('family_reward_delete', { p_id: id });
+export const rewardAsk = (id: string, person: string) => call('family_reward_ask', { p_reward: id, p_person: person });
+export const redeemDecide = (id: string, ok: boolean) => call('family_redeem_decide', { p_id: id, p_ok: ok });
+
+// Everyone's points. `sig` changes whenever a chore is ticked, approved or a reward is asked for, so the numbers follow.
+export function useBalances(fid: string | undefined, sig: string) {
+  const [bal, setBal] = useState<Record<string, number>>({});
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const load = useCallback(async () => {
+    if (!fid) return;
+    try { const r: any = await call('family_balances'); if (alive.current && r && typeof r === 'object') setBal(r); } catch (e) { /* offline: keep the last numbers */ }
+  }, [fid]);
+  useEffect(() => { load(); }, [load, sig]);
+  return { bal, reload: load };
+}
+
+// Chores take turns. The same sums are made on the server (family_chore_person), so every phone agrees on whose turn it is.
+const ymd = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+export const localDay = (d = new Date()) => ymd(d);
+export const periodOf = (every: 'daily' | 'weekly', d = new Date()) => { if (every === 'daily') return ymd(d); const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return ymd(x); };
+const utcDay = (s: string) => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 86400000;
+export function choreWho(c: FChore, period: string): string {
+  const n = c.rotate.length; if (!n) return '';
+  const k = Math.floor((utcDay(period) - utcDay(c.anchor)) / (c.every === 'weekly' ? 7 : 1));
+  return c.rotate[((k % n) + n) % n];
+}
+export const nextWho = (c: FChore, period: string): string => { const n = c.rotate.length; if (n < 2) return ''; const k = Math.floor((utcDay(period) - utcDay(c.anchor)) / (c.every === 'weekly' ? 7 : 1)); return c.rotate[(((k + 1) % n) + n) % n]; };

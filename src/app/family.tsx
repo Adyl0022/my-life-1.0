@@ -102,11 +102,11 @@ export default function Family() {
         ) : null}
         <Rise i={2}>
           <Label t="Plans" />
-          <Tile ic="tasks" c="#5ee7df" t="Tasks" sub={tk.ready ? (tkOpen ? tkOpen + ' open' : 'Nothing open') : 'Tasks for everyone'} onPress={() => router.push('/family-tasks' as any)} />
+          <Tile ic="tasks" c="#5ee7df" t="Tasks" sub={tk.ready && tkOpen ? tkOpen + ' open · chores and rewards' : 'Tasks, chores and rewards'} onPress={() => router.push('/family-tasks' as any)} />
           <Tile ic="star" c="#ffc46b" t="Activities" sub={ev.ready ? (evNext ? evNext + ' coming up' : 'Nothing planned') : 'Plans together'} onPress={() => router.push('/family-events' as any)} />
-          <Tile ic="shop" c="#ff8fab" t="Shopping list" sub={sh.ready ? (shLeft ? shLeft + ' to buy' : 'Nothing to buy') : 'One list for the family'} onPress={() => router.push('/family-shop' as any)} />
+          <Tile ic="shop" c="#ff8fab" t="Household" sub={sh.ready && shLeft ? shLeft + ' to buy · menu and wishes' : 'Shopping, menu and wishes'} onPress={() => router.push('/family-shop' as any)} />
           <Tile ic="undo" c="#9aa6c4" t="Recently deleted" sub="Kept for 7 days" onPress={() => router.push('/family-trash' as any)} />
-          <Note t={isParent(info.role) ? 'Share your family code from the members page so others can join. The calendar is coming next.' : 'Ask a parent for the family code if someone else wants to join. The calendar is coming next.'} />
+          <Note t={isParent(info.role) ? 'Share your family code from the members page so others can join.' : 'Ask a parent for the family code if someone else wants to join.'} />
         </Rise>
         {f.offline ? <View style={{ marginTop: 12 }}><Note t="You are offline. Showing the last saved copy." /></View> : null}
       </>
