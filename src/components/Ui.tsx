@@ -15,18 +15,18 @@ export const Inp = (p: any) => {
 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const nice = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? Number(m[3]) + ' ' + MON[Number(m[2]) - 1] + ' ' + m[1] : v; };
-export function DateField({ value, onChange, style }: { value: string; onChange: (v: string) => void; style?: any }) {
+export function DateField({ value, onChange, style, past }: { value: string; onChange: (v: string) => void; style?: any; past?: boolean }) {
   if (Platform.OS === 'web') {
-    return React.createElement('input', { type: 'date', value, onChange: (e: any) => onChange(e.target.value), style: { color: '#fff', colorScheme: 'dark', fontSize: 14, padding: '10px 12px', borderRadius: 14, background: 'rgba(0,0,0,.28)', border: '1px solid rgba(255,255,255,.14)', outline: 'none', fontFamily: 'inherit', minWidth: 0, ...(style || {}) } });
+    return React.createElement('input', { type: 'date', value, max: past ? new Date().toISOString().slice(0, 10) : undefined, onChange: (e: any) => onChange(e.target.value), style: { color: '#fff', colorScheme: 'dark', fontSize: 14, padding: '10px 12px', borderRadius: 14, background: 'rgba(0,0,0,.28)', border: '1px solid rgba(255,255,255,.14)', outline: 'none', fontFamily: 'inherit', minWidth: 0, ...(style || {}) } });
   }
   const d = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(value + 'T12:00:00') : new Date();
   const fmt = (x: Date) => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
   const box = { paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', justifyContent: 'center' as const };
   if (Platform.OS === 'ios') {
-    return <View style={[box, { paddingVertical: 4, alignItems: 'flex-start' }, style]}><DateTimePicker value={d} mode="date" display="compact" themeVariant="dark" onChange={(_: any, x?: Date) => x && onChange(fmt(x))} /></View>;
+    return <View style={[box, { paddingVertical: 4, alignItems: 'flex-start' }, style]}><DateTimePicker value={d} mode="date" display="compact" themeVariant="dark" maximumDate={past ? new Date() : undefined} onChange={(_: any, x?: Date) => x && onChange(fmt(x))} /></View>;
   }
   return (
-    <Pressable style={[box, style]} onPress={() => DateTimePickerAndroid.open({ value: d, mode: 'date', onChange: (e: any, x?: Date) => { if (e.type === 'set' && x) onChange(fmt(x)); } })}>
+    <Pressable style={[box, style]} onPress={() => DateTimePickerAndroid.open({ value: d, mode: 'date', maximumDate: past ? new Date() : undefined, onChange: (e: any, x?: Date) => { if (e.type === 'set' && x) onChange(fmt(x)); } })}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Text style={{ fontSize: 16 }}>📅</Text>
         <View style={{ flex: 1 }}>

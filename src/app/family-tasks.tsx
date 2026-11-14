@@ -12,7 +12,7 @@ import { Avatar, Chip, Ico, Label, NewBtn, Note, Tick, W, DIM } from '../compone
 import { HouseTabs } from '../components/HouseTabs';
 import { HouseChores, HouseRewards } from '../components/HouseChores';
 import { useFamily, useAutoRefresh, famError } from '../lib/family';
-import { useFamTasks, peopleOf, taskDone, dueText, dayDiff, FTask, useReloadOnFocus } from '../lib/familyData';
+import { useFamTasks, peopleOf, taskDone, taskLocked, dueText, dayDiff, FTask, useReloadOnFocus } from '../lib/familyData';
 
 export default function FamilyTasks() {
   const router = useRouter();
@@ -36,6 +36,7 @@ export default function FamilyTasks() {
 
   const tick = async (x: FTask) => {
     setMsg('');
+    if (taskLocked(x)) return;
     const nowDone = !x.done;
     if (x.repeat === 'none' || !x.due_at) t.patch(x.id, { done: nowDone, done_at: nowDone ? new Date().toISOString() : null });
     try { await taskDone(x.id, nowDone); if (x.repeat !== 'none') await t.reload(); }
@@ -44,18 +45,19 @@ export default function FamilyTasks() {
   const edit = (id?: string) => router.push({ pathname: '/family-task-edit', params: id ? { id } : {} } as any);
 
   const Row = ({ x }: { x: FTask }) => {
-    const late = !x.done && x.due_at ? dayDiff(x.due_at) < 0 : false;
+    const lock = taskLocked(x); const dn = x.done || lock;
+    const late = !dn && x.due_at ? dayDiff(x.due_at) < 0 : false;
     const who2 = x.assignees.map((id) => people.find((p) => p.id === id)).filter(Boolean) as typeof people;
     return (
-      <Glass flat radius={20} style={{ marginBottom: 8, opacity: x.done ? 0.6 : 1 }}>
+      <Glass flat radius={20} style={{ marginBottom: 8, opacity: dn ? 0.6 : 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 13 }}>
-          <Tick on={x.done} onPress={() => tick(x)} />
+          <Tick on={dn} onPress={() => tick(x)} />
           <Pressable style={{ flex: 1 }} onPress={() => edit(x.id)}>
-            <Text style={{ color: W, fontSize: 14.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }} numberOfLines={2}>{x.title}</Text>
+            <Text style={{ color: W, fontSize: 14.5, fontWeight: '700', textDecorationLine: dn ? 'line-through' : 'none' }} numberOfLines={2}>{x.title}</Text>
             {x.due_at || x.repeat !== 'none' ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
                 {x.repeat !== 'none' ? <Ico k="repeat" c={DIM} s={12} w={2.2} /> : null}
-                <Text style={{ color: late ? '#ff9db0' : DIM, fontSize: 11.5 }}>{late ? 'Overdue · ' : ''}{dueText(x.due_at)}{x.repeat !== 'none' ? ' · ' + x.repeat : ''}</Text>
+                <Text style={{ color: late ? '#ff9db0' : DIM, fontSize: 11.5 }}>{lock ? 'Done · next ' : late ? 'Overdue · ' : ''}{dueText(x.due_at)}{x.repeat !== 'none' ? ' · ' + x.repeat : ''}</Text>
               </View>
             ) : null}
           </Pressable>

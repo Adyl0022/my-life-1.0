@@ -84,12 +84,14 @@ export const ChipIcon = ({ k }: { k: string }) => (
 export const FamilyArt = () => (
 <Svg width="100%" height="100%" viewBox="0 -8 170 98" preserveAspectRatio="xMidYMid meet">
 <Defs>
-<RadialGradient id="fmoon" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#fff6d8" stopOpacity=".6"/><Stop offset="1" stopColor="#fff6d8" stopOpacity="0"/></RadialGradient>
+<LinearGradient id="faur1" x1="0" y1="0" x2="1" y2="0"><Stop offset="0" stopColor="#5ee7df"/><Stop offset=".5" stopColor="#7dffb5"/><Stop offset="1" stopColor="#b794ff"/></LinearGradient>
+<LinearGradient id="faur2" x1="0" y1="0" x2="1" y2="0"><Stop offset="0" stopColor="#b794ff"/><Stop offset=".6" stopColor="#5ee7df"/><Stop offset="1" stopColor="#ff8fab"/></LinearGradient>
 <RadialGradient id="fwin" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#fff3c4"/><Stop offset="1" stopColor="#ffc46b"/></RadialGradient>
 <RadialGradient id="flamp" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#ffd98a" stopOpacity=".7"/><Stop offset="1" stopColor="#ffd98a" stopOpacity="0"/></RadialGradient>
 </Defs>
-<Circle cx="143" cy="12" r="22" fill="url(#fmoon)"/>
-<Path d="M146 2a10 10 0 1 0 6 18 8 8 0 1 1-6-18z" fill="#fff6d8"/>
+<Path d="M0 14Q28 -6 58 8T116 2T170 12L170 34Q142 20 112 28T52 24T0 34z" fill="url(#faur1)" opacity=".6"/>
+<Path d="M0 24Q34 8 66 20T128 14T170 26L170 38Q140 30 110 36T50 34T0 42z" fill="url(#faur2)" opacity=".45"/>
+<G opacity=".28"><Rect x="40" y="-4" width="2" height="30" fill="url(#faur1)"/><Rect x="76" y="-6" width="3" height="34" fill="url(#faur1)"/><Rect x="112" y="-4" width="2" height="28" fill="url(#faur2)"/><Rect x="140" y="-2" width="2.5" height="30" fill="url(#faur1)"/></G>
 <G fill="#fff"><Circle cx="14" cy="6" r="1.3" opacity=".9"/><Circle cx="30" cy="16" r="1" opacity=".7"/><Circle cx="52" cy="3" r="1.4" opacity=".85"/><Circle cx="118" cy="4" r="1" opacity=".7"/><Circle cx="104" cy="16" r="1.2" opacity=".8"/><Circle cx="8" cy="30" r="1" opacity=".6"/><Path d="M70 10l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" opacity=".85"/></G>
 <G fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><Path d="M28 24q3-4 6 0q3-4 6 0" opacity=".9"/><Path d="M48 14q2.5-3 5 0q2.5-3 5 0" opacity=".8"/><Path d="M104 28q2-3 4 0q2-3 4 0" opacity=".7"/></G>
 <Ellipse cx="85" cy="77" rx="82" ry="8" fill="#3e8f7a" opacity=".55"/>
@@ -118,7 +120,7 @@ export const CARDS = [
   { k: 'Islamic', title: 'Islamic Hub', sub: 'Surah · Doa · Zikir', c1: 'rgba(52,211,153,.5)', c2: 'rgba(94,231,223,.3)' },
   { k: 'Finance', title: 'My Finance', sub: 'Income · Spending', c1: 'rgba(255,196,107,.55)', c2: 'rgba(255,143,171,.3)' },
   { k: 'Record', title: 'My Record', sub: 'Logs & records', c1: 'rgba(255,143,171,.55)', c2: 'rgba(183,148,255,.35)' },
-  { k: 'Family', title: 'Family Planner', sub: 'Together, everything in one place', c1: 'rgba(94,231,223,.5)', c2: 'rgba(255,143,171,.38)' },
+  { k: 'Family', title: 'Family Planner', sub: 'Tasks · Shopping · Calendar', c1: 'rgba(28,40,118,.72)', c2: 'rgba(94,231,223,.34)' },
   { k: 'Habit', title: 'Habit Tracker & Health', sub: 'Mood · Sleep · Water · Goals', c1: 'rgba(183,148,255,.55)', c2: 'rgba(94,231,223,.3)' },
 ];
 

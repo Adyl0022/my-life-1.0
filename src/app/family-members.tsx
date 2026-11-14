@@ -113,7 +113,7 @@ export default function FamilyMembers() {
           <Rise i={2}>
             <Label t="Birthdays" />
             <Glass solid radius={24} style={{ padding: 14 }}>
-              <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginBottom: 6 }}>Shown in the family calendar every year. Everyone can set their own. The owner and parents can set it for anyone.</Text>
+              <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginBottom: 6 }}>Shown in the family calendar every year. Pick the day you were born (tap the year to go back). Everyone can set their own. The owner and parents can set it for anyone.</Text>
               {[...info.members.map((m) => ({ id: m.user_id, name: m.name, color: m.color, bd: m.birthday || '', mine: m.user_id === info.me, prof: false })), ...info.profiles.map((p) => ({ id: p.id, name: p.name, color: p.color, bd: p.birthday || '', mine: false, prof: true }))].map((x) => {
                 const can = x.mine || parent;
                 const save = (v: string | null) => run(() => (x.prof ? famProfileBirthday(x.id, v) : x.mine ? famSetBirthday(v) : famMemberBirthday(x.id, v)), v ? 'Birthday saved.' : 'Birthday cleared.');
@@ -124,7 +124,7 @@ export default function FamilyMembers() {
                       <Text style={{ flex: 1, color: W, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{x.name}{x.mine ? ' (You)' : ''}</Text>
                       {x.bd && can ? <Pressable hitSlop={10} onPress={() => save(null)}><Text style={{ color: '#ffb3bf', fontSize: 12, fontWeight: '800' }}>Clear</Text></Pressable> : null}
                     </View>
-                    {can ? <View style={{ marginTop: 6 }}><DateField value={x.bd} onChange={(v) => save(v)} /></View> : <Text style={{ color: DIM, fontSize: 12.5, marginTop: 4, marginLeft: 40 }}>{x.bd ? bdText(x.bd) : 'Not set'}</Text>}
+                    {can ? <View style={{ marginTop: 6 }}><DateField past value={x.bd} onChange={(v) => save(v)} /></View> : <Text style={{ color: DIM, fontSize: 12.5, marginTop: 4, marginLeft: 40 }}>{x.bd ? bdText(x.bd) : 'Not set'}</Text>}
                   </View>
                 );
               })}

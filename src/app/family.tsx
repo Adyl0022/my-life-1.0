@@ -88,9 +88,9 @@ export default function Family() {
         <Rise>
           <Pressable onPress={() => router.push('/family-members' as any)}>
             <Glass flat radius={24} style={{ padding: 14, flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ flexDirection: 'row', flex: 1 }}>
-                {info.members.slice(0, 5).map((m, i) => <View key={m.user_id} style={{ marginLeft: i ? -12 : 0 }}><Avatar name={m.name} color={m.color} ring /></View>)}
-                {n > 5 ? <View style={{ marginLeft: -12 }}><Avatar name={'+' + (n - 5)} color="#7c9cff" ring /></View> : null}
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Family members</Text>
+                <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>See everyone, birthdays and roles</Text>
               </View>
               <Pill t={n + ' / ' + info.max_members + '  ›'} />
             </Glass>

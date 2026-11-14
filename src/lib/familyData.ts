@@ -100,6 +100,15 @@ export type TaskIn = { id?: string | null; title: string; note: string; due: str
 export const taskSave = (a: TaskIn) => call<string>('family_task_save', { p_id: a.id || null, p_title: a.title, p_note: a.note || null, p_due: a.due, p_repeat: a.repeat, p_remind: a.due ? a.remind : null, p_assignees: a.assignees });
 export type EventIn = { id?: string | null; title: string; place: string; note: string; starts: string; ends: string | null; attendees: string[]; remind: number | null };
 export const eventSave = (a: EventIn) => call<string>('family_event_save', { p_id: a.id || null, p_title: a.title, p_place: a.place || null, p_note: a.note || null, p_starts: a.starts, p_ends: a.ends, p_attendees: a.attendees, p_remind: a.remind });
+/** A repeating task that was ticked stays ticked (and cannot be ticked again) until its next day, week or month begins. */
+export const taskLocked = (x: FTask, now = new Date()): boolean => {
+  if (x.repeat === 'none' || !x.due_at || !x.done_at || x.done) return false;
+  const d = new Date(x.due_at);
+  let start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (x.repeat === 'weekly') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  else if (x.repeat === 'monthly') start = new Date(d.getFullYear(), d.getMonth(), 1);
+  return now.getTime() < start.getTime() && new Date(x.done_at).getTime() <= now.getTime();
+};
 export const taskDone = (id: string, done: boolean) => call('family_task_done', { p_id: id, p_done: done });
 export const shopSave = (id: string | null, name: string, qty: string, cat: string) => call<string>('family_shop_save', { p_id: id, p_name: name, p_qty: qty || null, p_cat: cat });
 export const shopBought = (id: string, bought: boolean) => call('family_shop_bought', { p_id: id, p_bought: bought });
