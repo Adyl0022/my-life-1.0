@@ -6,13 +6,13 @@ import { useStored } from '../lib/store';
 
 const VER: string = String(require('../../app.json').expo.version || '');
 
-const DAYS = 14;
-// True while the What's new card should show: until it is closed or opened, and at most 14 days after this version first appeared.
+const HOURS = 1;
+// True while the What's new card should show: until it is closed or opened, and at most 1 hour after this version first appeared.
 export function useWhatsNew() {
   const [seen, setSeen, ok] = useStored<string>('ml_seen_ver', '');
   const [first, setFirst, ok2] = useStored<{ v: string; t: number }>('ml_ver_first', { v: '', t: 0 });
   React.useEffect(() => { if (ok && ok2 && seen !== VER && first.v !== VER) setFirst({ v: VER, t: Date.now() }); }, [ok, ok2, seen, first.v]);
-  const fresh = first.v !== VER || Date.now() - first.t < DAYS * 86400000;
+  const fresh = first.v !== VER || Date.now() - first.t < HOURS * 3600000;
   return { show: ok && ok2 && !!VER && seen !== VER && fresh, done: () => setSeen(VER) };
 }
 
