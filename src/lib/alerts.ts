@@ -70,3 +70,37 @@ export async function syncBackupAlert(on: boolean, last: number): Promise<void> 
     });
   } catch (e) { /* ignore */ }
 }
+
+type RenData = { data?: Record<string, { renew?: { roadtax?: string; insurance?: string; licence?: string } }> };
+// Road tax, insurance and driving licence: a reminder 30 days before, 7 days before and on the day, at 9 am.
+export async function syncRenewAlerts(rec: RenData, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('renew-');
+    if (!on || !tg.ev) return;
+    const now = Date.now(); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    const L: [string, string][] = [['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Driving licence']];
+    Object.entries((rec && rec.data) || {}).forEach(([veh, v], vi) => {
+      const rn = (v && v.renew) || {};
+      L.forEach(([k, lab]) => {
+        const s = (rn as any)[k] as string | undefined; if (!s) return;
+        const [y, m, d] = s.split('-').map(Number); if (!y || !m || !d) return;
+        ([[30, 'in 30 days'], [7, 'in 7 days'], [0, 'today']] as [number, string][]).forEach(([back, when]) => {
+          const at = new Date(y, m - 1, d - back, 9, 0, 0);
+          if (at.getTime() <= now + 5000 || inQuiet(at, tg)) return;
+          todo.push({ id: 'renew-' + vi + '-' + k + '-' + back, at, title: lab + ' ' + (back === 0 ? 'expires today' : 'expires ' + when), body: (veh ? veh + '. ' : '') + 'Open My Record to see the date.' });
+        });
+      });
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('renewals', { name: 'Renewal reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ff8fab' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: t.id,
+        content: { title: t.title, body: t.body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals' } as any,
+      });
+    }
+  } catch (e) { /* ignore */ }
+}

@@ -15,13 +15,14 @@ import { usePrayer } from '../lib/prayer';
 import { useStored, encryptExisting } from '../lib/store';
 import { useLockWatcher } from '../lib/lock';
 import { LockScreen } from '../components/LockScreen';
+import { WhatsNewPop } from '../components/WhatsNewPop';
 import { AuthScreen } from '../components/AuthScreen';
 import { useSession } from '../lib/auth';
 import { useLicense, refreshLicense } from '../lib/license';
 import { ActivationScreen } from '../components/ActivationScreen';
 import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
-import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, PEvent } from '../lib/alerts';
+import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles } from '../lib/adhan';
 import { useFamily } from '../lib/family';
 import { useFamTasks, useFamEvents } from '../lib/familyData';
@@ -52,6 +53,8 @@ function AlertSync() {
   const t = { ...TG_DEFAULT, ...tg }; t.ev = t.ev && hid.on('planner'); t.zk = t.zk && hid.on('islamic');
   useEffect(() => { if (ok && ok2 && hid.ready && Platform.OS !== 'web') syncEventAlerts(pl.events || [], t); }, [ok, ok2, hid.ready, JSON.stringify(pl.events || []), t.ev, t.qh]);
   useEffect(() => { if (ok2 && hid.ready && Platform.OS !== 'web') syncZikirAlerts(t); }, [ok2, hid.ready, t.zk, t.qh]);
+  const [rc, , okr] = useStored<{ data?: Record<string, any> }>('ml_record', { data: {} });
+  useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncRenewAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify((rc && rc.data) || {}), tg.ev, t.qh]);
   const [bk, , okb] = useStored<number>('ml_backup_last', 0);
   const [bo, , okc] = useStored<boolean>('ml_backup_rem', false);
   useEffect(() => { if (okb && okc && Platform.OS !== 'web') syncBackupAlert(!!bo, bk); }, [okb, okc, bk, bo]);
@@ -104,5 +107,5 @@ export default function Root() {
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><FamilySync /><DialogHost /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
+  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><FamilySync /><DialogHost /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><WhatsNewPop ready={!!sess && lic.status !== 'locked' && lic.status !== 'unknown'} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }
