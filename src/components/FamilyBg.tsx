@@ -163,37 +163,47 @@ function FadeIn({ children }: { children: React.ReactNode }) {
 }
 function Moving() {
   const o = useRef(new Animated.Value(0)).current;
-  // Second step: the heavier parts (asteroids, shooting stars, houses) are added a moment later so the screen never stalls while it opens.
-  const [more, setMore] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setMore(true), 700); return () => clearTimeout(t); }, []);
+  // The moving parts are added in small steps, a few at a time, so no single frame has to build the whole sky.
+  const [st, setSt] = useState(0);
+  useEffect(() => {
+    let n = 0; let t: any;
+    const next = () => { n += 1; setSt(n); if (n < 6) t = setTimeout(next, 200); };
+    t = setTimeout(next, 120);
+    return () => clearTimeout(t);
+  }, []);
   useEffect(() => { const a = Animated.timing(o, { toValue: 1, duration: 450, easing: Easing.out(Easing.quad), useNativeDriver: true }); a.start(); return () => a.stop(); }, []);
   return (
     <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: o }}>
-      {STARS.map((t, i) => <Star key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
-      {SPARK.map((t, i) => <Sparkle key={i} x={t[0]} y={t[1]} s={t[2]} c={t[3]} i={t[4]} />)}
-      {more ? <FadeIn>
+      {st >= 1 ? STARS.map((t, i) => <Star key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />) : null}
+      {st >= 2 ? SPARK.slice(0, 9).map((t, i) => <Sparkle key={i} x={t[0]} y={t[1]} s={t[2]} c={t[3]} i={t[4]} />) : null}
+      {st >= 3 ? SPARK.slice(9).map((t, i) => <Sparkle key={i + 9} x={t[0]} y={t[1]} s={t[2]} c={t[3]} i={t[4]} />) : null}
+      {st >= 4 ? <>
+        <Mote left="14%" delay={0} dur={7000} size={4} color="#ff8fab" />
+        <Mote left="36%" delay={2200} dur={8500} size={3} color="#ffc46b" />
+        <Mote left="58%" delay={900} dur={7500} size={4} color="#5ee7df" />
+        <Mote left="78%" delay={3600} dur={8000} size={3} color="#ff8fab" />
+        <Mote left="90%" delay={1800} dur={6500} size={3} color="#ffc46b" />
+        <Lights />
+      </> : null}
+      {st >= 5 ? <Houses /> : null}
+      {st >= 6 ? <FadeIn>
         {ASTEROIDS.map((a, i) => <Asteroid key={i} y0={a[0]} kind={a[1]} phase={a[2]} dur={a[3]} i={i} />)}
         <Shoot left="6%" top="14%" delay={1500} gap={4500} />
         <Shoot left="42%" top="22%" delay={5200} gap={6200} />
         <Shoot left="-4%" top="40%" delay={9000} gap={7000} />
       </FadeIn> : null}
-      <Mote left="14%" delay={0} dur={7000} size={4} color="#ff8fab" />
-      <Mote left="36%" delay={2200} dur={8500} size={3} color="#ffc46b" />
-      <Mote left="58%" delay={900} dur={7500} size={4} color="#5ee7df" />
-      <Mote left="78%" delay={3600} dur={8000} size={3} color="#ff8fab" />
-      <Mote left="90%" delay={1800} dur={6500} size={3} color="#ffc46b" />
-      {more ? <Houses /> : null}
-      <Lights />
     </Animated.View>
   );
 }
-export function FamilyBg() {
+// Memoised: the sky has no props, so refreshes of the screen's own data (every few seconds) never redraw it.
+export const FamilyBg = React.memo(function FamilyBg() {
   const [on, setOn] = useState(false);
   const off = useRef<any>(null);
   useFocusEffect(useCallback(() => {
     clearTimeout(off.current);
-    const t = setTimeout(() => setOn(true), 450); // after the slide-in has finished
-    return () => { clearTimeout(t); off.current = setTimeout(() => setOn(false), 450); };
+    // Only after the slide-in has finished, so the sky never competes with the screen opening.
+    const t = setTimeout(() => setOn(true), 600);
+    return () => { clearTimeout(t); off.current = setTimeout(() => setOn(false), 900); };
   }, []));
   useEffect(() => () => clearTimeout(off.current), []);
   return (
@@ -205,7 +215,7 @@ export function FamilyBg() {
       {on ? <Moving /> : null}
     </>
   );
-}
+});
 
 function Bird({ size, delay, y, w }: { size: number; delay: number; y: number; w: number }) {
   const v = useRef(new Animated.Value(0)).current;

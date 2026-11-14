@@ -55,11 +55,18 @@ export function scoreParts(c: Core, week: boolean): Part[] {
   if (due.length) { const dn = due.filter((t) => t.status === 'done').length; parts.push({ k: 'tasks', label: 'Tasks', pct: Math.round((dn / due.length) * 100), detail: dn + ' of ' + due.length + ' tasks due or overdue', c: '#7c9cff' }); }
   const ds = debtSummary(c.debts);
   if (ds.commit > 0) parts.push({ k: 'bills', label: 'Commitments', pct: Math.round((ds.paid / ds.commit) * 100), detail: rmf(ds.paid) + ' of ' + rmf(ds.commit) + ' paid this month', c: '#ff8fab' });
+  // Spending is measured against what Money Left says you can spend per day. Without an income or a daily amount it falls back to your usual spending.
+  const ym = ymOf(new Date());
+  const ml = calcLeft({ ym, income: incomeOf(c), commit: commitFor(c.debts, ym), spends: allSpends(c) as any });
   const us = usualSpend(c);
-  // Spending only counts once something was actually entered, so an empty day never shows a perfect score.
-  if (us > 0 && (week ? spendSum(c, -6, 0) > 0 : spendOn(c, 0) > 0)) {
-    if (week) { const w = spendSum(c, -6, 0) / 7; const pct = w <= us ? 100 : Math.max(20, Math.round(100 - ((w - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(w) + ' a day against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
-    else { const t = spendOn(c, 0); const pct = t <= us ? 100 : Math.max(20, Math.round(100 - ((t - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(t) + ' against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
+  const spendToday = spendOn(c, 0), spendWeek = spendSum(c, -6, 0);
+  if (ml.income > 0 && ml.allowance > 0) {
+    const al = ml.allowance;
+    if (week) { if (spendWeek > 0) { const w = spendWeek / 7; parts.push({ k: 'spend', label: 'Spending', pct: Math.max(0, Math.min(100, Math.round((1 - w / al) * 100))), detail: rmf(w) + ' a day of ' + rmf(al) + ' you can spend', c: '#ffc46b' }); } }
+    else if (spendToday > 0) parts.push({ k: 'spend', label: 'Spending', pct: Math.max(0, Math.min(100, Math.round((1 - spendToday / al) * 100))), detail: rmf(spendToday) + ' of ' + rmf(al) + ' you can spend today', c: '#ffc46b' });
+  } else if (us > 0 && (week ? spendWeek > 0 : spendToday > 0)) {
+    if (week) { const w = spendWeek / 7; const pct = w <= us ? 100 : Math.max(20, Math.round(100 - ((w - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(w) + ' a day against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
+    else { const t = spendToday; const pct = t <= us ? 100 : Math.max(20, Math.round(100 - ((t - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(t) + ' against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
   }
   if (c.tas && c.tas.day && c.tas.day === tk(0) && c.tas.total > 0) parts.push({ k: 'faith', label: 'Zikir', pct: Math.min(100, Math.round((c.tas.total / 33) * 100)), detail: c.tas.total + ' tasbih today', c: '#8fe9e2' });
   try {
