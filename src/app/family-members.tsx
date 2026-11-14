@@ -165,7 +165,7 @@ export default function FamilyMembers() {
 
           <Rise i={4}>
             <View style={{ marginTop: 22 }}>
-              <Btn solid t="Leave family" kind="danger" disabled={busy} onPress={() => ask('Leave this family?', owner && info.members.length > 1 ? 'You are the owner. Ownership passes to ' + nextOwner + ', and you leave the family. Your own data is not affected.' : owner ? 'You are the only member. The family will be removed.' : 'You lose access to the family. Your own data is not affected.', 'Leave', async () => { try { setBusy(true); await famLeave(); famForget(); router.replace('/family' as any); } catch (e) { showAlert('Could not leave', famError(e)); } setBusy(false); })} />
+              <Btn solid t="Leave family" kind="danger" disabled={busy} onPress={() => ask('Leave this family?', owner && info.members.length > 1 ? 'You are the owner. Ownership passes to ' + nextOwner + ', and you leave the family. Your own data is not affected.' : owner ? 'You are the only member. The family will be removed.' : 'You lose access to the family. Your own data is not affected.', 'Leave', async () => { try { setBusy(true); await famLeave(); famForget(); router.dismissTo('/family' as any); } catch (e) { showAlert('Could not leave', famError(e)); } setBusy(false); })} />
             </View>
           </Rise>
           {owner ? (
@@ -178,7 +178,7 @@ export default function FamilyMembers() {
                     <Field label="" value={dn} onChange={setDn} ph={info.name} max={40} />
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
                       <Btn solid t="Cancel" onPress={() => { setDel(false); setDn(''); }} flex />
-                      <Btn solid t="Delete forever" kind="danger" busy={busy} disabled={!dn.trim()} flex onPress={async () => { try { setBusy(true); setMsg(''); await famDeleteAll(dn); famForget(); router.replace('/family' as any); } catch (e) { showAlert('Could not delete', famError(e)); } setBusy(false); }} />
+                      <Btn solid t="Delete forever" kind="danger" busy={busy} disabled={!dn.trim()} flex onPress={async () => { try { setBusy(true); setMsg(''); await famDeleteAll(dn); famForget(); router.dismissTo('/family' as any); } catch (e) { showAlert('Could not delete', famError(e)); } setBusy(false); }} />
                     </View>
                   </Glass>
                 )}

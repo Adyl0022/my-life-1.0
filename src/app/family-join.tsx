@@ -9,7 +9,7 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Btn, Field, Note, W, DIM } from '../components/FamilyUi';
-import { famJoin, famError, pickColor } from '../lib/family';
+import { famJoin, famError, famNotify, pickColor } from '../lib/family';
 import { useLicense } from '../lib/license';
 import { useName } from '../lib/store';
 
@@ -25,7 +25,7 @@ export default function FamilyJoin() {
   const shown = clean.length > 3 ? clean.slice(0, 3) + '-' + clean.slice(3, 6) : clean;
   const join = async () => {
     setBusy(true); setErr('');
-    try { await famJoin(clean, name || myName, pickColor(Date.now() >> 3)); router.replace('/family' as any); }
+    try { await famJoin(clean, name || myName, pickColor(Date.now() >> 3)); famNotify(); router.dismissTo('/family' as any); }
     catch (e) { setErr(famError(e)); }
     setBusy(false);
   };

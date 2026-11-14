@@ -66,7 +66,11 @@ export const famCreate = (name: string, display: string, color: string) => call<
 export const famJoin = (code: string, display: string, color: string) => call('family_join', { p_code: code, p_display: display, p_color: color });
 export const famLeave = () => call('family_leave');
 // After leaving or deleting a family: forget the saved copy, so the Family screen never shows the old family again.
-export function famForget() { mem = null; AsyncStorage.removeItem(KEY).catch(() => {}); clearRows(); }
+// Screens that are still open underneath (for example the Family screen below Members) are told straight away, so none of them
+// shows the old family for a moment after it was left or deleted.
+const subs = new Set<(gone: boolean) => void>();
+export const famNotify = (gone = false) => { subs.forEach((f) => { try { f(gone); } catch (e) {} }); };
+export function famForget() { mem = null; AsyncStorage.removeItem(KEY).catch(() => {}); clearRows(); famNotify(true); }
 export const famRemove = (uid: string) => call('family_remove_member', { p_user: uid });
 export const famNewCode = () => call<string>('family_new_code');
 export const famSetRole = (uid: string, role: 'parent' | 'member') => call('family_set_role', { p_user: uid, p_role: role });
@@ -121,6 +125,7 @@ export function useFamily() {
     readCache<any>(KEY).then((c) => { if (c && c.uid === uid && c.info && alive.current) { mem = { uid, info: c.info }; setInfo((i) => i || c.info); setState((x) => (x === 'loading' ? 'ready' : x)); } }).catch(() => {});
   }, [uid]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { const f = (gone: boolean) => { if (gone) { setInfo(null); setState('none'); } refresh(); }; subs.add(f); return () => { subs.delete(f); }; }, [refresh]);
   useEffect(() => { const s = AppState.addEventListener('change', (x) => { if (x === 'active') refresh(); }); return () => s.remove(); }, [refresh]);
   return { state, info, offline, refresh };
 }
