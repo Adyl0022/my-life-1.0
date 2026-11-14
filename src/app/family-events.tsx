@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { Fragment, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
@@ -8,7 +9,7 @@ import { Header } from '../components/IslamicUi';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Ico, Label, NewBtn, Note, W, DIM } from '../components/FamilyUi';
-import { useFamily } from '../lib/family';
+import { useFamily, useAutoRefresh } from '../lib/family';
 import { useFamEvents, useFamTasks, peopleOf, dayDiff, timeText, FEvent, useReloadOnFocus } from '../lib/familyData';
 import { FamCalendar } from '../components/FamCalendar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +26,7 @@ export default function FamilyEvents() {
   const tk = useFamTasks(info?.id);
   const [tab, setTab] = useState<'list' | 'cal'>('list');
   useReloadOnFocus(e.reload, tk.reload);
+  useAutoRefresh(() => { e.reload(); tk.reload(); }, 10000);
   const people = useMemo(() => peopleOf(info), [info]);
   const next = e.rows.filter((x) => dayDiff(x.starts_at) >= 0);
   const past = e.rows.filter((x) => dayDiff(x.starts_at) < 0).sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 10);
@@ -35,7 +37,7 @@ export default function FamilyEvents() {
     const who = x.attendees.map((id) => people.find((p) => p.id === id)).filter(Boolean) as typeof people;
     return (
       <Pressable onPress={() => edit(x.id)}>
-        <Glass radius={20} style={{ marginBottom: 8, opacity: old ? 0.6 : 1 }}>
+        <Glass flat radius={20} style={{ marginBottom: 8, opacity: old ? 0.6 : 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13, padding: 12 }}>
             <View style={{ width: 48, alignItems: 'center', paddingVertical: 6, borderRadius: 14, backgroundColor: n === 0 ? 'rgba(255,196,107,.28)' : 'rgba(255,255,255,.1)' }}>
               <Text style={{ color: n === 0 ? '#ffc46b' : DIM, fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>{MON[d.getMonth()]}</Text>
@@ -60,7 +62,7 @@ export default function FamilyEvents() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Activities" sub="Plans the family does together" right={<NewBtn onPress={() => edit()} />} />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
           {e.offline ? <Note t={e.msg || "You are offline. Showing the last saved list."} /> : null}
           <View style={{ flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,.3)', borderRadius: 999, padding: 3, borderWidth: 1, borderColor: 'rgba(255,255,255,.15)', marginBottom: 14 }}>
             {(['list', 'cal'] as const).map((k) => (
@@ -73,11 +75,11 @@ export default function FamilyEvents() {
           </View>
           {tab === 'cal' ? <FamCalendar info={info} events={e.rows} tasks={tk.rows} onEvent={(id) => edit(id)} onTask={(id) => router.push({ pathname: '/family-task-edit', params: { id } } as any)} onNew={(d) => edit(undefined, d)} /> : null}
           {tab === 'list' ? <Rise>
-            {next.length ? <><Label t="Coming up" />{next.map((x) => <Row key={x.id} x={x} />)}</> : null}
-            {past.length ? <><Label t="Earlier" />{past.map((x) => <Row key={x.id} x={x} old />)}</> : null}
+            {next.length ? <><Label t="Coming up" />{next.map((x) => <Fragment key={x.id}>{Row({ x })}</Fragment>)}</> : null}
+            {past.length ? <><Label t="Earlier" />{past.map((x) => <Fragment key={x.id}>{Row({ x, old: true })}</Fragment>)}</> : null}
           </Rise> : null}
           {tab === 'list' && e.ready && !e.rows.length ? <View style={{ marginTop: 18 }}><Note t="No activities yet. Tap + New to plan one, like a visit to grandma or a family trip." /></View> : null}
-        </ScrollView>
+        </KbScroll>
       </SafeAreaView>
     </View>
   );

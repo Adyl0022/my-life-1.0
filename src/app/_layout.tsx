@@ -1,4 +1,5 @@
 import { Stack, usePathname } from 'expo-router';
+import { DialogHost } from '../components/DialogHost';
 import { useEffect, useRef } from 'react';
 import { trackModule } from '../lib/modules';
 import { useRegion } from '../lib/region';
@@ -103,5 +104,5 @@ export default function Root() {
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><FamilySync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
+  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><FamilySync /><DialogHost /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }

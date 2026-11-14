@@ -55,6 +55,16 @@ export function FamCalendar({ info, events, tasks, onEvent, onTask, onNew }: { i
     return map;
   }, [ym, events, tasks, info, mc, rg.cc, people]);
 
+  const nextBd = useMemo(() => {
+    const out: { name: string; color: string; when: Date; days: number; age: number }[] = [];
+    const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    for (const p of [...(info?.members || []), ...(info?.profiles || [])] as { name: string; color: string; birthday?: string | null }[]) {
+      const r = p.birthday ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(p.birthday) : null; if (!r) continue;
+      let y = t0.getFullYear(); let d = new Date(y, Number(r[2]) - 1, Number(r[3])); if (d < t0) { y += 1; d = new Date(y, Number(r[2]) - 1, Number(r[3])); }
+      out.push({ name: p.name, color: p.color, when: d, days: Math.round((d.getTime() - t0.getTime()) / 86400000), age: y - Number(r[1]) });
+    }
+    return out.sort((a, b) => a.days - b.days).slice(0, 3);
+  }, [info]); // eslint-disable-line react-hooks/exhaustive-deps
   const go = (n: number) => { const d = new Date(ym.y, ym.m + n, 1); setYm({ y: d.getFullYear(), m: d.getMonth() }); setSel(d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() ? todayKey : keyOf(d)); };
   const lead = (new Date(ym.y, ym.m, 1).getDay() + 6) % 7; const dim = new Date(ym.y, ym.m + 1, 0).getDate();
   const cells: (number | null)[] = [...Array(lead).fill(null), ...Array.from({ length: dim }, (_, i) => i + 1)]; while (cells.length % 7) cells.push(null);
@@ -91,6 +101,19 @@ export function FamCalendar({ info, events, tasks, onEvent, onTask, onNew }: { i
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10, marginLeft: 6 }}>
         {([['a', 'Activity'], ['t', 'Task due'], ['b', 'Birthday'], ['h', 'Holiday']] as const).map(([k, t]) => <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C[k] }} /><Text style={{ color: DIM, fontSize: 11 }}>{t}</Text></View>)}
       </View>
+
+      {nextBd.length ? (
+        <Glass solid radius={20} style={{ marginTop: 14, padding: 12 }}>
+          <Text style={{ color: DIM, fontSize: 10.5, letterSpacing: 1.3, fontWeight: '800', marginBottom: 6 }}>NEXT BIRTHDAYS</Text>
+          {nextBd.map((b, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }}>
+              <Avatar name={b.name} color={b.color} size={26} />
+              <Text style={{ flex: 1, color: W, fontSize: 13.5, fontWeight: '700' }} numberOfLines={1}>{b.name}</Text>
+              <Text style={{ color: DIM, fontSize: 12 }}>{b.when.getDate()} {MONTHS[b.when.getMonth()].slice(0, 3)} · {b.days === 0 ? 'today' : b.days === 1 ? 'tomorrow' : 'in ' + b.days + ' days'}{b.age > 0 ? ' · turns ' + b.age : ''}</Text>
+            </View>
+          ))}
+        </Glass>
+      ) : null}
 
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 18, marginBottom: 10, marginHorizontal: 6 }}>
         <Text style={{ color: W, fontSize: 34, fontWeight: '900' }}>{sd.getDate()}</Text>

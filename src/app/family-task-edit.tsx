@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, TextInput, Platform } from 'react-native';
 import { showAlert } from '../lib/dialog';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -74,7 +75,7 @@ export default function FamilyTaskEdit() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title={old ? 'Edit task' : 'New task'} sub="Visible to the whole family" />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {id && !old && t.ready ? <Note warm t="This task was deleted or changed by someone else." /> : null}
           <Field label="Title" value={title} onChange={setTitle} ph="What needs doing?" max={120} />
           <View style={{ marginTop: 12 }}>
@@ -120,7 +121,7 @@ export default function FamilyTaskEdit() {
           {err ? <View style={{ marginTop: 16 }}><Note warm t={err} /></View> : null}
           <View style={{ marginTop: 22 }}><Btn t={old ? 'Save changes' : 'Save task'} kind="main" onPress={save} busy={busy} /></View>
           {old ? <View style={{ marginTop: 10 }}><Btn t="Delete task" kind="danger" onPress={del} disabled={busy} /></View> : null}
-        </ScrollView>
+        </KbScroll>
       </SafeAreaView>
     </View>
   );

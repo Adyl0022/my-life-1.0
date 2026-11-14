@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Share } from 'react-native';
 import { showAlert } from '../lib/dialog';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
@@ -10,7 +11,7 @@ import { DateField } from '../components/Ui';
 import { FamilyBg } from '../components/FamilyBg';
 import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, W, DIM } from '../components/FamilyUi';
-import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famForget, famAddProfile, famSetBirthday, famProfileBirthday, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
+import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famForget, famAddProfile, famSetBirthday, famProfileBirthday, famMemberBirthday, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
 
 const bdText = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? Number(m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1] + ' ' + m[1] : v; };
 const ROLE: Record<string, string> = { owner: 'Owner', parent: 'Parent', member: 'Member' };
@@ -63,8 +64,8 @@ export default function FamilyMembers() {
         </Pressable>
         {on ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 12 }}>
-            <Btn solid t={m.role === 'parent' ? 'Make member' : 'Make parent'} onPress={() => run(() => famSetRole(m.user_id, m.role === 'parent' ? 'member' : 'parent'))} disabled={busy} />
-            <Btn solid t="Make owner" onPress={() => ask('Make ' + m.name + ' the owner?', 'You will become a parent. Only the owner can remove members and change the code.', 'Make owner', () => run(() => famTransfer(m.user_id)))} disabled={busy} />
+            <Btn solid kind="good" t={m.role === 'parent' ? 'Make member' : 'Make parent'} onPress={() => run(() => famSetRole(m.user_id, m.role === 'parent' ? 'member' : 'parent'))} disabled={busy} />
+            <Btn solid kind="good" t="Make owner" onPress={() => ask('Make ' + m.name + ' the owner?', 'You will become a parent. Only the owner can remove members and change the code.', 'Make owner', () => run(() => famTransfer(m.user_id)))} disabled={busy} />
             <Btn solid t="Remove" kind="danger" onPress={() => ask('Remove ' + m.name + '?', 'They lose access to this family. Their own data on their phone is not affected.', 'Remove', () => run(() => famRemove(m.user_id)))} disabled={busy} />
           </View>
         ) : null}
@@ -77,7 +78,7 @@ export default function FamilyMembers() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Members" sub={info.members.length + ' of ' + info.max_members + ' members'} />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 170 }} showsVerticalScrollIndicator={false}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 170 }} showsVerticalScrollIndicator={false}>
           {parent ? (
             <Rise>
               <Glass solid radius={24} style={{ padding: 16 }}>
@@ -112,10 +113,10 @@ export default function FamilyMembers() {
           <Rise i={2}>
             <Label t="Birthdays" />
             <Glass solid radius={24} style={{ padding: 14 }}>
-              <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginBottom: 6 }}>Shown in the family calendar every year. Everyone sets their own. A parent sets it for people without an account.</Text>
+              <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginBottom: 6 }}>Shown in the family calendar every year. Everyone can set their own. The owner and parents can set it for anyone.</Text>
               {[...info.members.map((m) => ({ id: m.user_id, name: m.name, color: m.color, bd: m.birthday || '', mine: m.user_id === info.me, prof: false })), ...info.profiles.map((p) => ({ id: p.id, name: p.name, color: p.color, bd: p.birthday || '', mine: false, prof: true }))].map((x) => {
-                const can = x.mine || (x.prof && parent);
-                const save = (v: string | null) => run(() => (x.prof ? famProfileBirthday(x.id, v) : famSetBirthday(v)));
+                const can = x.mine || parent;
+                const save = (v: string | null) => run(() => (x.prof ? famProfileBirthday(x.id, v) : x.mine ? famSetBirthday(v) : famMemberBirthday(x.id, v)), v ? 'Birthday saved.' : 'Birthday cleared.');
                 return (
                   <View key={x.id} style={{ paddingVertical: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -127,11 +128,13 @@ export default function FamilyMembers() {
                   </View>
                 );
               })}
+              {msg ? <Text style={{ color: msg.indexOf('Birthday') === 0 ? '#8ff0d4' : '#ffb3bf', fontSize: 12.5, marginTop: 8 }}>{msg}</Text> : null}
             </Glass>
           </Rise>
 
           <Rise i={2}>
             <Label t="People without an account" />
+            <Text style={{ color: DIM, fontSize: 11.5, lineHeight: 16, marginTop: -4, marginBottom: 8, marginLeft: 4 }}>For a child or a grandparent who does not use the app. A parent adds them here, then they can have tasks, chores, wishes and a birthday like everyone else.</Text>
             <Glass solid radius={24} style={{ padding: 14 }}>
               {info.profiles.length ? info.profiles.map((p) => (
                 <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }}>
@@ -152,6 +155,7 @@ export default function FamilyMembers() {
           {owner ? (
             <Rise i={3}>
               <Label t="Family name" />
+              <Text style={{ color: DIM, fontSize: 11.5, lineHeight: 16, marginTop: -4, marginBottom: 8, marginLeft: 4 }}>Change the name everyone in the family sees. Only the owner can do this.</Text>
               <Glass solid radius={24} style={{ padding: 14 }}>
                 <Field label="" value={rn} onChange={setRn} ph={info.name} max={40} />
                 <View style={{ marginTop: 10 }}><Btn solid t="Rename" kind="good" onPress={() => run(async () => { await famRename(rn); setRn(''); }, 'Family renamed.')} disabled={!rn.trim() || busy} /></View>
@@ -181,7 +185,7 @@ export default function FamilyMembers() {
               </View>
             </Rise>
           ) : null}
-        </ScrollView>
+        </KbScroll>
       </SafeAreaView>
     </View>
   );

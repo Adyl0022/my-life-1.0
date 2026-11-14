@@ -28,7 +28,7 @@ export function Btn({ t, onPress, kind = 'ghost', busy, disabled, flex, solid }:
   const off = disabled || busy;
   const inner = busy ? <ActivityIndicator color={kind === 'main' ? '#2a1030' : '#fff'} /> : <Text style={{ color: kind === 'main' ? '#2a1030' : kind === 'danger' ? '#ffb3bf' : kind === 'good' ? '#8ff0d4' : W, fontSize: 13.5, fontWeight: '800' }}>{t}</Text>;
   return (
-    <Pressable onPress={off ? undefined : onPress} style={({ pressed }) => ({ flex: flex ? 1 : undefined, opacity: off ? 0.55 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+    <Pressable onPress={off ? undefined : onPress} style={({ pressed }) => ({ flex: flex ? 1 : undefined, opacity: off ? 0.55 : pressed ? 0.72 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
       {kind === 'main'
         ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center' }}>{inner}</LinearGradient>
         : <View style={{ paddingVertical: 12, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', backgroundColor: solid ? (kind === 'danger' ? '#3d2c4c' : kind === 'good' ? '#1c4252' : '#343d5a') : kind === 'danger' ? 'rgba(255,107,129,.16)' : kind === 'good' ? 'rgba(52,211,153,.18)' : 'rgba(255,255,255,.12)', borderWidth: kind === 'danger' || kind === 'good' ? 1 : 0, borderColor: kind === 'good' ? 'rgba(52,211,153,.5)' : 'rgba(255,107,129,.45)' }}>{inner}</View>}
@@ -74,8 +74,8 @@ export const Ico = ({ k, c = W, s = 20, w = 2 }: { k: string; c?: string; s?: nu
 
 // A row on the family home screen.
 export const Tile = ({ ic, c, t, sub, onPress }: { ic: string; c: string; t: string; sub: string; onPress: () => void }) => (
-  <Pressable onPress={onPress} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }], marginBottom: 10 })}>
-    <Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+  <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.78 : 1, transform: [{ scale: pressed ? 0.97 : 1 }], marginBottom: 10 })}>
+    <Glass flat radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 13 }}>
       <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c + '2b', alignItems: 'center', justifyContent: 'center' }}><Ico k={ic} c={c} s={22} /></View>
       <View style={{ flex: 1 }}>
         <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{t}</Text>
@@ -88,7 +88,7 @@ export const Tile = ({ ic, c, t, sub, onPress }: { ic: string; c: string; t: str
 
 // "+ New" button in the top corner of a list screen.
 export const NewBtn = ({ onPress, t = '+ New' }: { onPress: () => void; t?: string }) => (
-  <Pressable onPress={onPress} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+  <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1, transform: [{ scale: pressed ? 0.93 : 1 }] })}>
     <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999 }}>
       <Text style={{ color: '#2a1030', fontSize: 13.5, fontWeight: '800' }}>{t}</Text>
     </LinearGradient>
@@ -96,14 +96,14 @@ export const NewBtn = ({ onPress, t = '+ New' }: { onPress: () => void; t?: stri
 );
 
 export const Chip = ({ t, on, onPress, color }: { t: string; on?: boolean; onPress: () => void; color?: string }) => (
-  <Pressable onPress={onPress} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? (color || '#5ee7df') : 'rgba(255,255,255,.1)' }}>
+  <Pressable onPress={onPress} style={({ pressed }) => ({ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? (color || '#5ee7df') : 'rgba(255,255,255,.1)', opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
     <Text style={{ color: on ? '#0a0f2c' : W, fontSize: 12.5, fontWeight: '800' }}>{t}</Text>
   </Pressable>
 );
 
 // Round tick box for tasks and shopping items.
 export const Tick = ({ on, onPress, c = '#5ee7df' }: { on: boolean; onPress: () => void; c?: string }) => (
-  <Pressable onPress={onPress} hitSlop={10} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
+  <Pressable onPress={onPress} hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.85 : 1 }] })} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
     <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: on ? c : 'rgba(255,255,255,.45)', backgroundColor: on ? c : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
       {on ? <Ico k="tasks" c="#0a0f2c" s={15} w={3} /> : null}
     </View>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, TextInput, Platform } from 'react-native';
 import { showAlert } from '../lib/dialog';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -79,7 +80,7 @@ export default function FamilyEventEdit() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title={old ? 'Edit activity' : 'New activity'} sub="Visible to the whole family" />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {id && !old && ev.ready ? <Note warm t="This activity was deleted or changed by someone else." /> : null}
           <Field label="Title" value={title} onChange={setTitle} ph="Visit grandma" max={120} />
           <Field label="Place (optional)" value={place} onChange={setPlace} ph="Kuala Lumpur" max={80} />
@@ -117,7 +118,7 @@ export default function FamilyEventEdit() {
           {err ? <View style={{ marginTop: 16 }}><Note warm t={err} /></View> : null}
           <View style={{ marginTop: 22 }}><Btn t={old ? 'Save changes' : 'Save activity'} kind="main" onPress={save} busy={busy} /></View>
           {old ? <View style={{ marginTop: 10 }}><Btn t="Delete activity" kind="danger" onPress={del} disabled={busy} /></View> : null}
-        </ScrollView>
+        </KbScroll>
       </SafeAreaView>
     </View>
   );

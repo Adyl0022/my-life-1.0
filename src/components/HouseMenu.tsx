@@ -1,13 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { Avatar, Btn, Chip, Field, Note, W, DIM } from './FamilyUi';
-import { famError, FInfo } from '../lib/family';
+import { famError, useAutoRefresh, FInfo } from '../lib/family';
 import { useFamMenu, useFamShop, menuSave, shopSave, peopleOf, localDay, useReloadOnFocus, FMenu } from '../lib/familyData';
 
 // The family menu: breakfast, lunch and dinner for each day. "Needs" can be sent to the shopping list in one tap.
 const SLOTS: { k: FMenu['slot']; t: string; ic: string }[] = [{ k: 'breakfast', t: 'Breakfast', ic: '🍳' }, { k: 'lunch', t: 'Lunch', ic: '🍜' }, { k: 'dinner', t: 'Dinner', ic: '🍽️' }];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAYN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const ymd = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const parse = (s: string) => new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
@@ -17,6 +19,7 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
   const m = useFamMenu(info?.id);
   const sh = useFamShop(info?.id);
   useReloadOnFocus(m.reload, sh.reload);
+  useAutoRefresh(() => { m.reload(); sh.reload(); }, 8000);
   const people = useMemo(() => peopleOf(info), [info]);
   const [day, setDay] = useState(localDay());
   const [slot, setSlot] = useState<FMenu['slot'] | ''>('');
@@ -52,22 +55,30 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
 
   return (
     <View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-        <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7)))} style={{ paddingRight: 8 }}><Text style={{ color: W, fontSize: 22 }}>‹</Text></Pressable>
-        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
+      <Glass solid radius={26} style={{ paddingTop: 12, paddingBottom: 12, paddingHorizontal: 10, marginTop: 6, marginBottom: 18 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, marginBottom: 10 }}>
+          <Text style={{ color: W, fontSize: 17, fontWeight: '900', flex: 1 }}>{MON[week[0].getMonth()]}{week[6].getMonth() !== week[0].getMonth() ? ' / ' + MON[week[6].getMonth()] : ''} {week[6].getFullYear()}</Text>
+          <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7)))} style={({ pressed }) => ({ paddingHorizontal: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>‹</Text></Pressable>
+          <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 7)))} style={({ pressed }) => ({ paddingLeft: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>›</Text></Pressable>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
           {week.map((d) => { const k = ymd(d); const on = k === day; const has = m.rows.some((x) => x.day === k);
+            const inner = (
+              <>
+                <Text style={{ color: on ? '#2a1740' : DIM, fontSize: 10.5, fontWeight: '800' }}>{'MTWTFSS'[(d.getDay() + 6) % 7]}</Text>
+                <Text style={{ color: on ? '#2a1740' : W, fontSize: 16, fontWeight: '900', marginTop: 3 }}>{d.getDate()}</Text>
+                <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 5, backgroundColor: has ? (on ? '#2a1740' : '#5ee7df') : 'transparent' }} />
+              </>
+            );
             return (
-              <Pressable key={k} onPress={() => { setDay(k); setSlot(''); setOk(''); }} style={{ alignItems: 'center', width: 38 }}>
-                <Text style={{ color: DIM, fontSize: 11 }}>{'MTWTFSS'[(d.getDay() + 6) % 7]}</Text>
-                <View style={{ marginTop: 4, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? '#ffc46b' : 'transparent', borderWidth: k === today && !on ? 1.5 : 0, borderColor: 'rgba(255,196,107,.8)' }}>
-                  <Text style={{ color: on ? '#2a1740' : W, fontSize: 14, fontWeight: '800' }}>{d.getDate()}</Text>
-                </View>
-                <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 3, backgroundColor: has ? '#5ee7df' : 'transparent' }} />
+              <Pressable key={k} onPress={() => { setDay(k); setSlot(''); setOk(''); }} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+                {on
+                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16 }}>{inner}</LinearGradient>
+                  : <View style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: k === today ? 1.5 : 0, borderColor: 'rgba(255,196,107,.85)' }}>{inner}</View>}
               </Pressable>
             ); })}
         </View>
-        <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 7)))} style={{ paddingLeft: 8 }}><Text style={{ color: W, fontSize: 22 }}>›</Text></Pressable>
-      </View>
+      </Glass>
       <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginLeft: 4, marginBottom: 10 }}>{DAYN[base.getDay()]}{day === today ? ' · Today' : ''}</Text>
       {msg ? <Note warm t={msg} /> : null}
       {ok ? <Note t={ok} /> : null}

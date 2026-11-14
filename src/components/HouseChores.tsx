@@ -4,7 +4,7 @@ import { Text } from './Txt';
 import { Glass } from './Glass';
 import { showAlert } from '../lib/dialog';
 import { Avatar, Btn, Chip, Field, Note, W, DIM } from './FamilyUi';
-import { famError, isParent, FInfo } from '../lib/family';
+import { famError, isParent, useAutoRefresh, FInfo } from '../lib/family';
 import { useFamChores, useFamChoreLog, useFamRedeems, useFamRewards, useBalances, choreSave, choreDelete, choreMark, choreDecide, rewardSave, rewardDelete, rewardAsk, redeemDecide, choreWho, nextWho, periodOf, peopleOf, useReloadOnFocus, FChore, FReward } from '../lib/familyData';
 
 // Chores that take turns, the points they earn, and the rewards the points can buy.
@@ -16,6 +16,8 @@ function usePoints(info: FInfo | null) {
   const sig = log.rows.map((x) => x.id + x.status).join() + reds.rows.map((x) => x.id + x.status).join();
   const b = useBalances(info?.id, sig);
   useReloadOnFocus(chores.reload, log.reload, rewards.reload, reds.reload, b.reload);
+  // a request or a tick from another phone shows up within a few seconds, without leaving the screen
+  useAutoRefresh(() => { chores.reload(); log.reload(); rewards.reload(); reds.reload(); b.reload(); }, 5000);
   return { chores, log, rewards, reds, b };
 }
 

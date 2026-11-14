@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
@@ -48,13 +49,13 @@ export default function Family() {
     body = (
       <>
         <Rise>
-          <Glass radius={24} style={{ padding: 18 }}>
+          <Glass flat radius={24} style={{ padding: 18 }}>
             <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Plan together</Text>
             <Text style={{ color: DIM, fontSize: 13, lineHeight: 19, marginTop: 6 }}>One shared space for your family: tasks, activities and lists that stay in sync on everyone's phone.</Text>
           </Glass>
         </Rise>
         <Rise i={1}>
-          <Glass radius={24} style={{ padding: 18, marginTop: 12 }}>
+          <Glass flat radius={24} style={{ padding: 18, marginTop: 12 }}>
             <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Create a family</Text>
             <Text style={{ color: DIM, fontSize: 12.5, marginTop: 3 }}>You become the owner and get a code to share.</Text>
             {make ? (
@@ -71,7 +72,7 @@ export default function Family() {
           </Glass>
         </Rise>
         <Rise i={2}>
-          <Glass radius={24} style={{ padding: 18, marginTop: 12 }}>
+          <Glass flat radius={24} style={{ padding: 18, marginTop: 12 }}>
             <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Join with a code</Text>
             <Text style={{ color: DIM, fontSize: 12.5, marginTop: 3 }}>Someone in your family gave you a code.</Text>
             <View style={{ marginTop: 14 }}><Btn t="Enter a code" onPress={() => router.push('/family-join' as any)} /></View>
@@ -86,7 +87,7 @@ export default function Family() {
       <>
         <Rise>
           <Pressable onPress={() => router.push('/family-members' as any)}>
-            <Glass radius={24} style={{ padding: 14, flexDirection: 'row', alignItems: 'center' }}>
+            <Glass flat radius={24} style={{ padding: 14, flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ flexDirection: 'row', flex: 1 }}>
                 {info.members.slice(0, 5).map((m, i) => <View key={m.user_id} style={{ marginLeft: i ? -12 : 0 }}><Avatar name={m.name} color={m.color} ring /></View>)}
                 {n > 5 ? <View style={{ marginLeft: -12 }}><Avatar name={'+' + (n - 5)} color="#7c9cff" ring /></View> : null}
@@ -118,7 +119,7 @@ export default function Family() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Family Planner" sub={info ? info.name + ' · ' + info.members.length + (info.members.length === 1 ? ' member' : ' members') : 'Plan together'} right={<HouseHeart size={74} />} />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 170 }} showsVerticalScrollIndicator={false}>{body}</ScrollView>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 170 }} showsVerticalScrollIndicator={false}>{body}</KbScroll>
       </SafeAreaView>
     </View>
   );

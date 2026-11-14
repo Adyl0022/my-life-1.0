@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, TextInput } from 'react-native';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
@@ -33,13 +34,13 @@ export default function FamilyJoin() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Join a family" sub="Enter the code you were given" />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 170 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 170 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Rise>
             <TextInput value={shown} onChangeText={(s) => setCode(s)} placeholder="ABC-123" placeholderTextColor="rgba(255,255,255,.3)" maxLength={7} autoCapitalize="characters" autoCorrect={false}
               style={{ color: W, fontSize: 26, fontWeight: '900', letterSpacing: 6, textAlign: 'center', paddingVertical: 16, borderRadius: 18, backgroundColor: 'rgba(0,0,0,.3)', borderWidth: 1, borderColor: 'rgba(255,255,255,.18)' }} />
           </Rise>
           <Rise i={1}>
-            <Glass radius={22} style={{ padding: 16, marginTop: 14 }}>
+            <Glass flat radius={22} style={{ padding: 16, marginTop: 14 }}>
               <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Your name in the family</Text>
               <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>Other members will see this name.</Text>
               <Field label="" value={name} onChange={setName} ph="Your name" />
@@ -55,7 +56,7 @@ export default function FamilyJoin() {
             <View style={{ marginTop: 16 }}><Btn t="Join family" kind="main" onPress={join} busy={busy} disabled={clean.length < 6 || lic.status !== 'active'} /></View>
             <Text style={{ color: DIM, fontSize: 12, textAlign: 'center', marginTop: 14, lineHeight: 17 }}>If your subscription ends, you keep your own data but lose access to the family until you renew.</Text>
           </Rise>
-        </ScrollView>
+        </KbScroll>
       </SafeAreaView>
     </View>
   );

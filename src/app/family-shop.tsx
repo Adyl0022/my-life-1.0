@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { showAlert } from '../lib/dialog';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../components/Txt';
 import { Glass } from '../components/Glass';
@@ -11,7 +12,7 @@ import { Btn, Chip, Field, Label, NewBtn, Note, Tick, W, DIM } from '../componen
 import { HouseTabs } from '../components/HouseTabs';
 import { HouseMenu } from '../components/HouseMenu';
 import { HouseWishes } from '../components/HouseWishes';
-import { useFamily, famError } from '../lib/family';
+import { useFamily, useAutoRefresh, famError } from '../lib/family';
 import { useFamShop, shopSave, shopBought, shopClear, famDelete, nameOf, SHOP_CATS, FShop, useReloadOnFocus } from '../lib/familyData';
 
 // One list for the whole family. Anyone can add, tick off, edit or delete. Bought items stay until "Clear bought".
@@ -20,6 +21,7 @@ export default function FamilyShop() {
   const info = f.info;
   const s = useFamShop(info?.id);
   useReloadOnFocus(s.reload);
+  useAutoRefresh(() => s.reload(), 10000);
   const [tab, setTab] = useState<'shop' | 'menu' | 'wish'>('shop');
   const [panel, setPanel] = useState(false);
   const [eid, setEid] = useState<string | null>(null);
@@ -29,6 +31,8 @@ export default function FamilyShop() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
 
+  // if the item being edited was cleared or deleted (here or on another phone), close its panel instead of leaving an empty form open
+  useEffect(() => { if (panel && eid && s.ready && !s.rows.some((x) => x.id === eid)) { setPanel(false); setEid(null); } }, [s.rows, s.ready, panel, eid]);
   const toBuy = s.rows.filter((x) => !x.bought);
   const bought = s.rows.filter((x) => x.bought);
   const cats = [...SHOP_CATS, ...toBuy.map((x) => x.category).filter((c) => SHOP_CATS.indexOf(c) < 0)].filter((c, i, a) => a.indexOf(c) === i);
@@ -63,7 +67,7 @@ export default function FamilyShop() {
   ]);
 
   const Row = ({ x }: { x: FShop }) => (
-    <Glass radius={20} style={{ marginBottom: 8, opacity: x.bought ? 0.6 : 1 }}>
+    <Glass flat radius={20} style={{ marginBottom: 8, opacity: x.bought ? 0.6 : 1 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 13 }}>
         <Tick on={x.bought} onPress={() => tick(x)} c="#ffc46b" />
         <Pressable style={{ flex: 1 }} onPress={() => open(x)}>
@@ -79,12 +83,12 @@ export default function FamilyShop() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Household" sub="Shopping, menu and wishes for the family" right={tab === 'shop' ? <NewBtn onPress={() => (panel ? setPanel(false) : open())} t={panel ? 'Close' : '+ New'} /> : undefined} />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <HouseTabs tabs={[['shop', 'Shopping'], ['menu', 'Menu'], ['wish', 'Wishes']]} v={tab} onChange={setTab} />
           {tab === 'menu' ? <HouseMenu info={info} /> : tab === 'wish' ? <HouseWishes info={info} /> : <>
           {panel ? (
             <Rise>
-              <Glass radius={24} style={{ padding: 16 }}>
+              <Glass flat radius={24} style={{ padding: 16 }}>
                 <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{eid ? 'Edit item' : 'Add item'}</Text>
                 <Field label="Item" value={name} onChange={setName} ph="Eggs" max={80} />
                 <Field label="How many (optional)" value={qty} onChange={setQty} ph="2 trays" max={30} />
@@ -101,19 +105,19 @@ export default function FamilyShop() {
           ) : msg ? <Note warm t={msg} /> : null}
           {s.offline ? <View style={{ marginTop: 12 }}><Note t={s.msg || "You are offline. Showing the last saved list."} /></View> : null}
           {s.ready ? <Text style={{ color: DIM, fontSize: 12, marginTop: 14, marginLeft: 4 }}>{toBuy.length} to buy · {bought.length} bought</Text> : null}
-          {cats.map((c) => { const l = toBuy.filter((x) => x.category === c); return l.length ? <View key={c}><Label t={c} />{l.map((x) => <Row key={x.id} x={x} />)}</View> : null; })}
+          {cats.map((c) => { const l = toBuy.filter((x) => x.category === c); return l.length ? <View key={c}><Label t={c} />{l.map((x) => <Fragment key={x.id}>{Row({ x })}</Fragment>)}</View> : null; })}
           {bought.length ? (
             <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Label t="Bought" />
                 <Pressable onPress={clear} hitSlop={8} style={{ marginTop: 16 }}><Text style={{ color: '#5ee7df', fontSize: 12.5, fontWeight: '800' }}>Clear bought</Text></Pressable>
               </View>
-              {bought.map((x) => <Row key={x.id} x={x} />)}
+              {bought.map((x) => <Fragment key={x.id}>{Row({ x })}</Fragment>)}
             </>
           ) : null}
           {s.ready && !s.rows.length ? <View style={{ marginTop: 18 }}><Note t="The list is empty. Tap + New to add what the family needs." /></View> : null}
           </>}
-        </ScrollView>
+        </KbScroll>
       </SafeAreaView>
     </View>
   );

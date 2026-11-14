@@ -4,7 +4,7 @@ import { Text } from './Txt';
 import { Glass } from './Glass';
 import { showAlert } from '../lib/dialog';
 import { Avatar, Btn, Field, Note, W, DIM } from './FamilyUi';
-import { famError, isParent, FInfo } from '../lib/family';
+import { famError, isParent, useAutoRefresh, FInfo } from '../lib/family';
 import { useFamWishes, useFamClaims, wishSave, wishDelete, wishClaim, peopleOf, useReloadOnFocus, FWish } from '../lib/familyData';
 
 // Wish lists: everyone has their own, and the others can say "I'll get this" so a gift is never bought twice.
@@ -13,6 +13,7 @@ export function HouseWishes({ info }: { info: FInfo | null }) {
   const w = useFamWishes(info?.id);
   const cl = useFamClaims(info?.id);
   useReloadOnFocus(w.reload, cl.reload);
+  useAutoRefresh(() => { w.reload(); cl.reload(); }, 8000);
   const people = useMemo(() => peopleOf(info), [info]);
   const me = info?.me || '';
   const [who, setWho] = useState('');

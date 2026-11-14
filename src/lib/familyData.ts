@@ -37,17 +37,22 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
   const timer = useRef<any>(null);
   const uid = useRef(Math.random().toString(36).slice(2, 9)); // every screen gets its own channel name, so opening a screen again never clashes with one still closing
   const key = 'ml_famrows_' + table + '_' + (fid || '');
+  const locks = useRef<Record<string, { p: any; until: number }>>({}); // a tick the person just made stays as they made it until the server has caught up, so quick taps never flicker back
+  const seq = useRef(0);
   useEffect(() => { alive.current = true; return () => { alive.current = false; clearTimeout(timer.current); }; }, []);
 
   const load = useCallback(async () => {
     if (!fid) return;
+    const mine = ++seq.current;
     try {
       let q: any = supabase.from(table).select('*').eq('family_id', fid);
       if (soft) q = q.is('deleted_at', null);
       const { data, error } = await q.order(order, { ascending: asc }).limit(600);
       if (error) throw error;
-      if (!alive.current) return;
-      setRows((data || []) as T[]); setReady(true); setOffline(false); setMsg('');
+      if (!alive.current || mine !== seq.current) return; // a newer read is already on its way
+      const now = Date.now(); const L = locks.current;
+      const fresh = ((data || []) as T[]).map((x) => { const l = L[x.id]; if (!l) return x; if (l.until < now) { delete L[x.id]; return x; } return { ...x, ...l.p }; });
+      setRows(fresh); setReady(true); setOffline(false); setMsg('');
       AsyncStorage.setItem(key, JSON.stringify(data || [])).catch(() => {});
     } catch (e: any) {
       if (!alive.current) return;
@@ -72,7 +77,7 @@ function useRows<T extends { id: string }>(table: string, fid: string | undefine
     return () => { try { if (ch) supabase.removeChannel(ch); } catch (e) {} st.remove(); };
   }, [fid, key, load, soon, table]);
 
-  const patch = useCallback((id: string, p: Partial<T>) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...p } : x))), []);
+  const patch = useCallback((id: string, p: Partial<T>) => { locks.current[id] = { p: { ...(locks.current[id]?.p || {}), ...p }, until: Date.now() + 2500 }; setRows((r) => r.map((x) => (x.id === id ? { ...x, ...p } : x))); }, []);
   return { rows, ready, offline, msg, reload: load, patch };
 }
 // Call this on a screen (never in the root layout, which has no navigation yet): reads the list again every time the screen

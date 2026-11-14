@@ -77,6 +77,7 @@ export const famRename = (name: string) => call('family_rename', { p_name: name 
 export const famSetMe = (name: string, color: string) => call('family_set_me', { p_display: name, p_color: color });
 export const famAddProfile = (name: string, color: string) => call('family_profile_add', { p_name: name, p_color: color });
 export const famSetBirthday = (d: string | null) => call('family_set_birthday', { p_date: d });
+export const famMemberBirthday = (uid: string, d: string | null) => call('family_member_birthday', { p_user: uid, p_date: d });
 export const famProfileBirthday = (id: string, d: string | null) => call('family_profile_birthday', { p_id: id, p_date: d });
 export const famRemoveProfile = (id: string) => call('family_profile_remove', { p_id: id });
 

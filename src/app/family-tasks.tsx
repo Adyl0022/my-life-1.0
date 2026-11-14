@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { Fragment, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
+import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
@@ -10,7 +11,7 @@ import { Rise } from '../components/Anim';
 import { Avatar, Chip, Ico, Label, NewBtn, Note, Tick, W, DIM } from '../components/FamilyUi';
 import { HouseTabs } from '../components/HouseTabs';
 import { HouseChores, HouseRewards } from '../components/HouseChores';
-import { useFamily, famError } from '../lib/family';
+import { useFamily, useAutoRefresh, famError } from '../lib/family';
 import { useFamTasks, peopleOf, taskDone, dueText, dayDiff, FTask, useReloadOnFocus } from '../lib/familyData';
 
 export default function FamilyTasks() {
@@ -19,6 +20,7 @@ export default function FamilyTasks() {
   const info = f.info;
   const t = useFamTasks(info?.id);
   useReloadOnFocus(t.reload);
+  useAutoRefresh(() => t.reload(), 10000);
   const [tab, setTab] = useState<'tasks' | 'chores' | 'rewards'>('tasks');
   const people = useMemo(() => peopleOf(info), [info]);
   const [who, setWho] = useState('all');
@@ -45,7 +47,7 @@ export default function FamilyTasks() {
     const late = !x.done && x.due_at ? dayDiff(x.due_at) < 0 : false;
     const who2 = x.assignees.map((id) => people.find((p) => p.id === id)).filter(Boolean) as typeof people;
     return (
-      <Glass radius={20} style={{ marginBottom: 8, opacity: x.done ? 0.6 : 1 }}>
+      <Glass flat radius={20} style={{ marginBottom: 8, opacity: x.done ? 0.6 : 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 13 }}>
           <Tick on={x.done} onPress={() => tick(x)} />
           <Pressable style={{ flex: 1 }} onPress={() => edit(x.id)}>
@@ -65,7 +67,7 @@ export default function FamilyTasks() {
       </Glass>
     );
   };
-  const Group = ({ title, list }: { title: string; list: FTask[] }) => list.length ? <><Label t={title} />{list.map((x) => <Row key={x.id} x={x} />)}</> : null;
+  const Group = ({ title, list }: { title: string; list: FTask[] }) => list.length ? <><Label t={title} />{list.map((x) => <Fragment key={x.id}>{Row({ x })}</Fragment>)}</> : null;
 
   const none = t.ready && !t.rows.length;
   return (
@@ -73,7 +75,7 @@ export default function FamilyTasks() {
       <FamilyBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title={tab === 'tasks' ? 'Tasks' : tab === 'chores' ? 'Chores' : 'Rewards'} sub={tab === 'tasks' ? 'Everyone in the family can edit' : tab === 'chores' ? 'Take turns and earn points' : 'Spend the points you earn'} right={tab === 'tasks' ? <NewBtn onPress={() => edit()} /> : undefined} />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
           <HouseTabs tabs={[['tasks', 'Tasks'], ['chores', 'Chores'], ['rewards', 'Rewards']]} v={tab} onChange={setTab} />
           {tab === 'chores' ? <HouseChores info={info} /> : tab === 'rewards' ? <HouseRewards info={info} /> : <>
           {people.length > 1 ? (
@@ -85,15 +87,15 @@ export default function FamilyTasks() {
           {msg ? <View style={{ marginTop: 12 }}><Note warm t={msg} /></View> : null}
           {t.offline ? <View style={{ marginTop: 12 }}><Note t={t.msg || "You are offline. Showing the last saved list."} /></View> : null}
           <Rise>
-            <Group title="Today" list={today} />
-            <Group title="Coming up" list={later} />
-            <Group title="Anytime" list={anytime} />
-            <Group title="Done" list={done} />
+            {Group({ title: "Today", list: today })}
+            {Group({ title: "Coming up", list: later })}
+            {Group({ title: "Anytime", list: anytime })}
+            {Group({ title: "Done", list: done })}
           </Rise>
           {none ? <View style={{ marginTop: 18 }}><Note t="No tasks yet. Tap + New to add the first one. Everyone in the family sees it straight away." /></View> : null}
           {t.ready && t.rows.length && !mine.length ? <View style={{ marginTop: 18 }}><Note t="Nothing assigned to this person." /></View> : null}
           </>}
-        </ScrollView>
+        </KbScroll>
       </SafeAreaView>
     </View>
   );

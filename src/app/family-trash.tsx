@@ -47,7 +47,7 @@ export default function FamilyTrash() {
             {(list || []).map((x) => {
               const k = KIND[x.kind] || KIND.task;
               return (
-                <Glass key={x.kind + x.id} radius={20} style={{ marginBottom: 8 }}>
+                <Glass flat key={x.kind + x.id} radius={20} style={{ marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
                     <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: k.c + '2b', alignItems: 'center', justifyContent: 'center' }}><Ico k={k.ic} c={k.c} s={18} /></View>
                     <View style={{ flex: 1 }}>
