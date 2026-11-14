@@ -57,8 +57,8 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
 
   return (
     <View>
-      <LinearGradient colors={['rgba(94,231,223,.30)', 'rgba(183,148,255,.34)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 26, paddingTop: 12, paddingBottom: 14, paddingHorizontal: 10, marginTop: 6, marginBottom: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, marginBottom: 12 }}>
+      <LinearGradient colors={['rgba(94,231,223,.30)', 'rgba(183,148,255,.34)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 26, paddingTop: 16, paddingBottom: 16, paddingHorizontal: 12, marginTop: 6, marginBottom: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, marginBottom: 20 }}>
           <Text style={{ color: W, fontSize: 17, fontWeight: '900', flex: 1 }}>{MON[week[0].getMonth()]}{week[6].getMonth() !== week[0].getMonth() ? ' / ' + MON[week[6].getMonth()] : ''} {week[6].getFullYear()}</Text>
           <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7)))} style={({ pressed }) => ({ paddingHorizontal: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>‹</Text></Pressable>
           <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 7)))} style={({ pressed }) => ({ paddingLeft: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>›</Text></Pressable>
@@ -83,8 +83,8 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
               </Pressable>
             ); })}
         </View>
-        <View style={{ marginTop: 14, marginHorizontal: 6 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+        <View style={{ marginTop: 18, marginHorizontal: 6 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 7 }}>
             <Text style={{ color: DIM, fontSize: 10.5 }}>Menu planned</Text>
             <Text style={{ color: DIM, fontSize: 10.5 }}>{planned} of 7 days</Text>
           </View>
