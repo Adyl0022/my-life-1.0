@@ -9,6 +9,7 @@ import { useFamMenu, useFamShop, menuSave, shopSave, peopleOf, localDay, useRelo
 
 // The family menu: breakfast, lunch and dinner for each day. "Needs" can be sent to the shopping list in one tap.
 const SLOTS: { k: FMenu['slot']; t: string; ic: string }[] = [{ k: 'breakfast', t: 'Breakfast', ic: '🍳' }, { k: 'lunch', t: 'Lunch', ic: '🍜' }, { k: 'dinner', t: 'Dinner', ic: '🍽️' }];
+const ACC = ['#ff8fab', '#ffc46b', '#5ee7df', '#b794ff', '#7c9cff', '#ff8fab', '#ffc46b'];
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAYN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const ymd = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -62,20 +63,23 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
           <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7)))} style={({ pressed }) => ({ paddingHorizontal: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>‹</Text></Pressable>
           <Pressable hitSlop={12} onPress={() => setDay(ymd(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 7)))} style={({ pressed }) => ({ paddingLeft: 14, opacity: pressed ? 0.6 : 1 })}><Text style={{ color: W, fontSize: 22 }}>›</Text></Pressable>
         </View>
-        <View style={{ flexDirection: 'row', gap: 4 }}>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
           {week.map((d) => { const k = ymd(d); const on = k === day; const has = m.rows.some((x) => x.day === k);
+            const ac = ACC[(d.getDay() + 6) % 7]; // each weekday has its own colour once it has a menu
+            const dark = on ? '#2a1740' : null;
             const inner = (
               <>
-                <Text style={{ color: on ? '#2a1740' : 'rgba(255,255,255,.75)', fontSize: 10.5, fontWeight: '800' }}>{'MTWTFSS'[(d.getDay() + 6) % 7]}</Text>
-                <Text style={{ color: on ? '#2a1740' : W, fontSize: 15, fontWeight: '900', marginTop: 2 }}>{d.getDate()}</Text>
+                <Text style={{ color: dark || (has ? ac : 'rgba(255,255,255,.75)'), fontSize: 10.5, fontWeight: '800' }}>{'MTWTFSS'[(d.getDay() + 6) % 7]}</Text>
+                <Text style={{ color: dark || W, fontSize: 16, fontWeight: '900', marginTop: 3 }}>{d.getDate()}</Text>
+                <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 5, backgroundColor: has ? (dark || ac) : 'transparent' }} />
               </>
             );
             return (
               <Pressable key={k} onPress={() => { setDay(k); setSlot(''); setOk(''); }} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-                {on ? <View pointerEvents="none" style={{ position: 'absolute', left: -3, right: -3, top: -3, bottom: -3, borderRadius: 999, backgroundColor: 'rgba(255,143,171,.38)' }} /> : null}
+                {on ? <View pointerEvents="none" style={{ position: 'absolute', left: -3, right: -3, top: -3, bottom: -3, borderRadius: 19, backgroundColor: 'rgba(255,143,171,.38)' }} /> : null}
                 {on
-                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} style={{ alignItems: 'center', paddingVertical: 9, borderRadius: 999 }}>{inner}</LinearGradient>
-                  : <LinearGradient colors={['rgba(255,255,255,.26)', 'rgba(255,255,255,.07)']} style={{ alignItems: 'center', paddingVertical: 7, borderRadius: 999, borderWidth: has ? 1.5 : 1, borderColor: has ? '#5ee7df' : k === today ? 'rgba(255,196,107,.9)' : 'rgba(255,255,255,.35)' }}>{inner}</LinearGradient>}
+                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16 }}>{inner}</LinearGradient>
+                  : <View style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16, backgroundColor: has ? ac + '2e' : 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: has ? ac + '99' : k === today ? 'rgba(255,196,107,.9)' : 'rgba(255,255,255,.22)' }}>{inner}</View>}
               </Pressable>
             ); })}
         </View>
