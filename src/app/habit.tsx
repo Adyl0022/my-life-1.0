@@ -15,6 +15,8 @@ import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
 import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
+import { sensorToday } from '../lib/stepSensor';
+import { stepWhy } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
 
 const T = '#5ee7df';
@@ -87,13 +89,32 @@ export default function Habit() {
     if (!h.auto || Platform.OS === 'web') { setHcOn(false); setAutoMsg(''); return; }
     let sub: { remove: () => void } | null = null; let alive = true; let timer: any = null; let last = 0;
     const saveToday = (f: (td: HDay) => HDay) => { const cur = hRef.current; const key = keyOfDate(dateOf(0)); const td = { ...BLANKD, ...(cur.days[key] || {}) }; setH({ ...cur, days: { ...cur.days, [key]: f(td) } }); };
-    const startSensor = async (why: string) => {
+    // The phone's own step counter keeps counting while My Life is closed. Needs the Physical activity permission.
+    const sensorN = async (): Promise<number> => { const r = await sensorToday(); return 'n' in r ? r.n : -1; };
+    const sensorReady = async (): Promise<string> => {
       try {
         const { Pedometer } = require('expo-sensors');
-        if (!(await Pedometer.isAvailableAsync())) { setAutoMsg(why + ' This phone has no step sensor.'); return; }
-        const perm: any = await withNavBar(() => Pedometer.requestPermissionsAsync());
-        if (!perm.granted) { setAutoMsg('Allow Physical activity permission in phone settings to count steps.'); setH({ ...hRef.current, auto: false }); return; }
-        setAutoMsg(why);
+        let perm: any = await Pedometer.getPermissionsAsync();
+        if (!perm.granted) perm = await withNavBar(() => Pedometer.requestPermissionsAsync());
+        if (!perm.granted) return 'Allow Physical activity permission in phone settings to count steps.';
+        const r = await sensorToday();
+        return 'n' in r ? '' : 'Step sensor: ' + stepWhy(r.err) + '.';
+      } catch (e) { return 'Step sensor: ' + String((e as any)?.message || e).slice(0, 80); }
+    };
+    const startSensor = async (why: string) => {
+      try {
+        const bad = await sensorReady();
+        if (!bad) {
+          // All day count from the phone's sensor. Manual changes stay on top (adj), like with Health Connect.
+          setAutoMsg('Counting with your phone\'s step sensor, also when My Life is closed. Open My Life to refresh the total.');
+          const sync = async () => { try { const n = await sensorN(); if (alive && n >= 0) saveToday((td) => ({ ...td, hc: n, steps: Math.max(0, n + (td.adj || 0)) })); } catch (e) {} };
+          await sync(); timer = setInterval(sync, 30000);
+          return;
+        }
+        if (/permission/.test(bad)) { setAutoMsg(bad); setH({ ...hRef.current, auto: false }); return; }
+        const { Pedometer } = require('expo-sensors');
+        if (!(await Pedometer.isAvailableAsync())) { setAutoMsg(why + ' ' + bad); return; }
+        setAutoMsg(why + ' ' + bad);
         sub = Pedometer.watchStepCount((r: { steps: number }) => { if (!alive) return; const d = r.steps - last; last = r.steps; if (d > 0) saveToday((td) => ({ ...td, steps: td.steps + d })); });
       } catch (e) { setAutoMsg('Step counting is not available on this device.'); }
     };
@@ -101,11 +122,11 @@ export default function Habit() {
       try {
         const HC = require('react-native-health-connect');
         const st = await HC.getSdkStatus();
-        if (st !== HC.SdkAvailabilityStatus.SDK_AVAILABLE) { await startSensor(st === HC.SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED ? 'Update Health Connect in Play Store for all-day counting. For now steps count while this app is open.' : 'Health Connect is not on this phone, so steps count while this app is open.'); return; }
+        if (st !== HC.SdkAvailabilityStatus.SDK_AVAILABLE) { await startSensor(st === HC.SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED ? 'Update Health Connect in Play Store for more accurate counting.' : 'Health Connect is not on this phone.'); return; }
         await HC.initialize();
         let g = await HC.getGrantedPermissions();
         if (!g.some((x: any) => x.recordType === 'Steps')) g = await withNavBar(() => HC.requestPermission([{ accessType: 'read', recordType: 'Steps' }]));
-        if (!g.some((x: any) => x.recordType === 'Steps')) { await startSensor('Health Connect access was not allowed, so steps count while this app is open.'); return; }
+        if (!g.some((x: any) => x.recordType === 'Steps')) { await startSensor('Health Connect access was not allowed.'); return; }
         const read = async () => {
           const s0 = new Date(); s0.setHours(0, 0, 0, 0);
           const r = await HC.aggregateRecord({ recordType: 'Steps', timeRangeFilter: { operationType: 'between', startTime: s0.toISOString(), endTime: new Date().toISOString() } });
@@ -113,11 +134,13 @@ export default function Habit() {
         };
         const n0 = await read();
         if (!alive) return;
-        if (n0 <= 0) { await startSensor('No steps in Health Connect yet. In Honor Health or Samsung Health, turn on sharing to Health Connect for Steps, then tap Check again. For now steps count while this app is open.'); return; }
+        if (n0 <= 0) { await startSensor('No steps in Health Connect yet. In Honor Health or Samsung Health, turn on sharing to Health Connect for Steps, then tap Check again.'); return; }
         setHcOn(true); setAutoMsg('');
-        const sync = async () => { try { const n = await read(); if (alive) saveToday((td) => ({ ...td, hc: n, steps: Math.max(0, n + (td.adj || 0)) })); } catch (e) {} };
+        // Health Connect and the phone's sensor count the same steps, so take the larger number, never the sum.
+        const sOn = !(await sensorReady());
+        const sync = async () => { try { const n = await read(); const sn = sOn ? await sensorN() : -1; const best = Math.max(n, sn); if (alive) saveToday((td) => ({ ...td, hc: best, steps: Math.max(0, best + (td.adj || 0)) })); } catch (e) {} };
         await sync(); timer = setInterval(sync, 60000);
-      } catch (e) { await startSensor('Health Connect is not available, so steps count while this app is open.'); }
+      } catch (e) { await startSensor('Health Connect is not available.'); }
     })();
     return () => { alive = false; sub && sub.remove(); timer && clearInterval(timer); };
   }, [h.auto, retry]);
@@ -264,7 +287,7 @@ export default function Habit() {
             {Platform.OS !== 'web' && (
               <Pressable onPress={() => setH({ ...h, auto: !h.auto })} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: h.auto ? T : 'rgba(255,255,255,.2)', padding: 3, alignItems: h.auto ? 'flex-end' : 'flex-start' }}><View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: W }} /></View>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>All-day count from Health Connect when it has data.</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>All-day count from Health Connect or your phone's step sensor.</Text></View>
               </Pressable>
             )}
             {!!autoMsg && <Text style={{ color: '#ffc46b', fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{autoMsg}</Text>}
@@ -278,7 +301,7 @@ export default function Habit() {
                 </View>
               </View>
             )}
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect. Open My Life to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect and your phone's step sensor. Open My Life to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="mood" t="Mood" /><Text style={{ color: t.mood >= 0 ? MOODS[t.mood][1] : 'rgba(255,255,255,.6)', fontSize: 13, fontWeight: '800' }}>{t.mood >= 0 ? MOODS[t.mood][0] : 'How do you feel?'}</Text></View>
