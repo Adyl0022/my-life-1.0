@@ -76,8 +76,41 @@ export const ChipIcon = ({ k }: { k: string }) => (
     {k === 'Islamic' && (<G><Path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></G>)}
     {k === 'Finance' && (<G><Path d="M3 7a2 2 0 0 1 2-2h13v3"/><Path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-1"/><Circle cx="16" cy="14" r="1.2"/></G>)}
     {k === 'Record' && (<G><Path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><Path d="M5 17a3 3 0 0 1 3-3h11"/></G>)}
+    {k === 'Family' && (<G><Path d="M3 11l9-7 9 7"/><Path d="M5 10v10h14V10"/><Path d="M10 20v-5a2 2 0 0 1 4 0v5"/></G>)}
     {k === 'Habit' && (<G><Path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></G>)}
   </Svg>
+);
+
+export const FamilyArt = () => (
+<Svg width="100%" height="100%" viewBox="0 -8 170 98" preserveAspectRatio="xMidYMid meet">
+<Defs>
+<RadialGradient id="fmoon" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#fff6d8" stopOpacity=".6"/><Stop offset="1" stopColor="#fff6d8" stopOpacity="0"/></RadialGradient>
+<RadialGradient id="fwin" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#fff3c4"/><Stop offset="1" stopColor="#ffc46b"/></RadialGradient>
+<RadialGradient id="flamp" cx="0.5" cy="0.5" r="0.5"><Stop offset="0" stopColor="#ffd98a" stopOpacity=".7"/><Stop offset="1" stopColor="#ffd98a" stopOpacity="0"/></RadialGradient>
+</Defs>
+<Circle cx="143" cy="12" r="22" fill="url(#fmoon)"/>
+<Path d="M146 2a10 10 0 1 0 6 18 8 8 0 1 1-6-18z" fill="#fff6d8"/>
+<G fill="#fff"><Circle cx="14" cy="6" r="1.3" opacity=".9"/><Circle cx="30" cy="16" r="1" opacity=".7"/><Circle cx="52" cy="3" r="1.4" opacity=".85"/><Circle cx="118" cy="4" r="1" opacity=".7"/><Circle cx="104" cy="16" r="1.2" opacity=".8"/><Circle cx="8" cy="30" r="1" opacity=".6"/><Path d="M70 10l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" opacity=".85"/></G>
+<G fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><Path d="M28 24q3-4 6 0q3-4 6 0" opacity=".9"/><Path d="M48 14q2.5-3 5 0q2.5-3 5 0" opacity=".8"/><Path d="M104 28q2-3 4 0q2-3 4 0" opacity=".7"/></G>
+<Ellipse cx="85" cy="77" rx="82" ry="8" fill="#3e8f7a" opacity=".55"/>
+<Ellipse cx="85" cy="76" rx="70" ry="5.5" fill="#6fcf97" opacity=".35"/>
+<Rect x="102" y="18" width="9" height="19" fill="#c8694f"/><Rect x="100.5" y="16" width="12" height="4" rx="1.5" fill="#a9503b"/>
+<Circle cx="108" cy="11" r="3.5" fill="#fff" opacity=".35"/><Circle cx="111" cy="5" r="2.5" fill="#fff" opacity=".22"/>
+<Rect x="48" y="46" width="74" height="30" fill="#ffe3c2"/>
+<Rect x="48" y="70" width="74" height="6" fill="#f2c79d"/>
+<Path d="M34 49L85 10L136 49z" fill="#e0765b"/><Path d="M85 10L136 49L124 49L85 19z" fill="#c8624a"/>
+<Path d="M34 49L136 49" stroke="#a9503b" strokeWidth="2.2" strokeLinecap="round"/>
+<Circle cx="85" cy="35" r="5" fill="#fff3c4"/><Circle cx="85" cy="35" r="5" fill="none" stroke="#a9503b" strokeWidth="1.6"/>
+<Rect x="54" y="53" width="15" height="14" rx="3" fill="url(#fwin)"/><Path d="M61.5 53v14M54 60h15" stroke="#a9503b" strokeWidth="1.2"/><Rect x="52.5" y="66.5" width="18" height="2.4" rx="1.2" fill="#a9503b"/>
+<Rect x="101" y="53" width="15" height="14" rx="3" fill="url(#fwin)"/><Path d="M108.5 53v14M101 60h15" stroke="#a9503b" strokeWidth="1.2"/><Rect x="99.5" y="66.5" width="18" height="2.4" rx="1.2" fill="#a9503b"/>
+<Ellipse cx="85" cy="77" rx="17" ry="5" fill="url(#flamp)"/>
+<Path d="M76.5 76V62.5a8.5 8.5 0 0 1 17 0V76z" fill="#8a5a3c"/><Path d="M79 76V63a6 6 0 0 1 12 0V76z" fill="#a87048"/>
+<Path d="M85 57v19" stroke="#8a5a3c" strokeWidth="1" opacity=".6"/><Circle cx="88.5" cy="68" r="1.3" fill="#ffd98a"/>
+<Rect x="74" y="75" width="22" height="2.5" rx="1" fill="#e9c9a1"/>
+<G fill="#ffe9d2"><Circle cx="22" cy="60" r="5.5"/><Path d="M13 78q0-14 9-14q9 0 9 14z"/><Circle cx="148" cy="60" r="5.5"/><Path d="M139 78q0-14 9-14q9 0 9 14z"/><Circle cx="160" cy="68" r="3.8"/><Path d="M154 78q0-9 6-9q6 0 6 9z"/></G>
+<Rect x="6" y="66" width="2.4" height="10" fill="#8a5a3c"/><Circle cx="7.2" cy="63" r="7" fill="#3fae82"/>
+<Rect x="163" y="58" width="2.2" height="9" fill="#8a5a3c"/><Circle cx="164" cy="55" r="5.5" fill="#3fae82"/>
+</Svg>
 );
 
 export const CARDS = [
@@ -85,6 +118,7 @@ export const CARDS = [
   { k: 'Islamic', title: 'Islamic Hub', sub: 'Surah · Doa · Zikir', c1: 'rgba(52,211,153,.5)', c2: 'rgba(94,231,223,.3)' },
   { k: 'Finance', title: 'My Finance', sub: 'Income · Spending', c1: 'rgba(255,196,107,.55)', c2: 'rgba(255,143,171,.3)' },
   { k: 'Record', title: 'My Record', sub: 'Logs & records', c1: 'rgba(255,143,171,.55)', c2: 'rgba(183,148,255,.35)' },
+  { k: 'Family', title: 'Family Planner', sub: 'Shared · Chores', c1: 'rgba(94,231,223,.5)', c2: 'rgba(255,143,171,.38)' },
   { k: 'Habit', title: 'Habit Tracker & Health', sub: 'Mood · Sleep · Water · Goals', c1: 'rgba(183,148,255,.55)', c2: 'rgba(94,231,223,.3)' },
 ];
 

@@ -6,7 +6,7 @@ import { Glass } from './Glass';
 import { ChipIcon } from './dashArt';
 import { ALL_MODS, useHidden, useModOrder } from '../lib/hidden';
 
-const KEY: Record<string, string> = { planner: 'Planner', islamic: 'Islamic', finance: 'Finance', record: 'Record', habit: 'Habit' };
+const KEY: Record<string, string> = { planner: 'Planner', islamic: 'Islamic', finance: 'Finance', record: 'Record', habit: 'Habit', family: 'Family' };
 const G: [string, string] = ['#7c9cff', '#b794ff'];
 
 // Turn modules on or off. Data stays saved; a module that is off disappears from the Dashboard, Search, Stats, Insights, Assistant and its reminders.
@@ -24,7 +24,7 @@ export function ModulesCard() {
   return (
     <Glass style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 }}>
       <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Modules</Text>
-      <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>Turn off what you do not use and use the arrows to set the order on your Dashboard. Your data stays saved and comes back when you turn a module on again.</Text>
+      <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>Turn off what you do not use. The Dashboard fits 5 modules at most, and Family Planner is also inside Daily Planner. Use the arrows to set the order on your Dashboard. Your data stays saved and comes back when you turn a module on again.</Text>
       {keys.map((k, i) => {
         const m = by(k); const on = h.on(m.k); const isHabit = k === 'habit';
         const idx = mo.order.indexOf(k as any);
@@ -38,7 +38,7 @@ export function ModulesCard() {
             {isHabit
               ? <><Arrow up off={mo.habitTop} onPress={() => mo.setHabitTop(true)} /><Arrow up={false} off={!mo.habitTop} onPress={() => mo.setHabitTop(false)} /></>
               : <><Arrow up off={idx === 0} onPress={() => mo.move(k as any, -1)} /><Arrow up={false} off={idx === mo.order.length - 1} onPress={() => mo.move(k as any, 1)} /></>}
-            <Pressable onPress={() => { const ok = h.toggle(m.k); setMsg(ok ? '' : 'At least one module has to stay on.'); }} hitSlop={6}>
+            <Pressable onPress={() => { const r = h.toggle(m.k); setMsg(r === true ? '' : r === 'last' ? 'At least one module has to stay on.' : 'Dashboard fits 5 modules. Turn one off first.'); }} hitSlop={6}>
               <LinearGradient colors={on ? G : ['rgba(255,255,255,.22)', 'rgba(255,255,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 26, borderRadius: 13, padding: 3 }}>
                 <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', marginLeft: on ? 18 : 0 }} />
               </LinearGradient>

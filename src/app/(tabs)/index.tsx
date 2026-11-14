@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Bg, Blob } from '../../components/Bg';
 import { Glass } from '../../components/Glass';
 import { useHidden, useModOrder } from '../../lib/hidden';
-import { PlannerArt, IslamicArt, FinanceArt, RecordArt, HabitArt, HabitBanner, ChipIcon, CARDS } from '../../components/dashArt';
+import { PlannerArt, IslamicArt, FinanceArt, RecordArt, HabitArt, HabitBanner, FamilyArt, ChipIcon, CARDS } from '../../components/dashArt';
 import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
 import { useUsage } from '../../lib/usage';
@@ -19,13 +19,13 @@ import { HData, HEMPTY, getDay, cupsGoal } from '../../lib/habit';
 import { THEMES, LINES, periodOf } from '../../lib/theme';
 import { TOP } from '../../lib/layout';
 
-const HALO: Record<string, string> = { Planner: '124,156,255', Islamic: '52,211,153', Finance: '255,196,107', Record: '255,143,171', Habit: '183,148,255' };
+const HALO: Record<string, string> = { Planner: '124,156,255', Islamic: '52,211,153', Finance: '255,196,107', Record: '255,143,171', Habit: '183,148,255', Family: '94,231,223' };
 const Halo = ({ k }: { k: string }) => (
   <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}>
     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => <View key={i} style={{ position: 'absolute', left: -i * 2.2, right: -i * 2.2, top: -i * 1.4 + 2, bottom: -i * 3.2, borderRadius: 24 + i * 2.4, backgroundColor: 'rgba(' + HALO[k] + ',0.017)' }} />)}
   </View>
 );
-const ARTS: Record<string, () => React.ReactElement> = { Planner: PlannerArt, Islamic: IslamicArt, Finance: FinanceArt, Record: RecordArt, Habit: HabitArt };
+const ARTS: Record<string, () => React.ReactElement> = { Planner: PlannerArt, Islamic: IslamicArt, Finance: FinanceArt, Record: RecordArt, Habit: HabitArt, Family: FamilyArt };
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -43,7 +43,7 @@ export default function Home() {
   const hid = useHidden(); const mord = useModOrder();
   const name = useName();
   const [hd] = useStored<HData>('ml_habit', HEMPTY); const ht = getDay(hd, 0); const hcg = cupsGoal(hd);
-  const go = (k: string) => { const r = ({ Planner: '/planner', Islamic: '/islamic', Finance: '/finance', Record: '/record', Habit: '/habit' } as Record<string, string>)[k]; if (r) router.push(r as any); };
+  const go = (k: string) => { const r = ({ Planner: '/planner', Islamic: '/islamic', Finance: '/finance', Record: '/record', Habit: '/habit', Family: '/family' } as Record<string, string>)[k]; if (r) router.push(r as any); };
   const usage = useUsage(16);
   const mins = Math.floor(usage.today.sec / 60);
   const now = new Date();
