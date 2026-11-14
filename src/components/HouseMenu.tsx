@@ -78,7 +78,7 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
               <Pressable key={k} onPress={() => { setDay(k); setSlot(''); setOk(''); }} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
                 {on ? <View pointerEvents="none" style={{ position: 'absolute', left: -3, right: -3, top: -3, bottom: -3, borderRadius: 19, backgroundColor: 'rgba(255,143,171,.38)' }} /> : null}
                 {on
-                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16 }}>{inner}</LinearGradient>
+                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 16 }}>{inner}</LinearGradient>
                   : <View style={{ alignItems: 'center', paddingVertical: 10, borderRadius: 16, backgroundColor: has ? ac + '2e' : 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: has ? ac + '99' : k === today ? 'rgba(255,196,107,.9)' : 'rgba(255,255,255,.22)' }}>{inner}</View>}
               </Pressable>
             ); })}

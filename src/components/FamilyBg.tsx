@@ -64,7 +64,7 @@ function Asteroid({ y0, kind, phase, dur, i }: { y0: number; kind: number; phase
     m.start(); spin.start();
     return () => { m.stop(); spin.stop(); };
   }, []);
-  const sz = [14, 20, 28][kind], o = [0.45, 0.7, 0.95][kind], tl = [30, 36, 44][kind];
+  const sz = [9, 13, 18][kind], o = [0.4, 0.6, 0.8][kind], tl = [20, 24, 30][kind];
   return (
     <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, opacity: v.interpolate({ inputRange: [0, 0.08, 0.92, 1], outputRange: [0, o, o, 0] }), transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [-40, W + 40] }) }, { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [y0, y0 + (W + 80) * 0.42] }) }] }}>
       <View style={{ position: 'absolute', right: sz / 2, top: sz / 2 - 1, width: tl, height: 2, transformOrigin: 'right center', transform: [{ rotate: '-23deg' }] }}>
@@ -155,6 +155,12 @@ function Houses() {
 
 // The sky is drawn in two steps so opening a screen stays smooth: the colours and glows at once, then the moving parts (stars, sparkles,
 // asteroids, lights, houses) once the screen has finished sliding in. A screen that is covered by another one stops drawing them.
+// Fades its children in slowly, so the asteroids drift into view instead of popping up.
+function FadeIn({ children }: { children: React.ReactNode }) {
+  const o = useRef(new Animated.Value(0)).current;
+  useEffect(() => { const a = Animated.timing(o, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.quad), useNativeDriver: true }); a.start(); return () => a.stop(); }, []);
+  return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: o }}>{children}</Animated.View>;
+}
 function Moving() {
   const o = useRef(new Animated.Value(0)).current;
   // Second step: the heavier parts (asteroids, shooting stars, houses) are added a moment later so the screen never stalls while it opens.
@@ -165,10 +171,12 @@ function Moving() {
     <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: o }}>
       {STARS.map((t, i) => <Star key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
       {SPARK.map((t, i) => <Sparkle key={i} x={t[0]} y={t[1]} s={t[2]} c={t[3]} i={t[4]} />)}
-      {more ? ASTEROIDS.map((a, i) => <Asteroid key={i} y0={a[0]} kind={a[1]} phase={a[2]} dur={a[3]} i={i} />) : null}
-      {more ? <Shoot left="6%" top="14%" delay={1500} gap={4500} /> : null}
-      {more ? <Shoot left="42%" top="22%" delay={5200} gap={6200} /> : null}
-      {more ? <Shoot left="-4%" top="40%" delay={9000} gap={7000} /> : null}
+      {more ? <FadeIn>
+        {ASTEROIDS.map((a, i) => <Asteroid key={i} y0={a[0]} kind={a[1]} phase={a[2]} dur={a[3]} i={i} />)}
+        <Shoot left="6%" top="14%" delay={1500} gap={4500} />
+        <Shoot left="42%" top="22%" delay={5200} gap={6200} />
+        <Shoot left="-4%" top="40%" delay={9000} gap={7000} />
+      </FadeIn> : null}
       <Mote left="14%" delay={0} dur={7000} size={4} color="#ff8fab" />
       <Mote left="36%" delay={2200} dur={8500} size={3} color="#ffc46b" />
       <Mote left="58%" delay={900} dur={7500} size={4} color="#5ee7df" />

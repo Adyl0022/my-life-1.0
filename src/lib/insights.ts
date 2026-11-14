@@ -56,7 +56,8 @@ export function scoreParts(c: Core, week: boolean): Part[] {
   const ds = debtSummary(c.debts);
   if (ds.commit > 0) parts.push({ k: 'bills', label: 'Commitments', pct: Math.round((ds.paid / ds.commit) * 100), detail: rmf(ds.paid) + ' of ' + rmf(ds.commit) + ' paid this month', c: '#ff8fab' });
   const us = usualSpend(c);
-  if (us > 0) {
+  // Spending only counts once something was actually entered, so an empty day never shows a perfect score.
+  if (us > 0 && (week ? spendSum(c, -6, 0) > 0 : spendOn(c, 0) > 0)) {
     if (week) { const w = spendSum(c, -6, 0) / 7; const pct = w <= us ? 100 : Math.max(20, Math.round(100 - ((w - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(w) + ' a day against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
     else { const t = spendOn(c, 0); const pct = t <= us ? 100 : Math.max(20, Math.round(100 - ((t - us) / us) * 60)); parts.push({ k: 'spend', label: 'Spending', pct, detail: rmf(t) + ' against ' + rmf(us) + ' usual', c: '#ffc46b' }); }
   }

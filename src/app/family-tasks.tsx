@@ -12,7 +12,8 @@ import { Avatar, Chip, Ico, Label, NewBtn, Note, Tick, W, DIM } from '../compone
 import { HouseTabs } from '../components/HouseTabs';
 import { HouseChores, HouseRewards } from '../components/HouseChores';
 import { useFamily, useAutoRefresh, famError } from '../lib/family';
-import { useFamTasks, peopleOf, taskDone, taskLocked, dueText, dayDiff, FTask, useReloadOnFocus } from '../lib/familyData';
+import { useFamTasks, peopleOf, taskDone, taskLocked, dueText, dayDiff, FTask, useReloadOnFocus, famDelete } from '../lib/familyData';
+import { showAlert } from '../lib/dialog';
 
 export default function FamilyTasks() {
   const router = useRouter();
@@ -42,6 +43,16 @@ export default function FamilyTasks() {
     try { await taskDone(x.id, nowDone); if (x.repeat !== 'none') await t.reload(); }
     catch (e) { setMsg(famError(e)); t.reload(); }
   };
+  const doneAll = mine.filter((x) => x.done);
+  // Moves every finished task in this list to Recently deleted (kept for 7 days, so it can be brought back).
+  const clearDone = () => showAlert('Clear done tasks?', doneAll.length + (doneAll.length === 1 ? ' finished task moves' : ' finished tasks move') + ' to Recently deleted for 7 days. Anyone in the family can bring them back.', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Clear', style: 'destructive', onPress: async () => {
+      setMsg('');
+      try { await Promise.all(doneAll.map((x) => famDelete('task', x.id))); } catch (e) { setMsg(famError(e)); }
+      t.reload();
+    } },
+  ]);
   const edit = (id?: string) => router.push({ pathname: '/family-task-edit', params: id ? { id } : {} } as any);
 
   const Row = ({ x }: { x: FTask }) => {
@@ -69,7 +80,14 @@ export default function FamilyTasks() {
       </Glass>
     );
   };
-  const Group = ({ title, list }: { title: string; list: FTask[] }) => list.length ? <><Label t={title} />{list.map((x) => <Fragment key={x.id}>{Row({ x })}</Fragment>)}</> : null;
+  const Group = ({ title, list }: { title: string; list: FTask[] }) => list.length ? <>{title === 'Done'
+    ? <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <Label t={title} />
+        <Pressable onPress={clearDone} hitSlop={8} style={({ pressed }) => ({ marginBottom: 6, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 14, backgroundColor: 'rgba(255,143,171,.18)', borderWidth: 1, borderColor: 'rgba(255,143,171,.5)', opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+          <Text style={{ color: '#ffb3c6', fontSize: 12, fontWeight: '800' }}>Clear</Text>
+        </Pressable>
+      </View>
+    : <Label t={title} />}{list.map((x) => <Fragment key={x.id}>{Row({ x })}</Fragment>)}</> : null;
 
   const none = t.ready && !t.rows.length;
   return (
