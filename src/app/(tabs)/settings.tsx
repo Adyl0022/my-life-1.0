@@ -18,7 +18,6 @@ import { useIsAdmin } from '../../lib/admin';
 import { useLicense } from '../../lib/license';
 import { supabase } from '../../lib/supabase';
 import { Announcement } from '../../components/Announcement';
-import { WhatsNewCard } from '../../components/WhatsNewPop';
 import { RegionCard } from '../../components/RegionCard';
 import { ModulesCard } from '../../components/ModulesCard';
 import { useHidden } from '../../lib/hidden';
@@ -257,7 +256,6 @@ export default function Settings() {
           {tab === 0 && (
             <View style={{ gap: 12, marginTop: 14 }}>
               <Announcement />
-              <WhatsNewCard onOpen={() => setDlg('new')} />
               <RegionCard />
               <ModulesCard />
               <Glass style={{ paddingVertical: 8, paddingHorizontal: 16 }}>
