@@ -80,7 +80,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     </>);
   } else if (kind === 'score') {
     const sc = lifeScore(parts); const R = 24, C = 2 * Math.PI * R;
-    const top = parts.slice().sort((a, b) => b.pct - a.pct).slice(0, 3);
+    const sorted = parts.slice().sort((a, b) => b.pct - a.pct); const warn = sorted.find(p => p.k === 'spend' && /(over budget|nearly used)$/.test(p.detail)); const top = warn ? [warn, ...sorted.filter(p => p !== warn).slice(0, 2)] : sorted.slice(0, 3);
     body = (<>
       <View style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={60} height={60} style={{ position: 'absolute' }}>
