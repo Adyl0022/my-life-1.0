@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Line, Polyline, Circle, Rect } from 'react-native-svg';
+import { useRouter } from 'expo-router';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { HeadIcon, Face } from './HabitIcons';
@@ -60,6 +62,7 @@ function Guess({ hist, proj, color }: { hist: (number | null)[]; proj: number[];
 }
 
 export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void }) {
+  const router = useRouter();
   const goal = h.goal || 8000, cg = cupsGoal(h);
   const [tab, setTab] = useState<Tab>('cal');
   // Calendar
@@ -107,6 +110,13 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
         <HeadIcon k="week" size={34} />
         <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Time Machine</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Your days, past and ahead</Text></View>
       </View>
+      <Pressable onPress={() => router.push('/timemachine' as any)} accessibilityLabel="Open the body hologram" style={{ marginTop: 12, borderRadius: 16, overflow: 'hidden' }}>
+        <LinearGradient colors={['rgba(94,231,223,.28)', 'rgba(124,156,255,.3)', 'rgba(183,148,255,.3)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(143,233,226,.4)', borderRadius: 16 }}>
+          <HeadIcon k="rbody" size={30} />
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Body hologram</Text><Text style={{ color: DIM, fontSize: 11.5, marginTop: 3 }}>Tap your body. Travel to the past or the future.</Text></View>
+          <Text style={{ color: W, fontSize: 20 }}>›</Text>
+        </LinearGradient>
+      </Pressable>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -4 }} contentContainerStyle={{ gap: 6, paddingHorizontal: 4 }}>
         {TABS.map(([k, l]) => <Chip key={k} on={tab === k} t={l} onPress={() => setTab(k)} />)}
       </ScrollView>
