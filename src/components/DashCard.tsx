@@ -7,6 +7,9 @@ import { Text } from './Txt';
 import { Glass } from './Glass';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
+import { Inp } from './Ui';
+import { useCycleSave } from '../lib/cycleHook';
+import { cycleInfo } from '../lib/cycle';
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
 import { HeadIcon, Face } from './HabitIcons';
 import { curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
@@ -24,6 +27,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const [sel, setSel] = useStored<string>('ml_dcard2', 'log');
   const [hd, setHd] = useStored<HData>('ml_habit', HEMPTY);
   const [slp, setSlp] = React.useState(7);
+  const [bpm, setBpm] = React.useState('');
+  const [skip, setSkip] = useStored<{ d: string; k: string[] }>('ml_qlskip', { d: '', k: [] });
+  const { setPeriod } = useCycleSave(hd, setHd);
   const v = React.useRef(new Animated.Value(1)).current;
   const ty = React.useRef(new Animated.Value(0)).current;
 
@@ -51,6 +57,10 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
     const cg = cupsGoal(hd); const due = (hd.meds || []).filter((m) => medDue(m, dateOf(0))); const took = td.med || []; const med = due.find((m) => !took.includes(m.id));
     const todo: string[] = []; if (!(td.sleep > 0)) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
+    // Pulse and period are not daily, so they are asked only when they fit, and "Skip" hides them until tomorrow.
+    const dk = keyOfDate(dateOf(0)); const sk = skip.d === dk ? skip.k : []; const later = (k: string) => setSkip({ d: dk, k: [...sk, k] });
+    if ((hd.heart || []).length && !(hd.heart || []).some((x) => x.d === dk) && !sk.includes('heart')) todo.push('heart');
+    const cy = cycleInfo(hd); if (hd.cyOn && !td.pd && cy.nextOff != null && cy.nextOff <= 2 && !sk.includes('period')) todo.push('period');
     const cur = todo[0]; const head = (t: string, sub: string) => (
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2 }}>{'QUICK LOG' + (todo.length ? ' · ' + todo.length + ' LEFT' : '')}</Text>
@@ -66,8 +76,12 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ flexDirection: 'row', gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <Pressable key={i} onPress={() => put({ mood: i })} hitSlop={4} accessibilityLabel={'Mood ' + (i + 1) + ' of 5'}><Face i={i} size={31} /></Pressable>)}</View></>);
     else if (cur === 'med' && med) body = (<>{head(med.name, [med.dose, med.time ? to12(med.time) : ''].filter(Boolean).join(' · ') || 'Medicine for today')}
       <Btn t="Taken" onPress={() => put({ med: [...took, med.id] })} /></>);
-    else if (cur === 'water') body = (<>{head('Water · ' + td.cups * 250 + ' of ' + cg * 250 + ' ml', td.cups + ' of ' + cg + ' glasses today')}
+    else if (cur === 'water') body = (<>{head('Water today', td.cups * 250 + ' / ' + cg * 250 + ' ml · ' + td.cups + ' of ' + cg + ' glasses')}
       <Btn t="+1 glass (250 ml)" onPress={() => put({ cups: Math.min(cg, td.cups + 1) })} /></>);
+    else if (cur === 'heart') body = (<>{head('Pulse', 'In bpm')}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Inp value={bpm} onChangeText={setBpm} keyboardType="number-pad" placeholder="bpm" maxLength={3} style={{ width: 54, paddingVertical: 7, paddingHorizontal: 8, textAlign: 'center' }} /><Btn t="Save" onPress={() => { const n = parseInt(bpm, 10); if (!(n >= 30 && n <= 220)) return; const now = new Date(); setHd({ ...hd, heart: [...(hd.heart || []), { id: String(Date.now()), d: dk, at: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'), bpm: n }].slice(-400) }); setBpm(''); }} /><Pressable onPress={() => later('heart')} hitSlop={8}><Text style={{ color: dim, fontSize: 11.5, fontWeight: '700' }}>Skip</Text></Pressable></View></>);
+    else if (cur === 'period') body = (<>{head('Period', 'Did it start today?')}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Btn t="Yes" onPress={() => setPeriod(0, true)} /><Pressable onPress={() => later('period')} hitSlop={8}><Text style={{ color: dim, fontSize: 11.5, fontWeight: '700' }}>Skip</Text></Pressable></View></>);
     else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', 'Sleep, mood, medicine and water are in')}</>);
   } else if (kind === 'usage') {
     body = (<>
