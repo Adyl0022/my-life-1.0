@@ -262,7 +262,7 @@ export default function Settings() {
               <ModulesCard />
               {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
                 <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle tracking</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle card in Habit & Health. Your marks stay when you turn it off.</Text></View>
+                  <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>
                   <Sw on={!!hd.cyOn} />
                 </Pressable>
                 <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>{'Note: after you turn this on, open Habit & Health and go to the Today tab. The Cycle card appears below Relax. Tap Open on that card for the calendar, averages and reminder. Estimates only, not medical advice.'}</Text>
