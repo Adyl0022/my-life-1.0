@@ -54,7 +54,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   };
   const open = () => router.push((kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
-  const maxM = Math.max(...series, 1);
+  const maxM = Math.max(...series.filter((x) => Number.isFinite(x)), 1);
   let body: React.ReactNode = null; let cur0: string | undefined;
   if (kind === 'log') {
     // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
@@ -118,7 +118,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   } else if (kind === 'usage') {
     body = (<>
       <View>
-        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>App Usage <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· 30 days</Text></Text>
+        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>App Usage <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· {series.length} days</Text></Text>
         <View style={{ flexDirection: 'row', gap: 16, marginTop: 6 }}>
           <View><Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{mins} min</Text><Text style={{ color: dim, fontSize: 11 }}>Today</Text></View>
           <View><Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{opens} {opens === 1 ? 'open' : 'opens'}</Text><Text style={{ color: dim, fontSize: 11 }}>Today</Text></View>
@@ -126,7 +126,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       </View>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 60 }}>
         {series.map((m, i) => (
-          <LinearGradient key={i} colors={m > 0 ? ['#8fe9e2', '#7c9cff'] : ['rgba(255,255,255,.25)', 'rgba(255,255,255,.25)']} style={{ flex: 1, height: m > 0 ? Math.max(8, Math.round((m / maxM) * 52)) : 4, borderTopLeftRadius: 3, borderTopRightRadius: 3, borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
+          <LinearGradient key={i} colors={m > 0 ? ['#8fe9e2', '#7c9cff'] : ['rgba(255,255,255,.25)', 'rgba(255,255,255,.25)']} style={{ flex: 1, height: m > 0 && Number.isFinite(m) ? Math.max(8, Math.round((m / maxM) * 52)) : 4, borderTopLeftRadius: 3, borderTopRightRadius: 3, borderBottomLeftRadius: 1, borderBottomRightRadius: 1 }} />
         ))}
       </View>
     </>);

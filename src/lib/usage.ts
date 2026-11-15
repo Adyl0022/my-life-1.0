@@ -31,6 +31,8 @@ export function startUsage(): Promise<void> {
 }
 async function run() {
   try { const raw = await AsyncStorage.getItem(KEY); cache = raw ? JSON.parse(raw) : {}; } catch (e) { cache = {}; }
+  // A day saved without its seconds or opens would turn the graphs into NaN and hide today's bar, so every day gets real numbers.
+  Object.keys(cache).forEach((k) => { const d: any = cache[k] || {}; cache[k] = { ...d, opens: Number.isFinite(d.opens) ? d.opens : 0, sec: Number.isFinite(d.sec) ? d.sec : 0 }; });
   loaded = true;
   bump((d) => { d.opens += 1; });
   save();
@@ -63,11 +65,12 @@ export async function trackVisit(mod: string) {
 export function useUsage(daysBack = 16) {
   const [, force] = useState(0);
   useEffect(() => { startUsage(); const f = () => force((n) => n + 1); listeners.add(f); return () => { listeners.delete(f); }; }, []);
-  const today = cache[dkey(new Date())] || { opens: 0, sec: 0 };
+  const t0: any = cache[dkey(new Date())] || {}; const today = { ...t0, opens: Number.isFinite(t0.opens) ? t0.opens : 0, sec: Number.isFinite(t0.sec) ? t0.sec : 0 };
+  const secOf = (v: any) => (v && Number.isFinite(v.sec) ? v.sec : 0);
   const series: number[] = [];
-  for (let i = daysBack - 1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const v = cache[dkey(d)]; series.push(v ? v.sec / 60 : 0); }
+  for (let i = daysBack - 1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const v = cache[dkey(d)]; series.push(secOf(v) / 60); }
   const days: { min: number; opens: number }[] = [];
-  for (let i = 29; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const v = cache[dkey(d)]; days.push({ min: v ? v.sec / 60 : 0, opens: v ? v.opens : 0 }); }
+  for (let i = 29; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const v = cache[dkey(d)]; days.push({ min: secOf(v) / 60, opens: v && Number.isFinite(v.opens) ? v.opens : 0 }); }
   const mods: Record<string, number> = {}; const hours: number[] = new Array(24).fill(0);
   Object.values(cache).forEach((v) => {
     Object.keys(v.mods || {}).forEach((m) => { mods[m] = (mods[m] || 0) + (v.mods as any)[m]; });
