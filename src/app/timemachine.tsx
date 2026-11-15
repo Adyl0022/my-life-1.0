@@ -46,18 +46,14 @@ const Hud = ({ rows, goal }: { rows: Row[]; goal: number }) => {
   };
   const st = g('Steps'), wa = g('Water'), sl = g('Sleep');
   return (
-    <>
-      <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 6 }}>
-        <Cell l="Steps" c="#5ee7df" pct={st && st.v != null ? st.v / goal : 0} />
-        <Cell l="Water" c="#7c9cff" pct={wa && wa.v != null ? wa.v / 8 : 0} />
-        <Cell l="Sleep" c="#b794ff" pct={sl && sl.v != null ? sl.v / 8 : 0} />
-      </View>
-      <View pointerEvents="none" style={{ position: 'absolute', right: 0, top: 6, alignItems: 'flex-end' }}>
-        <Cell l="Mood" c="#ff8fab" />
-        <Cell l="Weight" c="#ffc46b" />
-        <Cell l="BMI" c="#8fe9e2" />
-      </View>
-    </>
+    <View pointerEvents="none" style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, marginBottom: 2 }}>
+      <View style={{ width: '33.3%' }}><Cell l="Steps" c="#5ee7df" pct={st && st.v != null ? st.v / goal : 0} /></View>
+      <View style={{ width: '33.3%' }}><Cell l="Water" c="#7c9cff" pct={wa && wa.v != null ? wa.v / 8 : 0} /></View>
+      <View style={{ width: '33.3%' }}><Cell l="Sleep" c="#b794ff" pct={sl && sl.v != null ? sl.v / 8 : 0} /></View>
+      <View style={{ width: '33.3%' }}><Cell l="Mood" c="#ff8fab" /></View>
+      <View style={{ width: '33.3%' }}><Cell l="Weight" c="#ffc46b" /></View>
+      <View style={{ width: '33.3%' }}><Cell l="BMI" c="#8fe9e2" /></View>
+    </View>
   );
 };
 
@@ -76,11 +72,10 @@ export default function TimeMachinePage() {
   useEffect(() => { if (prev !== null) return; mark('opened'); const t = setTimeout(() => mark('ok'), 3500); return () => { clearTimeout(t); mark('left'); }; }, [prev]);
   const rise = useRef(new Animated.Value(0)).current;
   useEffect(() => { rise.setValue(0); Animated.timing(rise, { toValue: 1, duration: reduce ? 0 : 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }, [reg, mode, a, b, hz]);
-  const tl = useRef<any>(null);
   const hw = Math.min(360, width - 32);
   const R = REGIONS.find((x) => x.k === reg)!;
   const pick = (r: Region) => { buzz(); setReg(r); };
-  const days = Array.from({ length: 60 }, (_, i) => i - 59);
+  const [pg, setPg] = useState(0);
   const tap = (o: number) => { buzz(); if (cmp && o !== a) setB(o); else { setA(o); if (cmp && b === o) setB(null); } };
 
   const Panel = () => {
@@ -156,7 +151,36 @@ export default function TimeMachinePage() {
             <Pressable onPress={() => router.back()} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
             <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Time Machine</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 6 }}>Your body, then and ahead</Text></View>
           </View>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 22 }}>
+          <View style={{ marginTop: 18 }}>
+            {mode === 'past' ? (
+              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'stretch' }}>
+                <Pressable onPress={() => { buzz(); setPg(Math.min(9, pg + 1)); }} disabled={pg >= 9} accessibilityLabel="Earlier days" style={{ width: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.28)', opacity: pg >= 9 ? 0.35 : 1 }}>
+                  <Text style={{ color: W, fontSize: 18, fontWeight: '800', marginTop: -2 }}>‹</Text><Text style={{ color: W, fontSize: 9, fontWeight: '800' }}>More</Text>
+                </Pressable>
+                {[-5, -4, -3, -2, -1, 0].map((k) => {
+                  const o = k - pg * 6; const d = dateOf(o); const isA = o === a; const isB = o === b; const rec = hasRecords(h, o);
+                  return (
+                    <Pressable key={o} onPress={() => tap(o)} accessibilityLabel={dl(o)} style={{ flex: 1, paddingVertical: 6, borderRadius: 14, alignItems: 'center', backgroundColor: isA ? T : isB ? '#ffc46b' : 'rgba(255,255,255,.09)', borderWidth: 1, borderColor: isA || isB ? 'transparent' : 'rgba(255,255,255,.1)' }}>
+                      <Text style={{ color: isA || isB ? '#06222a' : DIM, fontSize: 10, fontWeight: '700' }}>{WD[d.getDay()]}</Text>
+                      <Text style={{ color: isA || isB ? '#06222a' : W, fontSize: 15, fontWeight: '800', marginTop: 1 }}>{d.getDate()}</Text>
+                      <Text style={{ color: isA || isB ? '#06222a' : 'rgba(255,255,255,.45)', fontSize: 9 }}>{MON[d.getMonth()]}</Text>
+                      <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 3, backgroundColor: rec ? (isA || isB ? '#06222a' : T) : 'transparent' }} />
+                    </Pressable>
+                  );
+                })}
+                {pg > 0 ? (
+                  <Pressable onPress={() => { buzz(); setPg(pg - 1); }} accessibilityLabel="Later days" style={{ width: 30, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.28)' }}>
+                    <Text style={{ color: W, fontSize: 18, fontWeight: '800', marginTop: -2 }}>›</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {[7, 30, 90].map((n) => <Pressable key={n} onPress={() => { buzz(); setHz(n); }} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: hz === n ? '#b794ff' : 'rgba(255,255,255,.09)' }}><Text style={{ color: hz === n ? '#1a0b3a' : W, fontSize: 14, fontWeight: '800' }}>{n} days</Text><Text style={{ color: hz === n ? '#1a0b3a' : DIM, fontSize: 10.5, marginTop: 2 }}>ahead</Text></Pressable>)}
+              </View>
+            )}
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
             <Chip on={mode === 'past'} t="Past" onPress={() => setMode('past')} />
             <Chip on={mode === 'future'} t="Future" onPress={() => setMode('future')} c="#b794ff" />
             <Chip on={use3d && !failed} t="3D view" onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
@@ -174,14 +198,14 @@ export default function TimeMachinePage() {
           ) : use3d && !failed
             ? (
               <View style={{ width: Math.min(360, width - 32), alignSelf: 'center' }}>
-                <Guard onFail={() => setFailed(true)}><HologramSpin w={Math.min(360, width - 32)} onTap={() => pick('body')} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>
                 {mode === 'past' ? <Hud rows={rowsFor(h, a, 'body')} goal={h.goal || 8000} /> : null}
+                <Guard onFail={() => setFailed(true)}><HologramSpin w={Math.min(360, width - 32)} onTap={() => pick('body')} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>
               </View>
             )
             : <Guard onFail={() => setFailed(true)}><Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>}
           {prev === null && note ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, textAlign: 'center', marginTop: 6 }}>{'3D stopped last time at: ' + note + '. The flat hologram is shown. Tap 3D view to try again.'}</Text> : null}
           {prev === null && use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
-          {prev === null && use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Pick a part with the buttons below.</Text> : null}
+          {prev === null && use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center', marginBottom: 12 }}>Drag to turn. Pick a part with the buttons below.</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingVertical: 6, paddingHorizontal: 20 }}>
             {REGIONS.map((r) => <Chip key={r.k} on={reg === r.k} t={r.l} onPress={() => pick(r.k)} c={r.c} />)}
           </ScrollView>
@@ -198,29 +222,6 @@ export default function TimeMachinePage() {
           </Animated.View>
           <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 15, textAlign: 'center', marginTop: 12 }}>Only records you or your phone saved are shown. It all stays on your phone and your backup.</Text>
         </ScrollView>
-        <View style={{ paddingBottom: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)', backgroundColor: 'rgba(7,11,34,.6)' }}>
-          {mode === 'past' ? (
-            <ScrollView ref={tl} horizontal showsHorizontalScrollIndicator={false} onContentSizeChange={() => tl.current && tl.current.scrollToEnd({ animated: false })} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-              {days.map((o) => {
-                const d = dateOf(o); const isA = o === a; const isB = o === b; const rec = hasRecords(h, o);
-                return (
-                  <Pressable key={o} onPress={() => tap(o)} accessibilityLabel={dl(o)} style={{ width: 48, paddingVertical: 8, borderRadius: 16, alignItems: 'center', backgroundColor: isA ? T : isB ? '#ffc46b' : 'rgba(255,255,255,.09)', borderWidth: 1, borderColor: isA || isB ? 'transparent' : 'rgba(255,255,255,.1)' }}>
-                    <Text style={{ color: isA || isB ? '#06222a' : DIM, fontSize: 10.5, fontWeight: '700' }}>{WD[d.getDay()]}</Text>
-                    <Text style={{ color: isA || isB ? '#06222a' : W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{d.getDate()}</Text>
-                    <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 4, backgroundColor: rec ? (isA || isB ? '#06222a' : T) : 'transparent' }} />
-                    <Text style={{ color: isA || isB ? '#06222a' : 'rgba(255,255,255,.45)', fontSize: 9, marginTop: 1 }}>{MON[d.getMonth()]}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          ) : (
-            <View style={{ paddingHorizontal: 20 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {[7, 30, 90].map((n) => <Pressable key={n} onPress={() => { buzz(); setHz(n); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 16, alignItems: 'center', backgroundColor: hz === n ? '#b794ff' : 'rgba(255,255,255,.09)' }}><Text style={{ color: hz === n ? '#1a0b3a' : W, fontSize: 14, fontWeight: '800' }}>{n} days</Text><Text style={{ color: hz === n ? '#1a0b3a' : DIM, fontSize: 10.5, marginTop: 2 }}>ahead</Text></Pressable>)}
-              </View>
-            </View>
-          )}
-        </View>
       </SafeAreaView>
     </View>
   );
