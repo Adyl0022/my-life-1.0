@@ -31,7 +31,7 @@ export function PageArt({ kind }: { kind: 'med' | 'relax' | 'cycle' }) {
         <>
           <Animated.View style={[FILL, { transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [0, -16] }) }] }]}>
             <Vb>
-              {[[60, 700, 9], [330, 640, 6], [120, 790, 5], [290, 770, 11], [210, 560, 4], [36, 560, 5], [360, 520, 4]].map((c, i) => <Circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#8fe9e2" fillOpacity=".08" stroke="#8fe9e2" strokeOpacity=".35" strokeWidth="1.1" />)}
+              {[[60, 700, 9], [330, 640, 6], [120, 790, 5], [290, 770, 11]].map((c, i) => <Circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#8fe9e2" fillOpacity=".08" stroke="#8fe9e2" strokeOpacity=".35" strokeWidth="1.1" />)}
             </Vb>
           </Animated.View>
           <Vb>
