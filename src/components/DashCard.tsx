@@ -10,7 +10,6 @@ import { useHidden } from '../lib/hidden';
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
 import { HeadIcon, Face } from './HabitIcons';
 import { curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
-import { ENERGY } from '../lib/patterns';
 
 // The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
 type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip';
@@ -51,7 +50,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
     const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
     const cg = cupsGoal(hd); const due = (hd.meds || []).filter((m) => medDue(m, dateOf(0))); const took = td.med || []; const med = due.find((m) => !took.includes(m.id));
-    const todo: string[] = []; if (!(td.sleep > 0)) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if ((td.en ?? -1) < 0) todo.push('energy'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
+    const todo: string[] = []; if (!(td.sleep > 0)) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
     const cur = todo[0]; const head = (t: string, sub: string) => (
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2 }}>{'QUICK LOG' + (todo.length ? ' · ' + todo.length + ' LEFT' : '')}</Text>
@@ -65,13 +64,11 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Rnd t="−" onPress={() => setSlp(Math.max(0.5, slp - 0.5))} /><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800', minWidth: 40, textAlign: 'center' }}>{slp} h</Text><Rnd t="+" onPress={() => setSlp(Math.min(14, slp + 0.5))} /><Btn t="Save" onPress={() => put({ sleep: slp })} /></View></>);
     else if (cur === 'mood') body = (<>{head('Mood today', 'Tap how you feel')}
       <View style={{ flexDirection: 'row', gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <Pressable key={i} onPress={() => put({ mood: i })} hitSlop={4} accessibilityLabel={'Mood ' + (i + 1) + ' of 5'}><Face i={i} size={31} /></Pressable>)}</View></>);
-    else if (cur === 'energy') body = (<>{head('Energy today', 'Your own rating')}
-      <View style={{ width: 176, flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'flex-end', marginTop: 14 }}>{ENERGY.map((e, i) => <Pressable key={e[0]} onPress={() => put({ en: i })} style={{ width: 85, paddingVertical: 5, borderRadius: 999, alignItems: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: e[1] + '99' }}><Text numberOfLines={1} style={{ color: '#fff', fontSize: 10.5, fontWeight: '700' }}>{e[0]}</Text></Pressable>)}</View></>);
     else if (cur === 'med' && med) body = (<>{head(med.name, [med.dose, med.time ? to12(med.time) : ''].filter(Boolean).join(' · ') || 'Medicine for today')}
       <Btn t="Taken" onPress={() => put({ med: [...took, med.id] })} /></>);
     else if (cur === 'water') body = (<>{head('Water', td.cups + ' of ' + cg + ' glasses today')}
       <Btn t="+1 glass" onPress={() => put({ cups: Math.min(cg, td.cups + 1) })} /></>);
-    else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', 'Sleep, mood, energy and water are in')}</>);
+    else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', 'Sleep, mood, medicine and water are in')}</>);
   } else if (kind === 'usage') {
     body = (<>
       <View>
