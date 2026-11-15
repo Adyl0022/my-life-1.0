@@ -242,7 +242,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Patterns",
-  "s": "My Life Intelligence: patterns, calendar, time machine",
+  "s": "My Life Intelligence: patterns, experiments and Time Machine",
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
@@ -254,7 +254,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "medicine medication ubat reminder peringatan dose dos pill"
+  "k": "medicine medication ubat reminder peringatan dose dos pill capsule kapsul tablet syrup sirap injection suntikan drops titis inhaler cream krim vitamin ikon icon"
  },
  {
   "t": "Experiments",
@@ -327,6 +327,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "c": "#b794ff",
   "h": "Habit.dc.html",
   "k": "history sejarah calendar kalendar time machine graph graf explore future memories kenangan habit 30 hari days overview streak"
+ },
+ {
+  "t": "Body hologram",
+  "s": "Tap your body, travel to the past or the future",
+  "m": "Habit",
+  "c": "#5ee7df",
+  "h": "Habit.dc.html",
+  "k": "body hologram 3d badan otak brain jantung heart paru lungs otot muscles time machine past future masa lalu masa depan compare bandingkan estimate anggaran timeline"
  },
  {
   "t": "My Life Assistant",
