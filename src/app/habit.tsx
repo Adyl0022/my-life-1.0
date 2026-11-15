@@ -224,6 +224,7 @@ export default function Habit() {
               </Pressable>
             ))}
           </View>
+          {tab === 'patterns' || tab === 'progress' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>{tab === 'patterns' ? 'What the app notices in your records' : 'How you are doing, week by week'}</Text> : null}
 
           {tab === 'patterns' && <PatternsTab h={h} setH={setH} onToday={() => setTab('today')} />}
           {tab === 'today' && (<>
