@@ -66,8 +66,8 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ flexDirection: 'row', gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <Pressable key={i} onPress={() => put({ mood: i })} hitSlop={4} accessibilityLabel={'Mood ' + (i + 1) + ' of 5'}><Face i={i} size={31} /></Pressable>)}</View></>);
     else if (cur === 'med' && med) body = (<>{head(med.name, [med.dose, med.time ? to12(med.time) : ''].filter(Boolean).join(' · ') || 'Medicine for today')}
       <Btn t="Taken" onPress={() => put({ med: [...took, med.id] })} /></>);
-    else if (cur === 'water') body = (<>{head('Water', td.cups + ' of ' + cg + ' glasses today')}
-      <Btn t="+1 glass" onPress={() => put({ cups: Math.min(cg, td.cups + 1) })} /></>);
+    else if (cur === 'water') body = (<>{head('Water · ' + td.cups * 250 + ' of ' + cg * 250 + ' ml', td.cups + ' of ' + cg + ' glasses today')}
+      <Btn t="+1 glass (250 ml)" onPress={() => put({ cups: Math.min(cg, td.cups + 1) })} /></>);
     else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', 'Sleep, mood, medicine and water are in')}</>);
   } else if (kind === 'usage') {
     body = (<>
