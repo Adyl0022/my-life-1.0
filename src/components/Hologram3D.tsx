@@ -52,7 +52,7 @@ export function Hologram3D({ w, h, sel, onPick, glow, reduce, onFail }: Props) {
   useEffect(() => () => { dead.current = true; cancelAnimationFrame(raf.current); }, []);
 
   const pan = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true,
+    onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true, onPanResponderTerminationRequest: () => false, onShouldBlockNativeResponder: () => true,
     onPanResponderGrant: (e) => { const p: any = pan; p.t0 = Date.now(); p.mv = 0; p.last = 0; p.x = e.nativeEvent.locationX; p.y = e.nativeEvent.locationY; },
     onPanResponderMove: (_, g) => { const p: any = pan; const dx = g.dx - (p.last || 0); p.last = g.dx; p.mv += Math.abs(dx); if (api.current) api.current.spin(dx); },
     onPanResponderRelease: () => {
