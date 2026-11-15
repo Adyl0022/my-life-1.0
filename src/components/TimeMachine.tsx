@@ -21,7 +21,7 @@ const Chip = ({ on, t, onPress, c }: { on: boolean; t: string; onPress: () => vo
 );
 
 // Bars (steps, water, sleep) or a line with dots (mood, energy) over a number of days.
-function Chart({ vals, color, line, goal, max }: { vals: (number | null)[]; color: string; line: boolean; goal?: number; max: number }) {
+function Chart({ vals, color, line, goal, max, est }: { vals: (number | null)[]; color: string; line: boolean; goal?: number; max: number; est?: boolean[] }) {
   const [w, setW] = useState(280); const H = 120; const pad = 6; const n = vals.length;
   const bw = (w - pad * 2) / n; const y = (v: number) => H - pad - (Math.min(v, max) / max) * (H - pad * 2);
   const pts = vals.map((v, i) => (v == null ? null : { x: pad + bw * i + bw / 2, y: y(v) }));
@@ -34,7 +34,7 @@ function Chart({ vals, color, line, goal, max }: { vals: (number | null)[]; colo
           : <Rect key={i} x={pad + bw * i + bw * 0.14} y={y(v)} width={Math.max(1.5, bw * 0.72)} height={Math.max(2, H - pad - y(v))} rx={Math.min(3, bw * 0.3)} fill={color} fillOpacity={goal != null && v >= goal ? 1 : 0.65} />) : null}
         {line ? <>
           <Polyline points={pts.filter(Boolean).map((p) => p!.x + ',' + p!.y).join(' ')} fill="none" stroke={color} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
-          {pts.map((p, i) => p ? <Circle key={i} cx={p.x} cy={p.y} r={n > 40 ? 1.8 : 3.4} fill={color} /> : null)}
+          {pts.map((p, i) => p ? (est && est[i] ? <Circle key={i} cx={p.x} cy={p.y} r={n > 40 ? 2 : 3.4} fill="none" stroke={color} strokeWidth={n > 40 ? 1.2 : 1.8} /> : <Circle key={i} cx={p.x} cy={p.y} r={n > 40 ? 1.8 : 3.4} fill={color} />) : null)}
         </> : null}
       </Svg>
     </View>
@@ -88,11 +88,11 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
   const monthPct = Array.from({ length: dim }, (_, i) => { const k = keyOf(i + 1); return k > todayKey ? null : goalPctOf(dayOf(k), goal, cg); });
   // Explore
   const [range, setRange] = useState(30); const [met, setMet] = useState<Metric>('steps');
-  const ser = series(h, range, met); const nums = ser.filter((s) => s.v != null) as { off: number; v: number }[];
+  const ser = series(h, range, met); const nums = ser.filter((s) => s.v != null) as { off: number; v: number; est?: boolean }[]; const own = nums.filter((s) => !s.est); const hasEst = nums.length > own.length;
   const mdef = METRICS.find((x) => x.k === met)!; const line = met === 'mood' || met === 'energy';
   const mx = met === 'steps' ? Math.max(goal * 1.2, ...nums.map((s) => s.v), 1000) : met === 'water' ? Math.max(cg + 2, ...nums.map((s) => s.v)) : met === 'sleep' ? Math.max(10, ...nums.map((s) => s.v)) : met === 'mood' ? 4 : 3;
   const mg = met === 'steps' ? goal : met === 'water' ? cg : met === 'sleep' ? 7 : undefined;
-  const avg = nums.length ? nums.reduce((a, s) => a + s.v, 0) / nums.length : 0; const bestS = nums.length ? nums.reduce((a, s) => (s.v > a.v ? s : a)) : null;
+  const avg = own.length ? own.reduce((a, s) => a + s.v, 0) / own.length : 0; const bestS = own.length ? own.reduce((a, s) => (s.v > a.v ? s : a)) : null;
   // Then vs now
   const [back, setBack] = useState(30); const now = windowAvg(h, 0), then = windowAvg(h, -back);
   const trows: { l: string; k: Metric; a: number | null; b: number | null }[] = [
@@ -184,11 +184,12 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>{METRICS.map((x) => <Chip key={x.k} on={met === x.k} c={x.c} t={x.l} onPress={() => setMet(x.k)} />)}</View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>{[7, 30, 90].map((n) => <Chip key={n} on={range === n} t={n + ' days'} onPress={() => setRange(n)} />)}</View>
         {nums.length ? (<>
-          <Chart vals={ser.map((s) => s.v)} color={mdef.c} line={line} goal={mg} max={mx} />
+          <Chart vals={ser.map((s) => s.v)} est={ser.map((s) => !!s.est)} color={mdef.c} line={line} goal={mg} max={mx} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{dstr(dateOf(-(range - 1)))}</Text><Text style={{ color: DIM, fontSize: 10.5 }}>Today</Text></View>
           {mg != null ? <Text style={{ color: '#ffd593', fontSize: 11, marginTop: 6 }}>Dashed line: your goal. Brighter bars reached it.</Text> : null}
+          {hasEst ? <Text style={{ color: DIM, fontSize: 11, marginTop: 6 }}>Hollow dots are estimates from what you logged that day. Solid dots are your own rating. Average and Best use your own ratings only.</Text> : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            {[['Average', fmtVal(met, avg)], ['Best', bestS ? fmtVal(met, bestS.v) : '-'], ['Logged', nums.length + '/' + range]].map(([a, b]) => (
+            {[['Average', own.length ? fmtVal(met, avg) : '-'], ['Best', bestS ? fmtVal(met, bestS.v) : '-'], ['Logged', own.length + '/' + range]].map(([a, b]) => (
               <View key={a} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.09)' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{a}</Text><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 2 }}>{b}</Text></View>
             ))}
           </View>

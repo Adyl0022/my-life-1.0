@@ -1,5 +1,5 @@
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, MON, cupsGoal, bestStreakAll } from './habit';
-import { windowAvg, ENERGY, hasAny } from './patterns';
+import { windowAvg, ENERGY, hasAny, energyEstimate } from './patterns';
 import { mins, fmtMin } from './relax';
 
 export type Metric = 'steps' | 'water' | 'sleep' | 'mood' | 'energy';
@@ -16,9 +16,14 @@ export const fmtVal = (k: Metric, v: number): string =>
     : k === 'mood' ? MOODS[Math.max(0, Math.min(4, Math.round(v)))][0] : ENERGY[Math.max(0, Math.min(3, 3 - Math.round(v)))][0];
 export const dstr = (d: Date, year = false) => d.getDate() + ' ' + MON[d.getMonth()] + (year ? ' ' + d.getFullYear() : '');
 
-export function series(h: HData, n: number, k: Metric): { off: number; v: number | null }[] {
-  const out: { off: number; v: number | null }[] = [];
-  for (let i = 0; i < n; i++) { const off = -(n - 1) + i; out.push({ off, v: valOf(getDay(h, off), k) }); }
+// For energy, a day without the person's own rating gets the app's estimate (est = true), when it has two or more records to work from. The chart draws those as hollow dots.
+export function series(h: HData, n: number, k: Metric): { off: number; v: number | null; est?: boolean }[] {
+  const out: { off: number; v: number | null; est?: boolean }[] = [];
+  for (let i = 0; i < n; i++) {
+    const off = -(n - 1) + i; const x = getDay(h, off); let v = valOf(x, k); let est = false;
+    if (k === 'energy' && v == null) { const e = energyEstimate(x, cupsGoal(h), h.goal || 8000); if (e) { v = 3 - e.lvl; est = true; } }
+    out.push(est ? { off, v, est } : { off, v });
+  }
   return out;
 }
 
