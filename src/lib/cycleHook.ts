@@ -2,12 +2,14 @@ import { useStored } from './store';
 import { HData, getDay, dateOf, keyOfDate } from './habit';
 import { PUASA_EMPTY, PuasaData } from './fasting';
 import { reconcileHaid } from './cycle';
+import { modOn } from './hidden';
 
 // Saves a change to the cycle marks and keeps the Fasting record in step (period days in Ramadan become excused days).
 export function useCycleSave(h: HData, setH: (v: HData) => void) {
   const [pz, setPz, okp] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
   const save = (next: HData) => {
-    if (!okp) { setH(next); return; }
+    // Only people who use the Islamic module get period days linked to fasting and qadha.
+    if (!okp || !modOn('islamic')) { setH(next); return; }
     const r = reconcileHaid(pz, next);
     setH({ ...next, px: r.px });
     if (JSON.stringify(r.p.days) !== JSON.stringify(pz.days)) setPz(r.p);

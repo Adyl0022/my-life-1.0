@@ -12,6 +12,7 @@ import { TOP } from '../lib/layout';
 import { HData, HEMPTY, MON, dateOf, getDay } from '../lib/habit';
 import { cycleInfo, statusText, nextDate, fmtD, SYMS, FLOW } from '../lib/cycle';
 import { useCycleSave } from '../lib/cycleHook';
+import { useHidden } from '../lib/hidden';
 
 const PINK = '#ff8fab'; const T = '#5ee7df'; const DIM = 'rgba(255,255,255,.7)';
 const MN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -21,6 +22,7 @@ export default function Cycle() {
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const { setPeriod, patch } = useCycleSave(h, setH);
   const [mo, setMo] = useState(0);
+  const hid = useHidden();
   const c = cycleInfo(h);
   const base = new Date(); base.setDate(1); base.setMonth(base.getMonth() + mo);
   const y = base.getFullYear(), m = base.getMonth();
@@ -100,10 +102,12 @@ export default function Cycle() {
             </Glass>
           </Pressable>
 
+          {hid.on('islamic') ? (
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Fasting and qadha</Text>
             <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 4 }}>Period days that fall in Ramadan are marked as excused in your Fasting record, so they are added to the qadha you still owe. If you unmark a day here, the mark is removed too.</Text>
           </Glass>
+          ) : null}
           <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 12 }}>These are estimates from your own records, not medical advice, and not for planning or avoiding pregnancy. If your cycle is very irregular or you have strong pain, please see a doctor.</Text>
         </ScrollView>
       </SafeAreaView>
