@@ -154,9 +154,27 @@ export default function Notes() {
           <Pressable onPress={() => setSort((sort + 1) % 3)}><Glass radius={16} style={{ paddingHorizontal: 12, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{SORTS[sort]}</Text></Glass></Pressable>
           <Pressable onPress={() => setGrid(!grid)} accessibilityLabel="Layout"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16 }}>{grid ? '☰' : '▦'}</Text></Glass></Pressable>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0, marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 2, alignItems: 'center' }}>
-          {FILTERS.map((n, i) => (
-            <Pressable key={n} onPress={() => setFilter(i)}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: i === 0 ? 7.5 : 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: filter === i ? 'rgba(255,196,107,.3)' : 'rgba(255,255,255,.1)', ...(i === 0 ? { borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,213,147,.75)' } : {}) }}>{i === 0 ? <Bell c="#ffd593" z={13} /> : null}<Text style={{ color: filter === i ? W : i === 0 ? '#ffd593' : 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 17, fontWeight: filter === i ? '800' : '600' }}>{i === 0 && nRem ? n + ' · ' + nRem : n}</Text></View></Pressable>
+        {(() => {
+          const act = notes.filter((n) => n.rm && !n.rd); const od = act.filter((n) => (n.rm as number) < Date.now()).length;
+          const nx = act.filter((n) => (n.rm as number) >= Date.now()).sort((x, y) => (x.rm as number) - (y.rm as number))[0];
+          const sub = act.length ? [od ? od + ' overdue' : '', nx ? 'Next: ' + remShort(nx.rm as number) : ''].filter(Boolean).join(' · ') : 'Open a note and tap the bell to add one';
+          const on = filter === 0;
+          return (
+            <Pressable onPress={() => setFilter(on ? 1 : 0)} accessibilityLabel="Show only notes with reminders" style={{ marginHorizontal: 20, marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1.5, borderStyle: 'dashed', borderColor: on ? '#ffd593' : 'rgba(255,213,147,.55)', backgroundColor: on ? 'rgba(255,196,107,.3)' : 'rgba(255,196,107,.12)' }}>
+                <View style={{ width: 34, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,196,107,.25)', alignItems: 'center', justifyContent: 'center' }}><Bell c="#ffd593" z={18} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{'Reminders' + (act.length ? ' · ' + act.length : '')}</Text>
+                  <Text numberOfLines={1} style={{ color: od ? '#ffb3c4' : 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 2 }}>{sub}</Text>
+                </View>
+                <Text style={{ color: '#ffd593', fontSize: 12, fontWeight: '800' }}>{on ? 'Showing' : 'View'}</Text>
+              </View>
+            </Pressable>
+          );
+        })()}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0, marginTop: 10 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 2, alignItems: 'center' }}>
+          {FILTERS.map((n, i) => i === 0 ? null : (
+            <Pressable key={n} onPress={() => setFilter(i)}><View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: filter === i ? 'rgba(255,196,107,.3)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: filter === i ? W : 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 17, fontWeight: filter === i ? '800' : '600' }}>{n}</Text></View></Pressable>
           ))}
         </ScrollView>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
