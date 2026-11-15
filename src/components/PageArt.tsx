@@ -29,16 +29,18 @@ export function PageArt({ kind }: { kind: 'med' | 'relax' | 'cycle' }) {
       <LinearGradient colors={wash} start={{ x: 0.5, y: 0.1 }} end={{ x: 0.5, y: 1 }} style={FILL} />
       {kind === 'relax' ? (
         <>
-          <Animated.View style={[FILL, drift]}>
+          <Animated.View style={[FILL, { transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [0, -16] }) }] }]}>
             <Vb>
-              <Defs><RadialGradient id="rg" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#8fe9e2" stopOpacity=".22" /><Stop offset="1" stopColor="#8fe9e2" stopOpacity="0" /></RadialGradient></Defs>
-              <Circle cx="195" cy="640" r="230" fill="url(#rg)" />
-              {[40, 80, 124, 170, 220, 275].map((r, i) => <Circle key={r} cx="195" cy="640" r={r} fill="none" stroke="#8fe9e2" strokeOpacity={0.34 - i * 0.045} strokeWidth="1.4" />)}
-              <Circle cx="195" cy="640" r="10" fill="#8fe9e2" fillOpacity=".5" />
+              {[[60, 700, 9], [330, 640, 6], [120, 790, 5], [290, 770, 11], [210, 560, 4], [36, 560, 5], [360, 520, 4]].map((c, i) => <Circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#8fe9e2" fillOpacity=".08" stroke="#8fe9e2" strokeOpacity=".35" strokeWidth="1.1" />)}
             </Vb>
           </Animated.View>
           <Vb>
-            {[0, 1, 2, 3].map((i) => <Path key={i} d={'M-10 ' + (700 + i * 34) + 'q50-26 100 0t100 0 100 0 100 0 100 0'} fill="none" stroke="#7c9cff" strokeOpacity={0.3 - i * 0.06} strokeWidth="1.5" />)}
+            <Defs><RadialGradient id="rg" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#b794ff" stopOpacity=".2" /><Stop offset="1" stopColor="#b794ff" stopOpacity="0" /></RadialGradient></Defs>
+            <Circle cx="195" cy="740" r="120" fill="url(#rg)" />
+            {/* a lotus: two rings of petals around a small centre */}
+            {[-60, -30, 0, 30, 60].map((r) => <G key={'o' + r} rotation={r} origin="195, 770"><Path d="M195 770C171 742 171 700 195 674C219 700 219 742 195 770z" fill="#b794ff" fillOpacity=".08" stroke="#c9b0ff" strokeOpacity=".32" strokeWidth="1.2" /></G>)}
+            {[-30, 0, 30].map((r) => <G key={'i' + r} rotation={r} origin="195, 770"><Path d="M195 770C181 750 181 722 195 704C209 722 209 750 195 770z" fill="#8fe9e2" fillOpacity=".1" stroke="#8fe9e2" strokeOpacity=".4" strokeWidth="1.1" /></G>)}
+            <Circle cx="195" cy="770" r="5" fill="#ffd593" fillOpacity=".6" />
             {dots([[40, 120, 2], [330, 90, 2.6], [90, 260, 1.6], [350, 330, 2], [30, 430, 1.8], [300, 480, 1.4], [150, 70, 1.4], [260, 200, 1.8]], '#fff', 0.45)}
             <Path d="M318 150a22 22 0 1 0 22 28a17 17 0 0 1-22-28z" fill="#e8dcff" fillOpacity=".18" stroke="#c9b0ff" strokeOpacity=".35" strokeWidth="1.2" />
           </Vb>
@@ -56,20 +58,20 @@ export function PageArt({ kind }: { kind: 'med' | 'relax' | 'cycle' }) {
       ) : null}
       {kind === 'cycle' ? (
         <>
-          <Animated.View style={[FILL, drift]}>
+          <Animated.View style={[FILL, { transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [0, 14] }) }] }]}>
             <Vb>
-              <Defs><RadialGradient id="cg" cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#ff8fab" stopOpacity=".26" /><Stop offset="1" stopColor="#ff8fab" stopOpacity="0" /></RadialGradient></Defs>
-              <Circle cx="300" cy="640" r="210" fill="url(#cg)" />
-              <Circle cx="300" cy="640" r="150" fill="none" stroke="#ff8fab" strokeOpacity=".3" strokeWidth="1.4" strokeDasharray="2 8" />
-              <Circle cx="300" cy="640" r="100" fill="none" stroke="#ff8fab" strokeOpacity=".22" strokeWidth="1.2" />
-              <Circle cx="300" cy="640" r="44" fill="#ff8fab" fillOpacity=".3" />
-              <Path d="M300 596a44 44 0 0 0 0 88a28 44 0 0 1 0-88z" fill="#fff" fillOpacity=".2" />
+              {[[300, 560, 20], [70, 640, -35], [340, 700, 50], [120, 760, -10], [250, 800, 30], [28, 520, 60], [210, 620, -50]].map((p, i) => (
+                <G key={i} rotation={p[2]} origin={p[0] + ', ' + p[1]}>
+                  <Path d={'M' + p[0] + ' ' + (p[1] - 12) + 'C' + (p[0] + 9) + ' ' + (p[1] - 4) + ' ' + (p[0] + 9) + ' ' + (p[1] + 5) + ' ' + p[0] + ' ' + (p[1] + 12) + 'C' + (p[0] - 9) + ' ' + (p[1] + 5) + ' ' + (p[0] - 9) + ' ' + (p[1] - 4) + ' ' + p[0] + ' ' + (p[1] - 12) + 'z'} fill="#ff8fab" fillOpacity={0.14 + (i % 3) * 0.05} stroke="#ff8fab" strokeOpacity=".4" strokeWidth="1" />
+                </G>
+              ))}
             </Vb>
           </Animated.View>
           <Vb>
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => { const ang = (-170 + i * 26) * Math.PI / 180; const x = 300 + 150 * Math.cos(ang), y = 640 + 150 * Math.sin(ang); return <Circle key={i} cx={x} cy={y} r={i === 3 ? 7 : 4} fill="#ff8fab" fillOpacity={0.2 + i * 0.05} />; })}
-            {[[60, 560], [90, 700], [24, 450]].map((p, i) => <G key={i}>{[0, 72, 144, 216, 288].map((r) => <G key={r} rotation={r} origin={p[0] + ', ' + p[1]}><Circle cx={p[0]} cy={p[1] - 9} r="6" fill="#ff8fab" fillOpacity=".18" stroke="#ff8fab" strokeOpacity=".4" strokeWidth="1" /></G>)}<Circle cx={p[0]} cy={p[1]} r="3" fill="#ffd593" fillOpacity=".6" /></G>)}
-            {dots([[320, 110, 2], [60, 200, 1.8], [350, 300, 1.5], [130, 330, 1.4], [250, 400, 1.8], [30, 780, 1.6]], '#fff', 0.42)}
+            {/* a thin vine along the bottom with tiny blossoms */}
+            <Path d="M-10 820C60 780 110 830 190 800S320 770 400 810" fill="none" stroke="#ff8fab" strokeOpacity=".3" strokeWidth="1.4" />
+            {[[60, 796], [190, 800], [320, 782]].map((p, i) => <G key={i}>{[0, 72, 144, 216, 288].map((r) => <G key={r} rotation={r} origin={p[0] + ', ' + p[1]}><Circle cx={p[0]} cy={p[1] - 8} r="5" fill="#ff8fab" fillOpacity=".2" stroke="#ff8fab" strokeOpacity=".45" strokeWidth="1" /></G>)}<Circle cx={p[0]} cy={p[1]} r="2.6" fill="#ffd593" fillOpacity=".7" /></G>)}
+            {dots([[320, 110, 2], [60, 200, 1.8], [350, 300, 1.5], [130, 330, 1.4], [250, 400, 1.8], [30, 700, 1.6]], '#fff', 0.42)}
           </Vb>
         </>
       ) : null}
