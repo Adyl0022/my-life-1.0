@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Pressable, ScrollView, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Line, Polyline, Circle, Rect } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -26,6 +26,20 @@ function Chart({ vals, color, line, goal, max, est }: { vals: (number | null)[];
   const bw = (w - pad * 2) / n; const y = (v: number) => H - pad - (Math.min(v, max) / max) * (H - pad * 2);
   const pts = vals.map((v, i) => (v == null ? null : { x: pad + bw * i + bw / 2, y: y(v) }));
   const few = pts.filter(Boolean).length <= 3; // a few days only: bigger dots so they are easy to see
+  const R = few ? 6 : n > 40 ? 2 : 3.4; const SW = few ? 2.4 : n > 40 ? 1.2 : 1.8;
+  // The dots grow or shrink slowly to their new size, and fade in softly when the graph changes.
+  const [tg, setTg] = useState(1); const [to, setTo] = useState(1);
+  const prev = useRef({ r: R, sw: SW }); const [from, setFrom] = useState({ r: R, sw: SW });
+  const run = (set: (v: number) => void, dur: number, ease: (x: number) => number) => {
+    const v = new Animated.Value(0); const id = v.addListener(({ value }) => set(ease(value)));
+    Animated.timing(v, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: false }).start(() => { v.removeListener(id); set(1); });
+  };
+  useEffect(() => {
+    if (prev.current.r !== R || prev.current.sw !== SW) { setFrom(prev.current); setTg(0); run(setTg, 650, Easing.out(Easing.cubic)); prev.current = { r: R, sw: SW }; }
+  }, [R, SW]);
+  const dataKey = vals.join(',') + '|' + n;
+  useEffect(() => { setTo(0.2); run((x) => setTo(0.2 + 0.8 * x), 600, Easing.out(Easing.ease)); }, [dataKey]);
+  const rr = from.r + (R - from.r) * tg; const sw = from.sw + (SW - from.sw) * tg; const o = to;
   return (
     <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ marginTop: 10 }}>
       <Svg width={w} height={H}>
@@ -35,7 +49,7 @@ function Chart({ vals, color, line, goal, max, est }: { vals: (number | null)[];
           : <Rect key={i} x={pad + bw * i + bw * 0.14} y={y(v)} width={Math.max(1.5, bw * 0.72)} height={Math.max(2, H - pad - y(v))} rx={Math.min(3, bw * 0.3)} fill={color} fillOpacity={goal != null && v >= goal ? 1 : 0.65} />) : null}
         {line ? <>
           <Polyline points={pts.filter(Boolean).map((p) => p!.x + ',' + p!.y).join(' ')} fill="none" stroke={color} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
-          {pts.map((p, i) => p ? (est && est[i] ? <Circle key={i} cx={p.x} cy={p.y} r={few ? 6 : n > 40 ? 2 : 3.4} fill="none" stroke={color} strokeWidth={few ? 2.4 : n > 40 ? 1.2 : 1.8} /> : <Circle key={i} cx={p.x} cy={p.y} r={few ? 6 : n > 40 ? 1.8 : 3.4} fill={color} />) : null)}
+          {pts.map((p, i) => p ? (est && est[i] ? <Circle key={i} cx={p.x} cy={p.y} r={rr} opacity={o} fill="none" stroke={color} strokeWidth={sw} /> : <Circle key={i} cx={p.x} cy={p.y} r={rr} opacity={o} fill={color} />) : null)}
         </> : null}
       </Svg>
     </View>
