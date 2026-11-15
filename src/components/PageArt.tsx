@@ -24,6 +24,37 @@ function useLoop(ms: number, delay: number, yoyo: boolean, reduce: boolean) {
   return v;
 }
 
+// A small glowing firefly that wanders and twinkles.
+function Firefly({ x, y, ms, delay, reduce }: { x: number; y: number; ms: number; delay: number; reduce: boolean }) {
+  const v = useLoop(ms, delay, true, reduce); const t = useLoop(ms * 0.45, delay, true, reduce);
+  return (
+    <Animated.View style={{ position: 'absolute', left: px(x), top: py(y), width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(255,224,150,.32)', alignItems: 'center', justifyContent: 'center',
+      opacity: reduce ? 0.8 : t.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
+      transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [-22, 22] }) }, { translateY: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [8, -14, 6] }) }] }}>
+      <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#ffe9a8' }} />
+    </Animated.View>
+  );
+}
+// A little cloud that drifts sideways.
+function Cloud({ x, y, w, ms, dx, reduce }: { x: number; y: number; w: number; ms: number; dx: number; reduce: boolean }) {
+  const v = useLoop(ms, 0, true, reduce);
+  return (
+    <Animated.View style={{ position: 'absolute', left: px(x), top: py(y), width: w, height: w * 0.57, opacity: 0.9, transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [0, dx] }) }] }}>
+      <Svg width={w} height={w * 0.57} viewBox="0 -12 100 57"><Path d="M20 38a14 14 0 0 1 2-28a20 20 0 0 1 38-4a16 16 0 0 1 24 12a13 13 0 0 1-4 20z" fill="#fff" fillOpacity=".07" stroke="#c9b0ff" strokeOpacity=".4" strokeWidth="1.5" strokeLinejoin="round" /></Svg>
+    </Animated.View>
+  );
+}
+// A feather that floats down slowly.
+function Feather({ x, y, s, ms, delay, reduce }: { x: number; y: number; s: number; ms: number; delay: number; reduce: boolean }) {
+  const v = useLoop(ms, delay, false, reduce);
+  return (
+    <Animated.View style={{ position: 'absolute', left: px(x), top: py(y), width: s, height: s * 2.4,
+      opacity: reduce ? 0.7 : v.interpolate({ inputRange: [0, 0.12, 0.85, 1], outputRange: [0, 0.85, 0.6, 0] }),
+      transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, 200] }) }, { translateX: v.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: [0, 20, 0, -20, 0] }) }, { rotate: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['-20deg', '25deg', '-15deg'] }) }] }}>
+      <Svg width={s} height={s * 2.4} viewBox="0 0 20 48"><Path d="M10 1C20 12 19 34 10 47C1 34 0 12 10 1z" fill="#c9b0ff" fillOpacity=".16" stroke="#c9b0ff" strokeOpacity=".55" strokeWidth="1.1" /><Path d="M10 4V46M10 14l5-4M10 22l6-5M10 30l5-4M10 14l-5-4M10 22l-6-5M10 30l-5-4" stroke="#c9b0ff" strokeOpacity=".4" strokeWidth=".9" fill="none" /></Svg>
+    </Animated.View>
+  );
+}
 // A ripple that spreads on the water and fades.
 function Ripple({ ms, delay, reduce }: { ms: number; delay: number; reduce: boolean }) {
   const v = useLoop(ms, delay, false, reduce);
@@ -73,19 +104,11 @@ export function PageArt({ kind }: { kind: 'med' | 'relax' | 'cycle' }) {
       <LinearGradient colors={wash} start={{ x: 0.5, y: 0.1 }} end={{ x: 0.5, y: 1 }} style={FILL} />
       {kind === 'relax' ? (
         <>
-          {/* balanced stones that float a little, with ripples spreading under them */}
-          <Ripple ms={5200} delay={0} reduce={reduce} /><Ripple ms={5200} delay={1700} reduce={reduce} /><Ripple ms={5200} delay={3400} reduce={reduce} />
-          <Animated.View style={{ position: 'absolute', left: '50%', marginLeft: -130, bottom: -4, width: 260, height: 200, transform: [{ translateY: breathe.interpolate({ inputRange: [0, 1], outputRange: [4, -8] }) }] }}>
-            <Svg width="100%" height="100%" viewBox="0 0 260 200">
-              <Defs><RadialGradient id="rg" cx="50%" cy="55%" r="50%"><Stop offset="0" stopColor="#7c9cff" stopOpacity=".28" /><Stop offset="1" stopColor="#7c9cff" stopOpacity="0" /></RadialGradient></Defs>
-              <Circle cx="130" cy="115" r="105" fill="url(#rg)" />
-              <Ellipse cx="130" cy="156" rx="54" ry="18" fill="#7c9cff" fillOpacity=".2" stroke="#9fb4ff" strokeOpacity=".55" strokeWidth="1.3" />
-              <Ellipse cx="134" cy="126" rx="39" ry="14" fill="#b794ff" fillOpacity=".22" stroke="#c9b0ff" strokeOpacity=".55" strokeWidth="1.3" />
-              <Ellipse cx="128" cy="101" rx="27" ry="11" fill="#8fe9e2" fillOpacity=".2" stroke="#8fe9e2" strokeOpacity=".6" strokeWidth="1.3" />
-              <Ellipse cx="131" cy="82" rx="15" ry="7" fill="#ffd593" fillOpacity=".25" stroke="#ffd593" strokeOpacity=".65" strokeWidth="1.2" />
-              <Path d="M100 152q18 8 40 6" fill="none" stroke="#fff" strokeOpacity=".25" strokeWidth="1.2" strokeLinecap="round" /><Path d="M112 124q12 6 26 4" fill="none" stroke="#fff" strokeOpacity=".25" strokeWidth="1.2" strokeLinecap="round" />
-            </Svg>
-          </Animated.View>
+          <Cloud x={20} y={690} w={96} ms={9000} dx={30} reduce={reduce} /><Cloud x={250} y={760} w={70} ms={11000} dx={-26} reduce={reduce} />
+          <Firefly x={80} y={600} ms={5200} delay={0} reduce={reduce} /><Firefly x={300} y={560} ms={6100} delay={900} reduce={reduce} /><Firefly x={200} y={650} ms={4800} delay={1700} reduce={reduce} />
+          <Firefly x={340} y={730} ms={5600} delay={400} reduce={reduce} /><Firefly x={50} y={760} ms={6400} delay={2300} reduce={reduce} /><Firefly x={150} y={790} ms={5000} delay={1200} reduce={reduce} />
+          <Firefly x={270} y={690} ms={7000} delay={2800} reduce={reduce} /><Firefly x={120} y={530} ms={5800} delay={3200} reduce={reduce} />
+          <Feather x={300} y={470} s={13} ms={13000} delay={0} reduce={reduce} /><Feather x={70} y={500} s={11} ms={15000} delay={6000} reduce={reduce} />
           <Bubble x={60} y={760} r={9} ms={7000} delay={0} reduce={reduce} /><Bubble x={330} y={720} r={6} ms={6000} delay={1500} reduce={reduce} />
           <Bubble x={120} y={800} r={5} ms={5500} delay={800} reduce={reduce} /><Bubble x={290} y={800} r={11} ms={8000} delay={2600} reduce={reduce} />
           <Bubble x={200} y={700} r={4} ms={6500} delay={3400} reduce={reduce} /><Bubble x={30} y={680} r={5} ms={7500} delay={4200} reduce={reduce} />
