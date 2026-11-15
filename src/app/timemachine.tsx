@@ -9,7 +9,13 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { W } from '../components/Ui';
 import { Hologram } from '../components/Hologram';
-import { Hologram3D } from '../components/Hologram3D';
+class Guard extends React.Component<{ onFail: () => void; children: React.ReactNode }, { bad: boolean }> {
+  state = { bad: false };
+  static getDerivedStateFromError() { return { bad: true }; }
+  componentDidCatch() { this.props.onFail(); }
+  render() { return this.state.bad ? null : this.props.children; }
+}
+const load3d = (): any => { try { return require('../components/Hologram3D').Hologram3D; } catch (e) { return null; } };
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, dateOf, WD, MON } from '../lib/habit';
@@ -148,11 +154,11 @@ export default function TimeMachinePage() {
           {use3d && !failed
             ? (
               <View style={{ width: Math.min(360, width - 32), alignSelf: 'center' }}>
-                <Hologram3D key="3d" w={Math.min(360, width - 32)} h={330} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} onFail={() => setFailed(true)} />
+                <Guard onFail={() => setFailed(true)}>{(() => { const H3: any = load3d(); return H3 ? <H3 key="3d" w={Math.min(360, width - 32)} h={330} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} onFail={() => setFailed(true)} /> : null; })()}</Guard>
                 {mode === 'past' ? <Hud rows={rowsFor(h, a, 'body')} goal={h.goal || 8000} /> : null}
               </View>
             )
-            : <Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} />}
+            : <Guard onFail={() => setFailed(true)}><Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>}
           {use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
           {use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 6 }}>

@@ -5,22 +5,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Region, REGIONS } from '../lib/twin';
 
 // The flat hologram: the same body as the 3D one, drawn as a picture, with tap zones. Used when 3D is off or not available.
-const AG = Animated.createAnimatedComponent(G);
 const IMG = require('../../assets/body2d.png');
 const VW = 540, VH = 560, FLOOR = 60;
 
 export function Hologram({ w, sel, onPick, glow, reduce }: { w: number; sel: Region; onPick: (r: Region) => void; glow: number; reduce: boolean }) {
   const sc = w / VW; const H = (VH + FLOOR) * sc;
-  const scan = useRef(new Animated.Value(0)).current; const pulse = useRef(new Animated.Value(0)).current;
+  const scan = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (reduce) { scan.setValue(0.5); pulse.setValue(1); return; }
+    if (reduce) { scan.setValue(0.5); return; }
     const a = Animated.loop(Animated.timing(scan, { toValue: 1, duration: 3600, easing: Easing.inOut(Easing.quad), useNativeDriver: true }));
-    const b = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 1000, useNativeDriver: false }), Animated.timing(pulse, { toValue: 0.35, duration: 1000, useNativeDriver: false })]));
-    a.start(); b.start(); return () => { a.stop(); b.stop(); };
+    a.start(); return () => { a.stop(); };
   }, [reduce]);
   const on = (r: Region) => sel === r;
   const col = (r: Region) => REGIONS.find((x) => x.k === r)!.c;
-  const Hot = ({ r, children }: { r: Region; children: React.ReactNode }) => <AG opacity={on(r) ? (pulse as any) : 1} onPress={() => onPick(r)}>{children}</AG>;
+  const Hot = ({ r, children }: { r: Region; children: React.ReactNode }) => <G onPress={() => onPick(r)}>{children}</G>;
   const mus = col('muscles'); const mo = on('muscles') ? 0.5 : 0.1; const ms = on('muscles') ? 1.6 : 0.8;
   return (
     <View style={{ width: w, height: H, alignSelf: 'center' }}>
