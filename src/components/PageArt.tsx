@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, Easing, AccessibilityInfo } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, G, Path, Rect, Line, Defs, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Ellipse, G, Path, Rect, Line, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 // A full-screen decorative layer behind a feature page (Relax, Medicine, Cycle). It sits over the usual page gradient and under the content.
 // Things drift gently. Everything stands still when the phone is set to reduce motion.
@@ -24,6 +24,15 @@ function useLoop(ms: number, delay: number, yoyo: boolean, reduce: boolean) {
   return v;
 }
 
+// A ripple that spreads on the water and fades.
+function Ripple({ ms, delay, reduce }: { ms: number; delay: number; reduce: boolean }) {
+  const v = useLoop(ms, delay, false, reduce);
+  return (
+    <Animated.View style={{ position: 'absolute', left: '50%', marginLeft: -120, bottom: 4, width: 240, height: 56, opacity: reduce ? 0.3 : v.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.7, 0] }), transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1.25] }) }] }}>
+      <Svg width="100%" height="100%" viewBox="0 0 240 56"><Ellipse cx="120" cy="28" rx="116" ry="24" fill="none" stroke="#8fe9e2" strokeOpacity=".7" strokeWidth="1.4" /></Svg>
+    </Animated.View>
+  );
+}
 // A bubble that rises and fades.
 function Bubble({ x, y, r, ms, delay, reduce }: { x: number; y: number; r: number; ms: number; delay: number; reduce: boolean }) {
   const v = useLoop(ms, delay, false, reduce);
@@ -64,14 +73,17 @@ export function PageArt({ kind }: { kind: 'med' | 'relax' | 'cycle' }) {
       <LinearGradient colors={wash} start={{ x: 0.5, y: 0.1 }} end={{ x: 0.5, y: 1 }} style={FILL} />
       {kind === 'relax' ? (
         <>
-          {/* the lotus opens and closes like a breath */}
-          <Animated.View style={{ position: 'absolute', left: '50%', marginLeft: -130, bottom: 28, width: 260, height: 200, transform: [{ scale: breathe.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.08] }) }], opacity: breathe.interpolate({ inputRange: [0, 1], outputRange: [0.75, 1] }) }}>
+          {/* balanced stones that float a little, with ripples spreading under them */}
+          <Ripple ms={5200} delay={0} reduce={reduce} /><Ripple ms={5200} delay={1700} reduce={reduce} /><Ripple ms={5200} delay={3400} reduce={reduce} />
+          <Animated.View style={{ position: 'absolute', left: '50%', marginLeft: -130, bottom: -4, width: 260, height: 200, transform: [{ translateY: breathe.interpolate({ inputRange: [0, 1], outputRange: [4, -8] }) }] }}>
             <Svg width="100%" height="100%" viewBox="0 0 260 200">
-              <Defs><RadialGradient id="rg" cx="50%" cy="60%" r="50%"><Stop offset="0" stopColor="#b794ff" stopOpacity=".3" /><Stop offset="1" stopColor="#b794ff" stopOpacity="0" /></RadialGradient></Defs>
-              <Circle cx="130" cy="130" r="120" fill="url(#rg)" />
-              {[-60, -30, 0, 30, 60].map((r) => <G key={'o' + r} rotation={r} origin="130, 160"><Path d="M130 160C106 132 106 90 130 64C154 90 154 132 130 160z" fill="#b794ff" fillOpacity=".08" stroke="#c9b0ff" strokeOpacity=".4" strokeWidth="1.2" /></G>)}
-              {[-30, 0, 30].map((r) => <G key={'i' + r} rotation={r} origin="130, 160"><Path d="M130 160C116 140 116 112 130 94C144 112 144 140 130 160z" fill="#8fe9e2" fillOpacity=".12" stroke="#8fe9e2" strokeOpacity=".5" strokeWidth="1.1" /></G>)}
-              <Circle cx="130" cy="160" r="5" fill="#ffd593" fillOpacity=".7" />
+              <Defs><RadialGradient id="rg" cx="50%" cy="55%" r="50%"><Stop offset="0" stopColor="#7c9cff" stopOpacity=".28" /><Stop offset="1" stopColor="#7c9cff" stopOpacity="0" /></RadialGradient></Defs>
+              <Circle cx="130" cy="115" r="105" fill="url(#rg)" />
+              <Ellipse cx="130" cy="156" rx="54" ry="18" fill="#7c9cff" fillOpacity=".2" stroke="#9fb4ff" strokeOpacity=".55" strokeWidth="1.3" />
+              <Ellipse cx="134" cy="126" rx="39" ry="14" fill="#b794ff" fillOpacity=".22" stroke="#c9b0ff" strokeOpacity=".55" strokeWidth="1.3" />
+              <Ellipse cx="128" cy="101" rx="27" ry="11" fill="#8fe9e2" fillOpacity=".2" stroke="#8fe9e2" strokeOpacity=".6" strokeWidth="1.3" />
+              <Ellipse cx="131" cy="82" rx="15" ry="7" fill="#ffd593" fillOpacity=".25" stroke="#ffd593" strokeOpacity=".65" strokeWidth="1.2" />
+              <Path d="M100 152q18 8 40 6" fill="none" stroke="#fff" strokeOpacity=".25" strokeWidth="1.2" strokeLinecap="round" /><Path d="M112 124q12 6 26 4" fill="none" stroke="#fff" strokeOpacity=".25" strokeWidth="1.2" strokeLinecap="round" />
             </Svg>
           </Animated.View>
           <Bubble x={60} y={760} r={9} ms={7000} delay={0} reduce={reduce} /><Bubble x={330} y={720} r={6} ms={6000} delay={1500} reduce={reduce} />
