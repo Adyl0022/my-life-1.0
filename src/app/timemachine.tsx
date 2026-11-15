@@ -66,12 +66,12 @@ export default function TimeMachinePage() {
   const [mode, setMode] = useState<'past' | 'future'>('past');
   const [reg, setReg] = useState<Region>('body');
   const [a, setA] = useState(0); const [b, setB] = useState<number | null>(null); const [cmp, setCmp] = useState(false);
-  const [use3d, setUse3d] = useStored<boolean>('ml_tm3d2', true); const [failed, setFailed] = useState(false);
+  const [use3d, setUse3d] = useStored<boolean>('ml_tm3d3', false); const [failed, setFailed] = useState(false);
   const [hz, setHz] = useState(7); const [reduce, setReduce] = useState(false);
   useEffect(() => { try { AccessibilityInfo.isReduceMotionEnabled().then(setReduce); } catch (e) {} }, []);
   // If the last visit stopped partway, the hologram picture stays off this time and says where it stopped.
-  const [prev, setPrev] = useState<string | null | undefined>(undefined);
-  useEffect(() => { let on = true; readMark().then((m) => { if (on) setPrev(stoppedAt(m)); }); return () => { on = false; }; }, []);
+  const [prev, setPrev] = useState<string | null | undefined>(undefined); const [note, setNote] = useState<string | null>(null);
+  useEffect(() => { let on = true; readMark().then((m) => { if (!on) return; const x = stoppedAt(m); if (x && !x.startsWith('2d')) { setNote(x); setUse3d(false); setPrev(null); } else setPrev(x); }); return () => { on = false; }; }, []);
   useEffect(() => { if (prev !== null) return; mark('opened'); const t = setTimeout(() => mark('ok'), 3500); return () => { clearTimeout(t); mark('left'); }; }, [prev]);
   const rise = useRef(new Animated.Value(0)).current;
   useEffect(() => { rise.setValue(0); Animated.timing(rise, { toValue: 1, duration: reduce ? 0 : 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }, [reg, mode, a, b, hz]);
@@ -150,7 +150,7 @@ export default function TimeMachinePage() {
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 22 }}>
             <Chip on={mode === 'past'} t="Past" onPress={() => setMode('past')} />
             <Chip on={mode === 'future'} t="Future" onPress={() => setMode('future')} c="#b794ff" />
-            <Chip on={use3d && !failed} t={use3d && !failed ? '3D' : '2D'} onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
+            <Chip on={use3d && !failed} t={use3d && !failed ? 'Flat view' : '3D view (beta)'} onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setNote(null); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
             {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
           </View>
         </View>
@@ -170,6 +170,7 @@ export default function TimeMachinePage() {
               </View>
             )
             : <Guard onFail={() => setFailed(true)}><Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>}
+          {prev === null && note ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, textAlign: 'center', marginTop: 6 }}>{'3D stopped last time at: ' + note + '. The flat hologram is shown. Tap the chip above to try 3D again.'}</Text> : null}
           {prev === null && use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
           {prev === null && use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 6 }}>
