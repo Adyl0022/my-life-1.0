@@ -41,6 +41,22 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "notes nota catatan tulis write memo reminder peringatan ingatkan alarm remind checklist senarai semak shopping list senarai membeli belah beli belah barang dapur grocery todo"
  },
  {
+  "t": "Quick reminder",
+  "s": "Search button on the Dashboard, then Remind me",
+  "m": "Planner",
+  "c": "#7c9cff",
+  "h": "Notes.dc.html",
+  "k": "quick reminder remind me peringatan pantas ingatkan cas charge alarm cepat notification before sebelum"
+ },
+ {
+  "t": "Shopping list",
+  "s": "A checklist in Notes. Ask the Assistant to add items",
+  "m": "Planner",
+  "c": "#7c9cff",
+  "h": "Notes.dc.html",
+  "k": "shopping list senarai membeli belah beli belah barang dapur grocery groceries checklist beli buy"
+ },
+ {
   "t": "Islamic Hub",
   "s": "Prayer, Quran, zikir and fasting",
   "m": "Islamic",
@@ -279,6 +295,22 @@ export const SEARCH_INDEX: SearchItem[] = [
   "c": "#b794ff",
   "h": "Habit.dc.html",
   "k": "energy tenaga tired penat letih exhausted energetic bertenaga"
+ },
+ {
+  "t": "Sleep schedule",
+  "s": "When you went to bed and woke up, 7 or 30 days",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "sleep schedule jadual tidur bed bangun wake pukul 7 days 30 days minggu bulan"
+ },
+ {
+  "t": "Feeling unwell",
+  "s": "Note a headache, tired or fever in the Quick log",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "feeling unwell tak sihat sakit headache sakit kepala tired penat fever demam symptom simptom other"
  },
  {
   "t": "Drink Water",

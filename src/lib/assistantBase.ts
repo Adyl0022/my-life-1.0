@@ -233,7 +233,7 @@ export class AssistantBase extends React.Component<any, any> {
       { id: 'thanks', k: ['terima kasih', 'thanks', 'thank', 'tq', 'makasih', 'thx'] },
       { id: 'who', k: ['siapa', 'who are you', 'who', 'kamu', 'nama awak', 'are you ai', 'adakah awak ai', 'chatgpt'] },
       { id: 'family', k: ['keluarga', 'family', 'family planner', 'household', 'chores', 'chore', 'rewards', 'wishes', 'wish list', 'ahli keluarga', 'family code', 'kod keluarga', 'pasangan'] },
-      { id: 'help', k: ['boleh tanya', 'help', 'bantuan', 'apa boleh', 'what can', 'tolong', 'can i ask', 'commands'] },
+      { id: 'help', k: ['boleh tanya', 'help', 'bantuan', 'apa boleh', 'what can', 'tolong', 'can i ask', 'commands', 'awak boleh buat', 'boleh buat apa', 'apa awak boleh', 'what do you do', 'what can you do', 'apa fungsi'] },
       { id: 'puasa', k: ['puasa', 'fasting', 'fast', 'ramadan', 'ramadhan', 'qadha', 'qada', 'sunat', 'sunnah', 'berpuasa'] },
       { id: 'debt', k: ['hutang', 'debt', 'debts', 'komitmen', 'commitment', 'commitments', 'ansuran', 'installment', 'bayaran bulanan', 'monthly payment', 'bil bulanan'] },
       { id: 'lock', k: ['kunci', 'app lock', 'lock', 'pin', 'biometrik', 'biometric', 'fingerprint', 'cap jari'] },
@@ -544,7 +544,7 @@ export class AssistantBase extends React.Component<any, any> {
           if (isl) { hE.push('• Faith: next prayer, prayer times, Quran, zikir, fasting'); hM.push('• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha'); }
           if (fi) { hE.push('• Money: spending, income, money left, category limits, budget alerts, commitments and debts', '• Savings goals: how much saved, progress, what is left to reach a goal', '• How much you can spend today'); hM.push('• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang', '• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran', '• Berapa boleh dibelanjakan hari ini'); }
           if (rc) { hE.push('• Motorcycle: mileage, service, odometer'); hM.push('• Motosikal: jarak, servis, odometer'); }
-          if (pl) { hE.push('• Tasks: open tasks, due soon, events'); hM.push('• Tugasan: tugasan, hampir tarikh, acara'); }
+          if (pl) { hE.push('• Tasks: open tasks, due soon, events', '• Reminders: "remind me tomorrow 12pm to charge laptop", "show my reminders"', '• Shopping list: "add milk and eggs to my shopping list"'); hM.push('• Tugasan: tugasan, hampir tarikh, acara', '• Peringatan: "ingatkan saya esok pukul 12 tengah hari cas laptop", "apa reminder saya"', '• Senarai beli: "tambah susu dan telur ke senarai membeli belah"'); }
           hE.push('• Family Planner: how to open it', '• Life Score: what it is made of and what lifts it', '• Say "undo" to take back the last thing I saved', '• App: reminders, app lock, export' + (fi ? ' (includes savings goals and Money Left)' : ''));
           hM.push('• Family Planner: cara membukanya', '• Skor Life: apa yang membentuknya dan cara menaikkannya', '• Sebut "buat asal" untuk batalkan benda terakhir yang saya simpan', '• App: peringatan, kunci app, eksport' + (fi ? ' (termasuk tabung dan baki wang)' : ''));
           const eg = [], egM = [];
