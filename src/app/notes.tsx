@@ -17,7 +17,7 @@ type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: numb
 type Data = { notes: Note[]; seq: number };
 const COL = ['#7c9cff', '#5ee7df', '#ffc46b', '#ff8fb1', '#a78bfa', '#9be37a', '#94a3b8'];
 const PAPER = [['#4f6bff', '#8a6cff', '#3fb0ff'], ['#0fae9f', '#2f84d8', '#3fd1a8'], ['#f5a623', '#ef6a3a', '#e8436b'], ['#e0518a', '#a24fe0', '#ff8f6b'], ['#7a50e6', '#c05fd8', '#5b7cff'], ['#2fae64', '#2f93c4', '#8bd45a'], ['#334155', '#475569', '#94a3b8']];
-const FILTERS = ['All', 'Pinned', 'Checklist', 'Recent', 'Reminders'];
+const FILTERS = ['Reminders', 'All', 'Pinned', 'Checklist', 'Recent'];
 const SORTS = ['Newest', 'Oldest', 'A–Z'];
 const days = (u: number) => Math.floor((Date.now() - u) / 86400000);
 const when = (u: number) => { const d = days(u); return d <= 0 ? 'Today' : d === 1 ? 'Yesterday' : d + ' days ago'; };
@@ -36,7 +36,7 @@ const overdue = (n: Note) => !!n.rm && !n.rd && n.rm < Date.now();
 export default function Notes() {
   const router = useRouter();
   const [data, setData, ok] = useStored<Data>('ml_notes', { notes: [], seq: 1 });
-  const [filter, setFilter] = useState(0); const [sort, setSort] = useState(0); const [grid, setGrid] = useState(true); const [q, setQ] = useState('');
+  const [filter, setFilter] = useState(1); const [sort, setSort] = useState(0); const [grid, setGrid] = useState(true); const [q, setQ] = useState('');
   const [editId, setEditId] = useState(0); const [draft, setDraft] = useState<Note | null>(null); const [isNew, setIsNew] = useState(false);
   const [menuId, setMenuId] = useState(0); const [confirmDel, setConfirmDel] = useState(false);
   const [toast, setToast] = useState('');
@@ -47,13 +47,13 @@ export default function Notes() {
   const nRem = notes.filter((n) => n.rm && !n.rd).length;
 
   const qq = q.trim().toLowerCase();
-  const FIL = [() => true, (n: Note) => n.pin, isChk, (n: Note) => days(n.u) <= 2, (n: Note) => !!n.rm];
+  const FIL = [(n: Note) => !!n.rm, () => true, (n: Note) => n.pin, isChk, (n: Note) => days(n.u) <= 2];
   const list = notes.filter((n) => FIL[filter](n) && (!qq || (n.t + ' ' + n.s).toLowerCase().includes(qq)));
-  const key = (a: Note, b: Note) => (filter === 4 ? (a.rd ? 1 : 0) - (b.rd ? 1 : 0) || (a.rm || 0) - (b.rm || 0) : sort === 1 ? a.u - b.u : sort === 2 ? (a.t || '').localeCompare(b.t || '') : b.u - a.u);
+  const key = (a: Note, b: Note) => (filter === 0 ? (a.rd ? 1 : 0) - (b.rd ? 1 : 0) || (a.rm || 0) - (b.rm || 0) : sort === 1 ? a.u - b.u : sort === 2 ? (a.t || '').localeCompare(b.t || '') : b.u - a.u);
   const sorted = [...list.filter((n) => n.pin).sort(key), ...list.filter((n) => !n.pin).sort(key)];
   const menuNote = notes.find((n) => n.id === menuId);
 
-  const openNew = () => { cur.current = { s: 0, e: 0 }; const id = data.seq; setDraft({ id, t: '', s: '', c: 6, pin: false, u: Date.now(), r: '' }); setIsNew(true); setEditId(id); setFilter(0); setQ(''); };
+  const openNew = () => { cur.current = { s: 0, e: 0 }; const id = data.seq; setDraft({ id, t: '', s: '', c: 6, pin: false, u: Date.now(), r: '' }); setIsNew(true); setEditId(id); setFilter(1); setQ(''); };
   const openEdit = (n: Note) => { cur.current = { s: n.s.length, e: n.s.length }; setDraft({ ...n }); setIsNew(false); setEditId(n.id); };
   const closeEd = () => { setEditId(0); setDraft(null); setConfirmDel(false); };
   const edOpen = useRef(false); edOpen.current = !!draft;
@@ -156,7 +156,7 @@ export default function Notes() {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0, marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 2, alignItems: 'center' }}>
           {FILTERS.map((n, i) => (
-            <Pressable key={n} onPress={() => setFilter(i)}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: i === 4 ? 7.5 : 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: filter === i ? 'rgba(255,196,107,.3)' : 'rgba(255,255,255,.1)', ...(i === 4 ? { borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,213,147,.75)' } : {}) }}>{i === 4 ? <Bell c="#ffd593" z={13} /> : null}<Text style={{ color: filter === i ? W : i === 4 ? '#ffd593' : 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 17, fontWeight: filter === i ? '800' : '600' }}>{i === 4 && nRem ? n + ' · ' + nRem : n}</Text></View></Pressable>
+            <Pressable key={n} onPress={() => setFilter(i)}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: i === 0 ? 7.5 : 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: filter === i ? 'rgba(255,196,107,.3)' : 'rgba(255,255,255,.1)', ...(i === 0 ? { borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,213,147,.75)' } : {}) }}>{i === 0 ? <Bell c="#ffd593" z={13} /> : null}<Text style={{ color: filter === i ? W : i === 0 ? '#ffd593' : 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 17, fontWeight: filter === i ? '800' : '600' }}>{i === 0 && nRem ? n + ' · ' + nRem : n}</Text></View></Pressable>
           ))}
         </ScrollView>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
