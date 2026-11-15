@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from './Txt';
@@ -46,7 +47,8 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
   const dropExp = (id: string) => setH({ ...h, exps: (h.exps || []).filter((x) => x.id !== id) });
 
   return (<>
-    <Glass radius={26} style={{ marginTop: 12, padding: 16 }}>
+    <View style={{ marginTop: 12, padding: 16, borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
+      <LinearGradient colors={['#4b3fa6', '#6d4fc4']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
       <CardArt kind="intel" />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <HeadIcon k="brain" size={48} />
@@ -55,7 +57,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
           <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 17, marginTop: 4 }}>Understand your habits, discover your patterns and improve your everyday life.</Text>
         </View>
       </View>
-    </Glass>
+    </View>
 
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
       <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.6 }}>DAILY OVERVIEW · TODAY</Text>
