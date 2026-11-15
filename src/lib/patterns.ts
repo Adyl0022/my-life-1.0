@@ -1,4 +1,4 @@
-import { HData, HDay, getDay, dateOf, keyOfDate, MOODS, MON } from './habit';
+import { HData, HDay, Exp, getDay, dateOf, keyOfDate, MOODS, MON } from './habit';
 
 // My Life Intelligence: simple rules that run on the phone, on the person's own records. No AI service.
 export const ENERGY: [string, string][] = [['Very energetic', '#7df0c6'], ['Normal', '#8fe9e2'], ['Tired', '#ffc46b'], ['Exhausted', '#ff8fab']];
@@ -72,11 +72,43 @@ export function weekFacts(h: HData): string[] {
 }
 
 export type Win = { steps: number | null; water: number | null; sleep: number | null; mood: number | null; days: number };
-// Averages over 7 days that end `end` days from today (0 = today, -30 = 30 days ago).
-export function windowAvg(h: HData, end: number): Win {
+// Averages over the days from `from` to `to` (0 = today, -30 = 30 days ago).
+export function avgRange(h: HData, from: number, to: number): Win {
   const acc = { steps: [] as number[], water: [] as number[], sleep: [] as number[], mood: [] as number[] }; let days = 0;
-  for (let o = end - 6; o <= end; o++) { const d = getDay(h, o); if (hasAny(d)) days++; if (d.steps > 0) acc.steps.push(d.steps); if (d.cups > 0) acc.water.push(d.cups); if (d.sleep > 0) acc.sleep.push(d.sleep); if (d.mood >= 0) acc.mood.push(d.mood); }
+  for (let o = from; o <= to; o++) { const d = getDay(h, o); if (hasAny(d)) days++; if (d.steps > 0) acc.steps.push(d.steps); if (d.cups > 0) acc.water.push(d.cups); if (d.sleep > 0) acc.sleep.push(d.sleep); if (d.mood >= 0) acc.mood.push(d.mood); }
   const m = (a: number[]) => (a.length ? a.reduce((p, q) => p + q, 0) / a.length : null);
   return { steps: m(acc.steps), water: m(acc.water), sleep: m(acc.sleep), mood: m(acc.mood), days };
+}
+// Averages over 7 days that end `end` days from today.
+export const windowAvg = (h: HData, end: number): Win => avgRange(h, end - 6, end);
+
+// Experiments: small tests of the person's own habits. Only things the app already records can be counted.
+export type Tpl = { id: string; title: string; days: number; note: string; ok: (x: HDay) => boolean | null };
+export const TPLS: Tpl[] = [
+  { id: 'bed', title: 'Sleep before 11 pm', days: 7, note: 'Counted from the bedtime you log in Today', ok: (x) => { const m = /^(\d{1,2}):(\d{2})$/.exec(x.bed || ''); if (!m) return null; const v = +m[1] * 60 + +m[2]; return v >= 18 * 60 && v <= 23 * 60; } },
+  { id: 'sleep7', title: 'Sleep 7 hours or more', days: 7, note: 'Counted from your sleep record', ok: (x) => (x.sleep > 0 ? x.sleep >= 7 : null) },
+  { id: 'steps', title: 'Walk 6,000 steps a day', days: 7, note: 'Counted from your steps', ok: (x) => (x.steps > 0 ? x.steps >= 6000 : null) },
+  { id: 'water', title: 'Drink 7 glasses a day', days: 14, note: 'Counted from your water', ok: (x) => (x.cups > 0 ? x.cups >= 7 : null) },
+];
+export type ExpState = { tpl: Tpl; cells: ('hit' | 'miss' | 'none' | 'future')[]; hit: number; logged: number; dayNo: number; done: boolean; rows: { l: string; a: string; b: string }[] };
+export function expState(e: Exp, h: HData): ExpState | null {
+  const tpl = TPLS.find((t) => t.id === e.tpl); if (!tpl) return null;
+  const startOff = Math.round((new Date(e.start + 'T12:00:00').getTime() - dateOf(0).getTime()) / 86400000);
+  const cells: ExpState['cells'] = []; let hit = 0, logged = 0;
+  for (let i = 0; i < tpl.days; i++) {
+    const o = startOff + i; if (o > 0) { cells.push('future'); continue; }
+    const r = tpl.ok(getDay(h, o)); if (r === null) cells.push('none'); else { logged++; if (r) hit++; cells.push(r ? 'hit' : 'miss'); }
+  }
+  const endOff = startOff + tpl.days - 1; const done = endOff < 0;
+  const rows: ExpState['rows'] = [];
+  if (done || logged > 0) {
+    const bef = avgRange(h, startOff - tpl.days, startOff - 1), dur = avgRange(h, startOff, Math.min(endOff, 0));
+    const add = (l: string, a: number | null, b: number | null, f: (n: number) => string) => { if (a != null && b != null) rows.push({ l, a: f(a), b: f(b) }); };
+    add('Sleep a night', bef.sleep, dur.sleep, (n) => hrs(n));
+    add('Steps a day', bef.steps, dur.steps, (n) => Math.round(n).toLocaleString());
+    add('Water a day', bef.water, dur.water, (n) => (Math.round(n * 10) / 10) + ' glasses');
+    add('Mood', bef.mood, dur.mood, (n) => MOODS[Math.max(0, Math.min(4, Math.round(n)))][0]);
+  }
+  return { tpl, cells, hit, logged, dayNo: Math.min(tpl.days, -startOff + 1), done, rows };
 }
 export { keyOfDate };

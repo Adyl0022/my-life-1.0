@@ -3,8 +3,8 @@ import * as Notifications from 'expo-notifications';
 import { withNavBar } from './permNav';
 import { getItem } from './store';
 
-export type Toggles = { ev: boolean; pr: boolean; zk: boolean; qh: boolean };
-export const TG_DEFAULT: Toggles = { ev: true, pr: true, zk: true, qh: true };
+export type Toggles = { ev: boolean; pr: boolean; zk: boolean; qh: boolean; md: boolean };
+export const TG_DEFAULT: Toggles = { ev: true, pr: true, zk: true, qh: true, md: true };
 export const readToggles = async (): Promise<Toggles> => ({ ...TG_DEFAULT, ...(await getItem<Partial<Toggles>>('ml_toggles', {})) });
 // Quiet hours: nothing rings between 12 am and 5 am.
 export const inQuiet = (at: Date, tg: Toggles) => !!tg.qh && at.getHours() < 5;

@@ -70,11 +70,24 @@ export default function Habit() {
   const [edit, setEdit] = useState(false); const [gv, setGv] = useState('');
   const hRef = useRef(h); hRef.current = h;
   const [autoMsg, setAutoMsg] = useState('');
+  const [medEdit, setMedEdit] = useState(false); const [medName, setMedName] = useState(''); const [mDose, setMDose] = useState(''); const [mTime, setMTime] = useState(''); const [mErr, setMErr] = useState('');
   const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState<string | null>(null); const [wake, setWake] = useState<string | null>(null);
   const goal = h.goal || 8000;
   const cg = cupsGoal(h); const kg = latestKg(h);
   const t = getDay(h, 0);
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [keyOfDate(dateOf(0))]: { ...t, ...p } } });
+  const meds = h.meds || []; const taken = t.med || [];
+  const to12 = (s: string) => { const m = /^(\d{1,2}):(\d{2})$/.exec(s); if (!m) return s; const hh = +m[1]; return (hh % 12 || 12) + ':' + m[2] + ' ' + (hh < 12 ? 'am' : 'pm'); };
+  const addMed = () => {
+    const name = medName.trim(); const tm = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(mTime);
+    if (!name) { setMErr('Type the name of the medicine.'); return; }
+    if (!tm) { setMErr('Type the time as 24-hour, for example 20:30.'); return; }
+    if (meds.length >= 10) { setMErr('You can keep up to 10 medicines.'); return; }
+    const tt = String(+tm[1]).padStart(2, '0') + ':' + tm[2];
+    setH({ ...h, meds: [...meds, { id: String(Date.now()), name: name.slice(0, 40), dose: mDose.trim().slice(0, 60), time: tt }].sort((a, b) => (a.time < b.time ? -1 : 1)) });
+    setMedName(''); setMDose(''); setMTime(''); setMErr('');
+  };
+  const dropMed = (id: string) => setH({ ...h, meds: meds.filter((m) => m.id !== id) });
   const km = (t.steps * 0.00075).toFixed(1);
   const gp = goalPctOf(t, goal, cg);
   const stepPct = Math.min(t.steps / goal, 1);
@@ -216,7 +229,7 @@ export default function Habit() {
             ))}
           </View>
 
-          {tab === 'patterns' && <PatternsTab h={h} onToday={() => setTab('today')} />}
+          {tab === 'patterns' && <PatternsTab h={h} setH={setH} onToday={() => setTab('today')} />}
           {tab === 'today' && (<>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="goal" t="Goal Tracker" />
@@ -328,6 +341,32 @@ export default function Habit() {
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8, lineHeight: 15 }}>{own ? 'Tap your choice again to go back to the estimate.' : 'This is a guess from what you logged. Tap how you really feel to replace it.'}</Text>
             </>); })()}
+          </Glass>
+          <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Ttl nm k="medicine" t="Medication" />
+              <Pressable onPress={() => { setMedEdit(!medEdit); setMErr(''); }} hitSlop={10}><Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>{medEdit ? 'Done' : meds.length ? 'Manage' : '+ Add'}</Text></Pressable>
+            </View>
+            <Lbl t={meds.length ? 'Today: ' + meds.filter((m) => taken.includes(m.id)).length + ' of ' + meds.length + ' taken' : 'Add a medicine to get reminders and tick it off each day'} />
+            {meds.map((m) => { const on = taken.includes(m.id); return (
+              <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{m.name}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{(m.dose ? m.dose + ' · ' : '') + to12(m.time)}</Text>
+                </View>
+                {medEdit ? <Pressable onPress={() => dropMed(m.id)} hitSlop={8}><Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable>
+                  : <Pressable onPress={() => put({ med: on ? taken.filter((x) => x !== m.id) : [...taken, m.id] })} style={{ paddingVertical: 7, paddingHorizontal: 13, borderRadius: 999, backgroundColor: on ? T : 'rgba(255,255,255,.14)' }}><Text style={{ color: on ? '#06222a' : W, fontSize: 12, fontWeight: '800' }}>{on ? 'Taken ✓' : 'Mark taken'}</Text></Pressable>}
+              </View>); })}
+            {medEdit ? (
+              <View style={{ marginTop: 12, gap: 8 }}>
+                <Inp value={medName} onChangeText={setMedName} placeholder="Name of the medicine" />
+                <Inp value={mDose} onChangeText={setMDose} placeholder="Dose, as on the label or your doctor's note" />
+                <Inp value={mTime} onChangeText={(v: string) => setMTime(fmtTime(v))} placeholder="Reminder time, 24-hour, e.g. 20:30" keyboardType="number-pad" />
+                {mErr ? <Text style={{ color: '#ffb3bf', fontSize: 12 }}>{mErr}</Text> : null}
+                <Pressable onPress={addMed} style={{ alignSelf: 'flex-start' }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 20, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>Add medicine</Text></LinearGradient></Pressable>
+              </View>
+            ) : null}
+            <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>Type the dose from your doctor or the medicine label. My Life does not give dose advice. You get a reminder at the time you set, and again an hour later if it is not ticked.</Text>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="note" t="Today's note" /><Lbl t="Why do you feel this way? (optional)" />

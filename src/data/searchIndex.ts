@@ -249,6 +249,22 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "patterns pattern intelligence corak kalendar calendar time machine energy tenaga overview insight link hubungan"
  },
  {
+  "t": "Medicine reminder",
+  "s": "Reminder for your medicine, again after 1 hour",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "medicine medication ubat reminder peringatan dose dos pill"
+ },
+ {
+  "t": "Experiments",
+  "s": "Try a 7 or 14 day challenge and see the change",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "experiment experiments challenge cabaran eksperimen before after sleep tidur steps water"
+ },
+ {
   "t": "Energy",
   "s": "How energetic you feel today",
   "m": "Habit",

@@ -39,7 +39,7 @@ const GP = ['#7c9cff', '#b794ff'] as [string, string];
 const Ttl = ({ t }: { t: string }) => <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{t}</Text>;
 const Lbl = ({ t, style }: { t: string; style?: any }) => <Text style={[{ color: DIM, fontSize: 11.5, marginTop: 2, lineHeight: 16 }, style]}>{t}</Text>;
 const TILE: Record<string, [string, string]> = {
-  ev: ['#7c9cff', '#5b7bff'], pr: ['#34d399', '#12a58a'], zk: ['#ffc46b', '#ff8f5a'], wt: ['#5ee7df', '#4a8dff'], qh: ['#b794ff', '#7059e8'],
+  ev: ['#7c9cff', '#5b7bff'], pr: ['#34d399', '#12a58a'], zk: ['#ffc46b', '#ff8f5a'], wt: ['#5ee7df', '#4a8dff'], md: ['#5ee7df', '#7c9cff'], qh: ['#b794ff', '#7059e8'],
   export: ['#5ee7b5', '#26b8c9'], lang: ['#c79bff', '#ff8fab'], pw: ['#7c9cff', '#9a7bff'], nd: ['#ffc46b', '#ff7a6b'], dev: ['#8aa4d8', '#5d6fa8'], bk: ['#5ee7df', '#3aa6c9'], log: ['#ff8fab', '#b794ff'],
 };
 function Glyph({ k }: { k: string }) {
@@ -50,6 +50,7 @@ function Glyph({ k }: { k: string }) {
       {k === 'pr' && <Path d="M3 21h18M5 21v-7M19 21v-7M7 14a5 5 0 0 1 10 0M12 4v3M10 21v-3a2 2 0 0 1 4 0v3" {...p} />}
       {k === 'zk' && <>{Array.from({ length: 8 }, (_, i) => { const t = (i / 8) * Math.PI * 2; return <Circle key={i} cx={12 + 7 * Math.cos(t)} cy={11 + 7 * Math.sin(t)} r={1.7} fill="#fff" />; })}<Path d="M12 18.5v3.2" {...p} /></>}
       {k === 'wt' && <Path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" {...p} />}
+      {k === 'md' && <><Path d="M8.5 4.5a3.5 3.5 0 0 1 5 0l6 6a3.5 3.5 0 0 1-5 5l-6-6a3.5 3.5 0 0 1 0-5z" {...p} /><Path d="M9 14.5l5.5-5.5" {...p} /></>}
       {k === 'qh' && <Path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" {...p} />}
       {k === 'export' && <Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...p} />}
       {k === 'lang' && <><Circle cx={12} cy={12} r={9} {...p} /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" {...p} /></>}
@@ -200,9 +201,9 @@ export default function Settings() {
   const say = (t: string) => { setToast(t); setTimeout(() => setToast(''), 2200); };
   const close = () => { setDlg(''); setTyped(''); setPwv(''); setP1(''); setP2(''); setP3(''); setPwErr(''); };
 
-  const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
+  const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['md', 'Medicine reminders', 'At the time you set, and again an hour later'], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
   const hid = useHidden();
-  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : true));
+  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : k === 'md' ? hid.on('habit') : true));
   const isDel = dlg === 'delete';
   const [fam, setFam] = useState<{ name: string; role: string; n: number } | null>(null);
   const askDelete = () => {
@@ -260,7 +261,7 @@ export default function Settings() {
               <ModulesCard />
               <Glass style={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                 <View style={{ paddingTop: 8 }}><Ttl t="Reminders and notifications" /></View>
-                {TOGSHOW.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOGSHOW.length - 1} onPress={() => setTg({ ...tg, [k]: !tg[k] })} right={<Sw on={!!tg[k]} />} />)}
+                {TOGSHOW.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOGSHOW.length - 1} onPress={() => setTg({ ...tg, [k]: tg[k] === false })} right={<Sw on={tg[k] !== false} />} />)}
               </Glass>
 
               <Glass style={{ padding: 16 }}>

@@ -1,5 +1,7 @@
-export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number; en?: number };
-export type HData = { goal: number; days: Record<string, HDay>; kg?: { d: string; v: number }[]; cm?: number; goalKg?: number; age?: number; sex?: 'm' | 'f'; auto?: boolean };
+export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number; en?: number; med?: string[] };
+export type Med = { id: string; name: string; dose: string; time: string };
+export type Exp = { id: string; tpl: string; start: string };
+export type HData = { meds?: Med[]; exps?: Exp[]; goal: number; days: Record<string, HDay>; kg?: { d: string; v: number }[]; cm?: number; goalKg?: number; age?: number; sex?: 'm' | 'f'; auto?: boolean };
 export const HEMPTY: HData = { goal: 8000, days: {}, kg: [] };
 export const BLANK: HDay = { mood: -1, cups: 0, sleep: 0, steps: 0 };
 export const GLASS = 250;

@@ -120,3 +120,37 @@ export async function syncWeekAlert(tg: Toggles): Promise<void> {
     });
   } catch (e) { /* ignore */ }
 }
+
+type MedRow = { id: string; name: string; dose: string; time: string };
+// Medicine reminders: every day at the time set, and again one hour later if it is not ticked yet. Quiet hours do not mute these.
+export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('med-');
+    if (!on || !meds.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('meds', { name: 'Medicine reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#5ee7df' });
+    const now = Date.now();
+    for (const m of meds.slice(0, 10)) {
+      const t = /^(\d{1,2}):(\d{2})$/.exec(m.time || ''); if (!t) continue;
+      const hh = +t[1], mm = +t[2];
+      const body = m.name + (m.dose ? ' · ' + m.dose : '');
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'med-' + m.id + '-daily',
+        content: { title: 'Medicine reminder', body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh, minute: mm, channelId: 'meds' } as any,
+      });
+      // One reminder an hour later for each of the next 7 days. Ticking the medicine in the app cancels that day's reminder.
+      for (let d = 0; d < 7; d++) {
+        if (d === 0 && takenToday.includes(m.id)) continue;
+        const at = new Date(); at.setDate(at.getDate() + d); at.setHours(hh + 1, mm, 0, 0);
+        if (at.getTime() <= now + 5000) continue;
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'med-' + m.id + '-fu-' + at.getFullYear() + (at.getMonth() + 1) + at.getDate(),
+          content: { title: 'Did you take your medicine?', body, sound: true },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'meds' } as any,
+        });
+      }
+    }
+  } catch (e) { /* ignore */ }
+}

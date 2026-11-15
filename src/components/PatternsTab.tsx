@@ -5,7 +5,7 @@ import { Glass } from './Glass';
 import { HeadIcon } from './HabitIcons';
 import { useStored } from '../lib/store';
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal } from '../lib/habit';
-import { ENERGY, energyEstimate, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, Win } from '../lib/patterns';
+import { ENERGY, energyEstimate, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, expState } from '../lib/patterns';
 
 const T = '#5ee7df';
 const W = '#fff';
@@ -22,7 +22,7 @@ const Tile = ({ ic, v, l }: { ic: string; v: string; l: string }) => (
 );
 
 // The first tab of Habit & Health. It only reads what is already logged.
-export function PatternsTab({ h, onToday }: { h: HData; onToday: () => void }) {
+export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) => void; onToday: () => void }) {
   const goal = h.goal || 8000, cg = cupsGoal(h);
   const t = getDay(h, 0);
   const est = t.en != null && t.en >= 0 ? { lvl: t.en, own: true, why: 'Your own rating' } : (() => { const e = energyEstimate(t, cg, goal); return e ? { lvl: e.lvl, own: false, why: e.why } : null; })();
@@ -54,6 +54,15 @@ export function PatternsTab({ h, onToday }: { h: HData; onToday: () => void }) {
     { l: 'Mood', a: then.mood != null ? MOODS[Math.round(then.mood)][0] : null, b: now.mood != null ? MOODS[Math.round(now.mood)][0] : null, up: then.mood != null && now.mood != null ? now.mood >= then.mood : null },
   ];
   const nowAny = now.days > 0;
+  // Experiments
+  const [newOpen, setNewOpen] = useState(false);
+  const exps = (h.exps || []).map((e) => ({ e, st: expState(e, h) })).filter((x) => x.st);
+  const active = exps.filter((x) => !x.st!.done), finished = exps.filter((x) => x.st!.done).slice(-3).reverse();
+  const startExp = (tpl: string) => {
+    if (active.some((x) => x.e.tpl === tpl) || active.length >= 3) return;
+    setH({ ...h, exps: [...(h.exps || []), { id: String(Date.now()), tpl, start: keyOfDate(dateOf(0)) }] }); setNewOpen(false);
+  };
+  const dropExp = (id: string) => setH({ ...h, exps: (h.exps || []).filter((x) => x.id !== id) });
 
   return (<>
     <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
@@ -161,6 +170,51 @@ export function PatternsTab({ h, onToday }: { h: HData; onToday: () => void }) {
         </View>
       ))}
       <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8 }}>{then.days === 0 ? 'Nothing was logged around then. Try a shorter time back.' : !nowAny ? 'Nothing logged in the last 7 days.' : 'Averages use only the days that have a record.'}</Text>
+    </Glass>
+    <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+      <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Experiments</Text>
+      <Text style={{ color: DIM, fontSize: 12 }}>Small tests of your own habits</Text>
+      {active.map(({ e, st }) => (
+        <View key={e.id} style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
+          <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4 }}>{'ACTIVE · DAY ' + st!.dayNo + ' OF ' + st!.tpl.days}</Text>
+          <Text style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 3 }}>{st!.tpl.title}</Text>
+          <View style={{ flexDirection: 'row', gap: 4, marginTop: 8 }}>
+            {st!.cells.map((c, i) => <View key={i} style={{ flex: 1, height: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: c === 'hit' ? T : c === 'miss' ? 'rgba(255,143,171,.55)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: c === 'hit' ? '#06222a' : W, fontSize: 10, fontWeight: '800' }}>{c === 'hit' ? '✓' : c === 'miss' ? '✕' : ''}</Text></View>)}
+          </View>
+          <Text style={{ color: DIM, fontSize: 11.5, marginTop: 6 }}>{'Target met on ' + st!.hit + ' of ' + st!.logged + ' recorded days. ' + st!.tpl.note + '.'}</Text>
+          <Pressable onPress={() => dropExp(e.id)} hitSlop={8} style={{ marginTop: 6, alignSelf: 'flex-start' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, fontWeight: '700' }}>Stop this experiment</Text></Pressable>
+        </View>
+      ))}
+      {newOpen ? (
+        <View style={{ marginTop: 10 }}>
+          {TPLS.map((t) => { const used = active.some((x) => x.e.tpl === t.id); return (
+            <Pressable key={t.id} disabled={used} onPress={() => startExp(t.id)} style={{ marginTop: 8, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)', opacity: used ? 0.45 : 1 }}>
+              <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{t.title}</Text>
+              <Text style={{ color: DIM, fontSize: 11.5, marginTop: 2 }}>{t.days + ' days · ' + (used ? 'already running' : t.note)}</Text>
+            </Pressable>); })}
+          <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>Only things the app already records can be counted: sleep, steps, water and mood.</Text>
+        </View>
+      ) : null}
+      <Pressable onPress={() => setNewOpen(!newOpen)} style={{ marginTop: 12, alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: active.length >= 3 && !newOpen ? 'rgba(255,255,255,.12)' : 'rgba(124,156,255,.45)' }}>
+        <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{newOpen ? 'Close' : '+ New experiment'}</Text>
+      </Pressable>
+      {finished.length > 0 ? (
+        <View style={{ marginTop: 14 }}>
+          <Text style={{ color: DIM, fontSize: 11.5, fontWeight: '700' }}>FINISHED</Text>
+          {finished.map(({ e, st }) => (
+            <View key={e.id} style={{ marginTop: 8, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
+              <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{st!.tpl.title}</Text>
+              <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>{'Target met on ' + st!.hit + ' of ' + st!.tpl.days + ' days' + (st!.logged < st!.tpl.days ? ' (' + (st!.tpl.days - st!.logged) + ' with no record)' : '')}</Text>
+              {st!.rows.length > 0 ? <View style={{ marginTop: 6 }}>
+                <View style={{ flexDirection: 'row' }}><Text style={{ flex: 1.2, color: 'rgba(255,255,255,.5)', fontSize: 10.5 }}> </Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.5)', fontSize: 10.5, fontWeight: '700' }}>BEFORE</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.5)', fontSize: 10.5, fontWeight: '700' }}>DURING</Text></View>
+                {st!.rows.map((r) => <View key={r.l} style={{ flexDirection: 'row', paddingVertical: 3 }}><Text style={{ flex: 1.2, color: DIM, fontSize: 12 }}>{r.l}</Text><Text style={{ flex: 1, color: W, fontSize: 12, fontWeight: '700' }}>{r.a}</Text><Text style={{ flex: 1, color: W, fontSize: 12, fontWeight: '800' }}>{r.b}</Text></View>)}
+              </View> : null}
+              <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 6 }}>A personal observation from your own records, not clinical evidence.</Text>
+              <Pressable onPress={() => dropExp(e.id)} hitSlop={8} style={{ marginTop: 6, alignSelf: 'flex-start' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, fontWeight: '700' }}>Remove</Text></Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </Glass>
   </>);
 }
