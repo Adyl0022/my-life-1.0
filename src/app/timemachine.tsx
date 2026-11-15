@@ -13,7 +13,7 @@ import { Hologram3D } from '../components/Hologram3D';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, dateOf, WD, MON } from '../lib/habit';
-import { REGIONS, Region, rowsFor, glowOf, hasRecords, FMETRICS, guess, weightGuess } from '../lib/twin';
+import { REGIONS, Region, Row, rowsFor, glowOf, hasRecords, FMETRICS, guess, weightGuess } from '../lib/twin';
 import { Platform } from 'react-native';
 
 const T = '#5ee7df'; const DIM = 'rgba(255,255,255,.7)';
@@ -22,6 +22,36 @@ const dl = (off: number) => { const d = dateOf(off); return off === 0 ? 'Today' 
 const Chip = ({ on, t, onPress, c }: { on: boolean; t: string; onPress: () => void; c?: string }) => (
   <Pressable onPress={onPress} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? (c || T) : 'rgba(255,255,255,.12)' }}><Text style={{ color: on ? '#06222a' : W, fontSize: 12.5, fontWeight: '800' }}>{t}</Text></Pressable>
 );
+
+
+// Small readouts around the 3D body. Only real records; a missing record shows a dash.
+const Hud = ({ rows, goal }: { rows: Row[]; goal: number }) => {
+  const g = (l: string) => rows.find((r) => r.l === l);
+  const Cell = ({ l, c, pct }: { l: string; c: string; pct?: number }) => {
+    const r = g(l); return (
+      <View pointerEvents="none" style={{ marginBottom: 7, minWidth: 74 }}>
+        <Text style={{ color: 'rgba(143,233,226,.75)', fontSize: 9.5, fontWeight: '800', letterSpacing: 1 }}>{l.toUpperCase()}</Text>
+        <Text style={{ color: r && r.v != null ? W : 'rgba(255,255,255,.35)', fontSize: 13, fontWeight: '800', marginTop: 1 }}>{r && r.v != null ? r.t : '-'}</Text>
+        {pct != null ? <View style={{ height: 2, borderRadius: 1, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 3, width: 62 }}><View style={{ height: 2, borderRadius: 1, width: Math.round(62 * Math.max(0, Math.min(1, pct))), backgroundColor: c }} /></View> : null}
+      </View>
+    );
+  };
+  const st = g('Steps'), wa = g('Water'), sl = g('Sleep');
+  return (
+    <>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 6 }}>
+        <Cell l="Steps" c="#5ee7df" pct={st && st.v != null ? st.v / goal : 0} />
+        <Cell l="Water" c="#7c9cff" pct={wa && wa.v != null ? wa.v / 8 : 0} />
+        <Cell l="Sleep" c="#b794ff" pct={sl && sl.v != null ? sl.v / 8 : 0} />
+      </View>
+      <View pointerEvents="none" style={{ position: 'absolute', right: 0, top: 6, alignItems: 'flex-end' }}>
+        <Cell l="Mood" c="#ff8fab" />
+        <Cell l="Weight" c="#ffc46b" />
+        <Cell l="BMI" c="#8fe9e2" />
+      </View>
+    </>
+  );
+};
 
 export default function TimeMachinePage() {
   const router = useRouter(); const { width } = useWindowDimensions();
@@ -116,7 +146,12 @@ export default function TimeMachinePage() {
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
           <Text style={{ color: mode === 'past' ? T : '#c9b0ff', textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 }}>{mode === 'past' ? dl(a).toUpperCase() : 'ESTIMATE · IN ' + hz + ' DAYS'}</Text>
           {use3d && !failed
-            ? <Hologram3D key="3d" w={Math.min(260, width - 40)} h={300} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} onFail={() => setFailed(true)} />
+            ? (
+              <View style={{ width: Math.min(360, width - 32), alignSelf: 'center' }}>
+                <Hologram3D key="3d" w={Math.min(360, width - 32)} h={330} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} onFail={() => setFailed(true)} />
+                {mode === 'past' ? <Hud rows={rowsFor(h, a, 'body')} goal={h.goal || 8000} /> : null}
+              </View>
+            )
             : <Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} />}
           {use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
           {use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
