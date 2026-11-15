@@ -1,5 +1,5 @@
 import { HData, HDay, HeartRead, BLANK, getDay, dateOf, keyOfDate, MOODS, cupsGoal, goalPctOf, latestKg } from './habit';
-import { ENERGY, hasAny } from './patterns';
+import { ENERGY, hasAny, energyEstimate } from './patterns';
 import { BREATH } from './relax';
 
 // Time Machine twin: only what the app really records. Nothing here makes up a reading.
@@ -28,12 +28,20 @@ export type Row = { l: string; v: number | null; t: string; unit?: string };
 const r1 = (n: number) => String(Math.round(n * 10) / 10);
 const row = (l: string, v: number | null, f: (n: number) => string): Row => ({ l, v, t: v == null ? 'No record' : f(v) });
 
+// Your own rating when you gave one; otherwise the estimate from sleep, water, steps and mood, marked as an estimate.
+function energyRow(h: HData, x: HDay): Row {
+  if ((x.en ?? -1) >= 0) return row('Energy (your own rating)', 3 - (x.en as number), (n) => ENERGY[3 - Math.round(n)][0]);
+  const e = energyEstimate(x, cupsGoal(h), h.goal || 8000);
+  if (e) return row('Energy (estimate)', 3 - e.lvl, (n) => ENERGY[3 - Math.round(n)][0] + ' · estimate');
+  return row('Energy', null, () => '');
+}
+
 // Rows for one region on one day (off 0 = today, -1 = yesterday...). A row without a record says so.
 export function rowsFor(h: HData, off: number, k: Region): Row[] {
   const x: HDay = getDay(h, off); const pos = (n: number) => (n > 0 ? n : null);
   if (k === 'brain') return [
     row('Mood', x.mood >= 0 ? x.mood : null, (n) => MOODS[Math.round(n)][0]),
-    row('Energy (your own rating)', (x.en ?? -1) >= 0 ? 3 - (x.en as number) : null, (n) => ENERGY[3 - Math.round(n)][0]),
+    energyRow(h, x),
     row('Sleep', pos(x.sleep), (n) => r1(n) + ' h'),
     row('Calm minutes', pos(calmMins(x)), (n) => r1(n) + ' min'),
     row('Feeling unwell', (x.sy || []).length || null, () => (x.sy || []).join(', ')),
