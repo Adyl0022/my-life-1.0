@@ -109,7 +109,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8, flexGrow: 0 }} contentContainerStyle={{ gap: 6 }}>
             {UNWELL.map((x) => { const on = usy.includes(x); return <Pressable key={x} onPress={() => setUsy(on ? usy.filter((y) => y !== x) : [...usy, x])} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: on ? '#8fe9e2' : 'rgba(255,255,255,.12)' }}><Text style={{ color: on ? '#06222a' : '#fff', fontSize: 12, fontWeight: '800' }}>{x}</Text></Pressable>; })}
-            <Pressable onPress={() => setOthOn(true)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>Other</Text></Pressable>
+            <Pressable onPress={() => setOthOn(true)} accessibilityLabel="Other, type what you feel" style={{ paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#8fe9e2' }}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '800' }}>Other…</Text></Pressable>
           </ScrollView>
         )}
       </View>); }
