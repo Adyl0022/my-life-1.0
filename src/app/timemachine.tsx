@@ -182,7 +182,7 @@ export default function TimeMachinePage() {
           {prev === null && note ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, textAlign: 'center', marginTop: 6 }}>{'3D stopped last time at: ' + note + '. The flat hologram is shown. Tap the chip above to try 3D again.'}</Text> : null}
           {prev === null && use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
           {prev === null && use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 6 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingVertical: 6, paddingHorizontal: 20 }}>
             {REGIONS.map((r) => <Chip key={r.k} on={reg === r.k} t={r.l} onPress={() => pick(r.k)} c={r.c} />)}
           </ScrollView>
           <Animated.View style={{ opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
