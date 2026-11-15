@@ -5,6 +5,7 @@ import { Glass } from './Glass';
 import { HeadIcon } from './HabitIcons';
 import { useStored } from '../lib/store';
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal } from '../lib/habit';
+import { cyclePatterns } from '../lib/cycle';
 import { ENERGY, energyEstimate, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, expState } from '../lib/patterns';
 
 const T = '#5ee7df';
@@ -29,7 +30,8 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
   const [off, setOff] = useStored<Record<string, number>>('ml_pat_off', {});
   const [why, setWhy] = useState('');
   const pats = findPatterns(h);
-  const shown = pats.list.filter((p) => !(off[p.id] && Date.now() - off[p.id] < 30 * 86400000)).slice(0, 3);
+  const cyP = h.cyOn ? cyclePatterns(h) : [];
+  const shown = [...pats.list, ...cyP].filter((p) => !(off[p.id] && Date.now() - off[p.id] < 30 * 86400000)).slice(0, 3);
   const facts = weekFacts(h);
   // Calendar
   const [mo, setMo] = useState(0);
@@ -135,14 +137,16 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
             return (
               <Pressable key={i} disabled={fut} onPress={() => setPick(k)} style={{ flex: 1, aspectRatio: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: lv ? 'rgba(94,231,223,' + (0.1 + lv * 0.13) + ')' : 'rgba(255,255,255,.07)', borderWidth: on ? 2 : isT ? 1.5 : 0, borderColor: on ? W : 'rgba(255,255,255,.6)', opacity: fut ? 0.35 : 1 }}>
                 <Text style={{ color: W, fontSize: 11.5, fontWeight: isT ? '800' : '600' }}>{d}</Text>
+                {h.cyOn && !fut && dayOf(k).pd ? <View style={{ position: 'absolute', bottom: 3, width: 6, height: 6, borderRadius: 3, backgroundColor: '#ff8fab' }} /> : null}
               </Pressable>
             );
           })}
         </View>
       ))}
-      <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8 }}>Brighter means more things were logged that day.</Text>
+      <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8 }}>{'Brighter means more things were logged that day.' + (h.cyOn ? ' A pink dot marks a period day.' : '')}</Text>
       <View style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
         <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{WD[sdt.getDay()] + ', ' + sdt.getDate() + ' ' + MON[sdt.getMonth()]}</Text>
+        {h.cyOn && sd.pd ? <Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '700', marginTop: 4 }}>Period day</Text> : null}
         {hasAny(sd) ? (
           <View style={{ marginTop: 6, gap: 3 }}>
             {[['Steps', sd.steps > 0 ? Math.round(sd.steps).toLocaleString() : 'No record'], ['Water', sd.cups > 0 ? sd.cups + ' of ' + cg + ' glasses' : 'No record'], ['Sleep', sd.sleep > 0 ? hrs(sd.sleep) : 'No record'], ['Mood', sd.mood >= 0 ? MOODS[sd.mood][0] : 'No record'], ['Energy', sd.en != null && sd.en >= 0 ? ENERGY[sd.en][0] : sEst ? ENERGY[sEst.lvl][0] + ' (estimated)' : 'No record']].map(([a, b]) => (

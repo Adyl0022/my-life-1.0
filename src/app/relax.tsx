@@ -14,6 +14,7 @@ import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
 import { BREATH, STYLES, LOOK, mins, fmtMin, weekMins, relaxStreak, recentSess, addSess, nowHM } from '../lib/relax';
+import { dayKind } from '../lib/cycle';
 import { scheduleRelaxEnd, cancelRelaxEnd } from '../lib/alerts';
 
 const T = '#5ee7df';
@@ -172,6 +173,7 @@ export default function Relax() {
               </View>
               {tab === 'b' ? (
                 <>
+                  {h.cyOn && dayKind(h, 0) !== 'other' ? <Glass radius={20} style={{ marginTop: 14, padding: 12 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{dayKind(h, 0) === 'period' ? 'On your period?' : 'Your period may be close.'}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 3 }}>Slow breathing such as Deep belly or Calm 4-7-8 can feel soothing. A warm drink, some water and a little rest help too.</Text></Glass> : null}
                   <Cap t="BREATHING PATTERNS" />
                   {BREATH.map((b) => <Row key={b.k} ic={b.ic} n={b.name} d={b.desc} sel={bk === b.k} onPress={() => setBk(b.k)} />)}
                   <Cap t="LENGTH" top={8} />

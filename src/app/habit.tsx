@@ -13,6 +13,8 @@ import { PatternsTab } from '../components/PatternsTab';
 import { ENERGY, energyEstimate } from '../lib/patterns';
 import { useStored } from '../lib/store';
 import { mins, fmtMin, weekMins, relaxStreak } from '../lib/relax';
+import { cycleInfo, statusText, SYMS } from '../lib/cycle';
+import { useCycleSave } from '../lib/cycleHook';
 import { TOP } from '../lib/layout';
 import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
@@ -78,6 +80,7 @@ export default function Habit() {
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [keyOfDate(dateOf(0))]: { ...t, ...p } } });
   const meds = h.meds || []; const taken = t.med || [];
   const relaxToday = mins(t);
+  const { setPeriod } = useCycleSave(h, setH);
   const medDue_ = meds.filter((m) => medDue(m, dateOf(0)));
   const medNext = medDue_.filter((m) => !taken.includes(m.id)).sort((x, y) => (x.time < y.time ? -1 : 1))[0];
   const km = (t.steps * 0.00075).toFixed(1);
@@ -356,6 +359,23 @@ export default function Habit() {
               <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{relaxStreak(h) + ' day streak · ' + fmtMin(weekMins(h)) + ' min this week'}</Text>
             </Glass>
           </Pressable>
+          {h.cyOn ? (
+            <Pressable onPress={() => router.push('/cycle' as any)} accessibilityLabel="Open Cycle">
+              <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Ttl nm k="cycle" t="Cycle" />
+                  <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Open ›</Text>
+                </View>
+                <Lbl t={statusText(cycleInfo(h))} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                  <Pressable onPress={() => setPeriod(0, !t.pd)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: t.pd ? '#ff8fab' : 'rgba(255,255,255,.14)' }}><Text style={{ color: t.pd ? '#3a0f1c' : W, fontSize: 12.5, fontWeight: '800' }}>{t.pd ? 'Period today ✓' : 'Period started today'}</Text></Pressable>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                  {SYMS.map((s) => { const on = (t.sy || []).includes(s); return <Pressable key={s} onPress={() => put({ sy: on ? (t.sy || []).filter((x) => x !== s) : [...(t.sy || []), s] })} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: on ? T : 'rgba(255,255,255,.12)' }}><Text style={{ color: on ? '#06222a' : W, fontSize: 12, fontWeight: '800' }}>{s}</Text></Pressable>; })}
+                </View>
+              </Glass>
+            </Pressable>
+          ) : null}
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="note" t="Today's note" /><Lbl t="Why do you feel this way? (optional)" />
             <Inp value={t.note || ''} onChangeText={(v: string) => put({ note: v })} placeholder="e.g. Long shift, but a good rest" multiline style={{ marginTop: 8, minHeight: 44 }} />

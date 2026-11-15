@@ -201,3 +201,21 @@ export async function cancelRelaxEnd(): Promise<void> {
   if (Platform.OS === 'web') return;
   try { await cancelPrefix('rlx-end'); } catch (e) { /* ignore */ }
 }
+
+// Two days before the estimated period, at 9 am. The text is deliberately plain so nothing private shows on the lock screen.
+export async function syncCycleAlert(daysTo: number | null, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('cyc-');
+    if (!on || daysTo == null) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('cycle', { name: 'Personal reminder', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#ff8fab' });
+    const at = new Date(); at.setDate(at.getDate() + daysTo - 2); at.setHours(9, 0, 0, 0);
+    if (at.getTime() <= Date.now() + 5000) return;
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'cyc-next',
+      content: { title: 'Reminder from My Life', body: 'Open My Life to see your reminder.', sound: false },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'cycle' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}

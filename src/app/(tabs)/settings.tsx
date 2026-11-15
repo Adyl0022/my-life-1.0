@@ -150,6 +150,7 @@ export default function Settings() {
   const [name, setName] = useStored<string>('ml_name', DEFAULT_NAME);
   const [draft, setDraft] = useState<string | null>(null);
   const [nameMsg, setNameMsg] = useState('');
+  const [hd, setHd] = useStored<any>('ml_habit', { goal: 8000, days: {}, kg: [] });
   const [tg, setTg] = useStored<Record<string, boolean>>('ml_toggles', { ev: true, pr: true, zk: true, qh: true });
   const kb = useKb(); const sref = React.useRef<any>(null);
   const dlgR = React.useRef(''); 
@@ -259,6 +260,12 @@ export default function Settings() {
               <Announcement />
               <RegionCard />
               <ModulesCard />
+              {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+                <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle tracking</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle card in Habit & Health. Your marks stay when you turn it off.</Text></View>
+                  <Sw on={!!hd.cyOn} />
+                </Pressable>
+              </Glass> : null}
               <Glass style={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                 <View style={{ paddingTop: 8 }}><Ttl t="Reminders and notifications" /></View>
                 {TOGSHOW.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOGSHOW.length - 1} onPress={() => setTg({ ...tg, [k]: tg[k] === false })} right={<Sw on={tg[k] !== false} />} />)}
