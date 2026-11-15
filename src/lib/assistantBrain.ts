@@ -110,7 +110,10 @@ export function findTime(text) {
     else { if (h < 6) h += 12; }
     return { rel: 0, h, m: mi, spans: [m[0].trim()] };
   }
-  if ((m = t.match(/\b(?:pukul|jam)\s+(\d{1,2})(?:[:.](\d{2}))?\b/)) && Number(m[1]) <= 23) return { rel: 0, h: Number(m[1]), m: m[2] ? Number(m[2]) : 0, spans: [m[0].trim()] };
+  if ((m = t.match(/\b(?:pukul|jam)\s+(\d{1,2})(?:[:.](\d{2}))?\b/)) && Number(m[1]) <= 23) {
+    let h = Number(m[1]); if (h < 12 && /\b(tonight|tonite|malam|petang|evening)\b/.test(t) && (h >= 6 || /petang|evening/.test(t))) h += 12;
+    return { rel: 0, h, m: m[2] ? Number(m[2]) : 0, spans: [m[0].trim()] };
+  }
   if ((m = t.match(/\b(tonight|tonite|malam ini|malam ni)\b/))) return { rel: 0, h: 21, m: 0, spans: [m[0]] };
   if ((m = t.match(/\b(this evening|petang ini|petang ni|petang)\b/))) return { rel: 0, h: 18, m: 0, spans: [m[0]] };
   if ((m = t.match(/\b(this morning|morning|pagi ini|pagi ni|pagi)\b/))) return { rel: 0, h: 8, m: 0, spans: [m[0]] };
