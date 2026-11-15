@@ -38,7 +38,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Planner",
   "c": "#7c9cff",
   "h": "Notes.dc.html",
-  "k": "notes nota catatan tulis write memo reminder peringatan ingatkan alarm remind"
+  "k": "notes nota catatan tulis write memo reminder peringatan ingatkan alarm remind checklist senarai semak shopping list senarai membeli belah beli belah barang dapur grocery todo"
  },
  {
   "t": "Islamic Hub",
@@ -550,7 +550,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Family",
   "c": "#5ee7df",
   "h": "FamilyShop.dc.html",
-  "k": "household shopping list senarai belanja barang dapur grocery menu makan breakfast lunch dinner wishes wish list hajat"
+  "k": "household shopping list senarai belanja barang dapur grocery menu makan breakfast lunch dinner wishes wish list hajat membeli belah beli belah keluarga"
  },
  {
   "t": "Family Members",
