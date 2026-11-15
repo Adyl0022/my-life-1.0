@@ -10,7 +10,7 @@ import { useHidden } from '../lib/hidden';
 import { Inp } from './Ui';
 import { useCycleSave } from '../lib/cycleHook';
 import { cycleInfo } from '../lib/cycle';
-const UNWELL = ['Headache', 'Tired', 'Fever', 'Cough', 'Nausea', 'Cramps'];
+const UNWELL = ['Headache', 'Tired', 'Fever'];
 const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
 import { HeadIcon, Face } from './HabitIcons';
