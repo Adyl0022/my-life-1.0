@@ -105,7 +105,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <HeadIcon k="week" size={34} />
-        <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Time Machine</Text><Text style={{ color: DIM, fontSize: 12 }}>Your days, past and ahead</Text></View>
+        <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Time Machine</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Your days, past and ahead</Text></View>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -4 }} contentContainerStyle={{ gap: 6, paddingHorizontal: 4 }}>
         {TABS.map(([k, l]) => <Chip key={k} on={tab === k} t={l} onPress={() => setTab(k)} />)}
@@ -229,7 +229,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
         {mems.length ? mems.map((x, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: i === 0 ? 14 : 8, padding: 11, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
             <HeadIcon k={x.ic} size={36} />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{x.t}</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 1 }}>{x.d}</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{x.t}</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>{x.d}</Text></View>
           </View>
         )) : <Text style={{ color: DIM, fontSize: 12.5, marginTop: 14 }}>Your memories appear here as you log. Start with today.</Text>}
       </>) : null}

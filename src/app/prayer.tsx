@@ -80,7 +80,7 @@ export default function Prayer() {
             </Glass>
           )}
           <Glass radius={24} style={{ padding: 16, alignItems: 'center' }}>
-            <View style={{ alignSelf: 'stretch' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Qibla</Text><Text style={{ color: aligned ? '#7df0c6' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2, fontWeight: aligned ? '800' : '400' }}>{aligned ? 'You are facing the Qibla' : 'Qibla ' + q + '° from North (' + zn + ')'}{heading !== null ? '  ·  Facing ' + Math.round(heading) + '°' : ''}</Text></View>
+            <View style={{ alignSelf: 'stretch' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Qibla</Text><Text style={{ color: aligned ? '#7df0c6' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4, fontWeight: aligned ? '800' : '400' }}>{aligned ? 'You are facing the Qibla' : 'Qibla ' + q + '° from North (' + zn + ')'}{heading !== null ? '  ·  Facing ' + Math.round(heading) + '°' : ''}</Text></View>
             <Svg width={210} height={210} viewBox="0 0 210 210" style={{ marginTop: 6 }}>
               <Circle cx={105} cy={105} r={92} stroke="rgba(255,255,255,.25)" strokeWidth={2} fill="rgba(255,255,255,.05)" />
               <G rotation={heading === null ? 0 : -heading} origin="105, 105">

@@ -89,8 +89,8 @@ export function WeightGoal({ h, setH }: { h: HData; setH: (v: HData) => void }) 
       ) : kg > 0 ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 12 }}>Log your weight at least twice to see the trend chart.</Text> : null}
       {goal > 0 && kg > 0 && toGo !== 0 && !lowGoal ? (
         <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: 'rgba(124,156,255,.2)' }}>
-          {eta ? <><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>About {weeks} {weeks === 1 ? 'week' : 'weeks'} to go</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 2 }}>At your pace of {r1(Math.abs(perWeek))} kg a week you reach {goal} kg around {eta.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}.</Text></>
-            : <><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>No clear trend toward your target yet</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 2 }}>Weigh in weekly for a few weeks and an estimate will show here.</Text></>}
+          {eta ? <><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>About {weeks} {weeks === 1 ? 'week' : 'weeks'} to go</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>At your pace of {r1(Math.abs(perWeek))} kg a week you reach {goal} kg around {eta.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}.</Text></>
+            : <><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>No clear trend toward your target yet</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>Weigh in weekly for a few weeks and an estimate will show here.</Text></>}
         </View>
       ) : null}
     </Glass>
@@ -145,7 +145,7 @@ export function DailyNeeds({ h, setH }: { h: HData; setH: (v: HData) => void }) 
         </View>
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 17 }}>{'Based on ' + lvl.toLowerCase() + ' (about ' + Math.round(st).toLocaleString() + ' steps a day). Your body burns about ' + Math.round(tdee / 10) * 10 + ' kcal a day.' + (mode === 'lose' ? ' Eating a little less than this helps you lose weight slowly.' : mode === 'gain' ? ' Eating a little more than this helps you gain weight.' : '')}</Text>
         <Text style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 16 }}>What to eat today</Text>
-        <Text style={{ color: dim, fontSize: 11.5, marginTop: 2, lineHeight: 16 }}>{'Ideas that fit your ' + Math.round(cal / 10) * 10 + ' kcal. Amounts are rough and change with portion size.'}</Text>
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 5, lineHeight: 16 }}>{'Ideas that fit your ' + Math.round(cal / 10) * 10 + ' kcal. Amounts are rough and change with portion size.'}</Text>
         {meals.map(([n, c, f, pool]) => {
           const bud = Math.round((cal * f) / 10) * 10; const picks = pickFoods(pool, bud);
           return (
@@ -228,7 +228,7 @@ export function HealthSpend() {
     <Glass radius={24} style={{ paddingVertical: 16, paddingHorizontal: 16 }}>
       <LinearGradient colors={['rgba(255,143,171,.26)', 'rgba(94,231,181,.12)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Health spending</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 2 }}>Clinic, medicine, vitamins and gym. Also counted in My Finance.</Text></View>
+        <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Health spending</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>Clinic, medicine, vitamins and gym. Also counted in My Finance.</Text></View>
         <Pressable onPress={() => setOpen(!open)}><View style={{ paddingVertical: 7, paddingHorizontal: 13, borderRadius: 999, backgroundColor: open ? 'rgba(255,255,255,.14)' : '#ff8fab' }}><Text style={{ color: open ? W : '#2a1030', fontSize: 12.5, fontWeight: '800' }}>{open ? 'Close' : '+ Add'}</Text></View></Pressable>
       </View>
       {open ? (

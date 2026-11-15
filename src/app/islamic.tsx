@@ -17,7 +17,7 @@ import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram, k
 const Item = ({ t, s, c, ic = 'book', onPress }: { t: string; s: string; c: string; ic?: string; onPress: () => void }) => (
   <Pressable onPress={onPress}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
     <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c, alignItems: 'center', justifyContent: 'center' }}><Ic n={ic} size={22} /></View>
-    <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '700' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 2 }}>{s}</Text></View>
+    <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '700' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 4 }}>{s}</Text></View>
     <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
   </Glass></Pressable>
 );

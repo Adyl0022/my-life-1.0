@@ -37,7 +37,7 @@ const G = ['#34d399', '#5ee7df'] as [string, string];
 const GP = ['#7c9cff', '#b794ff'] as [string, string];
 
 const Ttl = ({ t }: { t: string }) => <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{t}</Text>;
-const Lbl = ({ t, style }: { t: string; style?: any }) => <Text style={[{ color: DIM, fontSize: 11.5, marginTop: 2, lineHeight: 16 }, style]}>{t}</Text>;
+const Lbl = ({ t, style }: { t: string; style?: any }) => <Text style={[{ color: DIM, fontSize: 11.5, marginTop: 5, lineHeight: 16 }, style]}>{t}</Text>;
 const TILE: Record<string, [string, string]> = {
   ev: ['#7c9cff', '#5b7bff'], pr: ['#34d399', '#12a58a'], zk: ['#ffc46b', '#ff8f5a'], wt: ['#5ee7df', '#4a8dff'], md: ['#5ee7df', '#7c9cff'], qh: ['#b794ff', '#7059e8'],
   export: ['#5ee7b5', '#26b8c9'], lang: ['#c79bff', '#ff8fab'], pw: ['#7c9cff', '#9a7bff'], nd: ['#ffc46b', '#ff7a6b'], dev: ['#8aa4d8', '#5d6fa8'], bk: ['#5ee7df', '#3aa6c9'], log: ['#ff8fab', '#b794ff'],
@@ -262,7 +262,7 @@ export default function Settings() {
               <ModulesCard />
               {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
                 <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>
+                  <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>
                   <Sw on={!!hd.cyOn} />
                 </Pressable>
                 <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>{'Note: after you turn this on, open Habit & Health and go to the Today tab. The Cycle card appears below Relax. Tap Open on that card for the calendar, averages and reminder. Estimates only, not medical advice.'}</Text>

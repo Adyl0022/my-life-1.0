@@ -80,7 +80,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
     </Glass>
 
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><HeadIcon k="link" /><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Patterns we noticed</Text><Text style={{ color: DIM, fontSize: 12 }}>Last 30 days · possible links, not proof</Text></View></View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><HeadIcon k="link" /><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Patterns we noticed</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Last 30 days · possible links, not proof</Text></View></View>
       {shown.length === 0 ? (
         <View style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.08)' }}>
           <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Not enough records yet</Text>

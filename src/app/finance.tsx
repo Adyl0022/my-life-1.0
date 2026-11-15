@@ -129,7 +129,7 @@ export default function Finance() {
           <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <Coin />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Income and spending at a glance</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Income and spending at a glance</Text></View>
           </Glass>
 
           <MoneyLeft ym={ym} income={total} spends={d.spends} />
@@ -321,7 +321,7 @@ export default function Finance() {
 
           {/* Income trend */}
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Income Trend</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>Last 6 months · tap to open</Text></View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Income Trend</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 4 }}>Last 6 months · tap to open</Text></View>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 104, marginTop: 18 }}>
               {tr.map((x) => {
                 const h = x.t > 0 ? Math.max(8, Math.round((x.t / maxT) * 56)) : 6; const sel = x.key === ym;

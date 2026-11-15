@@ -189,7 +189,7 @@ export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number;
           return (
             <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === list.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p.name}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 1 }}>Changed {fd(p.date)} at {num(p.odo)} km · lasts about {num(p.life)} km</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p.name}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>Changed {fd(p.date)} at {num(p.odo)} km · lasts about {num(p.life)} km</Text></View>
                 <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => upd((x) => ({ ...x, parts: (x.parts || []).filter((y: Pt) => y.id !== p.id) }))} />
               </View>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 7, overflow: 'hidden' }}><View style={{ width: pct + '%', height: '100%', backgroundColor: st.b }} /></View>

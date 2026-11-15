@@ -115,7 +115,7 @@ export default function Planner() {
           <LinearGradient colors={x.done ? ['#2fae7a', '#5ee7b5'] : GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 48, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 10, fontWeight: '700' }}>{okd ? MON[+p[1] - 1] : 'NEW'}</Text><Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>{okd ? p[2] : '--'}</Text>
           </LinearGradient>
-          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{(late ? 'Overdue · ' : '') + (x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind)}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{(late ? 'Overdue · ' : '') + (x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind)}</Text></View>
           <Ic t="✎" label="Edit" onPress={() => setEdit({ id: x.id, kind: 'event', name: x.name, note: '', prio: 'Medium', date: x.date, remind: x.remind })} />
           <Ic t="✕" label="Delete" onPress={() => { setD({ ...d, events: d.events.filter((y) => y.id !== x.id) }); setEdit(null); }} />
         </Raise>
@@ -134,7 +134,7 @@ export default function Planner() {
               {done ? <Text style={{ color: '#06241d', fontSize: 13, fontWeight: '800' }}>✓</Text> : null}
             </LinearGradient>
           </Pressable>
-          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: overdue ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{parts.join(' · ')}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: overdue ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{parts.join(' · ')}</Text></View>
           <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, backgroundColor: PB[x.prio] }}><Text style={{ color: PC[x.prio], fontSize: 11, fontWeight: '700' }}>{x.prio}</Text></View>
           <Ic t="✎" label="Edit" onPress={() => setEdit({ id: x.id, kind: 'task', name: x.name, note: x.note, prio: x.prio, date: x.due, remind: 'None' })} />
         </Raise>
@@ -187,7 +187,7 @@ export default function Planner() {
           </View>
           <Glass radius={26} style={{ marginTop: 14, padding: 16 }}>
             <LinearGradient colors={['rgba(124,156,255,.3)', 'rgba(183,148,255,.18)']} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
-            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Plan your day</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 2 }}>Events and tasks, all planned</Text>
+            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Plan your day</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>Events and tasks, all planned</Text>
           </Glass>
 
           <Pressable onPress={() => router.push('/notes' as any)} accessibilityLabel="Notes" style={{ marginTop: 12 }}>
@@ -197,7 +197,7 @@ export default function Planner() {
                 <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', alignItems: 'center', justifyContent: 'center' }}>
                   <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 3h10l4 4v14H5z" /><Path d="M14 3v5h5M8 13h8M8 17h5" /></Svg>
                 </View>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Notes</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 1 }}>Your quick notes and lists</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Notes</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>Your quick notes and lists</Text></View>
                 <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 22 }}>›</Text>
               </View>
             </Glass>

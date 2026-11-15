@@ -91,7 +91,7 @@ export default function Export() {
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 40 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable onPress={() => router.back()} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Export my data</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>Excel, PDF, CSV or a full backup</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Export my data</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 4 }}>Excel, PDF, CSV or a full backup</Text></View>
           </View>
 
           <Glass style={{ marginTop: 16, padding: 16 }}>
@@ -112,7 +112,7 @@ export default function Export() {
               <Pressable key={m.k} onPress={() => { setInc({ ...inc, [m.k]: !inc[m.k] }); reset(); }}>
                 <Glass radius={18} style={{ paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <Ico k={m.k} />
-                  <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{m.name}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{m.sub}</Text></View>
+                  <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{m.name}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{m.sub}</Text></View>
                   <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: inc[m.k] ? '#5ee7df' : 'rgba(255,255,255,.45)', backgroundColor: inc[m.k] ? '#5ee7df' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{inc[m.k] ? <Text style={{ color: '#0a0f2c', fontSize: 13, fontWeight: '800' }}>✓</Text> : null}</View>
                 </Glass>
               </Pressable>
@@ -135,7 +135,7 @@ export default function Export() {
             {FMT.map((f, i) => (
               <Pressable key={f.k} onPress={() => { setFmt(i); reset(); }}>
                 <View style={{ borderRadius: 18, paddingVertical: 10, paddingHorizontal: 14, backgroundColor: fmt === i ? 'rgba(94,231,181,.22)' : 'rgba(255,255,255,.08)', borderWidth: fmt === i ? 1.5 : 1, borderColor: fmt === i ? '#5ee7df' : 'rgba(255,255,255,.2)' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Ico k={f.k} size={34} /><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{f.name}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 1 }}>{f.sub}</Text></View></View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Ico k={f.k} size={34} /><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{f.name}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 4 }}>{f.sub}</Text></View></View>
                 </View>
               </Pressable>
             ))}

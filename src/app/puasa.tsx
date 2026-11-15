@@ -332,7 +332,7 @@ export default function Puasa() {
                   {upcoming.map((u) => (
                     <View key={u.n + u.w} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(52,211,153,.3)', alignItems: 'center', justifyContent: 'center' }}><Ic n="moon" size={20} /></View>
-                      <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{u.n.replace(' (13th to 15th of the Hijri month)', '')}</Text><Text style={{ color: dim, fontSize: 11.5 }}>{fdate(u.d)} · {hijriText(u.d, off)}</Text></View>
+                      <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{u.n.replace(' (13th to 15th of the Hijri month)', '')}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>{fdate(u.d)} · {hijriText(u.d, off)}</Text></View>
                       <Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '800' }}>{u.w === 1 ? 'Tomorrow' : 'In ' + u.w + ' days'}</Text>
                     </View>
                   ))}
@@ -367,7 +367,7 @@ export default function Puasa() {
             <Rise i={2}><Card>
               <H t="Tips for a good fast" />
               <View style={{ gap: 12, marginTop: 12 }}>
-                {TIPS.map(([ic, t, b], i) => <Rise key={t} i={i}><View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}><View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: ['rgba(255,196,107,.3)', 'rgba(255,143,171,.28)', 'rgba(94,231,223,.3)', 'rgba(255,196,107,.3)', 'rgba(124,156,255,.32)', 'rgba(94,231,181,.3)', 'rgba(183,148,255,.3)', 'rgba(255,143,171,.28)'][i % 8], alignItems: 'center', justifyContent: 'center' }}><TipIcon n={ic} size={34} /></View><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 2 }}>{b}</Text></View></View></Rise>)}
+                {TIPS.map(([ic, t, b], i) => <Rise key={t} i={i}><View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}><View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: ['rgba(255,196,107,.3)', 'rgba(255,143,171,.28)', 'rgba(94,231,223,.3)', 'rgba(255,196,107,.3)', 'rgba(124,156,255,.32)', 'rgba(94,231,181,.3)', 'rgba(183,148,255,.3)', 'rgba(255,143,171,.28)'][i % 8], alignItems: 'center', justifyContent: 'center' }}><TipIcon n={ic} size={34} /></View><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{b}</Text></View></View></Rise>)}
               </View>
               <Pressable onPress={() => router.push('/habit' as any)}><Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700', marginTop: 14 }}>Your water goal is {cupsGoal(hd)} glasses. Track it in Habit & Health ›</Text></Pressable>
             </Card></Rise>

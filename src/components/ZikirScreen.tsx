@@ -36,7 +36,7 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
         <Glass radius={26} style={{ marginHorizontal: 20, marginTop: 12, padding: 16, maxHeight: '46%' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: isRead ? 'rgba(52,211,153,.55)' : pc[0], alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontWeight: '800' }}>{isRead ? '✓' : sel + 1}</Text></View>
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }} numberOfLines={2}>{nm(p.name, !!evening)}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>Part {sel + 1} of {parts.length} · {nRead} read today</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }} numberOfLines={2}>{nm(p.name, !!evening)}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>Part {sel + 1} of {parts.length} · {nRead} read today</Text></View>
           </View>
           <ScrollView ref={sc} style={{ marginTop: 8 }}>
             {p.custom === 'tahlil33' ? (

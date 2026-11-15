@@ -68,7 +68,7 @@ export function HouseChores({ info }: { info: FInfo | null }) {
               <Glass key={x.id} solid radius={22} style={{ padding: 13, marginBottom: 10, borderColor: 'rgba(255,196,107,.7)' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   {p ? <Avatar name={p.name} color={p.color} size={30} /> : null}
-                  <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p?.name || 'Someone'} did: {c.title}</Text><Text style={{ color: DIM, fontSize: 11.5 }}>+{c.points} ⭐ if you approve</Text></View>
+                  <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p?.name || 'Someone'} did: {c.title}</Text><Text style={{ color: DIM, fontSize: 11.5, marginTop: 4 }}>+{c.points} ⭐ if you approve</Text></View>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                   <Btn solid t="Approve" kind="good" onPress={() => run(() => choreDecide(x.id, true))} disabled={busy} flex />
@@ -179,7 +179,7 @@ export function HouseRewards({ info }: { info: FInfo | null }) {
             <Glass key={x.id} solid radius={22} style={{ padding: 13, marginBottom: 10, borderColor: 'rgba(255,196,107,.7)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 {p ? <Avatar name={p.name} color={p.color} size={30} /> : null}
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p?.name || 'Someone'}</Text><Text style={{ color: DIM, fontSize: 11.5 }}>Wants: {x.title} ({x.cost} ⭐)</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p?.name || 'Someone'}</Text><Text style={{ color: DIM, fontSize: 11.5, marginTop: 4 }}>Wants: {x.title} ({x.cost} ⭐)</Text></View>
               </View>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                 <Btn solid t="Approve" kind="good" onPress={() => run(() => redeemDecide(x.id, true))} disabled={busy} flex />

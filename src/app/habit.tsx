@@ -212,7 +212,7 @@ export default function Habit() {
           <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <LinearGradient colors={['rgba(183,148,255,.45)', 'rgba(94,231,223,.25)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <Heart />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Small habits, big health</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Mood, water, sleep and goals</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Small habits, big health</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Mood, water, sleep and goals</Text></View>
           </Glass>
 
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
@@ -254,7 +254,7 @@ export default function Habit() {
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={6} />
-            <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 2 }}>{tip[1]}</Text></View>
+            <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="water" t="Drink Water" /><Text style={{ color: t.cups >= cg ? '#7df0c6' : 'rgba(255,255,255,.7)', fontSize: 13, fontWeight: '800' }}>{t.cups} of {cg} glasses</Text></View>
@@ -299,7 +299,7 @@ export default function Habit() {
             {Platform.OS !== 'web' && (
               <Pressable onPress={() => setH({ ...h, auto: !h.auto })} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: h.auto ? T : 'rgba(255,255,255,.2)', padding: 3, alignItems: h.auto ? 'flex-end' : 'flex-start' }}><View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: W }} /></View>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>All-day count from Health Connect or your phone's step sensor.</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 4 }}>All-day count from Health Connect or your phone's step sensor.</Text></View>
               </Pressable>
             )}
             {!!autoMsg && <Text style={{ color: '#ffc46b', fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{autoMsg}</Text>}
@@ -385,7 +385,7 @@ export default function Habit() {
             <Inp value={t.note || ''} onChangeText={(v: string) => put({ note: v })} placeholder="e.g. Long shift, but a good rest" multiline style={{ marginTop: 8, minHeight: 44 }} />
             <Pressable onPress={toggleFast} style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: t.fast ? T : 'rgba(255,255,255,.4)', backgroundColor: t.fast ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{t.fast && <Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>✓</Text>}</View>
-              <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Fasting today</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>{inRam ? 'Ramadan day ' + rs.day + ' of ' + rs.r.len + '.' : sunnahDay ? 'Today is a sunnah fasting day (' + (dow === 1 ? 'Monday' : 'Thursday') + ').' : 'Sunnah fasts: Monday, Thursday and the white days.'}</Text></View>
+              <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Fasting today</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 4 }}>{inRam ? 'Ramadan day ' + rs.day + ' of ' + rs.r.len + '.' : sunnahDay ? 'Today is a sunnah fasting day (' + (dow === 1 ? 'Monday' : 'Thursday') + ').' : 'Sunnah fasts: Monday, Thursday and the white days.'}</Text></View>
             </Pressable>
             <Pressable onPress={() => router.push('/puasa' as any)} style={{ marginTop: 10 }}><Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{(inRam ? rs.fasted + ' of ' + rs.r.len + ' days fasted' : owed > 0 ? owed + (owed === 1 ? ' missed fast' : ' missed fasts') + ' to make up' : 'Open Fasting') + ' ›'}</Text></Pressable>
           </Glass>
@@ -421,8 +421,8 @@ export default function Habit() {
             {insOk ? (
               <View style={{ gap: 8, marginTop: 10 }}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(124,156,255,.22)' }}><Lbl t={'Goal met · ' + hiW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(hiW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12 }}>Sleep {sAvgL(hiW).toFixed(1)} h</Text></View>
-                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.09)' }}><Lbl t={'Below goal · ' + loW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(loW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12 }}>Sleep {sAvgL(loW).toFixed(1)} h</Text></View>
+                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(124,156,255,.22)' }}><Lbl t={'Goal met · ' + hiW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(hiW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>Sleep {sAvgL(hiW).toFixed(1)} h</Text></View>
+                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.09)' }}><Lbl t={'Below goal · ' + loW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(loW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>Sleep {sAvgL(loW).toFixed(1)} h</Text></View>
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18 }}>{mAvg(hiW) - mAvg(loW) > 0.3 ? 'On days you reach your water goal your mood is higher. Keep drinking.' : mAvg(hiW) - mAvg(loW) < -0.3 ? 'No clear boost to your mood from water yet. Your sleep may matter more.' : 'Your mood looks similar either way so far. More days will make this clearer.'}</Text>
               </View>
@@ -434,7 +434,7 @@ export default function Habit() {
               {sgs.map((s, i) => (
                 <Pressable key={i} disabled={!s.to} onPress={() => s.to && router.push(s.to as any)} style={{ padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
                   <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{s.t}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>{s.b}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>{s.b}</Text>
                   <Text style={{ color: T, fontSize: 11, fontWeight: '700', marginTop: 6 }}>{s.tag}{s.to ? '  ›' : ''}</Text>
                 </Pressable>
               ))}

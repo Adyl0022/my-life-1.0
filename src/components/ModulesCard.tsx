@@ -24,7 +24,7 @@ export function ModulesCard() {
   return (
     <Glass style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 }}>
       <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Modules</Text>
-      <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>Turn off what you do not use. The Dashboard fits 5 modules at most, and Family Planner is also inside Daily Planner. Use the arrows to set the order on your Dashboard. Your data stays saved and comes back when you turn a module on again.</Text>
+      <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Turn off what you do not use. The Dashboard fits 5 modules at most, and Family Planner is also inside Daily Planner. Use the arrows to set the order on your Dashboard. Your data stays saved and comes back when you turn a module on again.</Text>
       {keys.map((k, i) => {
         const m = by(k); const on = h.on(m.k); const isHabit = k === 'habit';
         const idx = mo.order.indexOf(k as any);

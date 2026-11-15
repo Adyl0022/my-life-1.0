@@ -148,7 +148,7 @@ export default function Relax() {
   const Row = ({ ic, n, d, sel, onPress }: { ic: string; n: string; d: string; sel?: boolean; onPress?: () => void }) => (
     <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: sel ? 'rgba(94,231,223,.14)' : 'rgba(255,255,255,.09)', borderWidth: 2, borderColor: sel ? T : 'transparent' }}>
       <HeadIcon k={ic} size={40} />
-      <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{n}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{d}</Text></View>
+      <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{n}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{d}</Text></View>
     </Pressable>
   );
   const setRemind = () => {
@@ -174,7 +174,7 @@ export default function Relax() {
               </View>
               {tab === 'b' ? (
                 <>
-                  {h.cyOn && dayKind(h, 0) !== 'other' ? <Glass radius={20} style={{ marginTop: 14, padding: 12 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{dayKind(h, 0) === 'period' ? 'On your period?' : 'Your period may be close.'}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 3 }}>Slow breathing such as Deep belly or Calm 4-7-8 can feel soothing. A warm drink, some water and a little rest help too.</Text></Glass> : null}
+                  {h.cyOn && dayKind(h, 0) !== 'other' ? <Glass radius={20} style={{ marginTop: 14, padding: 12 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{dayKind(h, 0) === 'period' ? 'On your period?' : 'Your period may be close.'}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 4 }}>Slow breathing such as Deep belly or Calm 4-7-8 can feel soothing. A warm drink, some water and a little rest help too.</Text></Glass> : null}
                   <Cap t="BREATHING PATTERNS" />
                   {BREATH.map((b) => <Row key={b.k} ic={b.ic} n={b.name} d={b.desc} sel={bk === b.k} onPress={() => setBk(b.k)} />)}
                   <Cap t="LENGTH" top={8} />
@@ -204,7 +204,7 @@ export default function Relax() {
                 <>
                   <Glass radius={24} style={{ marginTop: 14, padding: 14, flexDirection: 'row', justifyContent: 'space-around' }}>
                     <CardArt kind="relax" />
-                    {[[fmtMin(today), 'min today'], [fmtMin(weekMins(h)), 'min this week'], [String(relaxStreak(h)), 'day streak']].map((x) => <View key={x[1]} style={{ alignItems: 'center' }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{x[0]}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{x[1]}</Text></View>)}
+                    {[[fmtMin(today), 'min today'], [fmtMin(weekMins(h)), 'min this week'], [String(relaxStreak(h)), 'day streak']].map((x) => <View key={x[1]} style={{ alignItems: 'center' }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{x[0]}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{x[1]}</Text></View>)}
                   </Glass>
                   <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
                     <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Last 7 days</Text>

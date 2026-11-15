@@ -235,7 +235,7 @@ export default function Record() {
           <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <LinearGradient colors={['rgba(255,143,171,.4)', 'rgba(183,148,255,.24)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <Logo />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Keep every record</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Logs, service and spending in one place</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Keep every record</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Logs, service and spending in one place</Text></View>
           </Glass>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 12 }}>
@@ -283,7 +283,7 @@ export default function Record() {
             <LinearGradient colors={['rgba(255,143,171,.2)', 'rgba(183,148,255,.1)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16 }}>✦</Text></LinearGradient>
-              <View><Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Suggestions</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 1 }}>From your readings and spending</Text></View>
+              <View><Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Suggestions</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>From your readings and spending</Text></View>
             </View>
             <View style={{ gap: 9, marginTop: 12 }}>
               {sugg.map((g, i) => (
@@ -302,7 +302,7 @@ export default function Record() {
           {/* Monthly mileage */}
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Monthly Mileage</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{M[monthsArr[0].m] + ' ' + monthsArr[0].y + ' – ' + M[monthsArr[5].m] + ' ' + monthsArr[5].y} · km</Text></View>
+              <View><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Monthly Mileage</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{M[monthsArr[0].m] + ' ' + monthsArr[0].y + ' – ' + M[monthsArr[5].m] + ' ' + monthsArr[5].y} · km</Text></View>
               <View style={{ flexDirection: 'row', gap: 6 }}><Arrow t="‹" label="Earlier months" op={mPg > 0 ? 1 : 0.35} onPress={() => setMPage(Math.max(0, mPg - 1))} /><Arrow t="›" label="Later months" op={mPg < mAuto ? 1 : 0.35} onPress={() => setMPage(Math.min(mAuto, mPg + 1))} /></View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}><Stat l="This month" v={mc.cur} /><Stat l="Last month" v={mc.prev} /><Stat l="Change" v={mc.diff} vc={mc.color} bg={mc.bg} /></View>
@@ -322,7 +322,7 @@ export default function Record() {
           {/* Yearly mileage */}
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Yearly Mileage</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{yearsArr[0] + ' – ' + yearsArr[4]} · km</Text></View>
+              <View><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Yearly Mileage</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{yearsArr[0] + ' – ' + yearsArr[4]} · km</Text></View>
               <View style={{ flexDirection: 'row', gap: 6 }}><Arrow t="‹" label="Earlier years" op={yPg > 0 ? 1 : 0.35} onPress={() => setYPage(Math.max(0, yPg - 1))} /><Arrow t="›" label="Later years" op={yPg < yAuto ? 1 : 0.35} onPress={() => setYPage(Math.min(yAuto, yPg + 1))} /></View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}><Stat l="This year" v={yc.cur} /><Stat l="Last year" v={yc.prev} /><Stat l="Change" v={yc.diff} vc={yc.color} bg={yc.bg} /></View>

@@ -121,7 +121,7 @@ export default function Medicine() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Today's medicine</Text>
-                  <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>{!meds.length ? 'Add a medicine to get reminders.' : !due.length ? 'Nothing due today.' : nextOne ? (due.length - done) + ' left to take. Next: ' + nextOne.name + ' at ' + to12(nextOne.time) : 'All done for today.'}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>{!meds.length ? 'Add a medicine to get reminders.' : !due.length ? 'Nothing due today.' : nextOne ? (due.length - done) + ' left to take. Next: ' + nextOne.name + ' at ' + to12(nextOne.time) : 'All done for today.'}</Text>
                   <Text style={{ color: '#ffd593', fontSize: 11, marginTop: 4 }}>Not ticked? You get a nudge after 1 hour.</Text>
                 </View>
               </Glass>

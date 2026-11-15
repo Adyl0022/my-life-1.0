@@ -29,7 +29,7 @@ export default function IslamicSettings() {
           <Glass style={{ paddingVertical: 4, paddingHorizontal: 16 }}>
             {rows.map(([k, t, s], i) => (
               <Pressable key={k} onPress={() => setTg({ ...tg, [k]: !tg[k] })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, borderBottomWidth: i === rows.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>{t}</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>{s}</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>{t}</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>{s}</Text></View>
                 <Sw on={!!tg[k]} />
               </Pressable>
             ))}
