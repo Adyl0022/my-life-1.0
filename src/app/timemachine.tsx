@@ -188,7 +188,20 @@ export default function TimeMachinePage() {
           </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-          <Text style={{ color: mode === 'past' ? T : '#c9b0ff', textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 }}>{mode === 'past' ? dl(a).toUpperCase() : 'ESTIMATE · IN ' + hz + ' DAYS'}</Text>
+          {(() => { const c = mode === 'past' ? T : '#c9b0ff'; const d = dateOf(a); const full = WD[d.getDay()] + ', ' + d.getDate() + ' ' + MON[d.getMonth()];
+            const big = mode === 'past' ? (a === 0 ? 'TODAY' : a === -1 ? 'YESTERDAY' : full.toUpperCase()) : 'ESTIMATE · IN ' + hz + ' DAYS';
+            const small = mode === 'past' && a >= -1 ? full : '';
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: c, opacity: 0.3 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: c + '88', backgroundColor: c + '22' }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c }} />
+                  <Text style={{ color: c, fontSize: 12.5, fontWeight: '800', letterSpacing: 1.4 }}>{big}</Text>
+                  {small ? <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, fontWeight: '600' }}>{small}</Text> : null}
+                </View>
+                <View style={{ flex: 1, height: 1, backgroundColor: c, opacity: 0.3 }} />
+              </View>
+            ); })()}
           {prev === undefined ? <View style={{ height: 330 }} /> : prev ? (
             <View style={{ alignSelf: 'center', width: hw, padding: 16, borderRadius: 18, backgroundColor: 'rgba(255,213,147,.12)', marginTop: 10 }}>
               <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>The hologram picture is off this time</Text>
