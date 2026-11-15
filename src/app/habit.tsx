@@ -12,6 +12,7 @@ import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
 import { HeartLog } from '../components/HeartLog';
 import { PatternsTab } from '../components/PatternsTab';
 import { ENERGY, energyEstimate } from '../lib/patterns';
+import { SleepSchedule } from '../components/SleepSchedule';
 import { useStored } from '../lib/store';
 import { CardArt } from '../components/CardArt';
 import { mins, fmtMin, weekMins, relaxStreak } from '../lib/relax';
@@ -255,6 +256,7 @@ export default function Habit() {
               <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
+            <SleepSchedule days={wk.map((x, i) => ({ label: x.o === 0 ? 'Last night' : WD[x.dt.getDay()], d: x.d, today: x.o === 0 }))} />
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={6} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
           </Glass>
