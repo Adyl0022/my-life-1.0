@@ -9,6 +9,7 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { W } from '../components/Ui';
 import { Hologram } from '../components/Hologram';
+import { Hologram3D } from '../components/Hologram3D';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, dateOf, WD, MON } from '../lib/habit';
@@ -28,6 +29,7 @@ export default function TimeMachinePage() {
   const [mode, setMode] = useState<'past' | 'future'>('past');
   const [reg, setReg] = useState<Region>('body');
   const [a, setA] = useState(0); const [b, setB] = useState<number | null>(null); const [cmp, setCmp] = useState(false);
+  const [use3d, setUse3d] = useStored<boolean>('ml_tm3d', false); const [failed, setFailed] = useState(false);
   const [hz, setHz] = useState(7); const [reduce, setReduce] = useState(false);
   useEffect(() => { try { AccessibilityInfo.isReduceMotionEnabled().then(setReduce); } catch (e) {} }, []);
   const rise = useRef(new Animated.Value(0)).current;
@@ -107,12 +109,17 @@ export default function TimeMachinePage() {
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
             <Chip on={mode === 'past'} t="Past" onPress={() => setMode('past')} />
             <Chip on={mode === 'future'} t="Future" onPress={() => setMode('future')} c="#b794ff" />
+            <Chip on={use3d && !failed} t={use3d && !failed ? '3D' : '2D'} onPress={() => { setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
             {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
           </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
           <Text style={{ color: mode === 'past' ? T : '#c9b0ff', textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 }}>{mode === 'past' ? dl(a).toUpperCase() : 'ESTIMATE · IN ' + hz + ' DAYS'}</Text>
-          <Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} />
+          {use3d && !failed
+            ? <Hologram3D key="3d" w={Math.min(260, width - 40)} h={300} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} onFail={() => setFailed(true)} />
+            : <Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} />}
+          {use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
+          {use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 6 }}>
             {REGIONS.map((r) => <Chip key={r.k} on={reg === r.k} t={r.l} onPress={() => pick(r.k)} c={r.c} />)}
           </ScrollView>
