@@ -6,6 +6,8 @@ import * as DB from './debts';
 import { calcLeft } from './moneyLeft';
 import { cs } from './region';
 import { modOn } from './hidden';
+import { expState } from './patterns';
+import { medDue, to12 } from './habit';
 
 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WD_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -20,6 +22,7 @@ const SLANG = {
 Object.assign(SLANG, { scor: 'score', scre: 'score', spnt: 'spent', spnd: 'spend', blja: 'belanja', slpt: 'slept', wtr: 'water', stps: 'steps', tsk: 'task', tsks: 'tasks', mkn: 'makan', mnggu: 'minggu', hri: 'hari', tdr: 'tidur', lngkh: 'langkah', lngkah: 'langkah', gelaas: 'gelas', mnum: 'minum', mnm: 'minum', smlm: 'semalam', skrg: 'sekarang', skrang: 'sekarang', xpe: 'tak apa', tkpe: 'tak apa', brpe: 'berapa', brape: 'berapa' });
 const VOC = ('siapa berapa bulan minggu semalam kelmarin esok lusa belanja perbelanjaan pendapatan gaji tidur langkah tugasan acara solat puasa hutang servis motosikal odometer kesihatan makan petrol minyak elektrik kenapa bagaimana macam mana boleh tambah padam buang catat nota ingatkan jangan lupa tandakan selesai siap sudah belum kategori paling banyak jimat bajet baki simpan bandingkan banding ringkasan cadangan nasihat penting segera tolong terima kasih hari ini tahun lepas depan sikit tinggi rendah purata jumlah jumpa doktor temujanji bengkel '
   + 'spending spent income salary budget savings steps sleep water mood tasks events prayer fasting debts service mileage motorcycle summary weekly week month year yesterday tomorrow today average total biggest expensive cheaper higher lower compare comparison reminder remind note delete remove undo done finished complete mark afford priority progress review advice suggest why reduce cut fuel lunch dinner breakfast coffee groceries shopping bills health appointment doctor meeting birthday').split(' ');
+('hologram pulse pressure blood heart experiment experiments medicine medication relax meditation breathing patterns progress nadi denyutan tekanan darah jantung eksperimen ubat meditasi pernafasan corak kemajuan').split(' ').forEach((w) => { if (VOC.indexOf(w) < 0) VOC.push(w); });
 const VSET = {}; VOC.forEach((w) => { VSET[w] = 1; });
 
 function dist(a, b, max) {
@@ -258,12 +261,55 @@ export function think(A, q, lang) {
     // the Body hologram (Time Machine): the word alone is enough
     if (has(['hologram', 'time machine', 'mesin masa', '3d view', 'badan 3d', '3d body']))
       return done(mk(L('The Body hologram is in Habit & Health, on the Patterns tab: scroll to Time Machine and tap Body hologram. Tap a day at the top to see that day (More goes further back). Tap a part of the body, or the buttons Whole body, Brain, Heart, Lungs and Muscles, to see your own records for it. Compare shows two days side by side. Future gives a simple estimate 7, 30 or 90 days ahead, and 3D view turns the body so you can drag it around. It only shows what you recorded, it is not a medical reading.', 'Body hologram ada di Habit & Health, tab Patterns: skrol ke Time Machine dan tekan Body hologram. Tekan satu hari di atas untuk lihat hari itu (More pergi lebih jauh ke belakang). Tekan bahagian badan, atau butang Whole body, Brain, Heart, Lungs dan Muscles, untuk lihat rekod awak sendiri. Compare tunjuk dua hari sebelah-menyebelah. Future bagi anggaran ringkas 7, 30 atau 90 hari ke depan, dan 3D view pusingkan badan supaya awak boleh seret. Ia hanya tunjuk apa yang awak rekod, bukan bacaan perubatan.'), open), {}, null, { intent: 'hologram-help' });
-    // Heart log: typed pulse and blood pressure
-    if (has(['heart log', 'heart rate', 'pulse', 'blood pressure', 'tekanan darah', 'denyutan', 'nadi', 'degupan', 'bpm', 'log jantung', 'rekod jantung']))
-      return done(mk(L('You can type your own pulse and blood pressure in the Heart log. Open Habit & Health, then the Body tab, or tap Heart on the Body hologram. Type the pulse in bpm and the two blood pressure numbers (systolic and diastolic), then Save reading. My Life only keeps the numbers you type. It does not measure them, and I cannot say whether a reading is good or bad. Please ask a doctor or nurse about your readings.', 'Awak boleh taip sendiri denyutan dan tekanan darah dalam Heart log. Buka Habit & Health, kemudian tab Body, atau tekan Heart pada Body hologram. Taip denyutan dalam bpm dan dua nombor tekanan darah (systolic dan diastolic), kemudian Save reading. My Life hanya simpan nombor yang awak taip. Ia tidak mengukurnya, dan saya tidak boleh kata sama ada bacaan itu baik atau tidak. Sila tanya doktor atau jururawat tentang bacaan awak.'), open), {}, null, { intent: 'heart-help' });
-    // Experiments
-    if (has(['experiment', 'eksperimen']))
+    // Heart log: answers from the readings the person typed, never a judgement
+    const heartHelp = L('You can type your own pulse and blood pressure in the Heart log. Open Habit & Health, then the Body tab, or tap Heart on the Body hologram. You can also just tell me, for example "pulse 72" or "blood pressure 120/80". My Life only keeps the numbers you type. It does not measure them, and I cannot say whether a reading is good or bad. Please ask a doctor or nurse about your readings.', 'Awak boleh taip sendiri denyutan dan tekanan darah dalam Heart log. Buka Habit & Health, kemudian tab Body, atau tekan Heart pada Body hologram. Awak juga boleh beritahu saya terus, contohnya "nadi 72" atau "tekanan darah 120/80". My Life hanya simpan nombor yang awak taip. Ia tidak mengukurnya, dan saya tidak boleh kata sama ada bacaan itu baik atau tidak. Sila tanya doktor atau jururawat tentang bacaan awak.');
+    const otherTopic = /(belanja|spend|spent|langkah|step|tidur|sleep|slept|water|mood|duit|money|gaji|income|task|tugas|budget|bajet|ubat|medicine)/.test(qn);
+    const heartW = has(['heart log', 'heart rate', 'pulse', 'blood pressure', 'tekanan darah', 'denyutan', 'nadi', 'degupan', 'bpm', 'log jantung', 'rekod jantung']);
+    if (heartW || (ctx.intent === 'heart' && per && qn.split(' ').length <= 6 && !otherTopic)) {
+      const all = ((R.hd && R.hd.heart) || []).slice().sort((x, y) => (x.d + x.at < y.d + y.at ? -1 : 1));
+      const howto = has(['how', 'macam mana', 'cara', 'where', 'mana']) && has(['log', 'rekod', 'record', 'add', 'tambah', 'taip', 'type', 'save', 'simpan', 'masuk', 'enter']);
+      if (!all.length || howto) return done(mk(heartHelp, open), {}, null, { intent: 'heart-help' });
+      const p = per || period(' last 7 days '); const inP = all.filter((x) => x.d >= p.from && x.d < p.to);
+      const pu = inP.filter((x) => x.bpm != null), bp = inP.filter((x) => x.sys != null && x.dia != null);
+      const av = (l, f) => Math.round(l.reduce((t, x) => t + f(x), 0) / l.length);
+      const last = all[all.length - 1]; const lastT = [last.bpm != null ? last.bpm + ' bpm' : '', last.sys != null ? last.sys + '/' + last.dia + ' mmHg' : ''].filter(Boolean).join(', ');
+      const out = [];
+      if (!inP.length) out.push(L('No heart readings were logged ' + p.en + '.', 'Tiada bacaan jantung direkod ' + p.ms + '.'));
+      else {
+        out.push(L('Heart log, ' + p.en + ': ' + inP.length + (inP.length === 1 ? ' reading.' : ' readings.'), 'Heart log, ' + p.ms + ': ' + inP.length + ' bacaan.'));
+        if (pu.length) out.push(L('• Average pulse: ' + av(pu, (x) => x.bpm) + ' bpm (' + pu.length + ')', '• Purata nadi: ' + av(pu, (x) => x.bpm) + ' bpm (' + pu.length + ')'));
+        if (bp.length) out.push(L('• Average blood pressure: ' + av(bp, (x) => x.sys) + '/' + av(bp, (x) => x.dia) + ' mmHg (' + bp.length + ')', '• Purata tekanan darah: ' + av(bp, (x) => x.sys) + '/' + av(bp, (x) => x.dia) + ' mmHg (' + bp.length + ')'));
+      }
+      out.push(L('Latest reading: ' + lastT + ' on ' + fmt(last.d) + ' at ' + to12(last.at) + '.', 'Bacaan terkini: ' + lastT + ' pada ' + fmt(last.d) + ', ' + to12(last.at) + '.'));
+      out.push(L('These are the numbers you typed. I cannot say whether they are good or bad. Please ask a doctor or nurse.', 'Ini nombor yang awak taip. Saya tidak boleh kata sama ada ia baik atau tidak. Sila tanya doktor atau jururawat.'));
+      return done(mk(out.join('\n'), Object.assign({ big: pu.length ? av(pu, (x) => x.bpm) + ' bpm' : (bp.length ? av(bp, (x) => x.sys) + '/' + av(bp, (x) => x.dia) : ''), bigLbl: pu.length ? L('average pulse', 'purata nadi') : (bp.length ? L('average blood pressure', 'purata tekanan darah') : ''), color: '#ff8fab' }, open)), {}, null, { intent: 'heart', pObj: p });
+    }
+    // Medicine today: what is ticked and what is left
+    const medList = (R.hd && R.hd.meds) || [];
+    if (medList.length && has(['ubat', 'medicine', 'medication', 'medicines', 'pil ']) && !has(['how', 'macam mana', 'add', 'tambah', 'set', 'reminder', 'peringatan', 'where', 'dose', 'dos'])) {
+      const due = medList.filter((m) => medDue(m, todayD)); const took = (((R.hd.days || {})[todayS] || {}).med) || [];
+      const left = due.filter((m) => took.indexOf(m.id) < 0); const doneN = due.length - left.length;
+      const txt = !due.length ? L('No medicine is set for today.', 'Tiada ubat ditetapkan untuk hari ini.')
+        : !left.length ? L('All ' + due.length + ' of today\'s medicines are ticked as taken. Well done.', 'Semua ' + due.length + ' ubat hari ini sudah ditanda diambil. Syabas.')
+          : L('Today ' + doneN + ' of ' + due.length + ' medicines are ticked as taken. Not ticked yet:\n', 'Hari ini ' + doneN + ' daripada ' + due.length + ' ubat sudah ditanda diambil. Belum ditanda:\n') + left.map((m) => '• ' + m.name + (m.time ? ' (' + to12(m.time) + ')' : '')).join('\n') + L('\nTick them in Habit & Health, Medication. I cannot give dose advice.', '\nTandakan di Habit & Health, Medication. Saya tidak boleh bagi nasihat dos.');
+      return done(mk(txt, Object.assign({ big: due.length ? doneN + '/' + due.length : '', bigLbl: due.length ? L('taken today', 'diambil hari ini') : '', pct: due.length ? Math.round(doneN / due.length * 100) : -1, color: '#5ee7df' }, open)), {}, null, { intent: 'meds' });
+    }
+    // Relax minutes
+    if (has(['relax', 'relaks', 'meditat', 'meditasi', 'breathing', 'pernafasan']) && has(['berapa', 'how long', 'how many', 'how much', 'minit', 'minutes', 'minggu', 'week', 'today', 'hari ini', 'lama']) && !has(['how to', 'macam mana', 'cara', 'where'])) {
+      const dz = (R.hd && R.hd.days) || {}; const mins = (k) => Math.round((((dz[k] || {}).rl || []).reduce((t, r) => t + r.s, 0) / 60) * 10) / 10;
+      let wk = 0, dn = 0; for (let i = 0; i < 7; i++) { const v = mins(iso(addDays(todayD, -i))); wk += v; if (v > 0) dn++; }
+      wk = Math.round(wk * 10) / 10; const td0 = mins(todayS);
+      return done(mk(wk > 0 ? L('Today you relaxed for ' + td0 + ' minutes. In the last 7 days: ' + wk + ' minutes over ' + dn + (dn === 1 ? ' day.' : ' days.'), 'Hari ini awak relaks ' + td0 + ' minit. Dalam 7 hari lepas: ' + wk + ' minit dalam ' + dn + ' hari.') : L('No Relax sessions in the last 7 days yet. Open Habit & Health, Today, and tap the Relax card to start one.', 'Belum ada sesi Relax dalam 7 hari lepas. Buka Habit & Health, Today, dan tekan kad Relax untuk mula.'), Object.assign({ big: wk > 0 ? wk + ' min' : '', bigLbl: wk > 0 ? L('last 7 days', '7 hari lepas') : '', color: '#7c9cff' }, open)), {}, null, { intent: 'relax' });
+    }
+    // Experiments: status when one is running, otherwise how to start
+    if (has(['experiment', 'eksperimen'])) {
+      const sts = ((R.hd && R.hd.exps) || []).map((e) => expState(e, R.hd)).filter(Boolean);
+      const live = sts.filter((x) => !x.done); const fin = sts.filter((x) => x.done);
+      const howto = has(['how', 'macam mana', 'cara', 'start', 'mula', 'new', 'baru', 'what is', 'apa itu', 'apa tu']) && !has(['going', 'doing', 'jalan', 'status', 'saya', 'my']);
+      if (live.length && !howto) return done(mk(L('Your running experiment' + (live.length > 1 ? 's' : '') + ':\n', 'Eksperimen awak yang sedang berjalan:\n') + live.map((x) => L('• ' + x.tpl.title + ': day ' + x.dayNo + ' of ' + x.tpl.days + ', target met on ' + x.hit + ' of ' + x.logged + ' recorded days', '• ' + x.tpl.title + ': hari ' + x.dayNo + ' daripada ' + x.tpl.days + ', sasaran dicapai ' + x.hit + ' daripada ' + x.logged + ' hari direkod')).join('\n'), Object.assign({ big: live[0].hit + '/' + live[0].logged, bigLbl: L('days on target', 'hari capai sasaran'), color: '#5ee7df' }, open)), {}, null, { intent: 'experiments' });
+      if (fin.length && !howto) { const x = fin[fin.length - 1]; return done(mk(L('No experiment is running now. Your last one, "' + x.tpl.title + '", met the target on ' + x.hit + ' of ' + x.logged + ' recorded days. Start a new one in Habit & Health, Patterns, Experiments.', 'Tiada eksperimen sedang berjalan. Yang terakhir, "' + x.tpl.title + '", capai sasaran ' + x.hit + ' daripada ' + x.logged + ' hari direkod. Mula yang baru di Habit & Health, Patterns, Experiments.'), open), {}, null, { intent: 'experiments' }); }
       return done(mk(L('Experiments are small tests of your own habits. Open Habit & Health, then the Patterns tab, and scroll to Experiments. Tap + New experiment and pick one, for example sleeping before 10:30 pm for 7 days. Each day is ticked from what you record, and at the end you see how many days you met the target. Tap Stop this experiment to end it early.', 'Experiments ialah ujian kecil untuk tabiat awak sendiri. Buka Habit & Health, kemudian tab Patterns, dan skrol ke Experiments. Tekan + New experiment dan pilih satu, contohnya tidur sebelum 10:30 malam selama 7 hari. Setiap hari ditanda daripada apa yang awak rekod, dan di hujungnya awak nampak berapa hari sasaran dicapai. Tekan Stop this experiment untuk tamatkan awal.'), open), {}, null, { intent: 'experiments-help' });
+    }
     if (has(['pattern', 'patterns', 'corak']) && has(['how', 'macam mana', 'where', 'mana', 'what', 'apa', 'beza', 'difference', 'different', 'start', 'mula', 'tab']))
       return done(mk(L('Open Habit & Health, then the Patterns tab. It shows your day at a glance, patterns found in your own records, and a Time Machine with your calendar, graphs, a future guess and memories. Tap Body hologram in it to tap your brain, lungs or muscles, go back to any day, compare two days, or see an estimate 7, 30 or 90 days ahead (flat or 3D view). The Progress tab is different: it shows how you are doing, with your streak, this week against last week and badges. Under Experiments you can start a 7 or 14 day challenge, like sleeping before 11 pm, and see before and after.', 'Buka Habit & Health, kemudian tab Patterns. Ia tunjuk hari awak sekilas pandang, corak daripada rekod awak sendiri, dan Time Machine dengan kalendar, graf, anggaran masa depan dan kenangan. Tekan Body hologram di dalamnya untuk ketuk otak, paru-paru atau otot, pergi ke mana-mana hari lepas, bandingkan dua hari, atau lihat anggaran 7, 30 atau 90 hari ke depan (rata atau 3D view). Tab Progress pula berbeza: ia tunjuk kemajuan awak, dengan streak, minggu ini berbanding minggu lepas dan lencana. Di bawah Experiments awak boleh mula cabaran 7 atau 14 hari, contohnya tidur sebelum 11 malam, dan lihat sebelum dan selepas.'), open), {}, null, { intent: 'patterns-help' });
   }

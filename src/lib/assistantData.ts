@@ -117,6 +117,11 @@ export async function persist(a: any): Promise<void> {
     if (a.type === 'mood') cur.mood = a.v - 1;
     if (a.type === 'cups') cur.cups = a.c;
     await setItem('ml_habit', { ...h, days: { ...(h.days || {}), [today]: cur } });
+  } else if (a.type === 'heart') {
+    const h: any = await getItemStrict('ml_habit', HEMPTY); if (h === null) return;
+    const n = new Date(); const at = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+    const r: any = { id: String(id), d: today, at }; if (a.bpm != null) r.bpm = a.bpm; if (a.sys != null && a.dia != null) { r.sys = a.sys; r.dia = a.dia; }
+    await setItem('ml_habit', { ...h, heart: [...(h.heart || []), r].slice(-400) });
   } else if (a.type === 'task') {
     const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
     const nid = p.nextId || 1;

@@ -30,6 +30,7 @@ class Chat extends AssistantBase {
   subs: any[] = [];
   kb = 0;
   componentDidMount() {
+    (this as any).weekly();
     if (Platform.OS === 'web') return;
     const set = (n: number) => { this.kb = n; (this as any).setState({ kbLift: n }); };
     this.subs = [
