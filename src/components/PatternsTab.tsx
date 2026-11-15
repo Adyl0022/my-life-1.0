@@ -54,7 +54,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
           <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>My Life Intelligence</Text>
         </View>
       </View>
-      <Text style={{ color: DIM, fontSize: 13.5, lineHeight: 20, marginTop: 12 }}>{'Understand your habits.\nDiscover your patterns.\nImprove your everyday life.'}</Text>
+      <Text style={{ color: DIM, fontSize: 13, lineHeight: 18, marginTop: 10 }}>Understand your habits. Discover your patterns. Improve your everyday life.</Text>
     </Glass>
 
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
@@ -111,7 +111,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
             {st!.cells.map((c, i) => <View key={i} style={{ flex: 1, height: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: c === 'hit' ? T : c === 'miss' ? 'rgba(255,143,171,.55)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: c === 'hit' ? '#06222a' : W, fontSize: 10, fontWeight: '800' }}>{c === 'hit' ? '✓' : c === 'miss' ? '✕' : ''}</Text></View>)}
           </View>
           <Text style={{ color: DIM, fontSize: 11.5, marginTop: 6 }}>{'Target met on ' + st!.hit + ' of ' + st!.logged + ' recorded days. ' + st!.tpl.note + '.'}</Text>
-          <Pressable onPress={() => dropExp(e.id)} hitSlop={8} style={{ marginTop: 6, alignSelf: 'flex-start' }}><Text style={{ color: '#ff6b81', fontSize: 12, fontWeight: '800' }}>Stop this experiment</Text></Pressable>
+          <Pressable onPress={() => dropExp(e.id)} hitSlop={6} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.55)' }}><Text style={{ color: '#ff8fa0', fontSize: 12.5, fontWeight: '800' }}>Stop this experiment</Text></Pressable>
         </View>
       ))}
       {newOpen ? (
