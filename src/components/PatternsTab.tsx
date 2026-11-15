@@ -54,7 +54,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
           <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>My Life Intelligence</Text>
         </View>
       </View>
-      <Text style={{ color: DIM, fontSize: 13, lineHeight: 18, marginTop: 10 }}>Understand your habits. Discover your patterns. Improve your everyday life.</Text>
+      <Text style={{ color: DIM, fontSize: 13, lineHeight: 18, marginTop: 10 }}>Understand your habits, discover your patterns, improve your everyday life.</Text>
     </Glass>
 
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
