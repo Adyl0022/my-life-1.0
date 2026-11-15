@@ -258,7 +258,7 @@ export default function Insights() {
           </Glass>
           </Rise></> : null}
 
-          <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 17, marginTop: 14, marginHorizontal: 4 }}>Calculated from your own habits, tasks, spending, records and zikir on this device.</Text>
+          <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 17, marginTop: 14, marginHorizontal: 4 }}>Calculated from your own habits, tasks, spending and records on this device.</Text>
         </ScrollView>
       </SafeAreaView>
       </PageIn>
