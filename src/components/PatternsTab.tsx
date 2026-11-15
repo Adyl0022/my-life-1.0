@@ -55,8 +55,11 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
           <Text style={{ color: DIM, fontSize: 13, marginTop: 2 }}>Your life, understood better.</Text>
         </View>
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-        {['Private, on your phone', 'Possible links, not proof', 'Not medical advice'].map((c) => <View key={c} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 11.5, fontWeight: '600' }}>{c}</Text></View>)}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+        {['Private, on your phone', 'Possible links, not proof'].map((c) => <View key={c} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 11.5, fontWeight: '600' }}>{c}</Text></View>)}
+      </View>
+      <View style={{ flexDirection: 'row', marginTop: 8, marginLeft: 62 }}>
+        <View style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 11.5, fontWeight: '600' }}>Not medical advice</Text></View>
       </View>
     </Glass>
 
