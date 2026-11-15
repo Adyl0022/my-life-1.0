@@ -10,9 +10,11 @@ import { useHidden } from '../lib/hidden';
 import { Inp } from './Ui';
 import { useCycleSave } from '../lib/cycleHook';
 import { cycleInfo } from '../lib/cycle';
+const UNWELL = ['Headache', 'Tired', 'Fever', 'Cough', 'Nausea', 'Cramps'];
+const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
 import { HeadIcon, Face } from './HabitIcons';
-import { curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
+import { curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
 type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip';
@@ -28,6 +30,8 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const [hd, setHd] = useStored<HData>('ml_habit', HEMPTY);
   const [slp, setSlp] = React.useState(7);
   const [bpm, setBpm] = React.useState('');
+  const [bedM, setBedM] = React.useState(23 * 60 + 30); const [wkM, setWkM] = React.useState(6 * 60 + 30); const [hrsOnly, setHrsOnly] = React.useState(false);
+  const [unw, setUnw] = React.useState(false); const [usy, setUsy] = React.useState<string[]>([]); const [oth, setOth] = React.useState(''); const [othOn, setOthOn] = React.useState(false);
   const [skip, setSkip] = useStored<{ d: string; k: string[] }>('ml_qlskip', { d: '', k: [] });
   const { setPeriod } = useCycleSave(hd, setHd);
   const v = React.useRef(new Animated.Value(1)).current;
@@ -51,7 +55,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const open = () => router.push((kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   const maxM = Math.max(...series, 1);
-  let body: React.ReactNode = null;
+  let body: React.ReactNode = null; let cur0: string | undefined;
   if (kind === 'log') {
     // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
     const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
@@ -61,7 +65,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     const dk = keyOfDate(dateOf(0)); const sk = skip.d === dk ? skip.k : []; const later = (k: string) => setSkip({ d: dk, k: [...sk, k] });
     if ((hd.heart || []).length && !(hd.heart || []).some((x) => x.d === dk) && !sk.includes('heart')) todo.push('heart');
     const cy = cycleInfo(hd); if (hd.cyOn && !td.pd && cy.nextOff != null && cy.nextOff <= 2 && !sk.includes('period')) todo.push('period');
-    const cur = todo[0]; const head = (t: string, sub: string) => (
+    const cur = todo[0]; cur0 = cur; const head = (t: string, sub: string) => (
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2 }}>{'QUICK LOG' + (todo.length ? ' · ' + todo.length + ' LEFT' : '')}</Text>
         <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>{t}</Text>
@@ -70,8 +74,23 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     );
     const Btn = ({ t, onPress, w }: { t: string; onPress: () => void; w?: number }) => <Pressable onPress={onPress} hitSlop={6} style={{ minWidth: w || 0, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: '#8fe9e2', alignItems: 'center' }}><Text style={{ color: '#06222a', fontSize: 12.5, fontWeight: '800' }}>{t}</Text></Pressable>;
     const Rnd = ({ t, onPress }: { t: string; onPress: () => void }) => <Pressable onPress={onPress} hitSlop={6} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.16)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 17, fontWeight: '800', marginTop: -2 }}>{t}</Text></Pressable>;
-    if (cur === 'sleep') body = (<>{head('Sleep last night', 'Hours you slept')}
+    if (cur === 'sleep' && hrsOnly) body = (<>{head('Sleep last night', 'Hours you slept')}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Rnd t="−" onPress={() => setSlp(Math.max(0.5, slp - 0.5))} /><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800', minWidth: 40, textAlign: 'center' }}>{slp} h</Text><Rnd t="+" onPress={() => setSlp(Math.min(14, slp + 0.5))} /><Btn t="Save" onPress={() => put({ sleep: slp })} /></View></>);
+    else if (cur === 'sleep') { const hr = hoursBetween(fm(bedM), fm(wkM)); body = (
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2 }}>{'QUICK LOG' + (todo.length ? ' · ' + todo.length + ' LEFT' : '')}</Text>
+        <Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>Sleep times</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+          {([['Bed', bedM, setBedM], ['Wake', wkM, setWkM]] as [string, number, (n: number) => void][]).map(([l, m, set]) => (
+            <View key={l}><Text style={{ color: dim, fontSize: 11, marginBottom: 4 }}>{l}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Rnd t="−" onPress={() => set((m + 1425) % 1440)} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800', minWidth: 66, textAlign: 'center' }}>{to12(fm(m))}</Text><Rnd t="+" onPress={() => set((m + 15) % 1440)} /></View></View>
+          ))}
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+          <Text style={{ color: dim, fontSize: 12 }}>{'= '}<Text style={{ color: '#fff', fontWeight: '800' }}>{hr + ' h'}</Text>{' of sleep'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Pressable onPress={() => setHrsOnly(true)} hitSlop={8}><Text style={{ color: dim, fontSize: 11.5, fontWeight: '700' }}>Use hours only</Text></Pressable><Btn t="Save" onPress={() => put({ bed: fm(bedM), wake: fm(wkM), sleep: hr })} /></View>
+        </View>
+      </View>); }
     else if (cur === 'mood') body = (<>{head('Mood today', 'Tap how you feel')}
       <View style={{ flexDirection: 'row', gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <Pressable key={i} onPress={() => put({ mood: i })} hitSlop={4} accessibilityLabel={'Mood ' + (i + 1) + ' of 5'}><Face i={i} size={31} /></Pressable>)}</View></>);
     else if (cur === 'med' && med) body = (<>{head(med.name, [med.dose, med.time ? to12(med.time) : ''].filter(Boolean).join(' · ') || 'Medicine for today')}
@@ -82,7 +101,23 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Inp value={bpm} onChangeText={setBpm} keyboardType="number-pad" placeholder="bpm" maxLength={3} style={{ width: 54, paddingVertical: 7, paddingHorizontal: 8, textAlign: 'center' }} /><Btn t="Save" onPress={() => { const n = parseInt(bpm, 10); if (!(n >= 30 && n <= 220)) return; const now = new Date(); setHd({ ...hd, heart: [...(hd.heart || []), { id: String(Date.now()), d: dk, at: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'), bpm: n }].slice(-400) }); setBpm(''); }} /><Pressable onPress={() => later('heart')} hitSlop={8}><Text style={{ color: dim, fontSize: 11.5, fontWeight: '700' }}>Skip</Text></Pressable></View></>);
     else if (cur === 'period') body = (<>{head('Period', 'Did it start today?')}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Btn t="Yes" onPress={() => setPeriod(0, true)} /><Pressable onPress={() => later('period')} hitSlop={8}><Text style={{ color: dim, fontSize: 11.5, fontWeight: '700' }}>Skip</Text></Pressable></View></>);
-    else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', 'Sleep, mood, medicine and water are in')}</>);
+    else if (unw) body = (
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2 }}>QUICK LOG</Text>
+        <Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>What are you feeling?</Text>
+        <Text style={{ color: dim, fontSize: 11, marginTop: 2 }}>Tap all that apply</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+          {UNWELL.map((x) => { const on = usy.includes(x); return <Pressable key={x} onPress={() => setUsy(on ? usy.filter((y) => y !== x) : [...usy, x])} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: on ? '#8fe9e2' : 'rgba(255,255,255,.12)' }}><Text style={{ color: on ? '#06222a' : '#fff', fontSize: 12, fontWeight: '800' }}>{x}</Text></Pressable>; })}
+          <Pressable onPress={() => setOthOn(!othOn)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: othOn ? '#8fe9e2' : 'rgba(255,255,255,.12)' }}><Text style={{ color: othOn ? '#06222a' : '#fff', fontSize: 12, fontWeight: '800' }}>Other</Text></Pressable>
+        </View>
+        {othOn ? <Inp value={oth} onChangeText={setOth} placeholder="Type what you feel" maxLength={24} style={{ marginTop: 10, paddingVertical: 8 }} /> : null}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+          <Pressable onPress={() => { setUnw(false); setUsy([]); setOth(''); setOthOn(false); }} hitSlop={8}><Text style={{ color: dim, fontSize: 12, fontWeight: '700' }}>Cancel</Text></Pressable>
+          <Btn t="Save" onPress={() => { const add = [...usy, ...(othOn && oth.trim() ? [oth.trim()] : [])]; if (add.length) put({ sy: [...(td.sy || []).filter((y) => !add.includes(y)), ...add] }); setUnw(false); setUsy([]); setOth(''); setOthOn(false); }} />
+        </View>
+      </View>);
+    else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', (td.sy || []).length ? 'Noted: ' + (td.sy || []).join(', ') : 'Everything is in')}
+      <Pressable onPress={() => { setUsy((td.sy || []).filter((y) => UNWELL.includes(y))); setUnw(true); }} hitSlop={8}><Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>{(td.sy || []).length ? 'Edit ›' : 'Feeling unwell? ›'}</Text></Pressable></>);
   } else if (kind === 'usage') {
     body = (<>
       <View>
@@ -146,7 +181,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
 
   return (
     <Pressable onPress={next} onLongPress={open} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <Glass style={{ height: 90, justifyContent: 'center' }}>
+      <Glass style={kind === 'log' && ((cur0 === 'sleep' && !hrsOnly) || (cur0 === undefined && unw)) ? { minHeight: 90, justifyContent: 'center', paddingVertical: 14 } : { height: 90, justifyContent: 'center' }}>
         <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {avail.length > 1 ? (
           <View pointerEvents="none" style={{ position: 'absolute', top: 9, right: 14, flexDirection: 'row', gap: 4 }}>
