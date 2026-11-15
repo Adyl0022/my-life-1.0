@@ -134,9 +134,9 @@ export default function TimeMachinePage() {
         <View style={{ paddingHorizontal: 20, paddingTop: 16 + TOP }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable onPress={() => router.back()} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Time Machine</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 3 }}>Your body, then and ahead</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Time Machine</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 6 }}>Your body, then and ahead</Text></View>
           </View>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 22 }}>
             <Chip on={mode === 'past'} t="Past" onPress={() => setMode('past')} />
             <Chip on={mode === 'future'} t="Future" onPress={() => setMode('future')} c="#b794ff" />
             <Chip on={use3d && !failed} t={use3d && !failed ? '3D' : '2D'} onPress={() => { setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
