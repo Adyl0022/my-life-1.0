@@ -180,7 +180,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   }
 
   return (
-    <Pressable onPress={next} onLongPress={open} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+    <Pressable onPress={kind === 'log' && (cur0 === 'heart' || (cur0 === undefined && unw)) ? undefined : next} onLongPress={open} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <Glass style={kind === 'log' && ((cur0 === 'sleep' && !hrsOnly) || (cur0 === undefined && unw)) ? { minHeight: 90, justifyContent: 'center', paddingVertical: 14 } : { height: 90, justifyContent: 'center' }}>
         <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {avail.length > 1 ? (
