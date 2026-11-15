@@ -11,6 +11,7 @@ import { Blob } from '../components/Bg';
 import { Inp, W } from '../components/Ui';
 import { HeadIcon } from '../components/HabitIcons';
 import { CardArt } from '../components/CardArt';
+import { PageArt } from '../components/PageArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
@@ -161,6 +162,7 @@ export default function Relax() {
       <LinearGradient colors={['#0d1030', '#1d1250', '#0f2b55']} locations={[0, 0.48, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
       <Blob size={320} color="rgba(183,148,255,.5)" style={{ right: -100, top: -40 }} />
       <Blob size={340} color="rgba(94,231,223,.3)" style={{ left: -120, bottom: 0 }} />
+      <PageArt kind="relax" />
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView keyboardShouldPersistTaps="handled" scrollEnabled={!run} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 60 }}>
           {run ? <Session run={run} bell={bell} reduce={reduce} onSave={save} onClose={() => setRun(null)} /> : (
