@@ -8,7 +8,9 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, W } from '../components/Ui';
-import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
+import { Face, GlassIcon, HeadIcon, BrainIcon } from '../components/HabitIcons';
+import { PatternsTab } from '../components/PatternsTab';
+import { ENERGY, energyEstimate } from '../lib/patterns';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
@@ -52,7 +54,7 @@ export default function Habit() {
   useRegion();
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
-  const [tab, setTab] = useState<'today' | 'progress' | 'body'>('today');
+  const [tab, setTab] = useState<'patterns' | 'today' | 'progress' | 'body'>('patterns');
   const svRef = useRef<any>(null); const scrollY = useRef(0); const [kb, setKb] = useState(0);
   useEffect(() => {
     const sh = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -205,15 +207,16 @@ export default function Habit() {
           </Glass>
 
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
-            {([['today', 'Today'], ['progress', 'Progress'], ['body', 'Body']] as ['today' | 'progress' | 'body', string][]).map(([k, n]) => (
+            {([['patterns', 'Patterns'], ['today', 'Today'], ['progress', 'Progress'], ['body', 'Body']] as ['patterns' | 'today' | 'progress' | 'body', string][]).map(([k, n]) => (
               <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
                 {tab === k ? (
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                ) : (<View style={{ paddingVertical: 8, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
+                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}>{k === 'patterns' ? <BrainIcon size={14} /> : null}<Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
+                ) : (<View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}>{k === 'patterns' ? <BrainIcon size={14} color="rgba(255,255,255,.85)" /> : null}<Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
               </Pressable>
             ))}
           </View>
 
+          {tab === 'patterns' && <PatternsTab h={h} onToday={() => setTab('today')} />}
           {tab === 'today' && (<>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="goal" t="Goal Tracker" />
@@ -312,6 +315,19 @@ export default function Habit() {
                   <Text style={{ color: on ? W : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: on ? '800' : '500' }}>{m[0]}</Text>
                 </Pressable>); })}
             </View>
+          </Glass>
+          <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+            {(() => { const est = energyEstimate(t, cg, goal); const own = t.en != null && t.en >= 0; return (<>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="energy" t="Energy" /><Text style={{ color: own ? '#7df0c6' : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>{own ? 'YOUR RATING' : est ? 'ESTIMATED' : ''}</Text></View>
+            <Lbl t={own ? 'How you said you feel today' : est ? est.why : 'Log two things above and an estimate appears'} />
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
+              {ENERGY.map((e, i) => { const on = own && t.en === i; const guess = !own && est && est.lvl === i; return (
+                <Pressable key={e[0]} onPress={() => put({ en: on ? undefined : i })} style={{ flex: 1, paddingVertical: 9, paddingHorizontal: 2, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? e[1] : 'rgba(255,255,255,.1)', borderWidth: guess ? 1.5 : 0, borderColor: e[1] }}>
+                  <Text numberOfLines={2} style={{ color: on ? '#06222a' : W, fontSize: 11.5, fontWeight: '800', textAlign: 'center' }}>{e[0]}</Text>
+                </Pressable>); })}
+            </View>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8, lineHeight: 15 }}>{own ? 'Tap your choice again to go back to the estimate.' : 'This is a guess from what you logged. Tap how you really feel to replace it.'}</Text>
+            </>); })()}
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="note" t="Today's note" /><Lbl t="Why do you feel this way? (optional)" />

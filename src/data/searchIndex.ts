@@ -241,6 +241,22 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "habit health kesihatan langkah steps water air sleep tidur mood goal sasaran"
  },
  {
+  "t": "Patterns",
+  "s": "My Life Intelligence: patterns, calendar, time machine",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "patterns pattern intelligence corak kalendar calendar time machine energy tenaga overview insight link hubungan"
+ },
+ {
+  "t": "Energy",
+  "s": "How energetic you feel today",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "energy tenaga tired penat letih exhausted energetic bertenaga"
+ },
+ {
   "t": "Drink Water",
   "s": "Glasses today",
   "m": "Habit",

@@ -50,6 +50,8 @@ const ICONS: Record<string, { c: string; d: React.ReactNode }> = {
   week: { c: '#8fe9e2', d: <G fill="#fff"><Rect x="4.500" y="12" width="3.500" height="7" rx="1.200" /><Rect x="10.200" y="7" width="3.500" height="12" rx="1.200" /><Rect x="16" y="9.500" width="3.500" height="9.500" rx="1.200" /></G> },
   badge: { c: '#ffc46b', d: <G fill="#fff"><Path d="M7 4h10v5a5 5 0 0 1-10 0z" /><Rect x="10.500" y="13.500" width="3" height="3.500" /><Rect x="8" y="17" width="8" height="2.500" rx="1" /></G> },
   note: { c: '#ff8fab', d: <G fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><Path d="M6 4.500h12v15H6z" /><Path d="M9 9h6M9 12.500h6M9 16h3.500" /></G> },
+  energy: { c: '#ffc46b', d: <Path d="M13 3L5.500 13H11l-1 8 7.500-10H12z" fill="#fff" /> },
+  brain: { c: '#b794ff', d: <G fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><Path d="M12 5.500v13" /><Path d="M12 6a3 3 0 0 0-5.600-1.100A3 3 0 0 0 5 10.500 3 3 0 0 0 5.500 15 3 3 0 0 0 9 18.500a3 3 0 0 0 3-1.200" /><Path d="M12 6a3 3 0 0 1 5.600-1.100A3 3 0 0 1 19 10.500 3 3 0 0 1 18.500 15 3 3 0 0 1 15 18.500a3 3 0 0 1-3-1.200" /><Path d="M8.500 10.500H12M15.500 10.500H12" /></G> },
   insight: { c: '#7df0c6', d: <G fill="none" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><Path d="M4 17l5-5 3.500 3.500L20 8" /><Path d="M15 8h5v5" /></G> },
 };
 export function HeadIcon({ k, size = 30 }: { k: string; size?: number }) {
@@ -58,5 +60,11 @@ export function HeadIcon({ k, size = 30 }: { k: string; size?: number }) {
     <View style={{ width: size, height: size, borderRadius: size * 0.34, backgroundColor: ic.c, alignItems: 'center', justifyContent: 'center', shadowColor: ic.c, shadowOpacity: 0.5, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
       <Svg width={size * 0.72} height={size * 0.72} viewBox="0 0 24 24">{ic.d}</Svg>
     </View>
+  );
+}
+
+export function BrainIcon({ size = 16, color = '#fff' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24"><G fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><Path d="M12 5.500v13" /><Path d="M12 6a3 3 0 0 0-5.600-1.100A3 3 0 0 0 5 10.500 3 3 0 0 0 5.500 15 3 3 0 0 0 9 18.500a3 3 0 0 0 3-1.200" /><Path d="M12 6a3 3 0 0 1 5.600-1.100A3 3 0 0 1 19 10.500 3 3 0 0 1 18.500 15 3 3 0 0 1 15 18.500a3 3 0 0 1-3-1.200" /><Path d="M8.500 10.500H12M15.500 10.500H12" /></G></Svg>
   );
 }

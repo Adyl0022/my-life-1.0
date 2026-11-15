@@ -1,4 +1,4 @@
-export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number };
+export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number; en?: number };
 export type HData = { goal: number; days: Record<string, HDay>; kg?: { d: string; v: number }[]; cm?: number; goalKg?: number; age?: number; sex?: 'm' | 'f'; auto?: boolean };
 export const HEMPTY: HData = { goal: 8000, days: {}, kg: [] };
 export const BLANK: HDay = { mood: -1, cups: 0, sleep: 0, steps: 0 };
