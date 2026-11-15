@@ -8,12 +8,13 @@ import { Glass } from './Glass';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
-import { HeadIcon } from './HabitIcons';
-import { curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf } from '../lib/habit';
+import { HeadIcon, Face } from './HabitIcons';
+import { curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
+import { ENERGY } from '../lib/patterns';
 
 // The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
-type Kind = 'usage' | 'streak' | 'score' | 'tip';
-const ORDER: Kind[] = ['usage', 'streak', 'score', 'tip'];
+type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip';
+const ORDER: Kind[] = ['log', 'usage', 'streak', 'score', 'tip'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -21,15 +22,17 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const router = useRouter();
   const hid = useHidden();
   const core = useCore();
-  const [sel, setSel] = useStored<string>('ml_dcard', 'usage');
+  const [sel, setSel] = useStored<string>('ml_dcard2', 'log');
+  const [hd, setHd] = useStored<HData>('ml_habit', HEMPTY);
+  const [slp, setSlp] = React.useState(7);
   const v = React.useRef(new Animated.Value(1)).current;
   const ty = React.useRef(new Animated.Value(0)).current;
 
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
-  const ok: Record<Kind, boolean> = { usage: true, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0 };
+  const ok: Record<Kind, boolean> = { log: hid.on('habit'), usage: true, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0 };
   const avail = ORDER.filter((k) => ok[k]);
-  const kind: Kind = (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : 'usage';
+  const kind: Kind = (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : 'usage');
   const idx = avail.indexOf(kind);
 
   const next = () => {
@@ -40,11 +43,36 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       Animated.parallel([Animated.timing(v, { toValue: 1, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: 0, duration: 160, useNativeDriver: true })]).start();
     });
   };
-  const open = () => router.push((kind === 'usage' ? '/stats' : kind === 'streak' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
+  const open = () => router.push((kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   const maxM = Math.max(...series, 1);
   let body: React.ReactNode = null;
-  if (kind === 'usage') {
+  if (kind === 'log') {
+    // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
+    const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
+    const cg = cupsGoal(hd); const due = (hd.meds || []).filter((m) => medDue(m, dateOf(0))); const took = td.med || []; const med = due.find((m) => !took.includes(m.id));
+    const todo: string[] = []; if (!(td.sleep > 0)) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if ((td.en ?? -1) < 0) todo.push('energy'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
+    const cur = todo[0]; const head = (t: string, sub: string) => (
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2 }}>{'QUICK LOG' + (todo.length ? ' · ' + todo.length + ' LEFT' : '')}</Text>
+        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>{t}</Text>
+        <Text numberOfLines={1} style={{ color: dim, fontSize: 11, marginTop: 2 }}>{sub}</Text>
+      </View>
+    );
+    const Btn = ({ t, onPress, w }: { t: string; onPress: () => void; w?: number }) => <Pressable onPress={onPress} hitSlop={6} style={{ minWidth: w || 0, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: '#8fe9e2', alignItems: 'center' }}><Text style={{ color: '#06222a', fontSize: 12.5, fontWeight: '800' }}>{t}</Text></Pressable>;
+    const Rnd = ({ t, onPress }: { t: string; onPress: () => void }) => <Pressable onPress={onPress} hitSlop={6} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.16)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 17, fontWeight: '800', marginTop: -2 }}>{t}</Text></Pressable>;
+    if (cur === 'sleep') body = (<>{head('Sleep last night', 'Hours you slept')}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Rnd t="−" onPress={() => setSlp(Math.max(0.5, slp - 0.5))} /><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800', minWidth: 40, textAlign: 'center' }}>{slp} h</Text><Rnd t="+" onPress={() => setSlp(Math.min(14, slp + 0.5))} /><Btn t="Save" onPress={() => put({ sleep: slp })} /></View></>);
+    else if (cur === 'mood') body = (<>{head('Mood today', 'Tap how you feel')}
+      <View style={{ flexDirection: 'row', gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <Pressable key={i} onPress={() => put({ mood: i })} hitSlop={4} accessibilityLabel={'Mood ' + (i + 1) + ' of 5'}><Face i={i} size={31} /></Pressable>)}</View></>);
+    else if (cur === 'energy') body = (<>{head('Energy today', 'Your own rating')}
+      <View style={{ width: 176, flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'flex-end' }}>{ENERGY.map((e, i) => <Pressable key={e[0]} onPress={() => put({ en: i })} style={{ width: 85, paddingVertical: 6, borderRadius: 999, alignItems: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: e[1] + '99' }}><Text numberOfLines={1} style={{ color: '#fff', fontSize: 10.5, fontWeight: '700' }}>{e[0]}</Text></Pressable>)}</View></>);
+    else if (cur === 'med' && med) body = (<>{head(med.name, [med.dose, med.time ? to12(med.time) : ''].filter(Boolean).join(' · ') || 'Medicine for today')}
+      <Btn t="Taken" onPress={() => put({ med: [...took, med.id] })} /></>);
+    else if (cur === 'water') body = (<>{head('Water', td.cups + ' of ' + cg + ' glasses today')}
+      <Btn t="+1 glass" onPress={() => put({ cups: Math.min(cg, td.cups + 1) })} /></>);
+    else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', 'Sleep, mood, energy and water are in')}</>);
+  } else if (kind === 'usage') {
     body = (<>
       <View>
         <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>App Usage <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· 30 days</Text></Text>
