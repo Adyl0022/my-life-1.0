@@ -190,14 +190,14 @@ export default function Planner() {
             <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Plan your day</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>Events and tasks, all planned</Text>
           </Glass>
 
-          <Pressable onPress={() => router.push('/notes' as any)} accessibilityLabel="Notes" style={{ marginTop: 12 }}>
+          <Pressable onPress={() => router.push('/notes' as any)} accessibilityLabel="Notes and Reminders" style={{ marginTop: 12 }}>
             <Glass radius={24}>
               <LinearGradient colors={['rgba(255,149,0,.32)', 'rgba(255,31,90,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 }}>
                 <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', alignItems: 'center', justifyContent: 'center' }}>
                   <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 3h10l4 4v14H5z" /><Path d="M14 3v5h5M8 13h8M8 17h5" /></Svg>
                 </View>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Notes</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>Your quick notes and lists</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Notes &amp; Reminders</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>Jot it down. Get reminded.</Text></View>
                 <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 22 }}>›</Text>
               </View>
             </Glass>

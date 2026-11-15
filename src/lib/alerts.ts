@@ -219,3 +219,26 @@ export async function syncCycleAlert(daysTo: number | null, on: boolean): Promis
     });
   } catch (e) { /* ignore */ }
 }
+
+// A reminder set inside a note (Notes & Reminders). It rings at the exact time the person chose, so quiet hours and the Planner switch do not hold it back.
+export type NoteRem = { id: number; t: string; s: string; rm?: number; rd?: boolean };
+export async function syncNoteAlerts(notes: NoteRem[], on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('note-');
+    if (!on) return;
+    const now = Date.now();
+    const todo = (notes || []).filter((n) => n.rm && !n.rd && (n.rm as number) > now + 5000).sort((a, b) => (a.rm as number) - (b.rm as number)).slice(0, 50);
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('notes', { name: 'Note reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ffc46b' });
+    for (const n of todo) {
+      const line = (n.s || '').split('\n').map((x) => x.replace(/^\s*([☐☑]|•|\d+\.)\s*/, '').trim()).find(Boolean) || '';
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'note-' + n.id + '-' + n.rm,
+        content: { title: (n.t || '').trim() || 'Reminder', body: line.slice(0, 120) || 'Open Notes & Reminders for your note.', sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(n.rm as number), channelId: 'notes' } as any,
+      });
+    }
+  } catch (e) { /* ignore */ }
+}

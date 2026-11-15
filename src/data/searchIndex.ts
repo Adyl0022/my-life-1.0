@@ -33,12 +33,12 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "task tugasan todo senarai senarai tugas siap done doing"
  },
  {
-  "t": "Notes",
-  "s": "Write and organise notes",
+  "t": "Notes & Reminders",
+  "s": "Write notes and get reminded",
   "m": "Planner",
   "c": "#7c9cff",
   "h": "Notes.dc.html",
-  "k": "notes nota catatan tulis write memo"
+  "k": "notes nota catatan tulis write memo reminder peringatan ingatkan alarm remind"
  },
  {
   "t": "Islamic Hub",

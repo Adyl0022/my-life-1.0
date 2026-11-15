@@ -7,19 +7,31 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { NotesArt } from '../components/NotesArt';
+import Svg, { Path } from 'react-native-svg';
 import { Inp, SBtn, Sheet, Toast, W, GP } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 
-type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string };
+// rm: when to remind (a time in ms), rd: the reminder is done
+type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean };
 type Data = { notes: Note[]; seq: number };
 const COL = ['#7c9cff', '#5ee7df', '#ffc46b', '#ff8fb1', '#a78bfa', '#9be37a', '#94a3b8'];
 const PAPER = [['#4f6bff', '#8a6cff', '#3fb0ff'], ['#0fae9f', '#2f84d8', '#3fd1a8'], ['#f5a623', '#ef6a3a', '#e8436b'], ['#e0518a', '#a24fe0', '#ff8f6b'], ['#7a50e6', '#c05fd8', '#5b7cff'], ['#2fae64', '#2f93c4', '#8bd45a'], ['#334155', '#475569', '#94a3b8']];
-const FILTERS = ['All', 'Pinned', 'Checklist', 'Recent'];
+const FILTERS = ['All', 'Pinned', 'Checklist', 'Recent', 'Reminders'];
 const SORTS = ['Newest', 'Oldest', 'A–Z'];
 const days = (u: number) => Math.floor((Date.now() - u) / 86400000);
 const when = (u: number) => { const d = days(u); return d <= 0 ? 'Today' : d === 1 ? 'Yesterday' : d + ' days ago'; };
 const isChk = (n: Note) => /[☐☑]/.test(n.s);
+const WDN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; const MONN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const clock = (d: Date) => { const h = d.getHours(); return (h % 12 || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM'); };
+const dayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+// "Today 12:00 PM", "Tomorrow 12:00 PM", "Wed 18 Nov, 12:00 PM"
+const remText = (ms: number) => { const d = new Date(ms); const diff = Math.round((dayStart(d) - dayStart(new Date())) / 86400000); return (diff === 0 ? 'Today ' : diff === 1 ? 'Tomorrow ' : WDN[d.getDay()] + ' ' + d.getDate() + ' ' + MONN[d.getMonth()] + ', ') + clock(d); };
+// A shorter one for the small note cards: "Today 12:00 PM", "Wed 12:00 PM", "18 Nov 12:00 PM"
+const remShort = (ms: number) => { const d = new Date(ms); const diff = Math.round((dayStart(d) - dayStart(new Date())) / 86400000); return (diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff > 1 && diff < 7 ? WDN[d.getDay()] : d.getDate() + ' ' + MONN[d.getMonth()]) + ' ' + clock(d); };
+const dayText = (ms: number) => { const d = new Date(ms); const diff = Math.round((dayStart(d) - dayStart(new Date())) / 86400000); return (diff === 0 ? 'Today, ' : diff === 1 ? 'Tomorrow, ' : WDN[d.getDay()] + ', ') + d.getDate() + ' ' + MONN[d.getMonth()]; };
+const Bell = ({ c = '#fff', z = 14 }: { c?: string; z?: number }) => <Svg width={z} height={z} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><Path d="M13.7 21a2 2 0 0 1-3.4 0" /></Svg>;
+const overdue = (n: Note) => !!n.rm && !n.rd && n.rm < Date.now();
 
 export default function Notes() {
   const router = useRouter();
@@ -28,14 +40,16 @@ export default function Notes() {
   const [editId, setEditId] = useState(0); const [draft, setDraft] = useState<Note | null>(null); const [isNew, setIsNew] = useState(false);
   const [menuId, setMenuId] = useState(0); const [confirmDel, setConfirmDel] = useState(false);
   const [toast, setToast] = useState('');
+  const [rmOpen, setRmOpen] = useState(false); const [rmAt, setRmAt] = useState(0);
   const lp = useRef(false);
   const say = (t: string) => { setToast(t); setTimeout(() => setToast(''), 1600); };
   const notes = data.notes;
+  const nRem = notes.filter((n) => n.rm && !n.rd).length;
 
   const qq = q.trim().toLowerCase();
-  const FIL = [() => true, (n: Note) => n.pin, isChk, (n: Note) => days(n.u) <= 2];
+  const FIL = [() => true, (n: Note) => n.pin, isChk, (n: Note) => days(n.u) <= 2, (n: Note) => !!n.rm];
   const list = notes.filter((n) => FIL[filter](n) && (!qq || (n.t + ' ' + n.s).toLowerCase().includes(qq)));
-  const key = (a: Note, b: Note) => (sort === 1 ? a.u - b.u : sort === 2 ? (a.t || '').localeCompare(b.t || '') : b.u - a.u);
+  const key = (a: Note, b: Note) => (filter === 4 ? (a.rd ? 1 : 0) - (b.rd ? 1 : 0) || (a.rm || 0) - (b.rm || 0) : sort === 1 ? a.u - b.u : sort === 2 ? (a.t || '').localeCompare(b.t || '') : b.u - a.u);
   const sorted = [...list.filter((n) => n.pin).sort(key), ...list.filter((n) => !n.pin).sort(key)];
   const menuNote = notes.find((n) => n.id === menuId);
 
@@ -51,6 +65,13 @@ export default function Notes() {
     return () => h.remove();
   }, []);
   const upd = (p: Partial<Note>) => setDraft((d) => (d ? { ...d, ...p } : d));
+  // Reminder sheet: quick choices plus date, hour and minute steppers.
+  const at9 = (plus: number) => { const d = new Date(); d.setDate(d.getDate() + plus); d.setHours(9, 0, 0, 0); return d.getTime(); };
+  const hourLater = () => { const d = new Date(Date.now() + 3600000); d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5, 0, 0); return d.getTime(); };
+  const tonight = () => { const d = new Date(); d.setHours(20, 0, 0, 0); return d.getTime(); };
+  const openRem = () => { Keyboard.dismiss(); setRmAt(draft?.rm && draft.rm > Date.now() ? draft.rm : at9(1)); setRmOpen(true); };
+  const shift = (field: 'd' | 'h' | 'm', by: number) => { const d = new Date(rmAt); if (field === 'd') d.setDate(d.getDate() + by); else if (field === 'h') d.setHours(d.getHours() + by); else d.setMinutes(d.getMinutes() + by); d.setSeconds(0, 0); setRmAt(Math.max(d.getTime(), 0)); };
+  const setRem = () => { if (rmAt <= Date.now() + 30000) return say('Pick a time in the future'); upd({ rm: rmAt, rd: false }); setRmOpen(false); say('Reminder set for ' + remText(rmAt)); };
   const save = () => {
     if (!draft) return;
     if (!(draft.t.trim() || draft.s.trim())) return say('Add a title or some text first');
@@ -122,7 +143,7 @@ export default function Notes() {
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 16 + TOP, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Pressable onPress={() => router.back()} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
-          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Notes</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 4 }}>{sorted.length === notes.length ? notes.length + (notes.length === 1 ? ' note' : ' notes') : sorted.length + ' of ' + notes.length + ' notes'}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Notes &amp; Reminders</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 4 }}>{(sorted.length === notes.length ? notes.length + (notes.length === 1 ? ' note' : ' notes') : sorted.length + ' of ' + notes.length + ' notes') + (nRem ? ' · ' + nRem + (nRem === 1 ? ' reminder' : ' reminders') : '')}</Text></View>
           <Pressable onPress={openNew} accessibilityLabel="New note"><LinearGradient colors={['#ffc46b', '#ff8f5a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 26, marginTop: -2 }}>+</Text></LinearGradient></Pressable>
         </View>
         <View style={{ paddingHorizontal: 20, marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
@@ -135,7 +156,7 @@ export default function Notes() {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0, marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 2, alignItems: 'center' }}>
           {FILTERS.map((n, i) => (
-            <Pressable key={n} onPress={() => setFilter(i)}><View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: filter === i ? 'rgba(255,196,107,.3)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: filter === i ? W : 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 17, fontWeight: filter === i ? '800' : '600' }}>{n}</Text></View></Pressable>
+            <Pressable key={n} onPress={() => setFilter(i)}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: i === 4 ? 7.5 : 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: filter === i ? 'rgba(255,196,107,.3)' : 'rgba(255,255,255,.1)', ...(i === 4 ? { borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,213,147,.75)' } : {}) }}>{i === 4 ? <Bell c="#ffd593" z={13} /> : null}<Text style={{ color: filter === i ? W : i === 4 ? '#ffd593' : 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 17, fontWeight: filter === i ? '800' : '600' }}>{i === 4 && nRem ? n + ' · ' + nRem : n}</Text></View></Pressable>
           ))}
         </ScrollView>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
@@ -160,9 +181,17 @@ export default function Notes() {
                         );
                       })}
                     </View>
-                    <View style={{ flexDirection: 'row', gap: 8, marginTop: grid ? 'auto' : 8, paddingTop: grid ? 6 : 0, flexWrap: 'wrap' }}>
-                      <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5 }}>{when(n.u)}</Text>
-                      {tot ? <Text style={{ color: '#8fe9e2', fontSize: 10.5 }}>✓ {dn}/{tot}</Text> : null}
+                    <View style={{ marginTop: grid ? 'auto' : 8, paddingTop: grid ? 6 : 0 }}>
+                      {n.rm ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', maxWidth: '100%', marginBottom: 6, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, borderWidth: 1, backgroundColor: n.rd ? 'rgba(255,255,255,.08)' : overdue(n) ? 'rgba(255,143,171,.2)' : 'rgba(255,196,107,.2)', borderColor: n.rd ? 'rgba(255,255,255,.2)' : overdue(n) ? 'rgba(255,143,171,.6)' : 'rgba(255,196,107,.55)' }}>
+                          <Bell c={n.rd ? 'rgba(255,255,255,.55)' : overdue(n) ? '#ff8fab' : '#ffd593'} z={11} />
+                          <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: 10, fontWeight: '800', color: n.rd ? 'rgba(255,255,255,.55)' : overdue(n) ? '#ffb3c4' : '#ffd593', textDecorationLine: n.rd ? 'line-through' : 'none' }}>{n.rd ? 'Done' : overdue(n) ? 'Overdue' : remShort(n.rm)}</Text>
+                        </View>
+                      ) : null}
+                      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                        <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5 }}>{when(n.u)}</Text>
+                        {tot ? <Text style={{ color: '#8fe9e2', fontSize: 10.5 }}>✓ {dn}/{tot}</Text> : null}
+                      </View>
                     </View>
                   </Glass>
                 </Pressable>
@@ -178,6 +207,8 @@ export default function Notes() {
             <View style={{ padding: 16, gap: 8, borderRadius: 24, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
               <Text style={{ color: W, fontSize: 15, fontWeight: '800', marginBottom: 4 }} numberOfLines={1}>{menuNote.t || 'Untitled'}</Text>
               <SBtn t={menuNote.pin ? 'Unpin' : 'Pin to top'} style={{ flex: 0 }} onPress={() => { setData({ ...data, notes: notes.map((x) => (x.id === menuNote.id ? { ...x, pin: !x.pin } : x)) }); setMenuId(0); say(menuNote.pin ? 'Unpinned' : 'Pinned to top'); }} />
+              {menuNote.rm ? <SBtn t={menuNote.rd ? 'Remind me again' : 'Mark reminder done'} style={{ flex: 0 }} onPress={() => { const again = menuNote.rd && (menuNote.rm as number) <= Date.now(); setData({ ...data, notes: notes.map((x) => (x.id === menuNote.id ? { ...x, rd: !x.rd } : x)) }); setMenuId(0); say(again ? 'Reminder is in the past. Open the note to set a new time.' : menuNote.rd ? 'Reminder is on again' : 'Reminder done'); }} /> : null}
+              {menuNote.rm ? <SBtn t="Remove reminder" style={{ flex: 0 }} onPress={() => { setData({ ...data, notes: notes.map((x) => { if (x.id !== menuNote.id) return x; const { rm, rd, ...rest } = x; return rest as Note; }) }); setMenuId(0); say('Reminder removed'); }} /> : null}
               <SBtn t="Delete" kind="danger" style={{ flex: 0 }} onPress={() => { del(menuNote.id); setMenuId(0); say('Note deleted'); }} />
             </View>
           </Sheet>
@@ -192,6 +223,7 @@ export default function Notes() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 12 }}>
                 <Pressable onPress={() => { closeEd(); }} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
                 <View style={{ flex: 1 }} />
+                <Pressable onPress={openRem} accessibilityLabel="Set a reminder"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', ...(draft.rm && !draft.rd ? { borderWidth: 1.5, borderColor: '#ffd593' } : {}) }}><Bell c={draft.rm && !draft.rd ? '#ffd593' : '#fff'} z={19} /></Glass></Pressable>
                 <Pressable onPress={() => upd({ pin: !draft.pin })} accessibilityLabel="Pin"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: draft.pin ? '#ffd593' : W, fontSize: 12, fontWeight: '800' }}>PIN</Text></Glass></Pressable>
                 {!isNew && <Pressable onPress={() => setConfirmDel(true)} accessibilityLabel="Delete"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 16 }}>✕</Text></Glass></Pressable>}
                 <Pressable onPress={save}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 18, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06241d', fontSize: 14, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
@@ -217,9 +249,39 @@ export default function Notes() {
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' }} />
                   <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12 }}>{words} {words === 1 ? 'word' : 'words'}</Text>
                 </View>
+                {draft.rm ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 10, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' }}>
+                    <Pressable onPress={openRem} accessibilityLabel="Change the reminder" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingLeft: 12, paddingRight: 8 }}><Bell z={13} /><Text style={{ color: W, fontSize: 12.5, fontWeight: '800', textDecorationLine: draft.rd ? 'line-through' : 'none' }}>{(overdue(draft) ? 'Overdue · ' : '') + remText(draft.rm)}</Text></Pressable>
+                    <Pressable onPress={() => { const { rm, rd, ...rest } = draft; setDraft(rest as Note); }} accessibilityLabel="Remove the reminder" hitSlop={6} style={{ paddingVertical: 7, paddingRight: 12, paddingLeft: 4 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>✕</Text></Pressable>
+                  </View>
+                ) : null}
                 <TextInput ref={inp} multiline onTouchStart={tapStart} onTouchEnd={tapEnd} onFocus={() => { foc.current = true; }} onBlur={() => { foc.current = false; }} value={draft.s} onChangeText={onText} selection={selOv ?? undefined} onSelectionChange={(e: any) => { const sl = e.nativeEvent.selection; cur.current = { s: sl.start, e: sl.end }; }} placeholder="Start writing..." placeholderTextColor="rgba(255,255,255,.6)" style={{ flex: 1, marginTop: 14, color: W, fontSize: 16, lineHeight: 24, padding: 0, paddingVertical: 0, textAlignVertical: 'top', outlineStyle: 'none' } as any} />
                </View>
               </View>
+              {rmOpen && (
+                <Sheet onClose={() => setRmOpen(false)}>
+                  <View style={{ padding: 18, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
+                    <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Remind me</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                      {([['In 1 hour', hourLater()], ...(tonight() > Date.now() + 600000 ? [['Tonight 8 PM', tonight()]] : []), ['Tomorrow 9 AM', at9(1)]] as [string, number][]).map(([l, v]) => (
+                        <Pressable key={l} onPress={() => setRmAt(v)} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: Math.abs(rmAt - v) < 60000 ? '#ffc46b' : 'rgba(255,255,255,.12)' }}><Text style={{ color: Math.abs(rmAt - v) < 60000 ? '#3a2200' : W, fontSize: 12.5, fontWeight: '800' }}>{l}</Text></Pressable>
+                      ))}
+                    </View>
+                    {([['Date', dayText(rmAt), 'd', 1], ['Hour', (new Date(rmAt).getHours() % 12 || 12) + ' ' + (new Date(rmAt).getHours() < 12 ? 'AM' : 'PM'), 'h', 1], ['Minute', ':' + String(new Date(rmAt).getMinutes()).padStart(2, '0'), 'm', 5]] as [string, string, 'd' | 'h' | 'm', number][]).map(([l, v, f, by]) => (
+                      <View key={l} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                        <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 13 }}>{l}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Pressable onPress={() => shift(f, -by)} accessibilityLabel={'Earlier ' + l} hitSlop={4} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.16)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 18, fontWeight: '800', marginTop: -2 }}>−</Text></Pressable>
+                          <Text style={{ color: W, fontSize: 14.5, fontWeight: '800', minWidth: 118, textAlign: 'center' }}>{v}</Text>
+                          <Pressable onPress={() => shift(f, by)} accessibilityLabel={'Later ' + l} hitSlop={4} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.16)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 18, fontWeight: '800', marginTop: -2 }}>+</Text></Pressable>
+                        </View>
+                      </View>
+                    ))}
+                    <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 14 }}>{'You will be reminded ' + remText(rmAt)}</Text>
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}><SBtn t="Cancel" onPress={() => setRmOpen(false)} /><SBtn t="Set reminder" kind="primary" onPress={setRem} /></View>
+                  </View>
+                </Sheet>
+              )}
               {confirmDel && (
                 <Sheet onClose={() => setConfirmDel(false)}>
                   <View style={{ padding: 20, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>

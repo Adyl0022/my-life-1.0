@@ -22,7 +22,7 @@ import { ActivationScreen } from '../components/ActivationScreen';
 import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
 import { cycleInfo } from '../lib/cycle';
-import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
+import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles } from '../lib/adhan';
 import { useFamily } from '../lib/family';
 import { useFamTasks, useFamEvents } from '../lib/familyData';
@@ -53,6 +53,10 @@ function AlertSync() {
   const t = { ...TG_DEFAULT, ...tg }; t.ev = t.ev && hid.on('planner'); t.zk = t.zk && hid.on('islamic');
   useEffect(() => { if (ok && ok2 && hid.ready && Platform.OS !== 'web') syncEventAlerts(pl.events || [], t); }, [ok, ok2, hid.ready, JSON.stringify(pl.events || []), t.ev, t.qh]);
   useEffect(() => { if (ok2 && hid.ready && Platform.OS !== 'web') syncZikirAlerts(t); }, [ok2, hid.ready, t.zk, t.qh]);
+  // Reminders written inside notes. Only the parts that matter for the alert are watched, so typing in a note does not re-plan them.
+  const [nt, , okn] = useStored<{ notes?: { id: number; t: string; s: string; rm?: number; rd?: boolean }[] }>('ml_notes', { notes: [] });
+  const noteRems = ((nt && nt.notes) || []).filter((n) => n.rm).map((n) => ({ id: n.id, t: n.t, s: (n.s || '').slice(0, 300), rm: n.rm, rd: n.rd }));
+  useEffect(() => { if (okn && hid.ready && Platform.OS !== 'web') syncNoteAlerts(noteRems, hid.on('planner')); }, [okn, hid.ready, JSON.stringify(noteRems)]);
   useEffect(() => { if (ok2 && Platform.OS !== 'web') syncWeekAlert({ ...t, ev: tg.ev !== false }); }, [ok2, tg.ev]);
   const [hb, , okh] = useStored<{ meds?: { id: string; name: string; dose: string; time: string }[]; days?: Record<string, { med?: string[] }>; rlRem?: string; cyOn?: boolean; cyRem?: boolean }>('ml_habit', {});
   const todayK = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
