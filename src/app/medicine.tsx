@@ -17,7 +17,7 @@ import { HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepe
 
 const T = '#5ee7df';
 const DN = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const ICS = ['medicine', 'tablet', 'syrup', 'needle'];
+const ICS: [string, string][] = [['medicine', 'Capsule'], ['tablet', 'Tablet'], ['syrup', 'Syrup'], ['needle', 'Injection'], ['drops', 'Drops'], ['inhaler', 'Inhaler'], ['cream', 'Cream'], ['vitamin', 'Vitamin']];
 const part = (t: string) => { const h = +t.slice(0, 2); return h < 12 ? 'MORNING' : h < 17 ? 'AFTERNOON' : h < 21 ? 'EVENING' : 'NIGHT'; };
 const ORDER = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
 
@@ -102,8 +102,8 @@ export default function Medicine() {
                   </View>
                 ) : null}
                 <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 14 }}>ICON</Text>
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-                  {ICS.map((k) => <Pressable key={k} onPress={() => setIc(k)} style={{ padding: 4, borderRadius: 16, borderWidth: 2, borderColor: ic === k ? W : 'transparent' }}><HeadIcon k={k} size={38} /></Pressable>)}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, rowGap: 10 }}>
+                  {ICS.map(([k, n]) => <Pressable key={k} onPress={() => setIc(k)} accessibilityLabel={n} style={{ width: '25%', alignItems: 'center' }}><View style={{ padding: 4, borderRadius: 18, borderWidth: 2, borderColor: ic === k ? W : 'transparent' }}><HeadIcon k={k} size={42} /></View><Text style={{ color: ic === k ? W : 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: ic === k ? '800' : '600', marginTop: 4 }}>{n}</Text></Pressable>)}
                 </View>
                 {err ? <Text style={{ color: '#ffb3bf', fontSize: 12, marginTop: 12 }}>{err}</Text> : null}
               </Glass>
