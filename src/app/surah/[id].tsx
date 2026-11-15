@@ -43,7 +43,7 @@ export default function SurahScreen() {
               <View onLayout={(e) => { flowH.current = e.nativeEvent.layout.height; tryJump(); }} style={{ paddingVertical: 14 }}>
                 <Text style={{ color: W, fontSize: AR_SIZE[size] + 4, lineHeight: (AR_SIZE[size] + 4) * 2.1, textAlign: 'justify', writingDirection: 'rtl' }}>
                   {s.verses.map((v) => (
-                    <Text key={v.n} onPress={() => { setIsl({ ...isl, last: { ...isl.last, [key]: v.n }, lastKey: key }); say('Last read: verse ' + v.n); }}
+                    <Text key={v.n} onPress={() => { setIsl({ ...isl, last: { ...isl.last, [key]: v.n }, lastKey: key }); }}
                       onLongPress={() => { const nx = marks.includes(v.n) ? marks.filter((x) => x !== v.n) : [...marks, v.n].sort((a, b) => a - b); setIsl({ ...isl, vb: { ...(isl.vb || {}), [key]: nx } }); say(marks.includes(v.n) ? 'Verse bookmark removed' : 'Verse ' + v.n + ' bookmarked'); }}
                       >
                       {(key === 'kahfi10' && v.n === 101 ? ' ··· ' : '') + v.ar}<Text style={{ color: '#7df0c6', fontSize: 16 }}>{' ﴿' + v.n + '﴾' + (marks.includes(v.n) ? '★' : '') + ' '}</Text>
@@ -56,7 +56,7 @@ export default function SurahScreen() {
                 {key === 'kahfi10' && v.n === 101 && <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center', paddingVertical: 10 }}>· · · verses 11 to 100 omitted · · ·</Text>}
                 <View onLayout={(e) => { ys.current[v.n] = e.nativeEvent.layout.y; if (v.n === +(jump || 0)) tryJump(); }}>
                 <VerseBlock v={v} size={size} lang={lang} arOnly={mode === 'ar'} marked={marks.includes(v.n)} last={i === s.verses.length - 1}
-                  onPress={() => { setIsl({ ...isl, last: { ...isl.last, [key]: v.n }, lastKey: key }); say('Last read: verse ' + v.n); }}
+                  onPress={() => { setIsl({ ...isl, last: { ...isl.last, [key]: v.n }, lastKey: key }); }}
                   onLong={() => { const nx = marks.includes(v.n) ? marks.filter((x) => x !== v.n) : [...marks, v.n].sort((a, b) => a - b); setIsl({ ...isl, vb: { ...(isl.vb || {}), [key]: nx } }); say(marks.includes(v.n) ? 'Verse bookmark removed' : 'Verse ' + v.n + ' bookmarked'); }} />
                 </View>
               </React.Fragment>

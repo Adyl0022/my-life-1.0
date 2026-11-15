@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, Easing, Image, Pressable } from 'react-native';
 import Svg, { Ellipse } from 'react-native-svg';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Region, REGIONS } from '../lib/twin';
 
 // The flat hologram: the same body as the 3D one, drawn as a picture, with tap zones. Used when 3D is off or not available.
@@ -25,7 +24,7 @@ export function Hologram({ w, sel, onPick, glow, reduce }: { w: number; sel: Reg
   );
   return (
     <View style={{ width: w, height: H, alignSelf: 'center' }}>
-      <Image source={IMG} resizeMode="stretch" style={{ position: 'absolute', left: 0, top: 0, width: w, height: VH * sc, opacity: 0.55 + 0.45 * glow }} />
+      <Image source={IMG} style={{ position: 'absolute', left: 0, top: 0, width: w, height: VH * sc, opacity: 0.55 + 0.45 * glow, resizeMode: 'stretch' }} />
       <Svg pointerEvents="none" width={w} height={H} viewBox={'0 0 ' + VW + ' ' + (VH + FLOOR)} style={{ position: 'absolute', left: 0, top: 0 }}>
         <Ellipse cx="270" cy="578" rx="200" ry="22" fill="none" stroke="#5ee7df" strokeOpacity="0.6" strokeWidth="2" />
         <Ellipse cx="270" cy="578" rx="150" ry="16" fill="none" stroke="#7c9cff" strokeOpacity="0.6" strokeWidth="2" />
@@ -41,8 +40,7 @@ export function Hologram({ w, sel, onPick, glow, reduce }: { w: number; sel: Reg
       <Z r="lungs" x={277} y={148} ww={26} hh={50} rad={13} fo={on('lungs') ? 0.6 : 0.3} sw={on('lungs') ? 2 : 1.2} />
       <Z r="heart" x={268} y={168} ww={24} hh={26} rad={12} fo={on('heart') ? 0.85 : 0.5} sw={on('heart') ? 2 : 1.2} />
       <Z r="brain" x={250} y={51} ww={40} hh={34} rad={17} fo={on('brain') ? 0.7 : 0.35} sw={on('brain') ? 2 : 1.2} />
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', left: w * 0.1, right: w * 0.1, top: 0, height: 36 * sc * 1.6, transform: [{ translateY: scan.interpolate({ inputRange: [0, 1], outputRange: [0, VH * sc - 36 * sc * 1.6] }) }] }}>
-        <LinearGradient colors={['rgba(94,231,223,0)', 'rgba(94,231,223,.4)', 'rgba(94,231,223,0)']} style={{ flex: 1 }} />
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', left: w * 0.1, right: w * 0.1, top: 0, height: 5, backgroundColor: 'rgba(94,231,223,.45)', transform: [{ translateY: scan.interpolate({ inputRange: [0, 1], outputRange: [0, VH * sc - 36 * sc * 1.6] }) }] }}>
       </Animated.View>
     </View>
   );

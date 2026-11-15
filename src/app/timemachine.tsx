@@ -65,7 +65,7 @@ export default function TimeMachinePage() {
   const [mode, setMode] = useState<'past' | 'future'>('past');
   const [reg, setReg] = useState<Region>('body');
   const [a, setA] = useState(0); const [b, setB] = useState<number | null>(null); const [cmp, setCmp] = useState(false);
-  const [use3d, setUse3d] = useStored<boolean>('ml_tm3d', false); const [failed, setFailed] = useState(false);
+  const [use3d, setUse3d] = useStored<boolean>('ml_tm3d2', true); const [failed, setFailed] = useState(false);
   const [hz, setHz] = useState(7); const [reduce, setReduce] = useState(false);
   useEffect(() => { try { AccessibilityInfo.isReduceMotionEnabled().then(setReduce); } catch (e) {} }, []);
   const rise = useRef(new Animated.Value(0)).current;
