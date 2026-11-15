@@ -9,6 +9,7 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { W } from '../components/Ui';
 import { Hologram } from '../components/Hologram';
+import { HeartLog } from '../components/HeartLog';
 class Guard extends React.Component<{ onFail: () => void; children: React.ReactNode }, { bad: boolean }> {
   state = { bad: false };
   static getDerivedStateFromError() { return { bad: true }; }
@@ -62,7 +63,7 @@ const Hud = ({ rows, goal }: { rows: Row[]; goal: number }) => {
 
 export default function TimeMachinePage() {
   const router = useRouter(); const { width } = useWindowDimensions();
-  const [h] = useStored<HData>('ml_habit', HEMPTY);
+  const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [mode, setMode] = useState<'past' | 'future'>('past');
   const [reg, setReg] = useState<Region>('body');
   const [a, setA] = useState(0); const [b, setB] = useState<number | null>(null); const [cmp, setCmp] = useState(false);
@@ -84,12 +85,20 @@ export default function TimeMachinePage() {
 
   const Panel = () => {
     const rowsA = rowsFor(h, a, reg); const rowsB = cmp && b != null ? rowsFor(h, b, reg) : null;
-    if (reg === 'heart') return (
-      <View style={{ marginTop: 12 }}>
-        <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>No heart records yet</Text>
-        <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>My Life does not measure heart rate or blood pressure, so there is nothing to show here. Nothing is made up. When you can log heart readings in the app, they will appear on this part of the body.</Text>
-      </View>
-    );
+    if (reg === 'heart') {
+      const hr = rowsFor(h, a, 'heart');
+      return (
+        <View style={{ marginTop: 10 }}>
+          {hasRecords(h, a) && hr[2].v != null ? hr.map((r, k) => (
+            <View key={r.l} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderTopWidth: k ? 1 : 0, borderTopColor: 'rgba(255,255,255,.08)' }}>
+              <Text style={{ flex: 1.3, color: DIM, fontSize: 12.5 }}>{r.l}</Text>
+              <Text style={{ flex: 1, color: r.v == null ? 'rgba(255,255,255,.4)' : W, fontSize: 13.5, fontWeight: '800' }}>{r.t}</Text>
+            </View>
+          )) : <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18 }}>No heart readings on this day. Type your own pulse or blood pressure below. Nothing is measured or made up.</Text>}
+          <View style={{ marginTop: 10 }}><HeartLog h={h} setH={setH} off={a} /></View>
+        </View>
+      );
+    }
     return (
       <View style={{ marginTop: 10 }}>
         {rowsB ? <View style={{ flexDirection: 'row', marginBottom: 4 }}><View style={{ flex: 1.3 }} /><Text style={{ flex: 1, color: '#9fb0d0', fontSize: 10.5, fontWeight: '800', letterSpacing: 1 }}>{dl(a).toUpperCase()}</Text><Text style={{ flex: 1, color: '#9fb0d0', fontSize: 10.5, fontWeight: '800', letterSpacing: 1 }}>{dl(b as number).toUpperCase()}</Text></View> : null}
@@ -111,7 +120,7 @@ export default function TimeMachinePage() {
 
   const Future = () => {
     const ms = FMETRICS[reg];
-    if (reg === 'heart') return <View style={{ marginTop: 12 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Nothing to estimate</Text><Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>There are no heart records, so there is no estimate for this part. Nothing is made up.</Text></View>;
+    if (reg === 'heart') return <View style={{ marginTop: 12 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Nothing to estimate</Text><Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>My Life does not guess pulse or blood pressure. A straight line through vital signs would not be honest or safe, so there is no estimate for this part. Ask a doctor or nurse about your readings.</Text></View>;
     const gs = ms.map((m) => ({ m, g: guess(h, m, hz) }));
     const wg = reg === 'body' ? weightGuess(h, hz) : null;
     const any = gs.some((x) => x.g) || !!wg;

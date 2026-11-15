@@ -337,6 +337,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "body hologram 3d badan otak brain jantung heart paru lungs otot muscles time machine past future masa lalu masa depan compare bandingkan estimate anggaran timeline"
  },
  {
+  "t": "Heart log",
+  "s": "Type your own pulse and blood pressure",
+  "m": "Habit",
+  "c": "#ff8fab",
+  "h": "Habit.dc.html",
+  "k": "heart log jantung denyutan nadi pulse bpm blood pressure tekanan darah tension bp rekod catatan body hologram"
+ },
+ {
   "t": "My Life Assistant",
   "s": "Ask about your own data",
   "m": "System",

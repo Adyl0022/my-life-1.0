@@ -1,4 +1,4 @@
-import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, cupsGoal, goalPctOf, latestKg } from './habit';
+import { HData, HDay, HeartRead, BLANK, getDay, dateOf, keyOfDate, MOODS, cupsGoal, goalPctOf, latestKg } from './habit';
 import { ENERGY, hasAny } from './patterns';
 import { BREATH } from './relax';
 
@@ -23,6 +23,7 @@ export const kgOn = (h: HData, off: number): number | null => {
   return l.length ? l[l.length - 1].v : null;
 };
 
+export const heartOn = (h: HData, off: number): HeartRead[] => { const k = keyOfDate(dateOf(off)); return (h.heart || []).filter((x) => x.d === k).sort((a, b) => (a.at < b.at ? -1 : 1)); };
 export type Row = { l: string; v: number | null; t: string; unit?: string };
 const r1 = (n: number) => String(Math.round(n * 10) / 10);
 const row = (l: string, v: number | null, f: (n: number) => string): Row => ({ l, v, t: v == null ? 'No record' : f(v) });
@@ -45,7 +46,14 @@ export function rowsFor(h: HData, off: number, k: Region): Row[] {
     row('Distance', pos(x.steps), (n) => r1(n * 0.00075) + ' km'),
     row('Steps goal', x.steps > 0 ? Math.min(100, Math.round((x.steps / (h.goal || 8000)) * 100)) : null, (n) => n + '%'),
   ];
-  if (k === 'heart') return [];
+  if (k === 'heart') {
+    const l = heartOn(h, off); const p = [...l].reverse().find((x) => x.bpm != null); const b = [...l].reverse().find((x) => x.sys != null && x.dia != null);
+    return [
+      row('Pulse (latest)', p ? p.bpm! : null, (n) => Math.round(n) + ' bpm'),
+      row('Blood pressure (latest)', b ? b.sys! : null, () => b!.sys + '/' + b!.dia + ' mmHg'),
+      row('Readings', l.length || null, (n) => String(n)),
+    ];
+  }
   const kg = kgOn(h, off); const bmi = kg && h.cm ? kg / Math.pow(h.cm / 100, 2) : null;
   return [
     row('Steps', pos(x.steps), (n) => Math.round(n).toLocaleString()),
@@ -61,7 +69,7 @@ export function glowOf(h: HData, off: number): number {
   const x = getDay(h, off); if (!hasAny({ ...BLANK, ...x })) return 0;
   return Math.max(0.15, Math.min(1, goalPctOf(x, h.goal || 8000, cupsGoal(h)) / 100));
 }
-export const hasRecords = (h: HData, off: number) => hasAny({ ...BLANK, ...getDay(h, off) }) || breathMins(getDay(h, off)) > 0 || calmMins(getDay(h, off)) > 0;
+export const hasRecords = (h: HData, off: number) => heartOn(h, off).length > 0 || hasAny({ ...BLANK, ...getDay(h, off) }) || breathMins(getDay(h, off)) > 0 || calmMins(getDay(h, off)) > 0;
 
 // ---- Future: a straight line through the last 4 weekly averages of the person's own records ----
 export type Metric = { k: string; l: string; unit: string; max: number; per: number; f: (x: HDay) => number | null; fmt: (n: number) => string };
