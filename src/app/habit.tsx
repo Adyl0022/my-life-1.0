@@ -451,11 +451,6 @@ export default function Habit() {
                 </View>); })}
             </View>
           </Glass>
-          <Pressable onPress={() => router.push('/habit-history' as any)}>
-            <Glass radius={22} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>30-Day History</Text><Text style={{ color: W, fontSize: 20 }}>›</Text>
-            </Glass>
-          </Pressable>
           </>)}
           {tab === 'body' && (<>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>

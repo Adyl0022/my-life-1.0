@@ -12,7 +12,6 @@ export const ROUTES: Record<string, string> = {
   'Savings.dc.html': '/savings',
   'Record.dc.html': '/record',
   'Habit.dc.html': '/habit',
-  'HabitHistory.dc.html': '/habit-history',
   'Islamic.dc.html': '/islamic',
   'Mathurat.dc.html': '/mathurat',
   'Tahlil.dc.html': '/tahlil',

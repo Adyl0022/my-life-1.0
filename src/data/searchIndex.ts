@@ -321,12 +321,12 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "daily needs keperluan harian kalori calories food makanan idea meal berat weight tinggi height umur age"
  },
  {
-  "t": "Habit History",
-  "s": "30-day overview",
+  "t": "Health Calendar",
+  "s": "Calendar, graphs, then vs now, future and memories",
   "m": "Habit",
   "c": "#b794ff",
-  "h": "HabitHistory.dc.html",
-  "k": "history sejarah habit 30 hari days overview streak"
+  "h": "Habit.dc.html",
+  "k": "history sejarah calendar kalendar time machine graph graf explore future memories kenangan habit 30 hari days overview streak"
  },
  {
   "t": "My Life Assistant",

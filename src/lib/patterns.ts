@@ -1,4 +1,4 @@
-import { HData, HDay, Exp, getDay, dateOf, keyOfDate, MOODS, MON } from './habit';
+import { HData, HDay, Exp, getDay, dateOf, keyOfDate, MOODS, MON, goalPctOf, cupsGoal, medDue } from './habit';
 
 // My Life Intelligence: simple rules that run on the phone, on the person's own records. No AI service.
 export const ENERGY: [string, string][] = [['Very energetic', '#7df0c6'], ['Normal', '#8fe9e2'], ['Tired', '#ffc46b'], ['Exhausted', '#ff8fab']];
@@ -83,12 +83,37 @@ export function avgRange(h: HData, from: number, to: number): Win {
 export const windowAvg = (h: HData, end: number): Win => avgRange(h, end - 6, end);
 
 // Experiments: small tests of the person's own habits. Only things the app already records can be counted.
-export type Tpl = { id: string; title: string; days: number; note: string; ok: (x: HDay) => boolean | null };
+export type Ctx = { goal: number; cg: number; date: Date; meds: { id: string; days?: number[] }[] };
+export type Tpl = { id: string; cat: string; title: string; days: number; note: string; ok: (x: HDay, c: Ctx) => boolean | null };
+const hm = (s?: string) => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ''); return m ? +m[1] * 60 + +m[2] : null; };
+// Bedtime counts as on time when it is between 6 pm and the limit. A time after midnight is late.
+const bedBy = (limit: number) => (x: HDay) => { const v = hm(x.bed); if (v == null) return null; if (v < 6 * 60) return false; return v >= 18 * 60 && v <= limit; };
+const wakeBy = (limit: number) => (x: HDay) => { const v = hm(x.wake); if (v == null) return null; return v <= limit; };
+export const CATS = ['Sleep', 'Move', 'Water', 'Mind', 'Habits'];
 export const TPLS: Tpl[] = [
-  { id: 'bed', title: 'Sleep before 11 pm', days: 7, note: 'Counted from the bedtime you log in Today', ok: (x) => { const m = /^(\d{1,2}):(\d{2})$/.exec(x.bed || ''); if (!m) return null; const v = +m[1] * 60 + +m[2]; return v >= 18 * 60 && v <= 23 * 60; } },
-  { id: 'sleep7', title: 'Sleep 7 hours or more', days: 7, note: 'Counted from your sleep record', ok: (x) => (x.sleep > 0 ? x.sleep >= 7 : null) },
-  { id: 'steps', title: 'Walk 6,000 steps a day', days: 7, note: 'Counted from your steps', ok: (x) => (x.steps > 0 ? x.steps >= 6000 : null) },
-  { id: 'water', title: 'Drink 7 glasses a day', days: 14, note: 'Counted from your water', ok: (x) => (x.cups > 0 ? x.cups >= 7 : null) },
+  { id: 'bed', cat: 'Sleep', title: 'Sleep before 11 pm', days: 7, note: 'Counted from the bedtime you log in Today', ok: bedBy(23 * 60) },
+  { id: 'bed12', cat: 'Sleep', title: 'Sleep before midnight', days: 7, note: 'Counted from your bedtime', ok: bedBy(24 * 60) },
+  { id: 'bed1030', cat: 'Sleep', title: 'Sleep before 10:30 pm', days: 7, note: 'Counted from your bedtime', ok: bedBy(22 * 60 + 30) },
+  { id: 'wake7', cat: 'Sleep', title: 'Wake up by 7 am', days: 7, note: 'Counted from the wake time you log', ok: wakeBy(7 * 60) },
+  { id: 'sleep7', cat: 'Sleep', title: 'Sleep 7 hours or more', days: 7, note: 'Counted from your sleep record', ok: (x) => (x.sleep > 0 ? x.sleep >= 7 : null) },
+  { id: 'sleep8', cat: 'Sleep', title: 'Sleep 8 hours or more', days: 7, note: 'Counted from your sleep record', ok: (x) => (x.sleep > 0 ? x.sleep >= 8 : null) },
+  { id: 'steps4', cat: 'Move', title: 'Walk 4,000 steps a day', days: 7, note: 'A gentle start, counted from your steps', ok: (x) => (x.steps > 0 ? x.steps >= 4000 : null) },
+  { id: 'steps', cat: 'Move', title: 'Walk 6,000 steps a day', days: 7, note: 'Counted from your steps', ok: (x) => (x.steps > 0 ? x.steps >= 6000 : null) },
+  { id: 'steps8', cat: 'Move', title: 'Walk 8,000 steps a day', days: 7, note: 'Counted from your steps', ok: (x) => (x.steps > 0 ? x.steps >= 8000 : null) },
+  { id: 'steps10', cat: 'Move', title: 'Walk 10,000 steps a day', days: 14, note: 'A bigger challenge, counted from your steps', ok: (x) => (x.steps > 0 ? x.steps >= 10000 : null) },
+  { id: 'goalsteps', cat: 'Move', title: 'Reach your steps goal', days: 7, note: 'Counted against the goal you set', ok: (x, c) => (x.steps > 0 ? x.steps >= c.goal : null) },
+  { id: 'water6', cat: 'Water', title: 'Drink 6 glasses a day', days: 7, note: 'Counted from your water', ok: (x) => (x.cups > 0 ? x.cups >= 6 : null) },
+  { id: 'water', cat: 'Water', title: 'Drink 7 glasses a day', days: 14, note: 'Counted from your water', ok: (x) => (x.cups > 0 ? x.cups >= 7 : null) },
+  { id: 'water8', cat: 'Water', title: 'Drink 8 glasses a day', days: 7, note: 'Counted from your water', ok: (x) => (x.cups > 0 ? x.cups >= 8 : null) },
+  { id: 'goalwater', cat: 'Water', title: 'Reach your water goal', days: 7, note: 'Counted against your own water goal', ok: (x, c) => (x.cups > 0 ? x.cups >= c.cg : null) },
+  { id: 'relax5', cat: 'Mind', title: 'Relax 5 minutes a day', days: 7, note: 'Counted from Relax (breathe or meditate)', ok: (x) => { const m = (x.rl || []).reduce((a, r) => a + r.s, 0) / 60; return m >= 5 ? true : (x.rl || []).length || x.mood >= 0 || x.cups > 0 || x.steps > 0 || x.sleep > 0 ? false : null; } },
+  { id: 'relax10', cat: 'Mind', title: 'Relax 10 minutes a day', days: 14, note: 'Counted from Relax (breathe or meditate)', ok: (x) => { const m = (x.rl || []).reduce((a, r) => a + r.s, 0) / 60; return m >= 10 ? true : (x.rl || []).length || x.mood >= 0 || x.cups > 0 || x.steps > 0 || x.sleep > 0 ? false : null; } },
+  { id: 'moodlog', cat: 'Mind', title: 'Log your mood every day', days: 7, note: 'Counted when you pick a mood', ok: (x) => x.mood >= 0 || x.cups > 0 || x.steps > 0 || x.sleep > 0 ? x.mood >= 0 : null },
+  { id: 'energylog', cat: 'Mind', title: 'Rate your energy every day', days: 14, note: 'Counted when you tap how you feel', ok: (x) => x.mood >= 0 || x.cups > 0 || x.steps > 0 || x.sleep > 0 ? (x.en ?? -1) >= 0 : null },
+  { id: 'happy', cat: 'Mind', title: 'Mood Good or Great', days: 7, note: 'Counted from the mood you log', ok: (x) => (x.mood >= 0 ? x.mood >= 3 : null) },
+  { id: 'goals80', cat: 'Habits', title: 'Reach 80% of your daily goals', days: 7, note: 'Water, sleep and steps together', ok: (x, c) => (x.cups > 0 || x.sleep > 0 || x.steps > 0 ? goalPctOf(x, c.goal, c.cg) >= 80 : null) },
+  { id: 'logall', cat: 'Habits', title: 'Log water, sleep and steps', days: 7, note: 'All three recorded on the same day', ok: (x) => (x.cups > 0 || x.sleep > 0 || x.steps > 0 ? x.cups > 0 && x.sleep > 0 && x.steps > 0 : null) },
+  { id: 'meds', cat: 'Habits', title: 'Take every medicine on time', days: 7, note: 'Counted from your Medication ticks', ok: (x, c) => { const due = c.meds.filter((m) => medDue(m, c.date)); if (!due.length) return null; return due.every((m) => (x.med || []).includes(m.id)); } },
 ];
 export type ExpState = { tpl: Tpl; cells: ('hit' | 'miss' | 'none' | 'future')[]; hit: number; logged: number; dayNo: number; done: boolean; rows: { l: string; a: string; b: string }[] };
 export function expState(e: Exp, h: HData): ExpState | null {
@@ -97,7 +122,7 @@ export function expState(e: Exp, h: HData): ExpState | null {
   const cells: ExpState['cells'] = []; let hit = 0, logged = 0;
   for (let i = 0; i < tpl.days; i++) {
     const o = startOff + i; if (o > 0) { cells.push('future'); continue; }
-    const r = tpl.ok(getDay(h, o)); if (r === null) cells.push('none'); else { logged++; if (r) hit++; cells.push(r ? 'hit' : 'miss'); }
+    const r = tpl.ok(getDay(h, o), { goal: h.goal || 8000, cg: cupsGoal(h), date: dateOf(o), meds: h.meds || [] }); if (r === null) cells.push('none'); else { logged++; if (r) hit++; cells.push(r ? 'hit' : 'miss'); }
   }
   const endOff = startOff + tpl.days - 1; const done = endOff < 0;
   const rows: ExpState['rows'] = [];
