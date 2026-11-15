@@ -166,3 +166,38 @@ export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: bo
     }
   } catch (e) { /* ignore */ }
 }
+
+// Optional daily Relax reminder at a time the person sets.
+export async function syncRelaxAlert(time: string | undefined, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('rlx-rem');
+    const t = /^(\d{1,2}):(\d{2})$/.exec(time || '');
+    if (!on || !t) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('relax', { name: 'Relax reminder', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#8fe9e2' });
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'rlx-rem',
+      content: { title: 'Time to relax', body: 'A few quiet minutes: breathe or meditate in Habit & Health.', sound: false },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: +t[1], minute: +t[2], channelId: 'relax' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}
+// A soft bell when a meditation ends, in case the screen has locked.
+export async function scheduleRelaxEnd(seconds: number): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('rlx-end');
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('relax', { name: 'Relax reminder', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#8fe9e2' });
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'rlx-end',
+      content: { title: 'Session complete', body: 'Well done. Take a moment before you carry on.', sound: true },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: Math.max(5, Math.round(seconds)), channelId: 'relax' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}
+export async function cancelRelaxEnd(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try { await cancelPrefix('rlx-end'); } catch (e) { /* ignore */ }
+}

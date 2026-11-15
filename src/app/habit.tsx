@@ -12,6 +12,7 @@ import { Face, GlassIcon, HeadIcon, BrainIcon } from '../components/HabitIcons';
 import { PatternsTab } from '../components/PatternsTab';
 import { ENERGY, energyEstimate } from '../lib/patterns';
 import { useStored } from '../lib/store';
+import { mins, fmtMin, weekMins, relaxStreak } from '../lib/relax';
 import { TOP } from '../lib/layout';
 import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
@@ -76,6 +77,7 @@ export default function Habit() {
   const t = getDay(h, 0);
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [keyOfDate(dateOf(0))]: { ...t, ...p } } });
   const meds = h.meds || []; const taken = t.med || [];
+  const relaxToday = mins(t);
   const medDue_ = meds.filter((m) => medDue(m, dateOf(0)));
   const medNext = medDue_.filter((m) => !taken.includes(m.id)).sort((x, y) => (x.time < y.time ? -1 : 1))[0];
   const km = (t.steps * 0.00075).toFixed(1);
@@ -341,6 +343,17 @@ export default function Habit() {
               <Lbl t={medDue_.length ? 'Today: ' + medDue_.filter((m) => taken.includes(m.id)).length + ' of ' + medDue_.length + ' taken' : meds.length ? 'No medicine due today' : 'Add a medicine to get reminders and tick it off each day'} />
               {medDue_.length ? <View style={{ height: 10, borderRadius: 99, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: (medDue_.filter((m) => taken.includes(m.id)).length / medDue_.length) * 100 + '%', height: '100%', backgroundColor: T }} /></View> : null}
               {medNext ? <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{'Next: ' + medNext.name + ' · ' + to12(medNext.time)}</Text> : null}
+            </Glass>
+          </Pressable>
+          <Pressable onPress={() => router.push('/relax' as any)} accessibilityLabel="Open Relax">
+            <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Ttl nm k="relax" t="Relax" />
+                <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Open ›</Text>
+              </View>
+              <Lbl t={'Today: ' + fmtMin(relaxToday) + ' of ' + (h.rlGoal || 10) + ' min'} />
+              <View style={{ height: 10, borderRadius: 99, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: Math.min(100, (relaxToday / (h.rlGoal || 10)) * 100) + '%', height: '100%', backgroundColor: T }} /></View>
+              <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{relaxStreak(h) + ' day streak · ' + fmtMin(weekMins(h)) + ' min this week'}</Text>
             </Glass>
           </Pressable>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>

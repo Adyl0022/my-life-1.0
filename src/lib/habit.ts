@@ -1,11 +1,12 @@
-export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number; en?: number; med?: string[] };
+export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number; en?: number; med?: string[]; rl?: RSess[] };
+export type RSess = { k: string; s: number; at: string };
 export type Med = { id: string; name: string; dose: string; time: string; days?: number[]; ic?: string };
 // days: weekdays (0 = Sunday ... 6 = Saturday) the medicine is due. Empty or missing means every day.
 export const medDue = (m: { days?: number[] }, d: Date) => !m.days || m.days.length === 0 || m.days.length >= 7 || m.days.includes(d.getDay());
 export const to12 = (s: string) => { const m = /^(\d{1,2}):(\d{2})$/.exec(s); if (!m) return s; const hh = +m[1]; return (hh % 12 || 12) + ':' + m[2] + ' ' + (hh < 12 ? 'AM' : 'PM'); };
 export const medRepeat = (m: { days?: number[] }) => { const d = m.days || []; if (d.length === 0 || d.length >= 7) return 'Everyday'; const k = [...d].sort().join(''); if (k === '12345') return 'Weekdays'; return [...d].sort().map((x) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][x]).join(' '); };
 export type Exp = { id: string; tpl: string; start: string };
-export type HData = { meds?: Med[]; exps?: Exp[]; goal: number; days: Record<string, HDay>; kg?: { d: string; v: number }[]; cm?: number; goalKg?: number; age?: number; sex?: 'm' | 'f'; auto?: boolean };
+export type HData = { rlGoal?: number; rlRem?: string; rlBell?: boolean; meds?: Med[]; exps?: Exp[]; goal: number; days: Record<string, HDay>; kg?: { d: string; v: number }[]; cm?: number; goalKg?: number; age?: number; sex?: 'm' | 'f'; auto?: boolean };
 export const HEMPTY: HData = { goal: 8000, days: {}, kg: [] };
 export const BLANK: HDay = { mood: -1, cups: 0, sleep: 0, steps: 0 };
 export const GLASS = 250;

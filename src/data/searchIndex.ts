@@ -265,6 +265,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "experiment experiments challenge cabaran eksperimen before after sleep tidur steps water"
  },
  {
+  "t": "Relax",
+  "s": "Breathing exercises and meditation timer",
+  "m": "Habit",
+  "c": "#8fe9e2",
+  "h": "Habit.dc.html",
+  "k": "relax breathing breathe meditation meditate meditasi nafas tenang stress timer calm tidur sleep"
+ },
+ {
   "t": "Energy",
   "s": "How energetic you feel today",
   "m": "Habit",
