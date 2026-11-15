@@ -153,6 +153,8 @@ export class AssistantBase extends React.Component<any, any> {
     if (a.type === 'steps') return { type: 'steps', n: -a.n };
     if (a.type === 'sleep') return { type: 'sleep', h: s.sleep || 0 };
     if (a.type === 'task') return { type: 'undoTask', name: a.name };
+    if (a.type === 'remind') return { type: 'undoRemind', title: a.title, rm: a.rm };
+    if (a.type === 'shop') return { type: 'undoShop', items: a.items };
     if (a.type === 'event') return { type: 'undoEvent', name: a.name, date: a.date };
     if (a.type === 'taskdone') { const t = (R.plTasks || []).find((x) => x.id === a.id); return { type: 'taskstatus', id: a.id, status: (t && t.status && t.status !== 'done') ? t.status : 'todo' }; }
     return null;

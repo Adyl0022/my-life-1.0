@@ -94,6 +94,44 @@ export function findDate(text) {
   return null;
 }
 
+// Finds a time of day ("pukul 12 tengah hari", "9pm", "tonight") or a wait ("in 1 hour", "30 minit lagi") in a sentence.
+export function findTime(text) {
+  const t = ' ' + (text || '').toLowerCase() + ' '; let m;
+  if ((m = t.match(/\b(?:dalam|in)\s+(\d{1,3})\s*(jam|hours?|hrs?|h|minit|minutes?|mins?)\b(?:\s+lagi)?/)) || (m = t.match(/\b(\d{1,3})\s*(jam|hours?|minit|minutes?|min)\s+lagi\b/))) {
+    const n = Number(m[1]); const hr = /^(jam|h)/.test(m[2]); const d = new Date(Date.now() + n * (hr ? 3600000 : 60000)); d.setSeconds(0, 0);
+    return { rel: d.getTime(), h: 0, m: 0, spans: [m[0].trim()] };
+  }
+  if ((m = t.match(/\b(?:(?:pukul|jam|at|@|pada)\s*)?(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm|pagi|petang|malam|tengah hari|tengahari|tghari)\b/))) {
+    let h = Number(m[1]); const mi = m[2] ? Number(m[2]) : 0; const k = m[3];
+    if (h > 12 || mi > 59) return null;
+    if (k === 'am' || k === 'pagi') { if (h === 12) h = 0; }
+    else if (k === 'pm' || k === 'petang') { if (h < 12) h += 12; }
+    else if (k === 'malam') { if (h === 12) h = 0; else if (h >= 6) h += 12; }
+    else { if (h < 6) h += 12; }
+    return { rel: 0, h, m: mi, spans: [m[0].trim()] };
+  }
+  if ((m = t.match(/\b(?:pukul|jam)\s+(\d{1,2})(?:[:.](\d{2}))?\b/)) && Number(m[1]) <= 23) return { rel: 0, h: Number(m[1]), m: m[2] ? Number(m[2]) : 0, spans: [m[0].trim()] };
+  if ((m = t.match(/\b(tonight|tonite|malam ini|malam ni)\b/))) return { rel: 0, h: 21, m: 0, spans: [m[0]] };
+  if ((m = t.match(/\b(this evening|petang ini|petang ni|petang)\b/))) return { rel: 0, h: 18, m: 0, spans: [m[0]] };
+  if ((m = t.match(/\b(this morning|morning|pagi ini|pagi ni|pagi)\b/))) return { rel: 0, h: 8, m: 0, spans: [m[0]] };
+  if ((m = t.match(/\b(noon|tengah hari|tengahari)\b/))) return { rel: 0, h: 12, m: 0, spans: [m[0]] };
+  return null;
+}
+// The moment a reminder should ring, from an optional date and a time.
+function remindAt(fd, tm) {
+  if (tm.rel) return tm.rel;
+  const now = new Date(); let d;
+  if (fd) { const p = fd.date.split('-'); d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), tm.h, tm.m, 0, 0); }
+  else { d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), tm.h, tm.m, 0, 0); if (d.getTime() <= now.getTime() + 60000) d.setDate(d.getDate() + 1); }
+  return d.getTime();
+}
+const WDS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const rtxt = (ms) => {
+  const d = new Date(ms); const a = new Date(); const diff = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime()) / 86400000);
+  const h = d.getHours(); const c = (h % 12 || 12) + ':' + pad(d.getMinutes()) + ' ' + (h < 12 ? 'AM' : 'PM');
+  return (diff === 0 ? 'Today ' : diff === 1 ? 'Tomorrow ' : WDS[d.getDay()] + ' ' + d.getDate() + ' ' + MN[d.getMonth()] + ', ') + c;
+};
+
 // A period such as "this week" as a [from, to) range of date strings.
 export function period(qn) {
   const t = ' ' + qn + ' '; const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -167,15 +205,54 @@ export function think(A, q, lang) {
   }
 
   // --- actions ---
+  // reminder that rings at a time: ingatkan saya esok pukul 12 ... / remind me in 1 hour to ...
+  let mt = ql.match(/^(?:tolong\s+)?(?:ingatkan saya|ingatkan|remind me|set (?:a )?reminder)\s*(?:(?:about|tentang|pasal|to|untuk|that|supaya)\b)?\s*(.+)$/);
+  if (mt && mt[1].trim()) {
+    const tm = findTime(mt[1]);
+    if (tm) {
+      const fd = findDate(mt[1]); let name = mt[1];
+      [fd && fd.span, ...tm.spans].forEach((sp) => { if (sp) name = name.replace(String(sp).trim(), ' '); });
+      name = name.replace(/\b(tonight|tonite|malam ini|malam ni|this evening|petang ini|petang ni|this morning|pagi ini|pagi ni)\b/g, ' ');
+      for (let i = 0; i < 3; i++) name = name.replace(/^\s*(pada|on|at|by|untuk|for|to|that|supaya|tentang|about|pukul|jam|then|dan|and)\b\s*/, ' ').replace(/\b(pada|on|at|by|untuk|for|pukul|jam|to)\s*$/, ' ');
+      name = name.replace(/\s+/g, ' ').trim() || 'Reminder'; name = name.charAt(0).toUpperCase() + name.slice(1);
+      const at = remindAt(fd, tm);
+      if (at <= Date.now() + 30000) return done(mk(L('That time has already passed. Tell me a time later than now, for example "remind me tomorrow 9am to ' + name.toLowerCase() + '".', 'Masa itu sudah lepas. Beritahu saya masa selepas sekarang, contohnya "ingatkan saya esok pukul 9 pagi ' + name.toLowerCase() + '".')), {}, null, {});
+      return done(mk(L('Reminder set for ' + rtxt(at) + ': "' + name + '". It will ring at that time.', 'Peringatan ditetapkan pada ' + rtxt(at) + ': "' + name + '". Ia akan berbunyi pada masa itu.'), { big: rtxt(at), bigLbl: name, color: '#ffc46b', label: L('Open Notes & Reminders', 'Buka Notes & Reminders'), href: 'Notes.dc.html' }), {}, { type: 'remind', title: name, rm: at });
+    }
+  }
+  // which reminders do I have
+  if (/\b(reminders?|peringatan)\b/.test(ql) && !/\b(how|macam mana|bagaimana|turn|off|on|matikan|hidupkan|setting|settings|sound|bunyi|quiet|senyap|ubah|change|cara|notification|notifikasi)\b/.test(ql) && /\b(apa|what|show|senarai|list|ada|my|saya|lihat|tunjuk|which|mana)\b/.test(ql)) {
+    const all = (R.noteList || []).filter((n) => n.rm && !n.rd).sort((a, b) => a.rm - b.rm); const fd0 = findDate(ql);
+    const rows = fd0 ? all.filter((n) => iso(new Date(n.rm)) === fd0.date) : all;
+    const od = rows.filter((n) => n.rm < Date.now()).length;
+    const link = { label: L('Open Notes & Reminders', 'Buka Notes & Reminders'), href: 'Notes.dc.html' };
+    if (!rows.length) return done(mk(fd0 ? L('No reminders for that day. Say "remind me tomorrow 12pm to charge laptop" to add one.', 'Tiada peringatan untuk hari itu. Sebut "ingatkan saya esok pukul 12 tengah hari cas laptop" untuk tambah.') : L('You have no reminders yet. Say "remind me tomorrow 12pm to charge laptop" to add one.', 'Awak belum ada peringatan. Sebut "ingatkan saya esok pukul 12 tengah hari cas laptop" untuk tambah.'), link), {}, null, {});
+    return done(mk(L('Your reminders' + (od ? ' (' + od + ' overdue)' : '') + ':\n', 'Peringatan awak' + (od ? ' (' + od + ' lewat)' : '') + ':\n') + rows.slice(0, 8).map((n) => '• ' + rtxt(n.rm) + ' · ' + (n.t || 'Reminder')).join('\n') + (rows.length > 8 ? '\n+' + (rows.length - 8) + L(' more', ' lagi') : ''), Object.assign({ big: String(rows.length), bigLbl: L('reminders', 'peringatan'), color: '#ffc46b' }, link)), {}, null, {});
+  }
   // note
-  let mt = ql.match(/^(?:tolong\s+)?(?:catat|catatkan|nota|note|tulis|jot|simpan nota|save note|write down)\s*(?:nota|note|that|bahawa)?\s*[:\-]?\s*(.+)$/);
+  mt = ql.match(/^(?:tolong\s+)?(?:buat\s+(?:satu\s+)?(?:nota|note)|make a note|create a note|add a note|new note|catat|catatkan|nota|note|tulis|jot|simpan nota|save note|write down)\s*(?:nota|note|that|bahawa)?\s*[:\-]?\s*(.+)$/);
   if (mt && mt[1].trim().length > 1 && !/^(saya|i)\s+(belanja|spent)/.test(mt[1])) {
     const text = mt[1].trim(); const body = text.charAt(0).toUpperCase() + text.slice(1);
     return done(mk(L('Saved to Notes: "' + body + '".', 'Disimpan dalam Nota: "' + body + '".'), { label: L('Open Notes', 'Buka Nota'), href: 'Notes.dc.html' }), {}, { type: 'note', title: body.slice(0, 40), text: body });
   }
+  // shopping list (a checklist note on this phone; the Family shopping list is shared online, so it stays in Family Planner)
+  if (/(senarai\s+(?:membeli[- ]?belah|beli[- ]?belah|belian|barang(?: dapur)?|runcit|shopping|dapur)|shopping\s*list|grocer(?:y|ies)\s*list|membeli[- ]?belah)/.test(ql)) {
+    const fam = /\b(family|keluarga)\b/.test(ql);
+    const ms = ql.match(/^(?:tolong\s+)?(?:tambah|tambahkan|add|masukkan|letak|put)\s+(.+?)\s+(?:ke dalam|ke|dalam|in|into|to|on)\s+.*$/);
+    if (fam) return done(mk(L('The Family shopping list is shared online with your family, so I cannot add to it from here. Open Family Planner, Household, Shopping and tap +. I can add it to your own Shopping list instead: say "add milk to my shopping list".', 'Senarai membeli-belah Family dikongsi dalam talian dengan keluarga, jadi saya tak boleh tambah dari sini. Buka Family Planner, Household, Shopping dan tekan +. Saya boleh tambah dalam senarai Shopping awak sendiri: sebut "tambah susu ke senarai membeli belah".'), { label: L('Open Family shopping', 'Buka Family shopping'), href: 'FamilyShop.dc.html' }), {}, null, {});
+    if (ms) {
+      let txt = ms[1]; for (let i = 0; i < 3; i++) txt = txt.replace(/^\s*(barang|item|items|beli|buy|tolong)\b\s*/, ' ');
+      const items = txt.split(/\s*(?:,|\bdan\b|\band\b|&|\+)\s*/).map((x) => x.trim()).filter((x) => x && x.length < 40).slice(0, 12).map((x) => x.charAt(0).toUpperCase() + x.slice(1));
+      if (items.length) return done(mk(L('Added to your Shopping list: ' + items.join(', ') + '. It is a checklist in Notes, so you can tick items off.', 'Dah tambah dalam senarai Shopping awak: ' + items.join(', ') + '. Ia senarai semak dalam Notes, jadi awak boleh tanda bila dah beli.'), { label: L('Open Notes', 'Buka Notes'), href: 'Notes.dc.html' }), {}, { type: 'shop', items });
+    }
+    const ex = (R.noteList || []).find((n) => (n.t || '').trim().toLowerCase() === 'shopping list');
+    const open = ex ? ex.s.split('\n').filter((l) => l.indexOf('☐') === 0).map((l) => l.slice(1).trim()) : [];
+    if (open.length) return done(mk(L('Still to buy:\n', 'Masih perlu dibeli:\n') + open.slice(0, 15).map((x) => '• ' + x).join('\n'), { label: L('Open Notes', 'Buka Notes'), href: 'Notes.dc.html' }), {}, null, {});
+    return done(mk(L('Your Shopping list is empty. Say "add milk and eggs to my shopping list".', 'Senarai Shopping awak kosong. Sebut "tambah susu dan telur ke senarai membeli belah".')), {}, null, {});
+  }
   // event
   mt = ql.match(/^(?:tolong\s+)?(?:tambah|tambahkan|add|buat|set|create|simpan|book)\s+(?:satu\s+|an?\s+)?(?:acara|event|temujanji|appointment|janji temu|meeting|mesyuarat|birthday|hari lahir)\s*(.*)$/)
-    || ql.match(/^(?:tolong\s+)?(?:ingatkan saya|remind me)\s+(?:about|tentang|pasal|to|untuk)?\s*(.+)$/);
+    || ql.match(/^(?:tolong\s+)?(?:ingatkan saya|remind me)\s+(?:(?:about|tentang|pasal|to|untuk)\b\s*)?(.+)$/);
   if (mt && mt[1] && mt[1].trim()) {
     const fd = findDate(mt[1]); let name = mt[1];
     if (fd) name = name.replace(fd.span.trim(), ' ');
