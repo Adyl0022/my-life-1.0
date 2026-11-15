@@ -25,6 +25,7 @@ function Chart({ vals, color, line, goal, max, est }: { vals: (number | null)[];
   const [w, setW] = useState(280); const H = 120; const pad = 6; const n = vals.length;
   const bw = (w - pad * 2) / n; const y = (v: number) => H - pad - (Math.min(v, max) / max) * (H - pad * 2);
   const pts = vals.map((v, i) => (v == null ? null : { x: pad + bw * i + bw / 2, y: y(v) }));
+  const few = pts.filter(Boolean).length <= 3; // a few days only: bigger dots so they are easy to see
   return (
     <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ marginTop: 10 }}>
       <Svg width={w} height={H}>
@@ -34,7 +35,7 @@ function Chart({ vals, color, line, goal, max, est }: { vals: (number | null)[];
           : <Rect key={i} x={pad + bw * i + bw * 0.14} y={y(v)} width={Math.max(1.5, bw * 0.72)} height={Math.max(2, H - pad - y(v))} rx={Math.min(3, bw * 0.3)} fill={color} fillOpacity={goal != null && v >= goal ? 1 : 0.65} />) : null}
         {line ? <>
           <Polyline points={pts.filter(Boolean).map((p) => p!.x + ',' + p!.y).join(' ')} fill="none" stroke={color} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
-          {pts.map((p, i) => p ? (est && est[i] ? <Circle key={i} cx={p.x} cy={p.y} r={n > 40 ? 2 : 3.4} fill="none" stroke={color} strokeWidth={n > 40 ? 1.2 : 1.8} /> : <Circle key={i} cx={p.x} cy={p.y} r={n > 40 ? 1.8 : 3.4} fill={color} />) : null)}
+          {pts.map((p, i) => p ? (est && est[i] ? <Circle key={i} cx={p.x} cy={p.y} r={few ? 6 : n > 40 ? 2 : 3.4} fill="none" stroke={color} strokeWidth={few ? 2.4 : n > 40 ? 1.2 : 1.8} /> : <Circle key={i} cx={p.x} cy={p.y} r={few ? 6 : n > 40 ? 1.8 : 3.4} fill={color} />) : null)}
         </> : null}
       </Svg>
     </View>
@@ -186,6 +187,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
         {nums.length ? (<>
           <Chart vals={ser.map((s) => s.v)} est={ser.map((s) => !!s.est)} color={mdef.c} line={line} goal={mg} max={mx} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{dstr(dateOf(-(range - 1)))}</Text><Text style={{ color: DIM, fontSize: 10.5 }}>Today</Text></View>
+          {nums.length < 3 && line ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{(nums.length === 1 ? 'Only 1 day so far' : 'Only ' + nums.length + ' days so far') + ' in the last ' + range + ' days. Pick 7 days to see it bigger. The line fills in as you log more days.'}</Text> : null}
           <View style={{ marginTop: 8, padding: 10, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.07)' }}>
             <Text style={{ color: DIM, fontSize: 10.5, fontWeight: '800', letterSpacing: 1 }}>HOW TO READ THIS</Text>
             <Text style={{ color: DIM, fontSize: 11.5, lineHeight: 16, marginTop: 4 }}>
@@ -200,7 +202,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
             ))}
           </View>
           {bestS ? <Text style={{ color: DIM, fontSize: 11.5, marginTop: 8 }}>{'Best day: ' + dstr(dateOf(bestS.off))}</Text> : null}
-        </>) : <Text style={{ color: DIM, fontSize: 12.5, marginTop: 14 }}>{'Nothing logged for ' + mdef.l.toLowerCase() + ' in the last ' + range + ' days yet.'}</Text>}
+        </>) : <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 14 }}>{'Nothing logged for ' + mdef.l.toLowerCase() + ' in the last ' + range + ' days yet.' + (met === 'energy' ? ' Tap how you feel on the Energy card, or log two of sleep, water, steps and mood on the same day and an estimate appears.' : '')}</Text>}
       </>) : null}
 
       {tab === 'then' ? (<>
