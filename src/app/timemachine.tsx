@@ -21,6 +21,7 @@ import { TOP } from '../lib/layout';
 import { HData, HEMPTY, dateOf, WD, MON } from '../lib/habit';
 import { REGIONS, Region, Row, rowsFor, glowOf, hasRecords, FMETRICS, guess, weightGuess } from '../lib/twin';
 import { Platform } from 'react-native';
+import { mark, readMark, stoppedAt } from '../lib/tmTrace';
 
 const T = '#5ee7df'; const DIM = 'rgba(255,255,255,.7)';
 const buzz = () => { if (Platform.OS === 'web') return; try { Haptics.selectionAsync(); } catch (e) {} };
@@ -68,6 +69,10 @@ export default function TimeMachinePage() {
   const [use3d, setUse3d] = useStored<boolean>('ml_tm3d2', true); const [failed, setFailed] = useState(false);
   const [hz, setHz] = useState(7); const [reduce, setReduce] = useState(false);
   useEffect(() => { try { AccessibilityInfo.isReduceMotionEnabled().then(setReduce); } catch (e) {} }, []);
+  // If the last visit stopped partway, the hologram picture stays off this time and says where it stopped.
+  const [prev, setPrev] = useState<string | null | undefined>(undefined);
+  useEffect(() => { let on = true; readMark().then((m) => { if (on) setPrev(stoppedAt(m)); }); return () => { on = false; }; }, []);
+  useEffect(() => { if (prev !== null) return; mark('opened'); const t = setTimeout(() => mark('ok'), 3500); return () => { clearTimeout(t); mark('left'); }; }, [prev]);
   const rise = useRef(new Animated.Value(0)).current;
   useEffect(() => { rise.setValue(0); Animated.timing(rise, { toValue: 1, duration: reduce ? 0 : 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }, [reg, mode, a, b, hz]);
   const tl = useRef<any>(null);
@@ -145,13 +150,19 @@ export default function TimeMachinePage() {
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 22 }}>
             <Chip on={mode === 'past'} t="Past" onPress={() => setMode('past')} />
             <Chip on={mode === 'future'} t="Future" onPress={() => setMode('future')} c="#b794ff" />
-            <Chip on={use3d && !failed} t={use3d && !failed ? '3D' : '2D'} onPress={() => { setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
+            <Chip on={use3d && !failed} t={use3d && !failed ? '3D' : '2D'} onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
             {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
           </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
           <Text style={{ color: mode === 'past' ? T : '#c9b0ff', textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 }}>{mode === 'past' ? dl(a).toUpperCase() : 'ESTIMATE · IN ' + hz + ' DAYS'}</Text>
-          {use3d && !failed
+          {prev === undefined ? <View style={{ height: 330 }} /> : prev ? (
+            <View style={{ alignSelf: 'center', width: hw, padding: 16, borderRadius: 18, backgroundColor: 'rgba(255,213,147,.12)', marginTop: 10 }}>
+              <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>The hologram picture is off this time</Text>
+              <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{'The last visit stopped at: ' + prev + '. Everything else on this page still works.'}</Text>
+              <Pressable onPress={() => { setPrev(null); }} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Try the hologram again</Text></Pressable>
+            </View>
+          ) : use3d && !failed
             ? (
               <View style={{ width: Math.min(360, width - 32), alignSelf: 'center' }}>
                 <Guard onFail={() => setFailed(true)}>{(() => { const H3: any = load3d(); return H3 ? <H3 key="3d" w={Math.min(360, width - 32)} h={330} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} onFail={() => setFailed(true)} /> : null; })()}</Guard>
@@ -159,8 +170,8 @@ export default function TimeMachinePage() {
               </View>
             )
             : <Guard onFail={() => setFailed(true)}><Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>}
-          {use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
-          {use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
+          {prev === null && use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
+          {prev === null && use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 6 }}>
             {REGIONS.map((r) => <Chip key={r.k} on={reg === r.k} t={r.l} onPress={() => pick(r.k)} c={r.c} />)}
           </ScrollView>

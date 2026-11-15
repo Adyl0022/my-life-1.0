@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { mark } from '../lib/tmTrace';
 import { View, PanResponder } from 'react-native';
 import { GLView } from 'expo-gl';
 import * as THREE from 'three';
@@ -48,7 +49,7 @@ void main(){
 export function Hologram3D({ w, h, sel, onPick, glow, reduce, onFail }: Props) {
   const st = useRef({ sel, glow, reduce, onPick, onFail }); st.current = { sel, glow, reduce, onPick, onFail };
   const api = useRef<{ pick: (x: number, y: number) => Region | null; spin: (dx: number) => void } | null>(null);
-  const raf = useRef(0); const dead = useRef(false);
+  const first = useRef(false); const raf = useRef(0); const dead = useRef(false);
   useEffect(() => () => { dead.current = true; cancelAnimationFrame(raf.current); }, []);
 
   const pan = useRef(PanResponder.create({
@@ -63,10 +64,12 @@ export function Hologram3D({ w, h, sel, onPick, glow, reduce, onFail }: Props) {
 
   const onCtx = (gl: any) => {
     try {
+      mark('3d: gl context');
       const W = gl.drawingBufferWidth, H = gl.drawingBufferHeight;
       const canvas: any = { width: W, height: H, style: {}, clientWidth: W, clientHeight: H, addEventListener() {}, removeEventListener() {}, getContext: () => gl };
       const renderer = new THREE.WebGLRenderer({ canvas, context: gl, antialias: true, alpha: true });
       renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.setClearColor(0x000000, 0);
+      mark('3d: renderer ready');
       const scene = new THREE.Scene();
       const cam = new THREE.PerspectiveCamera(32, W / H, 0.1, 50); cam.position.set(0, -0.05, 8.6); cam.lookAt(0, -0.1, 0);
       const g = new THREE.Group(); scene.add(g);
@@ -119,8 +122,10 @@ export function Hologram3D({ w, h, sel, onPick, glow, reduce, onFail }: Props) {
         for (const { r, m, kind } of organMats) { const on = s.sel === r; m.opacity = kind === 'fill' ? 0.22 + (on ? 0.3 + 0.25 * pulse : 0) : (on ? 0.7 + 0.3 * pulse : 0.5); }
         renderer.render(scene, cam);
         if (gl.endFrameEXP) gl.endFrameEXP();
+        if (!first.current) { first.current = true; mark('3d: first frame drawn'); }
         raf.current = requestAnimationFrame(loop);
       };
+      mark('3d: scene built');
       loop();
     } catch (e) { st.current.onFail(); }
   };

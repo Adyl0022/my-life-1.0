@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Animated, Easing, Image, Pressable } from 'react-native';
 import Svg, { Ellipse } from 'react-native-svg';
 import { Region, REGIONS } from '../lib/twin';
+import { mark } from '../lib/tmTrace';
 
 // The flat hologram: the same body as the 3D one, drawn as a picture, with tap zones. Used when 3D is off or not available.
 const IMG = require('../../assets/body2d.png');
@@ -9,7 +10,9 @@ const VW = 540, VH = 560, FLOOR = 60;
 
 export function Hologram({ w, sel, onPick, glow, reduce }: { w: number; sel: Region; onPick: (r: Region) => void; glow: number; reduce: boolean }) {
   const sc = w / VW; const H = (VH + FLOOR) * sc;
+  const seen = useRef(false); if (!seen.current) { seen.current = true; mark('2d: drawing'); }
   const scan = useRef(new Animated.Value(0)).current;
+  useEffect(() => { mark('2d: drawn'); }, []);
   useEffect(() => {
     if (reduce) { scan.setValue(0.5); return; }
     const a = Animated.loop(Animated.timing(scan, { toValue: 1, duration: 3600, easing: Easing.inOut(Easing.quad), useNativeDriver: true }));
