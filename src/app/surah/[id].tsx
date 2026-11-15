@@ -30,6 +30,8 @@ export default function SurahScreen() {
   const saved = !!isl.bm[key];
   const lastV = isl.last[key];
   const marks: number[] = (isl.vb || {})[key] || [];
+  const lastN = isl.last[key];
+  const tapVerse = (n: number) => { if (lastN === n) { const nl = { ...isl.last }; delete nl[key]; setIsl({ ...isl, last: nl }); say('Last read cleared'); } else { setIsl({ ...isl, last: { ...isl.last, [key]: n }, lastKey: key }); say('Last read: verse ' + n); } };
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <IslamicBg />
@@ -43,7 +45,7 @@ export default function SurahScreen() {
               <View onLayout={(e) => { flowH.current = e.nativeEvent.layout.height; tryJump(); }} style={{ paddingVertical: 14 }}>
                 <Text style={{ color: W, fontSize: AR_SIZE[size] + 4, lineHeight: (AR_SIZE[size] + 4) * 2.1, textAlign: 'justify', writingDirection: 'rtl' }}>
                   {s.verses.map((v) => (
-                    <Text key={v.n} onPress={() => { setIsl({ ...isl, last: { ...isl.last, [key]: v.n }, lastKey: key }); }}
+                    <Text key={v.n} style={lastN === v.n ? { backgroundColor: 'rgba(125,240,198,.18)' } : undefined} onPress={() => { tapVerse(v.n); }}
                       onLongPress={() => { const nx = marks.includes(v.n) ? marks.filter((x) => x !== v.n) : [...marks, v.n].sort((a, b) => a - b); setIsl({ ...isl, vb: { ...(isl.vb || {}), [key]: nx } }); say(marks.includes(v.n) ? 'Verse bookmark removed' : 'Verse ' + v.n + ' bookmarked'); }}
                       >
                       {(key === 'kahfi10' && v.n === 101 ? ' ··· ' : '') + v.ar}<Text style={{ color: '#7df0c6', fontSize: 16 }}>{' ﴿' + v.n + '﴾' + (marks.includes(v.n) ? '★' : '') + ' '}</Text>
@@ -55,8 +57,8 @@ export default function SurahScreen() {
               <React.Fragment key={v.n}>
                 {key === 'kahfi10' && v.n === 101 && <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center', paddingVertical: 10 }}>· · · verses 11 to 100 omitted · · ·</Text>}
                 <View onLayout={(e) => { ys.current[v.n] = e.nativeEvent.layout.y; if (v.n === +(jump || 0)) tryJump(); }}>
-                <VerseBlock v={v} size={size} lang={lang} arOnly={mode === 'ar'} marked={marks.includes(v.n)} last={i === s.verses.length - 1}
-                  onPress={() => { setIsl({ ...isl, last: { ...isl.last, [key]: v.n }, lastKey: key }); }}
+                <VerseBlock v={v} size={size} lang={lang} arOnly={mode === 'ar'} marked={marks.includes(v.n)} active={lastN === v.n} last={i === s.verses.length - 1}
+                  onPress={() => { tapVerse(v.n); }}
                   onLong={() => { const nx = marks.includes(v.n) ? marks.filter((x) => x !== v.n) : [...marks, v.n].sort((a, b) => a - b); setIsl({ ...isl, vb: { ...(isl.vb || {}), [key]: nx } }); say(marks.includes(v.n) ? 'Verse bookmark removed' : 'Verse ' + v.n + ' bookmarked'); }} />
                 </View>
               </React.Fragment>

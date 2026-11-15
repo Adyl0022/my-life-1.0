@@ -56,9 +56,9 @@ export function CardArt({ kind }: { kind: 'med' | 'relax' | 'cycle' | 'intel' })
         ) : null}
         {kind === 'intel' ? (
           <G>
-            {/* a small network of linked points, kept at the right edge so it never sits behind the text */}
-            {[[304, 18, 312, 52], [312, 52, 300, 86], [300, 86, 312, 118], [312, 52, 296, 34], [300, 86, 290, 110]].map((l, i) => <Line key={i} x1={l[0]} y1={l[1]} x2={l[2]} y2={l[3]} stroke="#b794ff" strokeOpacity=".4" strokeWidth="1.3" />)}
-            {[[304, 18, 3], [312, 52, 6], [296, 34, 3], [300, 86, 5], [312, 118, 4], [290, 110, 3]].map((c, i) => <Circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#d3c1ff" fillOpacity={i === 1 ? 0.7 : 0.45} />)}
+            {/* a faint network of linked points, spread across the card and kept soft so the text stays easy to read */}
+            {[[40, 120, 96, 92], [96, 92, 150, 118], [150, 118, 214, 84], [214, 84, 262, 112], [262, 112, 300, 62], [214, 84, 250, 34], [250, 34, 300, 62], [96, 92, 120, 40]].map((l, i) => <Line key={i} x1={l[0]} y1={l[1]} x2={l[2]} y2={l[3]} stroke="#b794ff" strokeOpacity=".16" strokeWidth="1.2" />)}
+            {[[40, 120, 3], [96, 92, 4], [150, 118, 3], [214, 84, 5], [262, 112, 4], [300, 62, 5], [250, 34, 3], [120, 40, 3]].map((c, i) => <Circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#d3c1ff" fillOpacity={i === 3 ? 0.3 : 0.2} />)}
           </G>
         ) : null}
       </Svg>
