@@ -65,7 +65,7 @@ export default function TimeMachinePage() {
   const rise = useRef(new Animated.Value(0)).current;
   useEffect(() => { rise.setValue(0); Animated.timing(rise, { toValue: 1, duration: reduce ? 0 : 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }, [reg, mode, a, b, hz]);
   const tl = useRef<any>(null);
-  const hw = Math.min(150, Math.round(width * 0.38));
+  const hw = Math.min(360, width - 32);
   const R = REGIONS.find((x) => x.k === reg)!;
   const pick = (r: Region) => { buzz(); setReg(r); };
   const days = Array.from({ length: 60 }, (_, i) => i - 59);
