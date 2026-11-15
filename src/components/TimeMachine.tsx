@@ -186,11 +186,17 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
         {nums.length ? (<>
           <Chart vals={ser.map((s) => s.v)} est={ser.map((s) => !!s.est)} color={mdef.c} line={line} goal={mg} max={mx} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{dstr(dateOf(-(range - 1)))}</Text><Text style={{ color: DIM, fontSize: 10.5 }}>Today</Text></View>
-          {mg != null ? <Text style={{ color: '#ffd593', fontSize: 11, marginTop: 6 }}>Dashed line: your goal. Brighter bars reached it.</Text> : null}
-          {hasEst ? <Text style={{ color: DIM, fontSize: 11, marginTop: 6 }}>Hollow dots are estimates from what you logged that day. Solid dots are your own rating. Average and Best use your own ratings only.</Text> : null}
+          <View style={{ marginTop: 8, padding: 10, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.07)' }}>
+            <Text style={{ color: DIM, fontSize: 10.5, fontWeight: '800', letterSpacing: 1 }}>HOW TO READ THIS</Text>
+            <Text style={{ color: DIM, fontSize: 11.5, lineHeight: 16, marginTop: 4 }}>
+              {(line ? 'Each dot is one day. The oldest day is on the left and today is on the right. ' + (met === 'mood' ? 'The higher the dot, the better the mood: top is ' + fmtVal('mood', 4) + ', bottom is ' + fmtVal('mood', 0) + '.' : 'The higher the dot, the more energy: top is ' + fmtVal('energy', 3) + ', bottom is ' + fmtVal('energy', 0) + '.')
+                : 'Each bar is one day. The oldest day is on the left and today is on the right. A taller bar means more.' + (mg != null ? ' The dashed line is your goal, and brighter bars reached it.' : ''))}
+              {hasEst ? ' Solid dots are your own rating. Hollow dots are estimates from what you logged that day. Average and Best use your own ratings only.' : ''}
+            </Text>
+          </View>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
             {[['Average', own.length ? fmtVal(met, avg) : '-'], ['Best', bestS ? fmtVal(met, bestS.v) : '-'], ['Logged', own.length + '/' + range]].map(([a, b]) => (
-              <View key={a} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.09)' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{a}</Text><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 2 }}>{b}</Text></View>
+              <View key={a} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.09)' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{a}</Text><Text numberOfLines={2} style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 2 }}>{b}</Text></View>
             ))}
           </View>
           {bestS ? <Text style={{ color: DIM, fontSize: 11.5, marginTop: 8 }}>{'Best day: ' + dstr(dateOf(bestS.off))}</Text> : null}
