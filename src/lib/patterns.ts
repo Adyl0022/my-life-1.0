@@ -12,7 +12,11 @@ export function energyEstimate(x: HDay, cg: number, goal: number): { lvl: number
   if (x.steps > 0) { n++; if (x.steps / goal >= 0.7) s += 1; why.push(Math.round(x.steps).toLocaleString() + ' steps'); }
   if (x.mood >= 0) { n++; s += x.mood >= 3 ? 1 : x.mood <= 1 ? -1 : 0; why.push('mood ' + MOODS[x.mood][0].toLowerCase()); }
   if (n < 2) return null;
-  return { lvl: s >= 3 ? 0 : s >= 0 ? 1 : s >= -2 ? 2 : 3, why: 'From ' + why.join(', ') };
+  let lvl = s >= 3 ? 0 : s >= 0 ? 1 : s >= -2 ? 2 : 3;
+  // Feeling tired or having a fever (noted in the Dashboard Quick log) lowers the guess by one step.
+  const sick = (x.sy || []).filter((y) => /^(tired|fever)$/i.test(y)); let note = '';
+  if (sick.length) { lvl = Math.min(3, lvl + 1); note = ' · ' + sick.join(' and ').toLowerCase() + ' noted'; }
+  return { lvl, why: 'From ' + why.join(', ') + note };
 }
 export const hasAny = (x: HDay) => x.steps > 0 || x.cups > 0 || x.sleep > 0 || x.mood >= 0 || (x.en ?? -1) >= 0;
 export const dayLevel = (x: HDay) => (x.steps > 0 ? 1 : 0) + (x.cups > 0 ? 1 : 0) + (x.sleep > 0 ? 1 : 0) + (x.mood >= 0 ? 1 : 0);
