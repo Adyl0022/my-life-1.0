@@ -58,7 +58,7 @@ export default function Notes() {
   const openEdit = (n: Note) => { cur.current = { s: n.s.length, e: n.s.length }; setDraft({ ...n }); setIsNew(false); setEditId(n.id); };
   const closeEd = () => { setEditId(0); setDraft(null); setConfirmDel(false); };
   const edOpen = useRef(false); edOpen.current = !!draft;
-  const closeRef = useRef(closeEd); closeRef.current = closeEd;
+  const closeRef = useRef(closeEd);
   // Android back button: close the open note straight away instead of leaving the whole screen (that felt laggy).
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -80,6 +80,15 @@ export default function Notes() {
     setData(isNew ? { notes: [nn, ...notes], seq: data.seq + 1 } : { ...data, notes: notes.map((x) => (x.id === nn.id ? nn : x)) });
     closeEd(); say('Note saved');
   };
+  // Back saves what was typed (new note with text, or a changed note) so nothing is lost when "Save" is forgotten.
+  const back = () => {
+    if (!draft) return closeEd();
+    const orig = isNew ? null : notes.find((x) => x.id === draft.id);
+    const has = !!(draft.t.trim() || draft.s.trim());
+    const changed = isNew || !orig || draft.t !== orig.t || draft.s !== orig.s || draft.c !== orig.c || draft.pin !== orig.pin || draft.rm !== orig.rm || !!draft.rd !== !!orig.rd || JSON.stringify(draft.ra || []) !== JSON.stringify(orig.ra || []);
+    if (has && changed) save(); else closeEd();
+  };
+  closeRef.current = back;
   const del = (id: number) => { setData({ ...data, notes: notes.filter((x) => x.id !== id) }); };
   const foc = useRef(false); const inp = useRef<any>(null); const cur = useRef({ s: 0, e: 0 });
   const [selOv, setSelOv] = useState<{ start: number; end: number } | null>(null);
@@ -240,7 +249,7 @@ export default function Notes() {
             <View pointerEvents="none" style={{ position: 'absolute', left: -110, bottom: 140, width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(255,255,255,.10)' }} />
             <SafeAreaView style={{ flex: 1, paddingBottom: kb }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 12 }}>
-                <Pressable onPress={() => { closeEd(); }} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
+                <Pressable onPress={back} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
                 <View style={{ flex: 1 }} />
                 <Pressable onPress={openRem} accessibilityLabel="Set a reminder"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', ...(draft.rm && !draft.rd ? { borderWidth: 1.5, borderColor: '#ffd593' } : {}) }}><Bell c={draft.rm && !draft.rd ? '#ffd593' : '#fff'} z={19} /></Glass></Pressable>
                 <Pressable onPress={() => upd({ pin: !draft.pin })} accessibilityLabel="Pin"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: draft.pin ? '#ffd593' : W, fontSize: 12, fontWeight: '800' }}>PIN</Text></Glass></Pressable>
