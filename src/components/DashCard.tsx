@@ -62,7 +62,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   } else if (kind === 'streak') {
     const hd = core.hd; const cg = cupsGoal(hd), g = hd.goal || 8000;
     const now = curStreak(hd), best = Math.max(bestStreakAll(hd), now);
-    const days = [-6, -5, -4, -3, -2, -1, 0].map((o) => ({ l: LET[dateOf(o).getDay()], on: goalPctOf(getDay(hd, o), g, cg) >= 70 }));
+    const days = [-6, -5, -4, -3, -2, -1, 0].map((o) => ({ l: LET[dateOf(o).getDay()], on: goalPctOf(getDay(hd, o), g, cg) >= 70, today: o === 0 }));
     body = (<>
       <View>
         <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Daily Streak</Text>
@@ -72,10 +72,10 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ flex: 1, alignItems: 'flex-end', gap: 6 }}>
         <View style={{ flexDirection: 'row', gap: 5 }}>
           {days.map((d, i) => d.on
-            ? <LinearGradient key={i} colors={['#8fe9e2', '#34d399']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 21, height: 21, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06222a', fontSize: 10, fontWeight: '900' }}>{d.l}</Text></LinearGradient>
-            : <View key={i} style={{ width: 21, height: 21, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10, fontWeight: '700' }}>{d.l}</Text></View>)}
+            ? <LinearGradient key={i} colors={['#8fe9e2', '#34d399']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 21, height: 21, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: d.today ? 2 : 0, borderColor: '#fff' }}><Text style={{ color: '#06222a', fontSize: 10, fontWeight: '900' }}>{d.l}</Text></LinearGradient>
+            : <View key={i} style={{ width: 21, height: 21, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center', justifyContent: 'center', borderWidth: d.today ? 2 : 0, borderColor: '#fff' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10, fontWeight: '700' }}>{d.l}</Text></View>)}
         </View>
-        <Text style={{ color: dim, fontSize: 11 }}>Last 7 days</Text>
+        <Text style={{ color: dim, fontSize: 11 }}>Last 7 days · ring = today</Text>
       </View>
     </>);
   } else if (kind === 'score') {

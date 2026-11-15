@@ -333,11 +333,11 @@ export default function Habit() {
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               {wk.map((x, i) => { const ok = goalPctOf(x.d, goal, cg) >= 70; return (
                 <View key={i} style={{ flex: 1, alignItems: 'center', gap: 5 }}>
-                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: ok ? T : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}>{ok && <HeadIcon k="streak" size={22} />}</View>
-                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5 }}>{WD[x.dt.getDay()]}</Text>
+                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: ok ? T : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center', borderWidth: x.o === 0 ? 2 : 0, borderColor: '#fff' }}>{ok && <HeadIcon k="streak" size={22} />}</View>
+                  <Text style={{ color: x.o === 0 ? '#fff' : 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: x.o === 0 ? '800' : '400' }}>{x.o === 0 ? 'Today' : WD[x.dt.getDay()]}</Text>
                 </View>); })}
             </View>
-            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{gp >= 70 ? 'Goal reached today, keep it going.' : 'Reach 70% today to extend it.'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{(gp >= 70 ? 'Goal reached today, keep it going.' : 'Reach 70% today to extend it.') + ' A lit flame is a day you reached your goal. The ring marks today.'}</Text>
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl k="week" t="This week" /><Lbl t="Last 7 days compared with the 7 before" />
