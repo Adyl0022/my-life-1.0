@@ -8,10 +8,11 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, W } from '../components/Ui';
-import { Face, GlassIcon, HeadIcon, BrainIcon } from '../components/HabitIcons';
+import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
 import { PatternsTab } from '../components/PatternsTab';
 import { ENERGY, energyEstimate } from '../lib/patterns';
 import { useStored } from '../lib/store';
+import { CardArt } from '../components/CardArt';
 import { mins, fmtMin, weekMins, relaxStreak } from '../lib/relax';
 import { cycleInfo, statusText, SYMS } from '../lib/cycle';
 import { useCycleSave } from '../lib/cycleHook';
@@ -218,8 +219,8 @@ export default function Habit() {
             {([['patterns', 'Patterns'], ['today', 'Today'], ['progress', 'Progress'], ['body', 'Body']] as ['patterns' | 'today' | 'progress' | 'body', string][]).map(([k, n]) => (
               <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
                 {tab === k ? (
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}>{k === 'patterns' ? <BrainIcon size={14} /> : null}<Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                ) : (<View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}>{k === 'patterns' ? <BrainIcon size={14} color="rgba(255,255,255,.85)" /> : null}<Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
+                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
+                ) : (<View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
               </Pressable>
             ))}
           </View>
@@ -326,7 +327,7 @@ export default function Habit() {
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             {(() => { const est = energyEstimate(t, cg, goal); const own = t.en != null && t.en >= 0; return (<>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="energy" t="Energy" /><Text style={{ color: own ? '#7df0c6' : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>{own ? 'YOUR RATING' : est ? 'ESTIMATED' : ''}</Text></View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><Ttl nm k="energy" t="Energy" /><Text style={{ color: own ? '#7df0c6' : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>{own ? 'YOUR RATING' : est ? 'ESTIMATED' : ''}</Text></View>
             <Lbl t={own ? 'How you said you feel today' : est ? est.why : 'Log two things above and an estimate appears'} />
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
               {ENERGY.map((e, i) => { const on = own && t.en === i; const guess = !own && est && est.lvl === i; return (
@@ -339,7 +340,8 @@ export default function Habit() {
           </Glass>
           <Pressable onPress={() => router.push('/medicine' as any)} accessibilityLabel="Open Medicine">
             <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <CardArt kind="med" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <Ttl nm k="medicine" t="Medication" />
                 <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>{meds.length ? 'Open ›' : '+ Add'}</Text>
               </View>
@@ -350,7 +352,8 @@ export default function Habit() {
           </Pressable>
           <Pressable onPress={() => router.push('/relax' as any)} accessibilityLabel="Open Relax">
             <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <CardArt kind="relax" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <Ttl nm k="relax" t="Relax" />
                 <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Open ›</Text>
               </View>
@@ -362,7 +365,8 @@ export default function Habit() {
           {h.cyOn ? (
             <Pressable onPress={() => router.push('/cycle' as any)} accessibilityLabel="Open Cycle">
               <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <CardArt kind="cycle" />
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <Ttl nm k="cycle" t="Cycle" />
                   <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Open ›</Text>
                 </View>

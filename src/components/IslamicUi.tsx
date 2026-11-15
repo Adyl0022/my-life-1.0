@@ -179,6 +179,9 @@ export function ReadPicker({ opts, mode, onMode, lang, onLang, onClose }: { opts
   }, []);
   const close = () => { Animated.timing(box, { toValue: 0, duration: 150, easing: Easing.in(Easing.quad), useNativeDriver: true }).start(() => onClose()); };
   return (
+    <>
+    {/* Tap anywhere outside the panel to close it. */}
+    <Pressable accessibilityLabel="Close options" onPress={close} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
     <Animated.View style={{ position: 'absolute', left: 20, right: 20, bottom: 84, borderRadius: 22, backgroundColor: '#0e2f3a', borderWidth: 1, borderColor: 'rgba(125,240,198,.3)', padding: 8, opacity: box, transform: [{ translateY: box.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }, { scale: box.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) }] }}>
       {opts.map((o, i) => (
         <Animated.View key={o.k} style={{ opacity: rows[i], transform: [{ translateY: rows[i].interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
@@ -194,6 +197,7 @@ export function ReadPicker({ opts, mode, onMode, lang, onLang, onClose }: { opts
         </Animated.View>
       ))}
     </Animated.View>
+    </>
   );
 }
 export function ToolBar({ saved, onSave, size, onSize, lang, onLang, langLabel }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void; langLabel?: string }) {

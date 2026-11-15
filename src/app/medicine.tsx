@@ -9,6 +9,7 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, W } from '../components/Ui';
 import { HeadIcon } from '../components/HabitIcons';
+import { CardArt } from '../components/CardArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
@@ -110,6 +111,7 @@ export default function Medicine() {
           ) : (
             <>
               <Glass radius={24} style={{ marginTop: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <CardArt kind="med" />
                 <View style={{ width: 84, height: 84, alignItems: 'center', justifyContent: 'center' }}>
                   <Svg width={84} height={84} viewBox="0 0 84 84" style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
                     <Circle cx="42" cy="42" r={R} stroke="rgba(255,255,255,.16)" strokeWidth="9" fill="none" />

@@ -5,6 +5,7 @@ import { Glass } from './Glass';
 import { HeadIcon } from './HabitIcons';
 import { useStored } from '../lib/store';
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal } from '../lib/habit';
+import { CardArt } from './CardArt';
 import { cyclePatterns } from '../lib/cycle';
 import { ENERGY, energyEstimate, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, expState } from '../lib/patterns';
 
@@ -67,15 +68,18 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
   const dropExp = (id: string) => setH({ ...h, exps: (h.exps || []).filter((x) => x.id !== id) });
 
   return (<>
-    <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <HeadIcon k="brain" size={40} />
+    <Glass radius={26} style={{ marginTop: 12, padding: 16 }}>
+      <CardArt kind="intel" />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <HeadIcon k="brain" size={48} />
         <View style={{ flex: 1 }}>
-          <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>My Life Intelligence</Text>
-          <Text style={{ color: DIM, fontSize: 12.5, marginTop: 1 }}>Your life, understood better.</Text>
+          <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>My Life Intelligence</Text>
+          <Text style={{ color: DIM, fontSize: 13, marginTop: 2 }}>Your life, understood better.</Text>
         </View>
       </View>
-      <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>Calculated on your phone from your own records. It shows possible links, not proof, and it is not medical advice.</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+        {['Private, on your phone', 'Possible links, not proof', 'Not medical advice'].map((c) => <View key={c} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 11.5, fontWeight: '600' }}>{c}</Text></View>)}
+      </View>
     </Glass>
 
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>

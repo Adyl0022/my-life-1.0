@@ -10,6 +10,7 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, W } from '../components/Ui';
 import { HeadIcon } from '../components/HabitIcons';
+import { CardArt } from '../components/CardArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
@@ -202,6 +203,7 @@ export default function Relax() {
               {tab === 'r' ? (
                 <>
                   <Glass radius={24} style={{ marginTop: 14, padding: 14, flexDirection: 'row', justifyContent: 'space-around' }}>
+                    <CardArt kind="relax" />
                     {[[fmtMin(today), 'min today'], [fmtMin(weekMins(h)), 'min this week'], [String(relaxStreak(h)), 'day streak']].map((x) => <View key={x[1]} style={{ alignItems: 'center' }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{x[0]}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{x[1]}</Text></View>)}
                   </Glass>
                   <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>

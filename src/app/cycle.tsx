@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { W } from '../components/Ui';
+import { CardArt } from '../components/CardArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, MON, dateOf, getDay } from '../lib/habit';
@@ -45,6 +46,7 @@ export default function Cycle() {
           </View>
 
           <Glass radius={24} style={{ marginTop: 14, padding: 14 }}>
+            <CardArt kind="cycle" />
             <Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{statusText(c)}</Text>
             {nd && !c.onPeriod ? <Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>{'Around ' + fmtD(nd) + (c.learned ? ' · based on your average cycle of ' + c.avgCycle + ' days' : ' · uses 28 days until you log two periods')}</Text> : null}
             <Pressable onPress={() => setPeriod(0, !today.pd)} style={{ marginTop: 12, alignSelf: 'flex-start' }}>
