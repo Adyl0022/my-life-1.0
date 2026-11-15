@@ -17,7 +17,7 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
     if (p == null && s == null && d == null) { setErr('Type a pulse, a blood pressure, or both.'); return; }
     if (p != null && (p < 30 || p > 220)) { setErr('Pulse should be between 30 and 220. Please check the number.'); return; }
     if ((s != null) !== (d != null)) { setErr('Blood pressure needs both numbers, for example 120 and 80.'); return; }
-    if (s != null && d != null && (s < 70 || s > 250 || d < 40 || d > 150 || d >= s)) { setErr('Please check the blood pressure numbers. The top number is the larger one.'); return; }
+    if (s != null && d != null && (s < 70 || s > 250 || d < 40 || d > 150 || d >= s)) { setErr('Please check the blood pressure numbers. The systolic (first) number is the larger one.'); return; }
     const now = new Date(); const at = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     const r: HeartRead = { id: String(Date.now()), d: keyOfDate(dateOf(Math.min(0, off))), at, ...(p != null ? { bpm: p } : {}), ...(s != null && d != null ? { sys: s, dia: d } : {}) };
     setH({ ...h, heart: [...(h.heart || []), r].slice(-400) });
@@ -29,10 +29,10 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
       <Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>{off < 0 ? 'Add a reading for this day' : 'Add a reading'}</Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
         <Inp value={bpm} onChangeText={setBpm} keyboardType="number-pad" placeholder="Pulse (bpm)" maxLength={3} style={{ flex: 1.2 }} />
-        <Inp value={sys} onChangeText={setSys} keyboardType="number-pad" placeholder="Top" maxLength={3} style={{ flex: 0.8 }} />
-        <Inp value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="Bottom" maxLength={3} style={{ flex: 0.8 }} />
+        <Inp value={sys} onChangeText={setSys} keyboardType="number-pad" placeholder="Systolic" maxLength={3} style={{ flex: 0.8 }} />
+        <Inp value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="Diastolic" maxLength={3} style={{ flex: 0.8 }} />
       </View>
-      <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 4 }}>Blood pressure: top and bottom numbers, in mmHg.</Text>
+      <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 4 }}>Blood pressure: systolic (first number) and diastolic (second number), in mmHg.</Text>
       {err ? <Text style={{ color: '#ffd593', fontSize: 12, marginTop: 6 }}>{err}</Text> : null}
       <Pressable onPress={save} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: T }}><Text style={{ color: '#2a0a14', fontWeight: '800', fontSize: 13 }}>Save reading</Text></Pressable>
       {list.length ? (
