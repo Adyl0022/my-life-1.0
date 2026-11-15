@@ -14,6 +14,8 @@ import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
 import { useUsage } from '../../lib/usage';
 import { DashCard } from '../../components/DashCard';
+import { QuickRemind, SearchMenu, Bell } from '../../components/QuickRemind';
+import { Toast } from '../../components/Ui';
 import { useName, useStored } from '../../lib/store';
 import { HData, HEMPTY, getDay, cupsGoal } from '../../lib/habit';
 import { THEMES, LINES, periodOf } from '../../lib/theme';
@@ -48,6 +50,7 @@ export default function Home() {
   const mins = Math.floor(usage.today.sec / 60);
   const now = new Date();
   const [force, setForce] = React.useState(-1);
+  const [sm, setSm] = React.useState(false); const [qr, setQr] = React.useState(false); const [toast, setToast] = React.useState('');
   const insets = useSafeAreaInsets();
   const habitBanner = (hid.on('habit') ? <Pressable onPress={() => go('Habit')} style={({ pressed }) => ({ marginTop: 0, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
               <Halo k="Habit" />
@@ -96,10 +99,11 @@ export default function Home() {
             </View>
             <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
               <Pressable onPress={() => router.push('/assistant')} accessibilityLabel="Ask My Life assistant"><Orb size={42} /></Pressable>
-              <Pressable onPress={() => router.push('/search')} accessibilityLabel="Search">
+              <Pressable onPress={() => setSm(true)} accessibilityLabel="Search or quick reminder">
               <Glass radius={14} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
                 <View><Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={11} cy={11} r={7} stroke="#fff" strokeWidth={1.8} fill="none" /><Path d="M20 20l-4-4" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" /></Svg></View>
               </Glass>
+              <View pointerEvents="none" style={{ position: 'absolute', right: -5, top: -5, width: 20, height: 20, borderRadius: 10, backgroundColor: '#ffc46b', borderWidth: 1.5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}><Bell c="#5a3300" z={11} /></View>
               </Pressable>
             </View>
           </View>
@@ -139,6 +143,9 @@ export default function Home() {
         </View>
       </SafeAreaView>
       </PageIn>
+      {sm && <SearchMenu top={HEAD - UP + 48} onClose={() => setSm(false)} onSearch={() => { setSm(false); router.push('/search'); }} onRemind={() => { setSm(false); setQr(true); }} />}
+      {qr && <QuickRemind onClose={() => setQr(false)} onDone={(m) => { setToast(m); setTimeout(() => setToast(''), 2200); }} />}
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 96, height: 90 }}><Toast t={toast} /></View>
     </Bg>
   );
 }
