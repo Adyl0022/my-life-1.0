@@ -9,6 +9,7 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { W } from '../components/Ui';
 import { Hologram } from '../components/Hologram';
+import { HologramSpin } from '../components/HologramSpin';
 import { HeartLog } from '../components/HeartLog';
 class Guard extends React.Component<{ onFail: () => void; children: React.ReactNode }, { bad: boolean }> {
   state = { bad: false };
@@ -16,7 +17,6 @@ class Guard extends React.Component<{ onFail: () => void; children: React.ReactN
   componentDidCatch() { this.props.onFail(); }
   render() { return this.state.bad ? null : this.props.children; }
 }
-const load3d = (): any => { try { return require('../components/Hologram3D').Hologram3D; } catch (e) { return null; } };
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, dateOf, WD, MON } from '../lib/habit';
@@ -159,7 +159,7 @@ export default function TimeMachinePage() {
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 22 }}>
             <Chip on={mode === 'past'} t="Past" onPress={() => setMode('past')} />
             <Chip on={mode === 'future'} t="Future" onPress={() => setMode('future')} c="#b794ff" />
-            <Chip on={use3d && !failed} t={use3d && !failed ? 'Flat view' : '3D view (beta)'} onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setNote(null); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
+            <Chip on={use3d && !failed} t="3D view" onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
             {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
           </View>
         </View>
@@ -174,14 +174,14 @@ export default function TimeMachinePage() {
           ) : use3d && !failed
             ? (
               <View style={{ width: Math.min(360, width - 32), alignSelf: 'center' }}>
-                <Guard onFail={() => setFailed(true)}>{(() => { const H3: any = load3d(); return H3 ? <H3 key="3d" w={Math.min(360, width - 32)} h={330} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} onFail={() => setFailed(true)} /> : null; })()}</Guard>
+                <Guard onFail={() => setFailed(true)}><HologramSpin w={Math.min(360, width - 32)} onTap={() => pick('body')} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>
                 {mode === 'past' ? <Hud rows={rowsFor(h, a, 'body')} goal={h.goal || 8000} /> : null}
               </View>
             )
             : <Guard onFail={() => setFailed(true)}><Hologram w={hw} sel={reg} onPick={pick} glow={mode === 'past' ? glowOf(h, a) : 0.6} reduce={reduce} /></Guard>}
-          {prev === null && note ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, textAlign: 'center', marginTop: 6 }}>{'3D stopped last time at: ' + note + '. The flat hologram is shown. Tap the chip above to try 3D again.'}</Text> : null}
+          {prev === null && note ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, textAlign: 'center', marginTop: 6 }}>{'3D stopped last time at: ' + note + '. The flat hologram is shown. Tap 3D view to try again.'}</Text> : null}
           {prev === null && use3d && failed ? <Text style={{ color: '#ffd593', fontSize: 11.5, textAlign: 'center', marginTop: 4 }}>3D is not available on this phone, so the flat hologram is shown.</Text> : null}
-          {prev === null && use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Tap a part to pick it.</Text> : null}
+          {prev === null && use3d && !failed ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, textAlign: 'center' }}>Drag to turn. Pick a part with the buttons below.</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingVertical: 6, paddingHorizontal: 20 }}>
             {REGIONS.map((r) => <Chip key={r.k} on={reg === r.k} t={r.l} onPress={() => pick(r.k)} c={r.c} />)}
           </ScrollView>
