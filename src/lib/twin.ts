@@ -36,6 +36,7 @@ export function rowsFor(h: HData, off: number, k: Region): Row[] {
     row('Energy (your own rating)', (x.en ?? -1) >= 0 ? 3 - (x.en as number) : null, (n) => ENERGY[3 - Math.round(n)][0]),
     row('Sleep', pos(x.sleep), (n) => r1(n) + ' h'),
     row('Calm minutes', pos(calmMins(x)), (n) => r1(n) + ' min'),
+    row('Feeling unwell', (x.sy || []).length || null, () => (x.sy || []).join(', ')),
   ];
   if (k === 'lungs') return [
     row('Breathing exercise', pos(breathMins(x)), (n) => r1(n) + ' min'),
@@ -62,6 +63,7 @@ export function rowsFor(h: HData, off: number, k: Region): Row[] {
     row('Mood', x.mood >= 0 ? x.mood : null, (n) => MOODS[Math.round(n)][0]),
     row('Weight', kg, (n) => r1(n) + ' kg'),
     row('BMI', bmi, (n) => r1(n)),
+    row('Feeling unwell', (x.sy || []).length || null, () => (x.sy || []).join(', ')),
   ];
 }
 // 0..1 for how much the person recorded or reached that day. Used only for how bright the hologram glows.
@@ -69,7 +71,7 @@ export function glowOf(h: HData, off: number): number {
   const x = getDay(h, off); if (!hasAny({ ...BLANK, ...x })) return 0;
   return Math.max(0.15, Math.min(1, goalPctOf(x, h.goal || 8000, cupsGoal(h)) / 100));
 }
-export const hasRecords = (h: HData, off: number) => heartOn(h, off).length > 0 || hasAny({ ...BLANK, ...getDay(h, off) }) || breathMins(getDay(h, off)) > 0 || calmMins(getDay(h, off)) > 0;
+export const hasRecords = (h: HData, off: number) => heartOn(h, off).length > 0 || (getDay(h, off).sy || []).length > 0 || hasAny({ ...BLANK, ...getDay(h, off) }) || breathMins(getDay(h, off)) > 0 || calmMins(getDay(h, off)) > 0;
 
 // ---- Future: a straight line through the last 4 weekly averages of the person's own records ----
 export type Metric = { k: string; l: string; unit: string; max: number; per: number; f: (x: HDay) => number | null; fmt: (n: number) => string };
