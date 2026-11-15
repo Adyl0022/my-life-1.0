@@ -10,10 +10,11 @@ import { NotesArt } from '../components/NotesArt';
 import Svg, { Path } from 'react-native-svg';
 import { Inp, SBtn, Sheet, Toast, W, GP } from '../components/Ui';
 import { useStored } from '../lib/store';
+import { AheadPicker } from '../components/QuickRemind';
 import { TOP } from '../lib/layout';
 
 // rm: when to remind (a time in ms), rd: the reminder is done
-type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean };
+type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean; ra?: number[] };
 type Data = { notes: Note[]; seq: number };
 const COL = ['#7c9cff', '#5ee7df', '#ffc46b', '#ff8fb1', '#a78bfa', '#9be37a', '#94a3b8'];
 const PAPER = [['#4f6bff', '#8a6cff', '#3fb0ff'], ['#0fae9f', '#2f84d8', '#3fd1a8'], ['#f5a623', '#ef6a3a', '#e8436b'], ['#e0518a', '#a24fe0', '#ff8f6b'], ['#7a50e6', '#c05fd8', '#5b7cff'], ['#2fae64', '#2f93c4', '#8bd45a'], ['#334155', '#475569', '#94a3b8']];
@@ -40,7 +41,7 @@ export default function Notes() {
   const [editId, setEditId] = useState(0); const [draft, setDraft] = useState<Note | null>(null); const [isNew, setIsNew] = useState(false);
   const [menuId, setMenuId] = useState(0); const [confirmDel, setConfirmDel] = useState(false);
   const [toast, setToast] = useState('');
-  const [rmOpen, setRmOpen] = useState(false); const [rmAt, setRmAt] = useState(0);
+  const [rmOpen, setRmOpen] = useState(false); const [rmAt, setRmAt] = useState(0); const [rmRa, setRmRa] = useState<number[]>([]);
   const lp = useRef(false);
   const say = (t: string) => { setToast(t); setTimeout(() => setToast(''), 1600); };
   const notes = data.notes;
@@ -69,9 +70,9 @@ export default function Notes() {
   const at9 = (plus: number) => { const d = new Date(); d.setDate(d.getDate() + plus); d.setHours(9, 0, 0, 0); return d.getTime(); };
   const hourLater = () => { const d = new Date(Date.now() + 3600000); d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5, 0, 0); return d.getTime(); };
   const tonight = () => { const d = new Date(); d.setHours(20, 0, 0, 0); return d.getTime(); };
-  const openRem = () => { Keyboard.dismiss(); setRmAt(draft?.rm && draft.rm > Date.now() ? draft.rm : at9(1)); setRmOpen(true); };
+  const openRem = () => { Keyboard.dismiss(); setRmAt(draft?.rm && draft.rm > Date.now() ? draft.rm : at9(1)); setRmRa(draft?.ra || []); setRmOpen(true); };
   const shift = (field: 'd' | 'h' | 'm', by: number) => { const d = new Date(rmAt); if (field === 'd') d.setDate(d.getDate() + by); else if (field === 'h') d.setHours(d.getHours() + by); else d.setMinutes(d.getMinutes() + by); d.setSeconds(0, 0); setRmAt(Math.max(d.getTime(), 0)); };
-  const setRem = () => { if (rmAt <= Date.now() + 30000) return say('Pick a time in the future'); upd({ rm: rmAt, rd: false }); setRmOpen(false); say('Reminder set for ' + remText(rmAt)); };
+  const setRem = () => { if (rmAt <= Date.now() + 30000) return say('Pick a time in the future'); { const ok = rmRa.filter((m) => rmAt - m * 60000 > Date.now() + 10000); upd({ rm: rmAt, rd: false, ra: ok.length ? ok : undefined }); } setRmOpen(false); say('Reminder set for ' + remText(rmAt)); };
   const save = () => {
     if (!draft) return;
     if (!(draft.t.trim() || draft.s.trim())) return say('Add a title or some text first');
@@ -226,7 +227,7 @@ export default function Notes() {
               <Text style={{ color: W, fontSize: 15, fontWeight: '800', marginBottom: 4 }} numberOfLines={1}>{menuNote.t || 'Untitled'}</Text>
               <SBtn t={menuNote.pin ? 'Unpin' : 'Pin to top'} style={{ flex: 0 }} onPress={() => { setData({ ...data, notes: notes.map((x) => (x.id === menuNote.id ? { ...x, pin: !x.pin } : x)) }); setMenuId(0); say(menuNote.pin ? 'Unpinned' : 'Pinned to top'); }} />
               {menuNote.rm ? <SBtn t={menuNote.rd ? 'Remind me again' : 'Mark reminder done'} style={{ flex: 0 }} onPress={() => { const again = menuNote.rd && (menuNote.rm as number) <= Date.now(); setData({ ...data, notes: notes.map((x) => (x.id === menuNote.id ? { ...x, rd: !x.rd } : x)) }); setMenuId(0); say(again ? 'Reminder is in the past. Open the note to set a new time.' : menuNote.rd ? 'Reminder is on again' : 'Reminder done'); }} /> : null}
-              {menuNote.rm ? <SBtn t="Remove reminder" style={{ flex: 0 }} onPress={() => { setData({ ...data, notes: notes.map((x) => { if (x.id !== menuNote.id) return x; const { rm, rd, ...rest } = x; return rest as Note; }) }); setMenuId(0); say('Reminder removed'); }} /> : null}
+              {menuNote.rm ? <SBtn t="Remove reminder" style={{ flex: 0 }} onPress={() => { setData({ ...data, notes: notes.map((x) => { if (x.id !== menuNote.id) return x; const { rm, rd, ra, ...rest } = x; return rest as Note; }) }); setMenuId(0); say('Reminder removed'); }} /> : null}
               <SBtn t="Delete" kind="danger" style={{ flex: 0 }} onPress={() => { del(menuNote.id); setMenuId(0); say('Note deleted'); }} />
             </View>
           </Sheet>
@@ -269,8 +270,8 @@ export default function Notes() {
                 </View>
                 {draft.rm ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 10, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' }}>
-                    <Pressable onPress={openRem} accessibilityLabel="Change the reminder" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingLeft: 12, paddingRight: 8 }}><Bell z={13} /><Text style={{ color: W, fontSize: 12.5, fontWeight: '800', textDecorationLine: draft.rd ? 'line-through' : 'none' }}>{(overdue(draft) ? 'Overdue · ' : '') + remText(draft.rm)}</Text></Pressable>
-                    <Pressable onPress={() => { const { rm, rd, ...rest } = draft; setDraft(rest as Note); }} accessibilityLabel="Remove the reminder" hitSlop={6} style={{ paddingVertical: 7, paddingRight: 12, paddingLeft: 4 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>✕</Text></Pressable>
+                    <Pressable onPress={openRem} accessibilityLabel="Change the reminder" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingLeft: 12, paddingRight: 8 }}><Bell z={13} /><Text style={{ color: W, fontSize: 12.5, fontWeight: '800', textDecorationLine: draft.rd ? 'line-through' : 'none' }}>{(overdue(draft) ? 'Overdue · ' : '') + remText(draft.rm) + (draft.ra && draft.ra.length ? ' · +' + draft.ra.length : '')}</Text></Pressable>
+                    <Pressable onPress={() => { const { rm, rd, ra, ...rest } = draft; setDraft(rest as Note); }} accessibilityLabel="Remove the reminder" hitSlop={6} style={{ paddingVertical: 7, paddingRight: 12, paddingLeft: 4 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>✕</Text></Pressable>
                   </View>
                 ) : null}
                 <TextInput ref={inp} multiline onTouchStart={tapStart} onTouchEnd={tapEnd} onFocus={() => { foc.current = true; }} onBlur={() => { foc.current = false; }} value={draft.s} onChangeText={onText} selection={selOv ?? undefined} onSelectionChange={(e: any) => { const sl = e.nativeEvent.selection; cur.current = { s: sl.start, e: sl.end }; }} placeholder="Start writing..." placeholderTextColor="rgba(255,255,255,.6)" style={{ flex: 1, marginTop: 14, color: W, fontSize: 16, lineHeight: 24, padding: 0, paddingVertical: 0, textAlignVertical: 'top', outlineStyle: 'none' } as any} />
@@ -295,6 +296,7 @@ export default function Notes() {
                         </View>
                       </View>
                     ))}
+                    <AheadPicker when={rmAt} ra={rmRa} setRa={setRmRa} />
                     <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 14 }}>{'You will be reminded ' + remText(rmAt)}</Text>
                     <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}><SBtn t="Cancel" onPress={() => setRmOpen(false)} /><SBtn t="Set reminder" kind="primary" onPress={setRem} /></View>
                   </View>

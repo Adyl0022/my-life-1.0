@@ -221,23 +221,30 @@ export async function syncCycleAlert(daysTo: number | null, on: boolean): Promis
 }
 
 // A reminder set inside a note (Notes & Reminders). It rings at the exact time the person chose, so quiet hours and the Planner switch do not hold it back.
-export type NoteRem = { id: number; t: string; s: string; rm?: number; rd?: boolean };
+export type NoteRem = { id: number; t: string; s: string; rm?: number; rd?: boolean; ra?: number[] };
+const AHEAD = (m: number) => (m >= 1440 ? (m / 1440 === 1 ? 'tomorrow' : 'in ' + m / 1440 + ' days') : m >= 60 ? 'in ' + (m / 60 === 1 ? '1 hour' : m / 60 + ' hours') : 'in ' + m + ' minutes');
 export async function syncNoteAlerts(notes: NoteRem[], on: boolean): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
     await cancelPrefix('note-');
     if (!on) return;
     const now = Date.now();
-    const todo = (notes || []).filter((n) => n.rm && !n.rd && (n.rm as number) > now + 5000).sort((a, b) => (a.rm as number) - (b.rm as number)).slice(0, 50);
-    if (!todo.length) return;
+    const todo: { id: string; at: number; title: string; body: string }[] = [];
+    for (const n of (notes || []).filter((x) => x.rm && !x.rd)) {
+      const line = (n.s || '').split('\n').map((x) => x.replace(/^\s*([☐☑]|•|\d+\.)\s*/, '').trim()).find(Boolean) || '';
+      const title = (n.t || '').trim() || 'Reminder';
+      todo.push({ id: 'note-' + n.id + '-' + n.rm, at: n.rm as number, title, body: line.slice(0, 120) || 'Open Notes & Reminders for your note.' });
+      for (const m of (n.ra || []).filter((v) => v > 0 && v <= 10080).slice(0, 5)) todo.push({ id: 'note-' + n.id + '-' + n.rm + '-b' + m, at: (n.rm as number) - m * 60000, title, body: 'Coming up ' + AHEAD(m) + (line ? ' · ' + line.slice(0, 80) : '') });
+    }
+    const list = todo.filter((x) => x.at > now + 5000).sort((a, b) => a.at - b.at).slice(0, 60);
+    if (!list.length) return;
     if (!(await setup())) return;
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('notes', { name: 'Note reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ffc46b' });
-    for (const n of todo) {
-      const line = (n.s || '').split('\n').map((x) => x.replace(/^\s*([☐☑]|•|\d+\.)\s*/, '').trim()).find(Boolean) || '';
+    for (const n of list) {
       await Notifications.scheduleNotificationAsync({
-        identifier: 'note-' + n.id + '-' + n.rm,
-        content: { title: (n.t || '').trim() || 'Reminder', body: line.slice(0, 120) || 'Open Notes & Reminders for your note.', sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(n.rm as number), channelId: 'notes' } as any,
+        identifier: n.id,
+        content: { title: n.title, body: n.body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(n.at), channelId: 'notes' } as any,
       });
     }
   } catch (e) { /* ignore */ }
