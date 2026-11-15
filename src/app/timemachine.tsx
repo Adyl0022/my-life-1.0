@@ -163,7 +163,7 @@ export default function TimeMachinePage() {
             {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
           </View>
         </View>
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
           <Text style={{ color: mode === 'past' ? T : '#c9b0ff', textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 }}>{mode === 'past' ? dl(a).toUpperCase() : 'ESTIMATE · IN ' + hz + ' DAYS'}</Text>
           {prev === undefined ? <View style={{ height: 330 }} /> : prev ? (
             <View style={{ alignSelf: 'center', width: hw, padding: 16, borderRadius: 18, backgroundColor: 'rgba(255,213,147,.12)', marginTop: 10 }}>
