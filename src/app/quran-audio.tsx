@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, TextInput, Dimensions } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
@@ -8,19 +8,22 @@ import { W } from '../components/Ui';
 import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
 import { useStored } from '../lib/store';
 import { dlSupported, useDl, surahDone, juzDone, downloadSurah, downloadJuz, downloadAll, cancelDownload, deleteSurah, deleteAll, usage, fmtBytes, clearDlError, NET_KEY, NetPref } from '../lib/quranDl';
-import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio } from '../lib/quranAudio';
+import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio, getResume, resumeLast, Resume } from '../lib/quranAudio';
+import { Shine, GlowField } from '../components/Shine';
+import { PlayIcon, PauseIcon, PrevIcon, NextIcon, DownloadIcon, CheckIcon, CloseIcon, SearchIcon } from '../components/AudioIcons';
 
 const TEAL = '#7df0c6';
-const Btn = ({ t, onPress, big }: { t: string; onPress: () => void; big?: boolean }) => (
-  <Pressable onPress={onPress} hitSlop={8} style={{ width: big ? 52 : 40, height: big ? 52 : 40, borderRadius: 26, backgroundColor: big ? 'rgba(94,231,181,.45)' : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}>
-    <Text style={{ color: W, fontSize: big ? 20 : 16, fontWeight: '800' }}>{t}</Text>
-  </Pressable>
+const Btn = ({ ic, onPress, big, label, pulse }: { ic: React.ReactNode; onPress: () => void; big?: boolean; label: string; pulse?: boolean }) => (
+  <Shine label={label} hitSlop={8} onPress={onPress} pulse={pulse} radius={big ? 29 : 22} style={{ width: big ? 58 : 44, height: big ? 58 : 44, backgroundColor: big ? '#7df0c6' : 'rgba(255,255,255,.12)' }}>{ic}</Shine>
+);
+const RowPlay = ({ onPress }: { onPress: () => void }) => (
+  <Shine label="Play" hitSlop={6} onPress={onPress} radius={19} style={{ width: 38, height: 38, backgroundColor: 'rgba(125,240,198,.16)', borderWidth: 1, borderColor: 'rgba(125,240,198,.4)' }}><PlayIcon size={17} color="#7df0c6" /></Shine>
 );
 
 const DlBtn = ({ state, pct, onPress }: { state: 'none' | 'busy' | 'done' | 'wait'; pct: number; onPress: () => void }) => (
-  <Pressable onPress={onPress} hitSlop={6} disabled={state === 'done' || state === 'wait'} accessibilityLabel={state === 'done' ? 'Saved on this phone' : state === 'busy' ? 'Cancel download' : 'Download to listen offline'} style={{ minWidth: 40, height: 34, paddingHorizontal: 8, borderRadius: 17, backgroundColor: state === 'done' ? 'rgba(94,231,181,.3)' : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center', opacity: state === 'wait' ? 0.4 : 1 }}>
-    <Text style={{ color: W, fontSize: state === 'busy' ? 11 : 15, fontWeight: '800' }}>{state === 'done' ? '✓' : state === 'busy' ? pct + '%' : state === 'wait' ? '⬇' : '⬇'}</Text>
-  </Pressable>
+  <Shine onPress={onPress} hitSlop={6} radius={19} disabled={state === 'done' || state === 'wait'} label={state === 'done' ? 'Saved on this phone' : state === 'busy' ? 'Cancel download' : 'Download to listen offline'} glow={state === 'busy' ? '#ffc46b' : '#7df0c6'} style={{ minWidth: 40, height: 38, paddingHorizontal: 8, backgroundColor: state === 'done' ? 'rgba(94,231,181,.3)' : 'rgba(255,255,255,.12)', opacity: state === 'wait' ? 0.4 : 1 }}>
+    {state === 'busy' ? <Text style={{ color: W, fontSize: 11, fontWeight: '800' }}>{pct + '%'}</Text> : state === 'done' ? <CheckIcon size={17} color="#7df0c6" /> : <DownloadIcon size={17} color="rgba(255,255,255,.85)" />}
+  </Shine>
 );
 
 export default function QuranAudio() {
@@ -33,6 +36,10 @@ export default function QuranAudio() {
   const pct = d.total > 0 ? Math.min(100, Math.round((d.done / d.total) * 100)) : 0;
   const [sure, setSure] = useState('');
   const a = useQuranAudio();
+  const [find, setFind] = useState('');
+  const [sf, setSf] = useState(false);
+  const [last, setLast] = useState<Resume | null>(null);
+  useEffect(() => { if (a.phase === 'idle') getResume().then((r) => setLast(r && r.title ? r : null)).catch(() => {}); }, [a.phase]);
   const [lang, setLang] = useLang(); const [size] = useSize();
   const [arOnly, setArOnly] = useState(false);
   const [text, setText] = useState(true);
@@ -41,6 +48,7 @@ export default function QuranAudio() {
   useEffect(load, []);
   const avail = (qs || []).filter((q) => q.identifier);
   const cur = avail.find((q) => q.id === qid) || avail[0];
+  const fq = find.trim().toLowerCase();
   const run = (f: (q: QariOpt) => void) => { if (cur) f(cur); };
   const it = a.items[a.index];
   const active = a.phase !== 'idle';
@@ -49,7 +57,7 @@ export default function QuranAudio() {
   const follow = active && a.phase !== 'error' && text && !!info;
   const vkey = it ? it.surah + ':' + it.ayah : '';
   // Keep the verse being read in view.
-  useEffect(() => { if (!follow || !it) return; const y = ys.current[vkey]; if (y !== undefined && scRef.current) scRef.current.scrollTo({ y: Math.max(0, y - 90), animated: true }); }, [vkey, follow]);
+  useEffect(() => { if (!follow || !it) return; const y = ys.current[vkey]; if (y !== undefined && scRef.current) scRef.current.scrollTo({ y: Math.max(0, y - Math.round(Dimensions.get('window').height * 0.3)), animated: true }); }, [vkey, follow]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
@@ -58,7 +66,7 @@ export default function QuranAudio() {
         <Header title="Quran Audio" sub="Listen by juz or surah" />
         <ScrollView ref={scRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: active ? 190 : 30, gap: 10 }}>
           {follow && info ? (
-            <Glass radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
+            <Glass solid radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6, backgroundColor: 'rgba(46,84,116,.96)' }}>
               <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                 <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>NOW READING</Text>
                 <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{info.title}</Text>
@@ -81,6 +89,18 @@ export default function QuranAudio() {
               ))}
             </Glass>
           ) : (<>
+          {last && a.phase === 'idle' && (qs || []).some((q) => q.id === last.qid && q.identifier) ? (
+            <Glass solid radius={22} style={{ padding: 14, backgroundColor: 'rgba(13,28,58,.95)' }}>
+              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>CONTINUE WHERE YOU STOPPED</Text>
+              <Text numberOfLines={1} style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 4 }}>{last.title}</Text>
+              <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2 }}>{last.qari + ' · ' + last.label + ' · ' + (last.index + 1) + '/' + last.total}</Text>
+              <View style={{ marginTop: 10, alignSelf: 'flex-start' }}>
+                <Shine label="Continue" radius={22} onPress={() => { const q = (qs || []).find((x) => x.id === last.qid && x.identifier); if (q) resumeLast(last, q); }} style={{ flexDirection: 'row', gap: 8, paddingVertical: 10, paddingHorizontal: 18, backgroundColor: '#7df0c6' }}>
+                  <PlayIcon size={16} color="#06231c" /><Text style={{ color: '#06231c', fontWeight: '800', fontSize: 13 }}>Continue</Text>
+                </Shine>
+              </View>
+            </Glass>
+          ) : null}
           <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>RECITER</Text>
           {bad ? (
             <Glass radius={20} style={{ padding: 14 }}>
@@ -109,28 +129,38 @@ export default function QuranAudio() {
           ) : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
             {['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? ['Downloads'] : []).map((t, i) => (
-              <Pressable key={t} onPress={() => setTab(i)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: tab === i ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: tab === i ? TEAL : 'rgba(255,255,255,.14)' }}>
+              <Pressable key={t} onPress={() => { setTab(i); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: tab === i ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: tab === i ? TEAL : 'rgba(255,255,255,.14)' }}>
                 <Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text>
               </Pressable>
             ))}
           </View>
 
+          {tab < 2 ? (
+            <GlowField focused={sf}>
+              <SearchIcon size={18} color={sf ? '#7df0c6' : 'rgba(255,255,255,.6)'} />
+              <TextInput value={find} onChangeText={setFind} onFocus={() => setSf(true)} onBlur={() => setSf(false)} placeholder={tab === 0 ? 'Search juz name or number' : 'Search surah name or number'} placeholderTextColor="rgba(255,255,255,.45)" style={{ flex: 1, color: W, fontSize: 14, paddingVertical: 11, outlineStyle: 'none' } as any} />
+              {find ? <Pressable onPress={() => setFind('')} hitSlop={8} accessibilityLabel="Clear search"><CloseIcon size={16} color="rgba(255,255,255,.7)" /></Pressable> : null}
+            </GlowField>
+          ) : null}
+
           {tab === 0 ? JUZ_NAMES.map((n, i) => (
+            fq && String(i + 1) !== fq && !n.toLowerCase().includes(fq) && !('juz ' + (i + 1)).includes(fq) ? null :
             <Pressable key={i} disabled={!cur} onPress={() => run((q) => playJuz(i + 1, q))}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
                 <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{i + 1}</Text></View>
                 <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>Juz {i + 1}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{n}</Text></View>
                 {dlSupported && cur ? <DlBtn state={juzDone(cur.id, i + 1) ? 'done' : d.busy ? (d.label === 'Juz ' + (i + 1) + ' · ' + n ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : downloadJuz(cur.id, cur.identifier as string, i + 1, 'Juz ' + (i + 1) + ' · ' + n))} /> : null}
-                <Text style={{ color: TEAL, fontSize: 18 }}>▶</Text>
+                <RowPlay onPress={() => run((q) => playJuz(i + 1, q))} />
               </View>
             </Pressable>
           )) : tab === 1 ? SURAH_LIST.map((x) => (
+            fq && String(x.num) !== fq && !x.title.toLowerCase().includes(fq) && !(x.sub || '').toLowerCase().includes(fq) ? null :
             <Pressable key={x.key} disabled={!cur} onPress={() => run((q) => playSurah(x.num, x.title, q))}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
                 <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{x.num}</Text></View>
                 <View style={{ flex: 1, minWidth: 0 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>{x.title}</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{x.sub}</Text></View>
                 {dlSupported && cur ? <DlBtn state={surahDone(cur.id, x.num) ? 'done' : d.busy ? (d.label === x.title ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : downloadSurah(cur.id, cur.identifier as string, x.num, x.title))} /> : null}
-                <Text style={{ color: TEAL, fontSize: 18 }}>▶</Text>
+                <RowPlay onPress={() => run((q) => playSurah(x.num, x.title, q))} />
               </View>
             </Pressable>
           )) : (
@@ -218,10 +248,10 @@ export default function QuranAudio() {
                       <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{a.phase === 'loading' ? 'Loading…' : a.qari + (it ? ' · ' + it.label + ' · ' + (a.index + 1) + '/' + a.items.length : '')}</Text>
                     </View>
                     <Pressable onPress={() => setText(!text)} hitSlop={6} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: text ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{text ? 'List' : 'Text'}</Text></Pressable>
-                    <Btn t="✕" onPress={() => stop()} />
+                    <Btn label="Close player" ic={<CloseIcon size={18} />} onPress={() => stop()} />
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18, marginTop: 10 }}>
-                    <Btn t="⏮" onPress={prev} /><Btn big t={a.playing ? '❚❚' : '▶'} onPress={toggle} /><Btn t="⏭" onPress={next} />
+                    <Btn label="Previous verse" ic={<PrevIcon size={20} />} onPress={prev} /><Btn big pulse={a.playing} label={a.playing ? 'Pause' : 'Play'} ic={a.playing ? <PauseIcon size={26} color="#06231c" /> : <PlayIcon size={26} color="#06231c" />} onPress={toggle} /><Btn label="Next verse" ic={<NextIcon size={20} />} onPress={next} />
                   </View>
                 </View>
               )}
