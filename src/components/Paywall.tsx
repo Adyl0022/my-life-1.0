@@ -140,8 +140,26 @@ export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?
       <Pressable onPress={openPaywall} accessibilityRole="button" accessibilityLabel={'Unlock, ' + PRICE + ' ' + PER} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
         <LinearGradient colors={['#1d1856', '#151a4a', '#0e2650']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <LinearGradient colors={['rgba(94,231,223,.16)', 'rgba(94,231,223,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 90 }} />
-        <View style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.25)', borderWidth: 1, borderColor: 'rgba(124,156,255,.5)' }}><Lock s={22} /></View>
-        <View style={{ marginTop: 12, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}>
+        {/* Made-up sample shapes. They are not the person's data. */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 18, right: 18, top: 18, bottom: 18, overflow: 'hidden' }}>
+          <View style={{ height: 13, width: '42%', borderRadius: 7, backgroundColor: 'rgba(255,255,255,.2)' }} />
+          <View style={{ height: 8, width: '68%', borderRadius: 4, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 9 }} />
+          {[['34%', '72%'], ['26%', '48%'], ['38%', '86%'], ['30%', '30%'], ['24%', '60%']].map(([a, b], i) => (
+            <View key={i} style={{ marginTop: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ height: 10, width: a as any, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.16)' }} />
+                <View style={{ height: 10, width: '14%', borderRadius: 5, backgroundColor: 'rgba(255,255,255,.12)' }} />
+              </View>
+              <View style={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.08)', marginTop: 8, overflow: 'hidden' }}>
+                <LinearGradient colors={['rgba(94,231,223,.55)', 'rgba(124,156,255,.5)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 8, width: b as any, borderRadius: 4 }} />
+              </View>
+            </View>
+          ))}
+        </View>
+        <Shine delay={400} />
+        <LinearGradient pointerEvents="none" colors={['rgba(14,20,56,0)', 'rgba(14,20,56,.82)', 'rgba(14,20,56,0)']} style={{ position: 'absolute', left: 0, right: 0, top: '18%', bottom: '18%' }} />
+        <View style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(14,20,56,.9)', borderWidth: 1, borderColor: 'rgba(124,156,255,.6)' }}><Lock s={22} /></View>
+        <View style={{ marginTop: 12, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(14,20,56,.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' }}>
           <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>Unlock · {PRICE} {PER}</Text>
         </View>
       </Pressable>
