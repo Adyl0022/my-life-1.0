@@ -13,8 +13,8 @@ const dim = 'rgba(255,255,255,.7)';
 // Everything spent today in My Finance (all categories except Savings, so Health and Bills count),
 // with an optional add-on: the vehicle maintenance noted in My Record. The person chooses once and can switch it any time.
 export function TodaySpend({ spends }: { spends: Sp[] }) {
-  const [mode, setMode] = useStored<'ask' | 'yes' | 'no'>('ml_today_veh', 'ask');
-  const [rec] = useStored<{ data?: Record<string, { exps?: { amt: number; date: string }[] }> }>('ml_record', { data: {} });
+  const [mode, setMode, modeOk] = useStored<'ask' | 'yes' | 'no'>('ml_today_veh', 'ask');
+  const [rec, , recOk] = useStored<{ data?: Record<string, { exps?: { amt: number; date: string }[] }> }>('ml_record', { data: {} });
   const [ask, setAsk] = useState<'yes' | 'no' | null>(null); // waiting for the person to confirm a change
   const t = todayStr();
   const mine = (spends || []).filter((p) => p.cat !== 'Savings' && p.date === t);
@@ -24,6 +24,8 @@ export function TodaySpend({ spends }: { spends: Sp[] }) {
   const maint = all.filter((e) => e.date === t);
   const veh = maint.reduce((a, e) => a + (e.amt || 0), 0);
   const has = all.length > 0;
+  // No vehicle maintenance left in My Record: forget the earlier choice, so the question comes back when a new one is added.
+  React.useEffect(() => { if (recOk && modeOk && !has && mode !== 'ask') setMode('ask'); }, [recOk, modeOk, has, mode]);
   const inc = mode === 'yes' && has;
   const total = fin + (inc ? veh : 0);
   const rows: { k: string; name: string; sub: string; amt: number; v?: boolean }[] = [
