@@ -22,7 +22,8 @@ export default function QuranAudio() {
   const [bad, setBad] = useState(false);
   const [tab, setTab] = useState(0);
   const a = useQuranAudio();
-  const [lang] = useLang(); const [size] = useSize();
+  const [lang, setLang] = useLang(); const [size] = useSize();
+  const [arOnly, setArOnly] = useState(false);
   const [text, setText] = useState(true);
   const scRef = React.useRef<any>(null); const ys = React.useRef<Record<string, number>>({});
   const load = () => { setBad(false); loadQaris().then((r) => setQs(r)).catch(() => { setBad(true); setQs(null); }); };
@@ -51,10 +52,20 @@ export default function QuranAudio() {
                 <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>NOW READING</Text>
                 <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{info.title}</Text>
               </View>
+              <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+                {([['ar', 'Arabic only'], ['ms', 'Melayu'], ['en', 'English']] as [string, string][]).map(([k, t]) => {
+                  const on = k === 'ar' ? arOnly : !arOnly && lang === k;
+                  return (
+                    <Pressable key={k} onPress={() => { if (k === 'ar') setArOnly(true); else { setArOnly(false); setLang(k as 'ms' | 'en'); } }} style={{ paddingVertical: 7, paddingHorizontal: 13, borderRadius: 999, backgroundColor: on ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? TEAL : 'rgba(255,255,255,.14)' }}>
+                      <Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{t}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
               {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
               {info.verses.map((v, i) => (
                 <View key={v.n} onLayout={(e) => { ys.current[info.num + ':' + v.n] = e.nativeEvent.layout.y + 90; }}>
-                  <VerseBlock v={v} size={size} lang={lang} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />
+                  <VerseBlock v={v} size={size} lang={lang} arOnly={arOnly} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />
                 </View>
               ))}
             </Glass>
