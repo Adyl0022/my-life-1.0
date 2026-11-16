@@ -76,6 +76,62 @@ function Shoot({ left, top, delay, gap, angle = 28 }: { left: string; top: strin
     </Animated.View>
   );
 }
+// Two slow asteroids drift towards each other, collide in a soft flash and break into pieces that drift apart and fade (login screen only).
+function rockPts(seed: number, n = 9) {
+  let a = seed * 9301 + 49297; const rnd = () => { a = (a * 9301 + 49297) % 233280; return a / 233280; };
+  return Array.from({ length: n }, (_, i) => { const t = (i / n) * Math.PI * 2; const r = 30 + rnd() * 18; return (Math.cos(t) * r).toFixed(1) + ',' + (Math.sin(t) * r).toFixed(1); }).join(' ');
+}
+function Rock({ size, seed, id }: { size: number; seed: number; id: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="-50 -50 100 100">
+      <Defs><SRG id={id} cx="35%" cy="30%" r="80%"><Stop offset="0" stopColor="#d9d3ff" /><Stop offset="0.55" stopColor="#8b86c9" /><Stop offset="1" stopColor="#4a4590" /></SRG></Defs>
+      <Path d={'M' + rockPts(seed).replace(/ /g, 'L') + 'Z'} fill={'url(#' + id + ')'} stroke="rgba(200,215,255,.55)" strokeWidth={2} />
+      <Circle cx={-8} cy={-6} r={7} fill="rgba(40,36,95,.35)" /><Circle cx={12} cy={9} r={5} fill="rgba(40,36,95,.3)" /><Circle cx={-2} cy={16} r={3.5} fill="rgba(40,36,95,.3)" />
+    </Svg>
+  );
+}
+const FRAG = [[-150, 78, 16, 1.1], [-95, 62, 12, -1.4], [-40, 90, 9, 1.8], [20, 70, 14, -1.0], [75, 96, 8, 2.0], [130, 66, 13, -1.6], [170, 84, 10, 1.3]] as const;
+function Collision({ left, top, ang, dur, gap, delay, id }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string }) {
+  const p = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const l = Animated.loop(Animated.sequence([
+      Animated.delay(delay),
+      Animated.timing(p, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: true }),
+      Animated.delay(gap),
+      Animated.timing(p, { toValue: 0, duration: 0, useNativeDriver: true }),
+    ]));
+    l.start(); return () => l.stop();
+  }, []);
+  const HIT = 0.4; // moment of impact
+  const go = (from: number) => p.interpolate({ inputRange: [0, HIT, 1], outputRange: [from, 0, 0] });
+  const gone = p.interpolate({ inputRange: [0, 0.02, HIT - 0.01, HIT], outputRange: [0, 1, 1, 0] });
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', left: left as any, top: top as any, width: 0, height: 0 }}>
+      <View style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, transform: [{ rotate: ang + 'deg' }] }}>
+        <Animated.View style={{ position: 'absolute', left: -19, top: -19, opacity: gone, transform: [{ translateX: go(-120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '70deg'], extrapolate: 'clamp' }) }] }}><Rock size={38} seed={3} id={id + 'a'} /></Animated.View>
+        <Animated.View style={{ position: 'absolute', left: -14, top: -14, opacity: gone, transform: [{ translateX: go(120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '-90deg'], extrapolate: 'clamp' }) }] }}><Rock size={28} seed={7} id={id + 'b'} /></Animated.View>
+      </View>
+      <Animated.View style={{ position: 'absolute', left: -45, top: -45, opacity: p.interpolate({ inputRange: [0, HIT - 0.005, HIT + 0.01, HIT + 0.18, 1], outputRange: [0, 0, 0.95, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT, HIT + 0.18, 1], outputRange: [0.3, 0.4, 1.5, 1.5] }) }] }}>
+        <Svg width={90} height={90} viewBox="-45 -45 90 90"><Defs><SRG id={id + 'fl'} cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#fff6e6" stopOpacity="1" /><Stop offset="0.35" stopColor="#ffd9a8" stopOpacity="0.55" /><Stop offset="1" stopColor="#ffb98a" stopOpacity="0" /></SRG></Defs><Circle cx={0} cy={0} r={45} fill={'url(#' + id + 'fl)'} /></Svg>
+      </Animated.View>
+      <Animated.View style={{ position: 'absolute', left: -30, top: -30, width: 60, height: 60, borderRadius: 30, borderWidth: 1.5, borderColor: 'rgba(143,233,226,.7)', opacity: p.interpolate({ inputRange: [0, HIT, HIT + 0.04, HIT + 0.3, 1], outputRange: [0, 0, 0.7, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT, HIT + 0.3, 1], outputRange: [0.3, 0.3, 3.2, 3.2] }) }] }} />
+      {FRAG.map((f, i) => {
+        const rad = (f[0] * Math.PI) / 180; const dx = Math.cos(rad) * f[1], dy = Math.sin(rad) * f[1];
+        const ease = (n: number) => p.interpolate({ inputRange: [0, HIT, HIT + 0.2, 1], outputRange: [0, 0, n * 0.62, n] });
+        return (
+          <Animated.View key={i} style={{ position: 'absolute', left: -f[2] / 2, top: -f[2] / 2, opacity: p.interpolate({ inputRange: [0, HIT - 0.001, HIT, 0.75, 1], outputRange: [0, 0, 1, 0.75, 0] }), transform: [{ translateX: ease(dx) }, { translateY: ease(dy) }, { rotate: p.interpolate({ inputRange: [0, HIT, 1], outputRange: ['0deg', '0deg', f[3] * 200 + 'deg'] }) }, { scale: p.interpolate({ inputRange: [0, HIT, 1], outputRange: [1, 1, 0.55] }) }] }}>
+            <Rock size={f[2]} seed={10 + i} id={id + 'f' + i} />
+          </Animated.View>
+        );
+      })}
+      {[...Array(10)].map((_, i) => {
+        const a = (i / 10) * Math.PI * 2 + 0.3; const d = 26 + (i % 4) * 14;
+        const ease = (n: number) => p.interpolate({ inputRange: [0, HIT, HIT + 0.25, 1], outputRange: [0, 0, n * 0.7, n] });
+        return <Animated.View key={'d' + i} style={{ position: 'absolute', left: -1.2, top: -1.2, width: 2.4, height: 2.4, borderRadius: 2, backgroundColor: i % 2 ? '#ffd9a8' : '#cfe9ff', opacity: p.interpolate({ inputRange: [0, HIT - 0.001, HIT, 0.7, 1], outputRange: [0, 0, 0.9, 0.4, 0] }), transform: [{ translateX: ease(Math.cos(a) * d * 1.6) }, { translateY: ease(Math.sin(a) * d * 1.6) }] }} />;
+      })}
+    </View>
+  );
+}
 function Mote({ left, delay, dur, size, color }: { left: string; delay: number; dur: number; size: number; color: string }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -88,14 +144,14 @@ function Mote({ left, delay, dur, size, color }: { left: string; delay: number; 
   }, []);
   return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: left as any, bottom: 20, width: size, height: size, borderRadius: size, backgroundColor: color, shadowColor: color, shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 }, opacity: v.interpolate({ inputRange: [0, 0.15, 0.8, 1], outputRange: [0, 0.9, 0.7, 0] }), transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -640] }) }, { translateX: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 14, -8] }) }] }} />;
 }
-export function Sky() {
+export function Sky({ shooting = true }: { shooting?: boolean }) {
   return (
     <>
       {SKY.map((t, i) => <Twinkle key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
-      <Shoot left="2%" top="4%" delay={900} gap={3800} />
-      <Shoot left="40%" top="10%" delay={3600} gap={5200} angle={32} />
-      <Shoot left="-6%" top="38%" delay={6400} gap={6800} angle={22} />
-      <Shoot left="30%" top="62%" delay={9000} gap={7600} angle={26} />
+      {shooting ? <Shoot left="2%" top="4%" delay={900} gap={3800} /> : null}
+      {shooting ? <Shoot left="40%" top="10%" delay={3600} gap={5200} angle={32} /> : null}
+      {shooting ? <Shoot left="-6%" top="38%" delay={6400} gap={6800} angle={22} /> : null}
+      {shooting ? <Shoot left="30%" top="62%" delay={9000} gap={7600} angle={26} /> : null}
       <Mote left="10%" delay={0} dur={7500} size={4} color="#8fe9e2" />
       <Mote left="30%" delay={2400} dur={9000} size={3} color="#ffd593" />
       <Mote left="52%" delay={1100} dur={8000} size={4} color="#ff8fe0" />
@@ -256,7 +312,9 @@ export function AuthScreen() {
       <Drift size={340} color="rgba(94,231,223,0.32)" x={150} y={250} dx={-45} dy={50} dur={9000} />
       <Drift size={320} color="rgba(255,143,224,0.26)" x={-130} y={520} dx={55} dy={-40} dur={8000} />
       <Wallpaper />
-      <Sky />
+      <Sky shooting={false} />
+      <Collision left="70%" top="9%" ang={24} dur={15000} gap={2500} delay={1200} id="c1" />
+      <Collision left="26%" top="84%" ang={-18} dur={17000} gap={3500} delay={7000} id="c2" />
       <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-start', paddingBottom: 16 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View style={{ height: topA }} />
         {kb ? null : (
