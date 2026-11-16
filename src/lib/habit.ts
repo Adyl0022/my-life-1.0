@@ -1,6 +1,6 @@
 export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number; en?: number; med?: string[]; rl?: RSess[]; pd?: boolean; fl?: number; sy?: string[] };
 export type RSess = { k: string; s: number; at: string };
-export type Med = { id: string; name: string; dose: string; time: string; days?: number[]; ic?: string };
+export type Med = { id: string; name: string; dose: string; time: string; days?: number[]; ic?: string; since?: number };
 // days: weekdays (0 = Sunday ... 6 = Saturday) the medicine is due. Empty or missing means every day.
 export const medDue = (m: { days?: number[] }, d: Date) => !m.days || m.days.length === 0 || m.days.length >= 7 || m.days.includes(d.getDay());
 export const to12 = (s: string) => { const m = /^(\d{1,2}):(\d{2})$/.exec(s); if (!m) return s; const hh = +m[1]; return (hh % 12 || 12) + ':' + m[2] + ' ' + (hh < 12 ? 'AM' : 'PM'); };

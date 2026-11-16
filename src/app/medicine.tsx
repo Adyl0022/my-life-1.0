@@ -33,6 +33,7 @@ export default function Medicine() {
   const [ring, setRing] = useStored<boolean>('ml_med_ring', true);
   const askExact = async () => { try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); } catch (e) { /* ignore */ } };
   const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState('');
   const [name, setName] = useState(''); const [dose, setDose] = useState(''); const [time, setTime] = useState('');
   const [rep, setRep] = useState<'every' | 'weekdays' | 'pick'>('every'); const [pick, setPick] = useState<number[]>([]);
   const [ic, setIc] = useState('medicine'); const [err, setErr] = useState('');
@@ -50,14 +51,32 @@ export default function Medicine() {
   const pct = due.length ? done / due.length : 0;
   const nextOne = due.filter((m) => !taken.includes(m.id)).sort((a, b) => (a.time < b.time ? -1 : 1))[0];
   const toggle = (id: string) => { const cur = getDay(h, 0); const on = (cur.med || []).includes(id); setH({ ...h, days: { ...h.days, [tk]: { ...cur, med: on ? (cur.med || []).filter((x) => x !== id) : [...(cur.med || []), id] } } }); };
-  const reset = () => { setName(''); setDose(''); setTime(''); setRep('every'); setPick([]); setIc('medicine'); setErr(''); };
+  const reset = () => { setName(''); setDose(''); setTime(''); setRep('every'); setPick([]); setIc('medicine'); setErr(''); setEditId(''); };
+  const startEdit = (m: Med) => {
+    const dd = m.days || [];
+    setName(m.name); setDose(m.dose || ''); setTime(m.time); setIc(m.ic || 'medicine'); setErr('');
+    if (dd.length === 0 || dd.length >= 7) { setRep('every'); setPick([]); } else if ([...dd].sort().join('') === '12345') { setRep('weekdays'); setPick([]); } else { setRep('pick'); setPick([...dd]); }
+    setEditId(m.id); setAdding(true);
+  };
   const save = () => {
     const nm = name.trim(); const tm = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(time);
     if (!nm) { setErr('Type the name of the medicine.'); return; }
     if (!tm) { setErr('Type the time as 24-hour, for example 20:30.'); return; }
     if (rep === 'pick' && pick.length === 0) { setErr('Pick at least one day.'); return; }
-    if (meds.length >= 10) { setErr('You can keep up to 10 medicines.'); return; }
+    if (!editId && meds.length >= 10) { setErr('You can keep up to 10 medicines.'); return; }
     const days = rep === 'every' ? undefined : rep === 'weekdays' ? [1, 2, 3, 4, 5] : [...pick].sort();
+    const tmS = String(+tm[1]).padStart(2, '0') + ':' + tm[2];
+    if (editId) {
+      const old = meds.find((x) => x.id === editId);
+      if (old) {
+        const changed = old.time !== tmS || JSON.stringify([...(old.days || [])].sort()) !== JSON.stringify([...(days || [])].sort());
+        const { days: _d, ...rest } = old;
+        const nm2: Med = { ...rest, name: nm.slice(0, 40), dose: dose.trim().slice(0, 60), time: tmS, ic, ...(days ? { days } : {}), ...(changed ? { since: Date.now() } : {}) };
+        setH({ ...h, meds: meds.map((x) => (x.id === editId ? nm2 : x)).sort((a, b) => (a.time < b.time ? -1 : 1)) });
+      }
+      reset(); setAdding(false); setTab('all');
+      return;
+    }
     const m: Med = { id: String(Date.now()), name: nm.slice(0, 40), dose: dose.trim().slice(0, 60), time: String(+tm[1]).padStart(2, '0') + ':' + tm[2], ic, ...(days ? { days } : {}) };
     setH({ ...h, meds: [...meds, m].sort((a, b) => (a.time < b.time ? -1 : 1)) });
     reset(); setAdding(false); setTab('today');
@@ -78,7 +97,10 @@ export default function Medicine() {
       {check ? (
         <Pressable accessibilityLabel={on ? 'Mark ' + m.name + ' as not taken' : 'Mark ' + m.name + ' as taken'} onPress={() => toggle(m.id)} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: on ? T : 'rgba(255,255,255,.4)', backgroundColor: on ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{on ? <Text style={{ color: '#06222a', fontWeight: '800', fontSize: 16 }}>✓</Text> : null}</Pressable>
       ) : (
-        <Pressable onPress={() => drop(m.id)} hitSlop={8}><Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable>
+        <View style={{ alignItems: 'flex-end', gap: 10 }}>
+          <Pressable onPress={() => startEdit(m)} hitSlop={8} accessibilityLabel={'Edit ' + m.name}><Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Edit</Text></Pressable>
+          <Pressable onPress={() => drop(m.id)} hitSlop={8}><Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable>
+        </View>
       )}
     </View>); };
   const week = Array.from({ length: 7 }, (_, i) => { const off = i - 6; const d = dateOf(off); const x = getDay(h, off); const dm = meds.filter((m) => medDue(m, d)); return { d, n: dm.length, k: dm.filter((m) => (x.med || []).includes(m.id)).length, off }; });
@@ -93,7 +115,7 @@ export default function Medicine() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 60 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable onPress={() => (adding ? (reset(), setAdding(false)) : router.back())} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></Glass></Pressable>
-            <Text style={{ flex: 1, color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>{adding ? 'Add medicine' : 'Medicine'}</Text>
+            <Text style={{ flex: 1, color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>{adding ? (editId ? 'Edit medicine' : 'Add medicine') : 'Medicine'}</Text>
             {!adding ? <Pressable onPress={() => { reset(); setAdding(true); }} accessibilityLabel="Add medicine"><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 26, marginTop: -2 }}>+</Text></LinearGradient></Pressable> : null}
           </View>
 
@@ -122,7 +144,7 @@ export default function Medicine() {
                 {err ? <Text style={{ color: '#ffb3bf', fontSize: 12, marginTop: 12 }}>{err}</Text> : null}
               </Glass>
               <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>My Life does not give dose advice. Type what is on the label or in your doctor's note. You get a reminder at the time you set, and again an hour later if it is not ticked.</Text>
-              <Pressable onPress={save} style={{ marginTop: 14, alignSelf: 'flex-start' }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 26, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>Save medicine</Text></LinearGradient></Pressable>
+              <Pressable onPress={save} style={{ marginTop: 14, alignSelf: 'flex-start' }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 26, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{editId ? 'Save changes' : 'Save medicine'}</Text></LinearGradient></Pressable>
             </>
           ) : (
             <>

@@ -9,7 +9,7 @@ export function missedDoses(h: HData, now: Date, days = 7): Dose[] {
   const out: Dose[] = [];
   for (const m of h.meds || []) {
     const t = /^(\d{1,2}):(\d{2})$/.exec(m.time || ''); if (!t) continue;
-    const created = Number(m.id) || 0;
+    const created = Number(m.since || m.id) || 0; // since: set when the time or days were edited, so the old schedule is not judged by the new one
     for (let o = -(days - 1); o <= 0; o++) {
       const d = dateOf(o);
       if (!medDue(m, d)) continue;
