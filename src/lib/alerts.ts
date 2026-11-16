@@ -123,7 +123,7 @@ export async function syncWeekAlert(tg: Toggles): Promise<void> {
 
 type MedRow = { id: string; name: string; dose: string; time: string; days?: number[] };
 // Medicine reminders: every day at the time set, and again one hour later if it is not ticked yet. Quiet hours do not mute these.
-export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: boolean): Promise<void> {
+export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: boolean, ring = true): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
     await cancelPrefix('med-');
@@ -131,6 +131,8 @@ export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: bo
     if (!(await setup())) return;
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('meds', { name: 'Medicine reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#5ee7df' });
     const now = Date.now();
+    // Alarm-style delivery: the phone cannot hold the reminder back (needs exact timing to be allowed). The person can turn it off in Medicine.
+    const delivery = ring ? 'alarmClock' : 'bestEffort';
     for (const m of meds.slice(0, 10)) {
       const t = /^(\d{1,2}):(\d{2})$/.exec(m.time || ''); if (!t) continue;
       const hh = +t[1], mm = +t[2];
@@ -140,14 +142,14 @@ export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: bo
         await Notifications.scheduleNotificationAsync({
           identifier: 'med-' + m.id + '-daily',
           content: { title: 'Medicine reminder', body, sound: true },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh, minute: mm, channelId: 'meds' } as any,
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh, minute: mm, channelId: 'meds', delivery } as any,
         });
       } else {
         for (const wd of m.days!) {
           await Notifications.scheduleNotificationAsync({
             identifier: 'med-' + m.id + '-wk' + wd,
             content: { title: 'Medicine reminder', body, sound: true },
-            trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: wd + 1, hour: hh, minute: mm, channelId: 'meds' } as any,
+            trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: wd + 1, hour: hh, minute: mm, channelId: 'meds', delivery } as any,
           });
         }
       }
@@ -160,7 +162,7 @@ export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: bo
         await Notifications.scheduleNotificationAsync({
           identifier: 'med-' + m.id + '-fu-' + at.getFullYear() + (at.getMonth() + 1) + at.getDate(),
           content: { title: 'Did you take your medicine?', body, sound: true },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'meds' } as any,
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'meds', delivery } as any,
         });
       }
     }
