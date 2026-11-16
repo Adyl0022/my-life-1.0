@@ -130,7 +130,7 @@ export function PaywallHost() {
 }
 
 // Blurs a card and opens the unlock sheet when tapped. When `on` is false the card is shown as normal.
-export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?: number; radius?: number; children: React.ReactNode }) {
+export function Locked({ on, mt = 0, radius = 24, title, children }: { on: boolean; mt?: number; radius?: number; title?: string; children: React.ReactNode }) {
   const PRICE = usePrice();
   if (!on) return <View style={{ marginTop: mt }}>{children}</View>;
   return (
@@ -141,9 +141,8 @@ export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?
         <LinearGradient colors={['#1d1856', '#151a4a', '#0e2650']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <LinearGradient colors={['rgba(94,231,223,.16)', 'rgba(94,231,223,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 90 }} />
         {/* Made-up sample shapes. They are not the person's data. */}
-        <View pointerEvents="none" style={{ position: 'absolute', left: 18, right: 18, top: 18, bottom: 18, overflow: 'hidden' }}>
-          <View style={{ height: 13, width: '42%', borderRadius: 7, backgroundColor: 'rgba(255,255,255,.2)' }} />
-          <View style={{ height: 8, width: '68%', borderRadius: 4, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 9 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: 18, right: 18, top: title ? 48 : 18, bottom: 18, overflow: 'hidden' }}>
+          {title ? null : (<><View style={{ height: 13, width: '42%', borderRadius: 7, backgroundColor: 'rgba(255,255,255,.2)' }} /><View style={{ height: 8, width: '68%', borderRadius: 4, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 9 }} /></>)}
           {[['34%', '72%'], ['26%', '48%'], ['38%', '86%'], ['30%', '30%'], ['24%', '60%']].map(([a, b], i) => (
             <View key={i} style={{ marginTop: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -156,6 +155,12 @@ export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?
             </View>
           ))}
         </View>
+        {title ? (
+          <View pointerEvents="none" style={{ position: 'absolute', left: 18, right: 18, top: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14, fontWeight: '800', flex: 1, marginRight: 10 }}>{title}</Text>
+            <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, backgroundColor: 'rgba(94,231,223,.2)', borderWidth: 1, borderColor: 'rgba(94,231,223,.5)' }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.5 }}>PRO</Text></View>
+          </View>
+        ) : null}
         <Shine delay={400} />
         <LinearGradient pointerEvents="none" colors={['rgba(14,20,56,0)', 'rgba(14,20,56,.82)', 'rgba(14,20,56,0)']} style={{ position: 'absolute', left: 0, right: 0, top: '18%', bottom: '18%' }} />
         <View style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(14,20,56,.9)', borderWidth: 1, borderColor: 'rgba(124,156,255,.6)' }}><Lock s={22} /></View>

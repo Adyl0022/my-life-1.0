@@ -419,7 +419,7 @@ export default function Record() {
           </Glass>
           <PartsCard d={d} upd={(fn) => upd(fn)} latest={allOdo} addNow={(o) => upd((x) => ({ ...x, readings: [...x.readings, { id: Date.now(), date: t0, odo: o }] }))} />
           <DocsCard d={d} upd={(fn) => upd(fn)} />
-          <Locked on={!pro}><ExportCard name={catName} d={d} latest={latest} /></Locked>
+          <Locked on={!pro} title="Export Report (PDF)"><ExportCard name={catName} d={d} latest={latest} /></Locked>
         </ScrollView>
 
         {quick ? (

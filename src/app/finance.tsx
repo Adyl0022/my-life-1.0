@@ -334,7 +334,7 @@ export default function Finance() {
           </Glass>
 
           {/* By category */}
-          <Locked on={!pro} mt={12}>
+          <Locked on={!pro} title="Spending by Category" mt={12}>
           <Glass radius={24} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending by Category</Text>
@@ -379,7 +379,7 @@ export default function Finance() {
           </Locked>
 
           {/* Income trend */}
-          <Locked on={!pro} mt={12}>
+          <Locked on={!pro} title="Income Trend" mt={12}>
           <Glass radius={24} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Income Trend</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 4 }}>Last 6 months · tap to open</Text></View>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 104, marginTop: 18 }}>

@@ -78,7 +78,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
       <Pressable onPress={onToday} style={{ marginTop: 10 }}><Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>Log today  ›</Text></Pressable>
     </Glass>
 
-    <Locked on={!pro} mt={12}>
+    <Locked on={!pro} title="Patterns we noticed" mt={12}>
     <Glass radius={24} style={{ padding: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><HeadIcon k="link" /><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Patterns we noticed</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Last 30 days · possible links, not proof</Text></View></View>
       {shown.length === 0 ? (
