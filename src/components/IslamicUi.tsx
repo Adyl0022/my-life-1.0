@@ -128,6 +128,21 @@ function Lantern() {
     </Animated.View>
   );
 }
+// Calm background for reading screens: the same dark teal as the Islamic Hub with a soft star pattern, and no glowing lights behind the words.
+export const ReadBg = () => (
+  <>
+    <LinearGradient colors={['#0a0f2c', '#0f1f3d', '#0c3a3f']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+    <Svg pointerEvents="none" width="100%" height="100%" style={{ position: 'absolute', left: 0, top: 0 }}>
+      <Defs>
+        <Pattern id="rgeo" width={52} height={52} patternUnits="userSpaceOnUse">
+          <Path d="M26 4l5.5 11.5L43 10l-5.5 11.5L49 26l-11.5 4.5L43 42l-11.5-5.5L26 48l-5.5-11.5L9 42l5.5-11.5L3 26l11.5-4.5L9 10l11.5 5.5z" fill="none" stroke="#7df0c6" strokeWidth={1} opacity={0.1} />
+        </Pattern>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#rgeo)" />
+    </Svg>
+  </>
+);
+
 export const IslamicBg = ({ a = 'rgba(52,211,153,.4)', b = 'rgba(124,156,255,.35)', deco = false }: { a?: string; b?: string; deco?: boolean }) => (
   <>
     <LinearGradient colors={['#0a0f2c', '#0f1f3d', '#0c3a3f']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />

@@ -1,0 +1,235 @@
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, Pressable } from 'react-native';
+import { Text } from '../components/Txt';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Glass } from '../components/Glass';
+import { Header, VerseBlock, ReadBg } from '../components/IslamicUi';
+import { W } from '../components/Ui';
+import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
+import { useStored } from '../lib/store';
+import { dlSupported, useDl, surahDone, juzDone, downloadSurah, downloadJuz, downloadAll, cancelDownload, deleteSurah, deleteAll, usage, fmtBytes, clearDlError, NET_KEY, NetPref } from '../lib/quranDl';
+import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio } from '../lib/quranAudio';
+
+const TEAL = '#7df0c6';
+const Btn = ({ t, onPress, big }: { t: string; onPress: () => void; big?: boolean }) => (
+  <Pressable onPress={onPress} hitSlop={8} style={{ width: big ? 52 : 40, height: big ? 52 : 40, borderRadius: 26, backgroundColor: big ? 'rgba(94,231,181,.45)' : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}>
+    <Text style={{ color: W, fontSize: big ? 20 : 16, fontWeight: '800' }}>{t}</Text>
+  </Pressable>
+);
+
+const DlBtn = ({ state, pct, onPress }: { state: 'none' | 'busy' | 'done' | 'wait'; pct: number; onPress: () => void }) => (
+  <Pressable onPress={onPress} hitSlop={6} disabled={state === 'done' || state === 'wait'} accessibilityLabel={state === 'done' ? 'Saved on this phone' : state === 'busy' ? 'Cancel download' : 'Download to listen offline'} style={{ minWidth: 40, height: 34, paddingHorizontal: 8, borderRadius: 17, backgroundColor: state === 'done' ? 'rgba(94,231,181,.3)' : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center', opacity: state === 'wait' ? 0.4 : 1 }}>
+    <Text style={{ color: W, fontSize: state === 'busy' ? 11 : 15, fontWeight: '800' }}>{state === 'done' ? '✓' : state === 'busy' ? pct + '%' : state === 'wait' ? '⬇' : '⬇'}</Text>
+  </Pressable>
+);
+
+export default function QuranAudio() {
+  const [qid, setQid] = useStored<string>('ml_qari', 'alafasy');
+  const [qs, setQs] = useState<QariOpt[] | null>(null);
+  const [bad, setBad] = useState(false);
+  const [tab, setTab] = useState(0);
+  const d = useDl();
+  const [net, setNet] = useStored<NetPref>(NET_KEY, 'wifi');
+  const pct = d.total > 0 ? Math.min(100, Math.round((d.done / d.total) * 100)) : 0;
+  const [sure, setSure] = useState('');
+  const a = useQuranAudio();
+  const [lang, setLang] = useLang(); const [size] = useSize();
+  const [arOnly, setArOnly] = useState(false);
+  const [text, setText] = useState(true);
+  const scRef = React.useRef<any>(null); const ys = React.useRef<Record<string, number>>({});
+  const load = () => { setBad(false); loadQaris().then((r) => setQs(r)).catch(() => { setBad(true); setQs(null); }); };
+  useEffect(load, []);
+  const avail = (qs || []).filter((q) => q.identifier);
+  const cur = avail.find((q) => q.id === qid) || avail[0];
+  const run = (f: (q: QariOpt) => void) => { if (cur) f(cur); };
+  const it = a.items[a.index];
+  const active = a.phase !== 'idle';
+  const meta = it ? SURAH_LIST.find((x) => x.num === it.surah) : undefined;
+  const info = meta ? SURAH[meta.key] : undefined;
+  const follow = active && a.phase !== 'error' && text && !!info;
+  const vkey = it ? it.surah + ':' + it.ayah : '';
+  // Keep the verse being read in view.
+  useEffect(() => { if (!follow || !it) return; const y = ys.current[vkey]; if (y !== undefined && scRef.current) scRef.current.scrollTo({ y: Math.max(0, y - 90), animated: true }); }, [vkey, follow]);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
+      <ReadBg />
+      <SafeAreaView style={{ flex: 1 }}>
+        <Header title="Quran Audio" sub="Listen by juz or surah" />
+        <ScrollView ref={scRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: active ? 190 : 30, gap: 10 }}>
+          {follow && info ? (
+            <Glass radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
+              <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+                <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>NOW READING</Text>
+                <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{info.title}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+                {([['ar', 'Arabic only'], ['ms', 'Melayu'], ['en', 'English']] as [string, string][]).map(([k, t]) => {
+                  const on = k === 'ar' ? arOnly : !arOnly && lang === k;
+                  return (
+                    <Pressable key={k} onPress={() => { if (k === 'ar') setArOnly(true); else { setArOnly(false); setLang(k as 'ms' | 'en'); } }} style={{ paddingVertical: 7, paddingHorizontal: 13, borderRadius: 999, backgroundColor: on ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? TEAL : 'rgba(255,255,255,.14)' }}>
+                      <Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{t}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
+              {info.verses.map((v, i) => (
+                <View key={v.n} onLayout={(e) => { ys.current[info.num + ':' + v.n] = e.nativeEvent.layout.y + 90; }}>
+                  <VerseBlock v={v} size={size} lang={lang} arOnly={arOnly} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />
+                </View>
+              ))}
+            </Glass>
+          ) : (<>
+          <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>RECITER</Text>
+          {bad ? (
+            <Glass radius={20} style={{ padding: 14 }}>
+              <Text style={{ color: '#ffd593', fontSize: 13, lineHeight: 19 }}>Could not load the reciters. Check your internet connection.</Text>
+              <Pressable onPress={load} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Try again</Text></Pressable>
+            </Glass>
+          ) : !qs ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 13 }}>Loading reciters…</Text> : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {(qs || []).map((q) => {
+                const on = !!cur && cur.id === q.id; const off = !q.identifier;
+                return (
+                  <Pressable key={q.id} disabled={off} onPress={() => setQid(q.id)} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? TEAL : 'rgba(255,255,255,.14)', opacity: off ? 0.4 : 1 }}>
+                    <Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{q.name}{off ? ' (not available)' : ''}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+          {qs && !avail.length ? <Text style={{ color: '#ffd593', fontSize: 12.5 }}>No reciter is available right now. Try again later.</Text> : null}
+
+          {d.err ? (
+            <Glass radius={22} style={{ padding: 14 }}>
+              <Text style={{ color: '#ffd593', fontSize: 13, lineHeight: 19 }}>{d.err}</Text>
+              <Pressable onPress={clearDlError} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>OK</Text></Pressable>
+            </Glass>
+          ) : null}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+            {['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? ['Downloads'] : []).map((t, i) => (
+              <Pressable key={t} onPress={() => setTab(i)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: tab === i ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: tab === i ? TEAL : 'rgba(255,255,255,.14)' }}>
+                <Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {tab === 0 ? JUZ_NAMES.map((n, i) => (
+            <Pressable key={i} disabled={!cur} onPress={() => run((q) => playJuz(i + 1, q))}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
+                <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{i + 1}</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>Juz {i + 1}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{n}</Text></View>
+                {dlSupported && cur ? <DlBtn state={juzDone(cur.id, i + 1) ? 'done' : d.busy ? (d.label === 'Juz ' + (i + 1) + ' · ' + n ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : downloadJuz(cur.id, cur.identifier as string, i + 1, 'Juz ' + (i + 1) + ' · ' + n))} /> : null}
+                <Text style={{ color: TEAL, fontSize: 18 }}>▶</Text>
+              </View>
+            </Pressable>
+          )) : tab === 1 ? SURAH_LIST.map((x) => (
+            <Pressable key={x.key} disabled={!cur} onPress={() => run((q) => playSurah(x.num, x.title, q))}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
+                <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{x.num}</Text></View>
+                <View style={{ flex: 1, minWidth: 0 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>{x.title}</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{x.sub}</Text></View>
+                {dlSupported && cur ? <DlBtn state={surahDone(cur.id, x.num) ? 'done' : d.busy ? (d.label === x.title ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : downloadSurah(cur.id, cur.identifier as string, x.num, x.title))} /> : null}
+                <Text style={{ color: TEAL, fontSize: 18 }}>▶</Text>
+              </View>
+            </Pressable>
+          )) : (
+            <View style={{ gap: 10 }}>
+              <Glass radius={22} style={{ padding: 14 }}>
+                <Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Download over</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                  {([['wifi', 'Wi-Fi only (recommended)'], ['any', 'Wi-Fi or mobile data']] as [NetPref, string][]).map(([k, t]) => (
+                    <Pressable key={k} onPress={() => setNet(k)} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: net === k ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: net === k ? TEAL : 'rgba(255,255,255,.14)' }}>
+                      <Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, lineHeight: 17, marginTop: 8 }}>Recitations are large files. Wi-Fi saves your mobile data.</Text>
+              </Glass>
+              {d.busy ? (
+                <Glass radius={22} style={{ padding: 14 }}>
+                  <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Downloading {d.label}</Text>
+                  <View style={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: pct + '%', height: 8, backgroundColor: TEAL }} /></View>
+                  <Pressable onPress={cancelDownload} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
+                </Glass>
+              ) : null}
+              <Glass radius={22} style={{ padding: 14 }}>
+                <Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Saved on this phone</Text>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 3 }}>{'All reciters: ' + fmtBytes(usage().bytes)}</Text>
+                {cur ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2 }}>{cur.name + ': ' + fmtBytes(usage(cur.id).bytes)}</Text> : null}
+                {cur && !d.busy ? (
+                  <Pressable onPress={() => setSure(sure === 'all' ? '' : 'all')} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.4)' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Download the whole Quran</Text></Pressable>
+                ) : null}
+                {sure === 'all' && cur ? (
+                  <View style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,196,107,.14)', borderWidth: 1, borderColor: 'rgba(255,196,107,.4)' }}>
+                    <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Download all 114 surahs?</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>{'This is the full recitation by ' + cur.name + '. It is a large download (it can be hundreds of MB) and takes a while. Wi-Fi is recommended. You can cancel any time and delete it later here.'}</Text>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                      <Pressable onPress={() => setSure('')} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
+                      <Pressable onPress={() => { setSure(''); downloadAll(cur.id, cur.identifier as string, SURAH_LIST.map((x) => x.title)); }} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: '#7df0c6', alignItems: 'center' }}><Text style={{ color: '#06231c', fontWeight: '800', fontSize: 13 }}>Download</Text></Pressable>
+                    </View>
+                  </View>
+                ) : null}
+              </Glass>
+              {cur && usage(cur.id).surahs.length ? (
+                <Glass radius={22} style={{ paddingHorizontal: 14, paddingVertical: 4 }}>
+                  {usage(cur.id).surahs.map((u, i) => {
+                    const m = SURAH_LIST.find((x) => x.num === u.s);
+                    return (
+                      <View key={u.s} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: 'rgba(255,255,255,.1)' }}>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text numberOfLines={1} style={{ color: W, fontSize: 14, fontWeight: '700' }}>{u.s + '. ' + (m ? m.title : 'Surah')}</Text>
+                          <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, marginTop: 1 }}>{fmtBytes(u.bytes) + (u.total === 0 ? ' · part of a juz' : u.have < u.total ? ' · partly saved (' + u.have + '/' + u.total + ')' : '')}</Text>
+                        </View>
+                        <Pressable onPress={() => deleteSurah(cur.id, u.s)} hitSlop={6} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '800' }}>Delete</Text></Pressable>
+                      </View>
+                    );
+                  })}
+                </Glass>
+              ) : <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12.5, lineHeight: 18 }}>{cur ? 'Nothing saved for ' + cur.name + ' yet. Tap ⬇ next to a surah or juz to save it.' : ''}</Text>}
+              {usage().bytes > 0 && !d.busy ? (
+                <Pressable onPress={() => setSure(sure === 'del' ? '' : 'del')} style={{ alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: '#ff9aa9', fontWeight: '800', fontSize: 13 }}>Delete all downloads</Text></Pressable>
+              ) : null}
+              {sure === 'del' ? (
+                <Glass radius={22} style={{ padding: 14 }}>
+                  <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Delete every saved recitation?</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>{'This frees ' + fmtBytes(usage().bytes) + ' on this phone. You can still stream them with internet.'}</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <Pressable onPress={() => setSure('')} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
+                    <Pressable onPress={() => { setSure(''); deleteAll(); }} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: '#ff9aa9', alignItems: 'center' }}><Text style={{ color: '#2a0710', fontWeight: '800', fontSize: 13 }}>Delete all</Text></Pressable>
+                  </View>
+                </Glass>
+              ) : null}
+            </View>
+          )}
+
+          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>Audio streams over the internet by default. Tap ⬇ to save a surah or juz on this phone and listen offline; saved audio stays on this phone only and can be deleted in Downloads. The recitations come from the free Al-Quran Cloud service (alquran.cloud) and belong to their reciters. It keeps playing when the screen is off.</Text>
+          </>)}
+        </ScrollView>
+
+        {active ? (
+          <View style={{ position: 'absolute', left: 14, right: 14, bottom: 16 }}>
+            <Glass radius={26} style={{ padding: 14, backgroundColor: 'rgba(14,30,60,.96)' }}>
+              {a.phase === 'error' ? <Text style={{ color: '#ffd593', fontSize: 13, lineHeight: 19 }}>{a.err}</Text> : (
+                <View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text numberOfLines={1} style={{ color: W, fontSize: 15, fontWeight: '800' }}>{a.title}</Text>
+                      <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{a.phase === 'loading' ? 'Loading…' : a.qari + (it ? ' · ' + it.label + ' · ' + (a.index + 1) + '/' + a.items.length : '')}</Text>
+                    </View>
+                    <Pressable onPress={() => setText(!text)} hitSlop={6} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: text ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{text ? 'List' : 'Text'}</Text></Pressable>
+                    <Btn t="✕" onPress={() => stop()} />
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18, marginTop: 10 }}>
+                    <Btn t="⏮" onPress={prev} /><Btn big t={a.playing ? '❚❚' : '▶'} onPress={toggle} /><Btn t="⏭" onPress={next} />
+                  </View>
+                </View>
+              )}
+              {a.phase === 'error' ? <Pressable onPress={() => stop()} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Close</Text></Pressable> : null}
+            </Glass>
+          </View>
+        ) : null}
+      </SafeAreaView>
+    </View>
+  );
+}

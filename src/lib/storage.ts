@@ -28,6 +28,7 @@ export async function storageInfo(): Promise<{ data: number; temp: number }> {
     try {
       const FS: any = await import('expo-file-system/legacy');
       data += await dirSize(FS, (FS.documentDirectory || '') + 'receipts/');
+      data += await dirSize(FS, (FS.documentDirectory || '') + 'quran-audio/'); // saved Quran recitations (deleted in Quran Audio, Downloads)
       temp = await dirSize(FS, FS.cacheDirectory || '');
     } catch (e) {}
   }
