@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image } from 'react-native';
+import { View, Keyboard, Linking, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image } from 'react-native';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, Rect, Defs, Pattern, Stop, RadialGradient as SRG } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Defs, Pattern, Stop, Mask, LinearGradient as SLG, RadialGradient as SRG } from 'react-native-svg';
 import { GP, W } from './Ui';
 import { Blob } from './Bg';
 import { CodeBoxes } from './CodeBoxes';
 import { pwLevel, PW_TEXT } from '../lib/pwstrength';
+import { SUPPORT_EMAIL2, PRIVACY_URL } from '../lib/legal';
 import { signIn, signUp, verifyCode, resendSignup, sendReset, setNewPassword } from '../lib/auth';
 
 type Mode = 'in' | 'up' | 'verify' | 'forgot' | 'reset';
@@ -25,14 +26,17 @@ const Ico = ({ n, c = 'rgba(255,255,255,.55)' }: { n: 'user' | 'mail' | 'lock' |
 );
 
 // One input row: icon on the left, glowing border while typing, optional show/hide for passwords.
-export function Field({ icon, secret, bad, ...p }: any) {
+export function Field({ icon, secret, bad, label, ...p }: any) {
   const [f, setF] = useState(false); const [show, setShow] = useState(false);
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', height: 48, borderRadius: 15, paddingHorizontal: 14, marginBottom: 9, backgroundColor: f ? '#2c5a78' : '#2e2d6c', borderWidth: 1.2, borderColor: bad ? 'rgba(255,107,129,.85)' : f ? 'rgba(143,233,226,.75)' : 'rgba(255,255,255,.13)', shadowColor: TEAL, shadowOpacity: f ? 0.55 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
+    <View style={label ? { marginBottom: 12 } : undefined}>
+    {label ? <Text style={{ color: f ? TEAL : 'rgba(255,255,255,.72)', fontSize: 11, fontWeight: '800', letterSpacing: 1, marginLeft: 4, marginBottom: 6 }}>{String(label).toUpperCase()}</Text> : null}
+    <View style={{ flexDirection: 'row', alignItems: 'center', height: 50, borderRadius: 15, paddingHorizontal: 14, marginBottom: label ? 0 : 9, backgroundColor: f ? '#2c5a78' : '#2e2d6c', borderWidth: 1.2, borderColor: bad ? 'rgba(255,107,129,.85)' : f ? 'rgba(143,233,226,.75)' : 'rgba(255,255,255,.13)', shadowColor: TEAL, shadowOpacity: f ? 0.55 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
       <Ico n={icon} c={f ? TEAL : undefined} />
       <TextInput {...p} secureTextEntry={secret && !show} onFocus={() => setF(true)} onBlur={(e: any) => { setF(false); p.onBlur && p.onBlur(e); }} placeholderTextColor="rgba(255,255,255,.38)" underlineColorAndroid="transparent" importantForAutofill="no" selectionColor="#8fe9e2" maxFontSizeMultiplier={1.1}
         style={[{ flex: 1, minWidth: 0, backgroundColor: 'transparent', color: W, fontSize: 15, marginLeft: 11, paddingVertical: 0, outlineStyle: 'none' } as any, p.style]} />
-      {secret ? <Pressable onPress={() => setShow(!show)} hitSlop={10}><Ico n={show ? 'eye' : 'eyeoff'} /></Pressable> : null}
+      {secret ? <Pressable onPress={() => setShow(!show)} hitSlop={10} accessibilityLabel={show ? 'Hide password' : 'Show password'}><Ico n={show ? 'eye' : 'eyeoff'} /></Pressable> : null}
+    </View>
     </View>
   );
 }
@@ -172,6 +176,44 @@ function Geo() {
 }
 export function Wallpaper() { return <Geo />; }
 
+// Background of the sign in and register screens: slow aurora lights, a crown of Islamic star pattern that fades out toward the form, and a calm night sky.
+function Crown() {
+  return (
+    <View pointerEvents="none" style={FULL}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <Pattern id="geo2" width="60" height="60" patternUnits="userSpaceOnUse">
+            <Path d="M30 4L36.5 17L50.5 13.5L47 27.5L60 34L47 40.5L50.5 54.5L36.5 51L30 64L23.5 51L9.5 54.5L13 40.5L0 34L13 27.5L9.5 13.5L23.5 17Z" transform="translate(0 -4)" fill="none" stroke="rgba(143,233,226,0.22)" strokeWidth={1} />
+            <Circle cx="30" cy="30" r="2" fill="rgba(255,213,147,0.38)" />
+          </Pattern>
+          <SLG id="fade" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#fff" stopOpacity="0.85" /><Stop offset="0.2" stopColor="#fff" stopOpacity="0.4" /><Stop offset="0.4" stopColor="#fff" stopOpacity="0" /></SLG>
+          <Mask id="crownMask" x="0" y="0" width="100%" height="100%"><Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" /></Mask>
+          <SRG id="halo" cx="50%" cy="14%" r="55%"><Stop offset="0" stopColor="#8a7bff" stopOpacity="0.55" /><Stop offset="1" stopColor="#0a0f2c" stopOpacity="0" /></SRG>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#halo)" />
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#geo2)" mask="url(#crownMask)" />
+      </Svg>
+    </View>
+  );
+}
+function AuthBg() {
+  return (
+    <>
+      <LinearGradient colors={['#080c27', '#171061', '#0d1f55', '#08122e']} locations={[0, 0.38, 0.72, 1]} style={FULL} />
+      <Drift size={460} color="rgba(106,77,240,0.55)" x={-170} y={-120} dx={60} dy={40} dur={9000} />
+      <Drift size={380} color="rgba(94,231,223,0.30)" x={140} y={300} dx={-50} dy={50} dur={11000} />
+      <Drift size={360} color="rgba(255,143,224,0.24)" x={-150} y={560} dx={55} dy={-45} dur={10000} />
+      <Crown />
+      {SKY.filter((_, i) => i % 2 === 0).map((t, i) => <Twinkle key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
+      <Shoot left="4%" top="5%" delay={1500} gap={6500} />
+      <Shoot left="38%" top="12%" delay={7200} gap={9000} angle={32} />
+      <Mote left="14%" delay={0} dur={9000} size={3} color="#8fe9e2" />
+      <Mote left="62%" delay={3000} dur={10000} size={3} color="#ffd593" />
+      <Mote left="86%" delay={1800} dur={9500} size={3} color="#ff8fe0" />
+    </>
+  );
+}
+
 function PwMeter({ pw }: { pw: string }) {
   if (!pw) return null;
   const lv = pwLevel(pw); const col = ['#ff7a8f', '#ffc46b', '#5ee7b5'][lv];
@@ -186,14 +228,15 @@ function PwMeter({ pw }: { pw: string }) {
 export function AuthScreen() {
   const [mode, setMode] = useState<Mode>('in');
   const [name, setName] = useState(''); const [email, setEmail] = useState('');
-  const [pw, setPw] = useState(''); const [pw2, setPw2] = useState(''); const [code, setCode] = useState('');
+  const [pw, setPw] = useState(''); const [code, setCode] = useState('');
   const [emailSeen, setEmailSeen] = useState(false);
   const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [info, setInfo] = useState('');
   // The logo stays pinned at the top; it hides while the keyboard is open so the form always has room.
   const [kb, setKb] = useState(false);
-  // Same starting height on sign in and register, a little lower on taller phones.
+  // Every mode starts at the same height so the logo never jumps. Short phones get a smaller header.
   const { height: winH } = useWindowDimensions();
-  const top = Math.max(40, Math.min(150, Math.round(winH * 0.135)));
+  const compact = winH < 720;
+  const topPad = compact ? 20 : Math.max(24, Math.min(90, Math.round((winH - 755) / 2)));
   useEffect(() => {
     const a = Keyboard.addListener('keyboardDidShow', () => setKb(true)); const b = Keyboard.addListener('keyboardDidHide', () => setKb(false));
     return () => { a.remove(); b.remove(); };
@@ -214,7 +257,6 @@ export function AuthScreen() {
     if (name.trim().length < 2) { setErr('Enter your name.'); return; }
     if (!needEmail()) return;
     if (pw.length < 8) { setErr('Password must be at least 8 characters.'); return; }
-    if (pw !== pw2) { setErr('The two passwords are not the same.'); return; }
     const r = await signUp(name, email, pw);
     if (!r.ok) setErr(r.err); else if (r.confirm) { go('verify'); setInfo('We sent a 6-digit code to ' + email.trim() + '.'); }
   });
@@ -230,79 +272,92 @@ export function AuthScreen() {
   const doReset = () => run(async () => {
     if (code.trim().length < 6) { setErr('Enter the code from your email.'); return; }
     if (pw.length < 8) { setErr('Password must be at least 8 characters.'); return; }
-    if (pw !== pw2) { setErr('The two passwords are not the same.'); return; }
     const v = await verifyCode(email, code, 'recovery'); if (!v.ok) { setErr(v.err); return; }
     const r = await setNewPassword(pw); if (!r.ok) setErr(r.err);
   });
 
-  const head = { in: ['Welcome back', 'Sign in to pick up where you left off.'], up: ['Create your account', 'Your data stays yours.'], verify: ['Check your email', 'Type the 6-digit code we sent you.'], forgot: ['Forgot password?', 'We will email you a 6-digit code.'], reset: ['New password', 'Enter the code and choose a new password.'] }[mode];
+  const head = { in: ['Welcome back', 'Sign in to pick up where you left off.'], up: ['Create your account', 'It takes a minute. Your data stays yours.'], verify: ['Check your email', 'Type the 6-digit code we sent you.'], forgot: ['Forgot password?', 'We will email you a 6-digit code.'], reset: ['New password', 'Enter the code and choose a new password.'] }[mode];
   const main = { in: ['Sign in', doIn], up: ['Create account', doUp], verify: ['Confirm', doVerify], forgot: ['Send code', doForgot], reset: ['Save password', doReset] }[mode] as [string, () => void];
   const tabs = mode === 'in' || mode === 'up';
   const link = (t: string, f: () => void) => <Pressable onPress={f} hitSlop={8}><Text style={{ color: TEAL, fontSize: 13.5, fontWeight: '700' }}>{t}</Text></Pressable>;
 
+  const lbl = (t: string) => ({ label: t });
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#0a0f2c', zIndex: 60, overflow: 'hidden' }}>
-      <LinearGradient colors={['#0a0f2c', '#1b1466', '#0a0f2c']} locations={[0, 0.45, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      <Drift size={420} color="rgba(106,77,240,0.6)" x={-160} y={-110} dx={50} dy={40} dur={7000} />
-      <Drift size={340} color="rgba(94,231,223,0.32)" x={150} y={250} dx={-45} dy={50} dur={9000} />
-      <Drift size={320} color="rgba(255,143,224,0.26)" x={-130} y={520} dx={55} dy={-40} dur={8000} />
-      <Wallpaper />
-      <Sky />
-      <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-start', paddingTop: top, paddingBottom: 16 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {kb ? null : (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 0, paddingBottom: 14, paddingLeft: 22, paddingRight: 70 }}>
-            <View style={{ width: 96, height: 96, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 170, height: 170, transform: [{ scale: 0.52 }] }}><Logo /></View></View>
-            <View style={{ marginLeft: 6 }}>
-              <Text style={{ color: W, fontSize: 28, fontWeight: '800', letterSpacing: 0.3 }}>My Life</Text>
-              <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 2.2, marginTop: 9 }}>YOUR DAY, ONE APP</Text>
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#080c27', zIndex: 60, overflow: 'hidden' }}>
+      <AuthBg />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: topPad, paddingBottom: 28 }}>
+          {kb ? null : (
+            <View style={{ alignItems: 'center', marginBottom: compact ? 14 : 22 }}>
+              <View style={{ width: compact ? 84 : 112, height: compact ? 84 : 112, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 170, height: 170, transform: [{ scale: compact ? 0.48 : 0.64 }] }}><Logo /></View></View>
+              <Text style={{ color: W, fontSize: compact ? 26 : 32, fontWeight: '800', letterSpacing: 0.4, marginTop: 4 }}>My Life</Text>
+              {compact ? null : <Text style={{ color: TEAL, fontSize: 11.5, fontWeight: '700', letterSpacing: 2.4, marginTop: 8 }}>YOUR DAY, ONE APP</Text>}
             </View>
-          </View>
-        )}
-        <ScrollView style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: 6, paddingBottom: 20 }}>
+          )}
 
-          <View style={{ borderRadius: 26, padding: 16, backgroundColor: '#3b3a7e', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.42)', borderBottomColor: 'rgba(0,0,0,.38)', borderBottomWidth: 2, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 22, shadowOffset: { width: 0, height: 14 }, elevation: 16 }}>
-            <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
+          <View style={{ borderRadius: 28, padding: 18, backgroundColor: 'rgba(36,34,102,.86)', borderWidth: 1, borderColor: 'rgba(255,255,255,.18)', borderTopColor: 'rgba(255,255,255,.4)', borderBottomColor: 'rgba(0,0,0,.35)', borderBottomWidth: 2, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 24, shadowOffset: { width: 0, height: 16 }, elevation: 16 }}>
+            <LinearGradient colors={['rgba(255,255,255,.2)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
             {tabs ? (
-              <View style={{ flexDirection: 'row', padding: 4, borderRadius: 16, backgroundColor: 'rgba(15,12,60,.45)', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', padding: 4, borderRadius: 16, backgroundColor: 'rgba(12,10,52,.55)', marginBottom: 16 }}>
                 {(['in', 'up'] as const).map((m) => (
-                  <Pressable key={m} onPress={() => { if (m !== mode) { setPw(''); setPw2(''); } go(m); }} style={{ flex: 1 }}>
+                  <Pressable key={m} onPress={() => { if (m !== mode) setPw(''); go(m); }} style={{ flex: 1 }}>
                     {mode === m
-                      ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></LinearGradient>
-                      : <View style={{ paddingVertical: 10, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, fontWeight: '700' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></View>}
+                      ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 11, borderRadius: 12, alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></LinearGradient>
+                      : <View style={{ paddingVertical: 11, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 14, fontWeight: '700' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></View>}
                   </Pressable>
                 ))}
               </View>
             ) : null}
             <Animated.View style={{ opacity: enter, transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
-              <Text style={{ color: W, fontSize: 20, fontWeight: '800' }}>{head[0]}</Text>
-              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12.5, marginTop: 2, marginBottom: 12, lineHeight: 17 }}>{head[1]}</Text>
+              <Text style={{ color: W, fontSize: 21, fontWeight: '800' }}>{head[0]}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 13, marginTop: 3, marginBottom: 16, lineHeight: 18 }}>{head[1]}</Text>
 
-              {mode === 'up' ? <Field icon="user" value={name} onChangeText={setName} placeholder="Your name" autoCapitalize="words" autoComplete="name" maxLength={30} /> : null}
-              {mode !== 'verify' && mode !== 'reset' ? <><Field icon="mail" bad={emailBad} value={email} onChangeText={setEmail} onBlur={() => setEmailSeen(true)} placeholder="Email address" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" />{emailBad ? <Text style={{ color: '#ff9aa9', fontSize: 11.5, marginTop: -4, marginBottom: 9 }}>That does not look like a real email address.</Text> : null}</> : null}
-              {mode === 'in' ? <Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password" autoCapitalize="none" autoCorrect={false} autoComplete="current-password" /> : null}
-              {mode === 'up' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password (8+ characters)" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat password" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
+              {mode === 'up' ? <Field {...lbl('Name')} icon="user" value={name} onChangeText={setName} placeholder="Your name" autoCapitalize="words" autoComplete="name" maxLength={30} /> : null}
+              {mode !== 'verify' && mode !== 'reset' ? <><Field {...lbl('Email')} icon="mail" bad={emailBad} value={email} onChangeText={setEmail} onBlur={() => setEmailSeen(true)} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" />{emailBad ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: -6, marginBottom: 12, marginLeft: 4 }}>That does not look like a real email address.</Text> : null}</> : null}
+              {mode === 'in' ? <>
+                <Field {...lbl('Password')} icon="lock" secret value={pw} onChangeText={setPw} placeholder="Your password" autoCapitalize="none" autoCorrect={false} autoComplete="current-password" />
+                <View style={{ alignItems: 'flex-end', marginTop: -4, marginBottom: 16 }}>{link('Forgot password?', () => go('forgot'))}</View>
+              </> : null}
+              {mode === 'up' ? <><Field {...lbl('Password')} icon="lock" secret value={pw} onChangeText={setPw} placeholder="At least 8 characters" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /></> : null}
               {mode === 'verify' || mode === 'reset' ? <CodeBoxes value={code} onChange={setCode} length={6} shake={err} /> : null}
-              {mode === 'reset' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="New password (8+ characters)" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat new password" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
+              {mode === 'reset' ? <><Field {...lbl('New password')} icon="lock" secret value={pw} onChangeText={setPw} placeholder="At least 8 characters" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /></> : null}
 
-              {err ? <View style={{ padding: 10, borderRadius: 12, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.4)', marginBottom: 12 }}><Text style={{ color: '#ffc2cc', fontSize: 12.5, lineHeight: 17 }}>{err}</Text></View> : null}
-              {info ? <View style={{ padding: 10, borderRadius: 12, backgroundColor: 'rgba(143,233,226,.12)', borderWidth: 1, borderColor: 'rgba(143,233,226,.35)', marginBottom: 12 }}><Text style={{ color: TEAL, fontSize: 12.5, lineHeight: 17 }}>{info}</Text></View> : null}
+              {err ? <View style={{ padding: 11, borderRadius: 12, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.45)', marginBottom: 14 }}><Text style={{ color: '#ffc2cc', fontSize: 13, lineHeight: 18 }}>{err}</Text></View> : null}
+              {info ? <View style={{ padding: 11, borderRadius: 12, backgroundColor: 'rgba(143,233,226,.12)', borderWidth: 1, borderColor: 'rgba(143,233,226,.35)', marginBottom: 14 }}><Text style={{ color: TEAL, fontSize: 13, lineHeight: 18 }}>{info}</Text></View> : null}
 
-              <Pressable onPress={main[1]} disabled={busy} style={{ shadowColor: '#8a7bff', shadowOpacity: 0.7, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8, borderRadius: 18 }}>
-                <LinearGradient colors={['#7c9cff', '#9a8cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.75 : 1 }}>
+              <Pressable onPress={main[1]} disabled={busy} style={{ shadowColor: '#8a7bff', shadowOpacity: 0.7, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8, borderRadius: 18 }}>
+                <LinearGradient colors={['#7c9cff', '#9a8cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.75 : 1 }}>
                   {busy ? <ActivityIndicator color="#fff" /> : <Text style={{ color: W, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 }}>{main[0]}</Text>}
                 </LinearGradient>
               </Pressable>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 12 }}>
-                {mode === 'in' ? link('Forgot password?', () => go('forgot')) : null}
-                {mode === 'verify' ? <>{link('Resend code', doResend)}{link('Back', () => go('in'))}</> : null}
-                {mode === 'forgot' || mode === 'reset' ? link('Back to sign in', () => go('in')) : null}
-              </View>
+              {mode === 'up' ? (
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 12 }}>
+                  {'By creating an account you agree to the '}
+                  <Text onPress={() => Linking.openURL(PRIVACY_URL + '#terms').catch(() => {})} accessibilityRole="link" style={{ color: TEAL, fontWeight: '700' }}>Terms</Text>
+                  {' and '}
+                  <Text onPress={() => Linking.openURL(PRIVACY_URL + '#privacy').catch(() => {})} accessibilityRole="link" style={{ color: TEAL, fontWeight: '700' }}>Privacy Policy</Text>
+                  {'.'}
+                </Text>
+              ) : null}
+              {mode === 'verify' || mode === 'forgot' || mode === 'reset' ? (
+                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 14 }}>
+                  {mode === 'verify' ? <>{link('Resend code', doResend)}{link('Back', () => go('in'))}</> : null}
+                  {mode === 'forgot' || mode === 'reset' ? link('Back to sign in', () => go('in')) : null}
+                </View>
+              ) : null}
             </Animated.View>
           </View>
 
-          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 18, lineHeight: 19, letterSpacing: 0.3 }}>{'Planner  ·  Budget  ·  Finance\nHabits & Health  ·  Record  ·  Islamic Hub'}</Text>
-          <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 11.5, textAlign: 'center', marginTop: 12, lineHeight: 16 }}>Your life, kept private and always with you.</Text>
+          <View style={{ alignItems: 'center', marginTop: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+              <Ico n="lock" c="rgba(143,233,226,.9)" />
+              <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, fontWeight: '600' }}>Encrypted on your phone  ·  No ads</Text>
+            </View>
+            <Pressable onPress={() => Linking.openURL('mailto:' + SUPPORT_EMAIL2).catch(() => {})} hitSlop={8} style={{ marginTop: 12 }}>
+              <Text style={{ color: 'rgba(255,255,255,.66)', fontSize: 12.5 }}>Need help? <Text style={{ color: TEAL, fontWeight: '700' }}>Contact support</Text></Text>
+            </Pressable>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
