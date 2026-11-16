@@ -197,7 +197,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
 
       {tab === 'explore' ? (<>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>{METRICS.map((x) => <Chip key={x.k} on={met === x.k} c={x.c} t={x.l} onPress={() => setMet(x.k)} />)}</View>
-        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>{[7, 30, 90].map((n) => <Chip key={n} on={range === n} t={n + ' days'} onPress={() => setRange(n)} />)}</View>
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, marginBottom: 14 }}>{[7, 30, 90].map((n) => <Chip key={n} on={range === n} t={n + ' days'} onPress={() => setRange(n)} />)}</View>
         {nums.length ? (<>
           <Chart vals={ser.map((s) => s.v)} est={ser.map((s) => !!s.est)} color={mdef.c} line={line} goal={mg} max={mx} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{dstr(dateOf(-(range - 1)))}</Text><Text style={{ color: DIM, fontSize: 10.5 }}>Today</Text></View>
