@@ -83,6 +83,8 @@ export default function Finance() {
   const gMax = Math.max(...gm.map((x) => x.v), 1);
   const gc = gm[5].v, gp = gm[4].v, gd = gc - gp; const gPct = gp > 0 ? Math.round(Math.abs(gd) / gp * 100) : 0;
   const spent = d.spends.filter((p) => p.cat !== 'Savings').reduce((a, p) => a + p.amt, 0);
+  // The list is always in date order, oldest first, whatever order the entries were typed in. Same day: the order they were added.
+  const byDate = [...d.spends].sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.id - b.id);
   const monthSpent = d.spends.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
   const tr = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, t: sumOf(d.inc[k.key]) }; });
   const maxT = Math.max(...tr.map((x) => x.t), 1);
@@ -265,10 +267,13 @@ export default function Finance() {
               <View style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}><Text style={{ textAlign: 'center', color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18 }}>No spending yet. Type what you bought, the amount, pick a category and tap Add.</Text></View>
             ) : null}
             <View style={{ marginTop: 6 }}>
-              {d.spends.map((p, i) => (
-                <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, borderBottomWidth: i === d.spends.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+              {byDate.map((p, i) => (
+                <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
-                  <Text style={{ flex: 1, color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}<Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, fontWeight: '400' }}>{'  · ' + p.cat + ' · ' + dateText(p.date)}</Text></Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={{ color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{p.cat + ' · ' + dateText(p.date)}</Text>
+                  </View>
                   <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(p.amt)}</Text>
                   <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>
                 </View>
