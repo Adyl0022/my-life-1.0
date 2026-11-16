@@ -31,7 +31,7 @@ export function Field({ icon, secret, bad, ...p }: any) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', height: 48, borderRadius: 15, paddingHorizontal: 14, marginBottom: 9, backgroundColor: f ? '#2c5a78' : '#2e2d6c', borderWidth: 1.2, borderColor: bad ? 'rgba(255,107,129,.85)' : f ? 'rgba(143,233,226,.75)' : 'rgba(255,255,255,.13)', shadowColor: TEAL, shadowOpacity: f ? 0.55 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
       <Ico n={icon} c={f ? TEAL : undefined} />
-      <TextInput {...p} secureTextEntry={secret && !show} onFocus={() => setF(true)} onBlur={(e: any) => { setF(false); p.onBlur && p.onBlur(e); }} placeholderTextColor="rgba(255,255,255,.38)" underlineColorAndroid="transparent" importantForAutofill="no" selectionColor="#8fe9e2" maxFontSizeMultiplier={1.1}
+      <TextInput {...p} secureTextEntry={secret && !show} onFocus={(e: any) => { setF(true); p.onFocus && p.onFocus(e); }} onBlur={(e: any) => { setF(false); p.onBlur && p.onBlur(e); }} placeholderTextColor="rgba(255,255,255,.38)" underlineColorAndroid="transparent" importantForAutofill="no" selectionColor="#8fe9e2" maxFontSizeMultiplier={1.1}
         style={[{ flex: 1, minWidth: 0, backgroundColor: 'transparent', color: W, fontSize: 15, marginLeft: 11, paddingVertical: 0, outlineStyle: 'none' } as any, p.style]} />
       {secret ? <Pressable onPress={() => setShow(!show)} hitSlop={10}><Ico n={show ? 'eye' : 'eyeoff'} /></Pressable> : null}
     </View>
@@ -192,6 +192,9 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [info, setInfo] = useState('');
   // The logo stays pinned at the top; it hides while the keyboard is open so the form always has room.
   const [kb, setKb] = useState(false);
+  const scrollRef = useRef<any>(null);
+  // When the keyboard covers the lower fields, scroll the form down so the focused password field, the button and the consent line stay visible.
+  const toEnd = () => { setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300); };
   // Same starting height on sign in and register, a little lower on taller phones.
   const { height: winH } = useWindowDimensions();
   const top = Math.max(40, Math.min(66, Math.round(winH * 0.06)));
@@ -259,7 +262,7 @@ export function AuthScreen() {
             </View>
           </View>
         )}
-        <ScrollView style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: 6, paddingBottom: 20 }}>
+        <ScrollView ref={scrollRef} style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: 6, paddingBottom: 20 }}>
 
           <View style={{ borderRadius: 26, padding: 16, backgroundColor: '#3b3a7e', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.42)', borderBottomColor: 'rgba(0,0,0,.38)', borderBottomWidth: 2, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 22, shadowOffset: { width: 0, height: 14 }, elevation: 16 }}>
             <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
@@ -281,9 +284,9 @@ export function AuthScreen() {
               {mode === 'up' ? <Field icon="user" value={name} onChangeText={setName} placeholder="Your name" autoCapitalize="words" autoComplete="name" maxLength={30} /> : null}
               {mode !== 'verify' && mode !== 'reset' ? <><Field icon="mail" bad={emailBad} value={email} onChangeText={setEmail} onBlur={() => setEmailSeen(true)} placeholder="Email address" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" />{emailBad ? <Text style={{ color: '#ff9aa9', fontSize: 11.5, marginTop: -4, marginBottom: 9 }}>That does not look like a real email address.</Text> : null}</> : null}
               {mode === 'in' ? <Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password" autoCapitalize="none" autoCorrect={false} autoComplete="current-password" /> : null}
-              {mode === 'up' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password (8+ characters)" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat password" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
+              {mode === 'up' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password (8+ characters)" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat password" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
               {mode === 'verify' || mode === 'reset' ? <CodeBoxes value={code} onChange={setCode} length={6} shake={err} /> : null}
-              {mode === 'reset' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="New password (8+ characters)" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat new password" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
+              {mode === 'reset' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="New password (8+ characters)" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat new password" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
 
               {err ? <View style={{ padding: 10, borderRadius: 12, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.4)', marginBottom: 12 }}><Text style={{ color: '#ffc2cc', fontSize: 12.5, lineHeight: 17 }}>{err}</Text></View> : null}
               {info ? <View style={{ padding: 10, borderRadius: 12, backgroundColor: 'rgba(143,233,226,.12)', borderWidth: 1, borderColor: 'rgba(143,233,226,.35)', marginBottom: 12 }}><Text style={{ color: TEAL, fontSize: 12.5, lineHeight: 17 }}>{info}</Text></View> : null}
