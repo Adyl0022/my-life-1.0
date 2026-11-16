@@ -52,11 +52,16 @@ export const cancelDownload = () => {
   try { abortCtl && abortCtl.abort(); } catch (e) { /* ignore */ }
 };
 // One verse file, with a time limit so a stuck connection can never freeze the download or the Cancel button.
-async function getFile(FS: any, url: string, to: string): Promise<boolean> {
+async function getFile(FS: any, url: string, to: string): Promise<number> {
   const d = FS.createDownloadResumable(url, to);
   live.add(d);
   const timer = setTimeout(() => { try { d.cancelAsync(); } catch (e) { /* ignore */ } }, 30000);
-  try { const r = await d.downloadAsync(); return !!r && r.status === 200; } catch (e) { return false; }
+  try {
+    const r = await d.downloadAsync();
+    if (!r || r.status !== 200) return 0;
+    const h = r.headers || {}; const n = parseInt(h['Content-Length'] || h['content-length'] || '0', 10);
+    return n > 0 ? n : -1; // -1 = saved, size unknown (read it from the file)
+  } catch (e) { return 0; }
   finally { clearTimeout(timer); live.delete(d); }
 }
 let bProg: { done: number } | null = null; // verses finished in a whole-Quran download
@@ -144,20 +149,20 @@ async function oneUnit(qid: string, ident: string, kind: 's' | 'j', n: number, l
   const worker = async () => {
     while (at < todo.length && !cancel) {
       const [s, a] = todo[at++]; const to = fileUri(dir, qid, s, a);
-      let ok = false;
-      for (let t = 0; t < 3 && !ok && !cancel; t++) {
-        ok = await getFile(FS, urls[s + ':' + a], to);
-        if (!ok) await FS.deleteAsync(to, { idempotent: true }).catch(() => {});
+      let bytes = 0;
+      for (let t = 0; t < 3 && !bytes && !cancel; t++) {
+        bytes = await getFile(FS, urls[s + ':' + a], to);
+        if (!bytes) await FS.deleteAsync(to, { idempotent: true }).catch(() => {});
       }
-      if (!ok) { if (!cancel) { cancel = true; throw new Error('download'); } return; }
-      let bytes = 0; try { const i = await FS.getInfoAsync(to); bytes = (i && i.size) || 1; } catch (e) { bytes = 1; }
+      if (!bytes) { if (!cancel) { cancel = true; throw new Error('download'); } return; }
+      if (bytes < 0) { try { const i = await FS.getInfoAsync(to); bytes = (i && i.size) || 1; } catch (e) { bytes = 1; } }
       if (!qi.s[String(s)]) qi.s[String(s)] = { total: 0, files: {} };
       qi.s[String(s)].files[String(a)] = bytes; done++;
       if (!batch) set({ done }); else if (bProg) { bProg.done++; set({ done: bProg.done }); }
     }
   };
   if (batch && bProg) { bProg.done += list.length - todo.length; set({ done: bProg.done }); }
-  await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+  await Promise.all(Array.from({ length: 16 }, () => worker()));
   if (cancel) { await saveIdx(); return false; }
   if (kind === 'j') qi.j[String(n)] = list;
   await saveIdx(); set({ version: st.version + 1 });
