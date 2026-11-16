@@ -23,9 +23,12 @@ const RowPlay = ({ onPress }: { onPress: () => void }) => (
   <Shine label="Play" hitSlop={6} onPress={onPress} radius={19} style={{ width: 38, height: 38, backgroundColor: 'rgba(125,240,198,.16)', borderWidth: 1, borderColor: 'rgba(125,240,198,.4)' }}><PlayIcon size={17} color="#7df0c6" /></Shine>
 );
 
-const DlBtn = ({ state, pct, onPress }: { state: 'none' | 'busy' | 'done' | 'wait'; pct: number; onPress: () => void }) => (
-  <Shine onPress={onPress} hitSlop={6} radius={19} disabled={state === 'done' || state === 'wait'} label={state === 'done' ? 'Saved on this phone' : state === 'busy' ? 'Cancel download' : 'Download to listen offline'} glow={state === 'busy' ? '#ffc46b' : '#7df0c6'} style={{ minWidth: 40, height: 38, paddingHorizontal: 8, backgroundColor: state === 'done' ? 'rgba(94,231,181,.3)' : 'rgba(255,255,255,.12)', opacity: state === 'wait' ? 0.4 : 1 }}>
-    {state === 'busy' ? <Text style={{ color: W, fontSize: 11, fontWeight: '800' }}>{pct + '%'}</Text> : state === 'done' ? <CheckIcon size={17} color="#7df0c6" /> : <DownloadIcon size={17} color="rgba(255,255,255,.85)" />}
+const ProTag = ({ s = 10 }: { s?: number }) => (
+  <View style={{ paddingVertical: 2, paddingHorizontal: 6, borderRadius: 999, backgroundColor: 'rgba(255,196,107,.2)', borderWidth: 1, borderColor: 'rgba(255,196,107,.6)' }}><Text style={{ color: '#ffd9a0', fontSize: s, fontWeight: '800', letterSpacing: 1 }}>PRO</Text></View>
+);
+const DlBtn = ({ state, pct, onPress, lock }: { state: 'none' | 'busy' | 'done' | 'wait'; pct: number; onPress: () => void; lock?: boolean }) => (
+  <Shine onPress={onPress} hitSlop={6} radius={19} disabled={state === 'done' || state === 'wait'} label={state === 'done' ? 'Saved on this phone' : state === 'busy' ? 'Cancel download' : 'Download to listen offline'} glow={state === 'busy' ? '#ffc46b' : '#7df0c6'} style={{ minWidth: lock ? 68 : 40, height: 38, paddingHorizontal: 8, backgroundColor: state === 'done' ? 'rgba(94,231,181,.3)' : 'rgba(255,255,255,.12)', opacity: state === 'wait' ? 0.4 : 1 }}>
+    {state === 'busy' ? <Text style={{ color: W, fontSize: 11, fontWeight: '800' }}>{pct + '%'}</Text> : state === 'done' ? <CheckIcon size={17} color="#7df0c6" /> : lock ? (<View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><DownloadIcon size={17} color="rgba(255,255,255,.85)" /><ProTag s={9} /></View>) : <DownloadIcon size={17} color="rgba(255,255,255,.85)" />}
   </Shine>
 );
 
@@ -120,8 +123,8 @@ export default function QuranAudio() {
           ) : null}
           {dlSupported && !hintOff && usage().bytes === 0 ? (
             <Glass radius={20} style={{ padding: 14 }}>
-              <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Save your favourite recitations</Text>
-              <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Saved recitations play without internet, and keep working even if the online service is unavailable.</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Save your favourite recitations</Text>{!pro ? <ProTag /> : null}</View>
+              <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Saved recitations play without internet, and keep working even if the online service is unavailable.{!pro ? ' Saving needs the yearly subscription. Listening online stays free.' : ''}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                 <Pressable onPress={() => { setTab(2); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.4)', borderWidth: 1, borderColor: TEAL }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Open Downloads</Text></Pressable>
                 <Pressable onPress={() => setHintOff(true)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: 'rgba(255,255,255,.8)', fontWeight: '700', fontSize: 13 }}>Dismiss</Text></Pressable>
@@ -154,10 +157,10 @@ export default function QuranAudio() {
               <Pressable onPress={clearDlError} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>OK</Text></Pressable>
             </Glass>
           ) : null}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
             {['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? ['Downloads'] : []).map((t, i) => (
-              <Pressable key={t} onPress={() => { setTab(i); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: tab === i ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: tab === i ? TEAL : 'rgba(255,255,255,.14)' }}>
-                <Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text>
+              <Pressable key={t} onPress={() => { setTab(i); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 13, borderRadius: 999, backgroundColor: tab === i ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: tab === i ? TEAL : 'rgba(255,255,255,.14)' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text>{t === 'Downloads' && !pro ? <ProTag /> : null}</View>
               </Pressable>
             ))}
           </View>
@@ -176,7 +179,7 @@ export default function QuranAudio() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
                 <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{i + 1}</Text></View>
                 <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>Juz {i + 1}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{n}</Text></View>
-                {dlSupported && cur ? <DlBtn state={juzDone(cur.id, i + 1) ? 'done' : d.busy ? (d.label === 'Juz ' + (i + 1) + ' · ' + n ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : !pro ? openPaywall() : downloadJuz(cur.id, cur.identifier as string, i + 1, 'Juz ' + (i + 1) + ' · ' + n))} /> : null}
+                {dlSupported && cur ? <DlBtn lock={!pro} state={juzDone(cur.id, i + 1) ? 'done' : d.busy ? (d.label === 'Juz ' + (i + 1) + ' · ' + n ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : !pro ? openPaywall() : downloadJuz(cur.id, cur.identifier as string, i + 1, 'Juz ' + (i + 1) + ' · ' + n))} /> : null}
                 <RowPlay onPress={() => run((q) => playJuz(i + 1, q))} />
               </View>
             </Pressable>
@@ -186,12 +189,21 @@ export default function QuranAudio() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
                 <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{x.num}</Text></View>
                 <View style={{ flex: 1, minWidth: 0 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '700' }}>{x.title}</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{x.sub}</Text></View>
-                {dlSupported && cur ? <DlBtn state={surahDone(cur.id, x.num) ? 'done' : d.busy ? (d.label === x.title ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : !pro ? openPaywall() : downloadSurah(cur.id, cur.identifier as string, x.num, x.title))} /> : null}
+                {dlSupported && cur ? <DlBtn lock={!pro} state={surahDone(cur.id, x.num) ? 'done' : d.busy ? (d.label === x.title ? 'busy' : 'wait') : 'none'} pct={pct} onPress={() => (d.busy ? cancelDownload() : !pro ? openPaywall() : downloadSurah(cur.id, cur.identifier as string, x.num, x.title))} /> : null}
                 <RowPlay onPress={() => run((q) => playSurah(x.num, x.title, q))} />
               </View>
             </Pressable>
           )) : (
             <View style={{ gap: 10 }}>
+              {!pro ? (
+                <Pressable onPress={openPaywall} accessibilityRole="button">
+                  <Glass radius={22} style={{ padding: 14, borderWidth: 1, borderColor: 'rgba(255,196,107,.5)' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Saving recitations is Pro</Text><ProTag /></View>
+                    <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 5 }}>Subscribe to save recitations on this phone and listen offline. Listening online stays free for everyone.</Text>
+                    <View style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,196,107,.28)', borderWidth: 1, borderColor: 'rgba(255,196,107,.7)' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>See Pro</Text></View>
+                  </Glass>
+                </Pressable>
+              ) : null}
               <Glass radius={22} style={{ padding: 14 }}>
                 <Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Download over</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
@@ -215,7 +227,7 @@ export default function QuranAudio() {
                 <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 3 }}>{'All reciters: ' + fmtBytes(usage().bytes)}</Text>
                 {cur ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2 }}>{cur.name + ': ' + fmtBytes(usage(cur.id).bytes)}</Text> : null}
                 {cur && !d.busy ? (
-                  <Pressable onPress={() => (pro ? setSure(sure === 'all' ? '' : 'all') : openPaywall())} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.4)' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Download the whole Quran</Text></Pressable>
+                  <Pressable onPress={() => (pro ? setSure(sure === 'all' ? '' : 'all') : openPaywall())} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.4)' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Download the whole Quran</Text>{!pro ? <ProTag /> : null}</View></Pressable>
                 ) : null}
                 {sure === 'all' && cur ? (
                   <View style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,196,107,.14)', borderWidth: 1, borderColor: 'rgba(255,196,107,.4)' }}>
