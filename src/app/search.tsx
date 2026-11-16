@@ -8,6 +8,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { SEARCH_INDEX } from '../data/searchIndex';
+import { useRegion, countryOf } from '../lib/region';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useHidden, modOnName } from '../lib/hidden';
@@ -21,7 +22,10 @@ export default function Search() {
   const hid = useHidden();
   const [note, setNote] = useState('');
   const ql = q.trim().toLowerCase();
-  const res = useMemo(() => { const w = ql.split(/\s+/).filter(Boolean); return SEARCH_INDEX.filter((x) => { if (!modOnName(x.m)) return false; if (mod !== 'All' && x.m !== mod) return false; const hay = (x.t + ' ' + x.s + ' ' + x.k + ' ' + x.m).toLowerCase(); return w.every((t) => hay.indexOf(t) >= 0); }); }, [ql, mod, hid.off.join(',')]);
+  const [rg] = useRegion();
+  // The holiday entry follows the chosen country, so it never says Malaysia for someone elsewhere.
+  const IDX = useMemo(() => SEARCH_INDEX.map((x) => { if (x.t !== 'Malaysia events' || rg.cc === 'MY') return x; const cn = countryOf(rg.cc); return { ...x, t: cn.name + ' events', s: 'Public holidays and other big dates in ' + cn.name, k: 'public holiday cuti umum holidays events ' + cn.name.toLowerCase() }; }), [rg.cc]);
+  const res = useMemo(() => { const w = ql.split(/\s+/).filter(Boolean); return IDX.filter((x) => { if (!modOnName(x.m)) return false; if (mod !== 'All' && x.m !== mod) return false; const hay = (x.t + ' ' + x.s + ' ' + x.k + ' ' + x.m).toLowerCase(); return w.every((t) => hay.indexOf(t) >= 0); }); }, [ql, mod, hid.off.join(','), IDX]);
   const open = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }

@@ -4,7 +4,7 @@ import * as F from './fasting';
 import { upcomingMy } from './myEvents';
 import * as DB from './debts';
 import { think, fix } from './assistantBrain';
-import { cs, cu, curCode } from './region';
+import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
@@ -479,10 +479,10 @@ export class AssistantBase extends React.Component<any, any> {
           const t0 = new Date(); const ts = t0.getFullYear() + '-' + String(t0.getMonth() + 1).padStart(2, '0') + '-' + String(t0.getDate()).padStart(2, '0');
           const ql2 = String(q || '').toLowerCase();
           const want = [['raya', 'aidilfitri'], ['haji', 'adha'], ['deepavali', 'deepavali'], ['cina', 'chinese'], ['chinese', 'chinese'], ['thaipusam', 'thaipusam'], ['merdeka', 'national'], ['krismas', 'christmas'], ['christmas', 'christmas'], ['maulid', 'maulidur'], ['muharram', 'muharram'], ['ramadan', 'ramadan'], ['wesak', 'wesak'], ['tahun baru', "new year's"]].filter(w => ql2.includes(w[0])).map(w => w[1]);
-          const my = want.length ? upcomingMy(ts, 60).filter(e => want.some(w => e.name.toLowerCase().includes(w))).slice(0, 3) : upcomingMy(ts, 5);
+          const my = want.length ? upcomingMy(ts, 60, undefined, regionCC()).filter(e => want.some(w => e.name.toLowerCase().includes(w))).slice(0, 3) : upcomingMy(ts, 5, undefined, regionCC());
           const mine = (ev.length ? L('Upcoming events:\n', 'Acara akan datang:\n') + ev.map(e => '• ' + e.n + ' (' + this.dueText(e.d, L) + ')').join('\n') : L('No upcoming events.', 'Tiada acara akan datang.'))
             + (od.length ? L('\n\nOverdue:\n', '\n\nTertunggak:\n') + od.map(e => '• ' + e.n + ' (' + this.dueText(e.d, L) + ')').join('\n') : '')
-            + L('\n\nBig Malaysia events:\n', '\n\nEvent besar Malaysia:\n') + my.map(e => '• ' + e.name + ' (' + (e.days === 0 ? L('today', 'hari ini') : e.days === 1 ? L('tomorrow', 'esok') : L('in ' + e.days + ' days', e.days + ' hari lagi')) + ')').join('\n');
+            + L('\n\nBig ' + regionCountry().name + ' events:\n', '\n\nEvent besar ' + regionCountry().name + ':\n') + my.map(e => '• ' + e.name + ' (' + (e.days === 0 ? L('today', 'hari ini') : e.days === 1 ? L('tomorrow', 'esok') : L('in ' + e.days + ' days', e.days + ' hari lagi')) + ')').join('\n');
           m = mk(mine, { label: L('Open Date & Events', 'Buka Date & Events'), href: 'Planner.dc.html' });
           break;
         }

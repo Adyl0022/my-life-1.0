@@ -29,17 +29,25 @@ class Chat extends AssistantBase {
   panelRef: any = null;
   subs: any[] = [];
   kb = 0;
+  kbOpen = false;
   componentDidMount() {
     (this as any).weekly();
     if (Platform.OS === 'web') return;
     const set = (n: number) => { this.kb = n; (this as any).setState({ kbLift: n }); };
+    // Work out how far the input bar must rise. The bar's own current lift is added back, so a second keyboard event
+    // (the keyboard changing height, for example) can never wrongly drop the bar behind the keyboard.
+    const fit = (top: number, h: number) => {
+      if (this.panelRef && this.panelRef.measureInWindow) this.panelRef.measureInWindow((_x: number, y: number, _w: number, ph: number) => set(Math.max(0, Math.round(y + ph + (this.kb || 0) - top))));
+      else set(h);
+    };
     this.subs = [
       Keyboard.addListener('keyboardDidShow', (e: any) => {
-        const top = e.endCoordinates.screenY;
-        if (this.panelRef && this.panelRef.measureInWindow) this.panelRef.measureInWindow((_x: number, y: number, _w: number, h: number) => set(Math.max(0, Math.round(y + h - top + (this.kb || 0) * 0))));
-        else set(e.endCoordinates.height);
+        const top = e.endCoordinates.screenY, h = e.endCoordinates.height;
+        fit(top, h);
+        setTimeout(() => { if (this.kbOpen) fit(top, h); }, 120); // measure again once the layout has settled
+        this.kbOpen = true;
       }),
-      Keyboard.addListener('keyboardDidHide', () => set(0)),
+      Keyboard.addListener('keyboardDidHide', () => { this.kbOpen = false; set(0); }),
     ];
   }
   componentWillUnmount() { this.subs.forEach((x) => x.remove()); }
