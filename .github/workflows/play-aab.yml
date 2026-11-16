@@ -5,6 +5,11 @@ on:
   push:
     branches: [play-aab]
   workflow_dispatch:
+    inputs:
+      testing:
+        description: 'Open every feature for testers. Untick to test the real subscription locks.'
+        type: boolean
+        default: true
 permissions:
   contents: write
 concurrency:
@@ -16,7 +21,8 @@ jobs:
     timeout-minutes: 60
     env:
       EXPO_PUBLIC_EDITION: play
-      EXPO_PUBLIC_PLAY_TESTING: '1'
+      # A push always builds the tester version. Only a manual run with the box unticked builds the one with real locks.
+      EXPO_PUBLIC_PLAY_TESTING: ${{ (github.event_name == 'workflow_dispatch' && inputs.testing == false) && '0' || '1' }}
       # Set the RevenueCat public Android key as the repository secret REVENUECAT_ANDROID_KEY. Without it, purchases stay switched off.
       EXPO_PUBLIC_REVENUECAT_KEY: ${{ secrets.REVENUECAT_ANDROID_KEY }}
     steps:
