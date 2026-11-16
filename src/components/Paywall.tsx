@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Pressable } from 'react-native';
+import { Modal, View, Pressable, ScrollView } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -47,24 +47,35 @@ export function PaywallHost() {
   const go = async (fn: typeof buyPro) => { setBusy(true); const r = await fn(); setBusy(false); setMsg(r.msg); if (r.ok) closePaywall(); };
   return (
     <Modal visible={shown} transparent animationType="fade" onRequestClose={closePaywall} statusBarTranslucent>
-      <View style={{ flex: 1, backgroundColor: 'rgba(5,8,28,.72)', justifyContent: 'center', padding: 22 }}>
-        <Glass radius={28} style={{ padding: 22 }}>
-          <View style={{ alignItems: 'center' }}>
-            <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.28)' }}><Lock s={26} /></View>
-            <Text style={{ color: '#fff', fontSize: 21, fontWeight: '800', marginTop: 14 }}>Unlock My Life</Text>
-            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 13.5, marginTop: 4, textAlign: 'center' }}>{PRICE} {PER}. Renews every year until you cancel.</Text>
-          </View>
-          <View style={{ marginTop: 18, gap: 11 }}>
-            {PERKS.map((p) => (<View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Tick /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', flex: 1 }}>{p}</Text></View>))}
-          </View>
-          {msg ? <Text style={{ color: '#ffd9a0', fontSize: 12.5, marginTop: 16, textAlign: 'center' }}>{msg}</Text> : null}
-          <View style={{ marginTop: 18 }}>
-            <Btn solid t={busy ? 'Please wait...' : 'Subscribe · ' + PRICE + ' ' + PER} onPress={() => { if (!busy) go(buyPro); }} />
-            <Btn t="Restore purchase" onPress={() => { if (!busy) go(restorePurchases); }} />
-            <Btn t="Not now" onPress={closePaywall} />
-            <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, textAlign: 'center', marginTop: 4, lineHeight: 16 }}>Cancel anytime in Google Play. Your data stays with you if you stop.</Text>
-          </View>
-        </Glass>
+      <View style={{ flex: 1, backgroundColor: 'rgba(3,5,20,.88)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ borderRadius: 30, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', maxHeight: '92%' }}>
+          <LinearGradient colors={['#222a78', '#151b55', '#0e2a54']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+          <View pointerEvents="none" style={{ position: 'absolute', top: -70, right: -50, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(183,148,255,.22)' }} />
+          <View pointerEvents="none" style={{ position: 'absolute', bottom: -80, left: -60, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(94,231,223,.14)' }} />
+          <ScrollView bounces={false} contentContainerStyle={{ padding: 22 }} showsVerticalScrollIndicator={false}>
+            <View style={{ alignItems: 'center' }}>
+              <View style={{ width: 66, height: 66, borderRadius: 33, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.18)', borderWidth: 1, borderColor: 'rgba(124,156,255,.45)' }}>
+                <View style={{ width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.35)' }}><Lock s={24} /></View>
+              </View>
+              <Text style={{ color: '#fff', fontSize: 23, fontWeight: '800', marginTop: 14 }}>Unlock My Life</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 8 }}>
+                <Text style={{ color: '#fff', fontSize: 30, fontWeight: '800' }}>{PRICE}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 14, fontWeight: '600', marginLeft: 6 }}>{PER}</Text>
+              </View>
+              <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12.5, marginTop: 4, textAlign: 'center' }}>Renews every year until you cancel.</Text>
+            </View>
+            <View style={{ marginTop: 18, padding: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)', gap: 11 }}>
+              {PERKS.map((p) => (<View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}><View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(94,231,223,.18)' }}><Tick /></View><Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', flex: 1 }}>{p}</Text></View>))}
+            </View>
+            {msg ? <Text style={{ color: '#ffd9a0', fontSize: 12.5, marginTop: 14, textAlign: 'center' }}>{msg}</Text> : null}
+            <View style={{ marginTop: 18 }}>
+              <Btn solid t={busy ? 'Please wait...' : 'Subscribe · ' + PRICE + ' ' + PER} onPress={() => { if (!busy) go(buyPro); }} />
+              <Btn t="Restore purchase" onPress={() => { if (!busy) go(restorePurchases); }} />
+              <Btn t="Not now" onPress={closePaywall} />
+              <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, textAlign: 'center', marginTop: 4, lineHeight: 16 }}>Cancel anytime in Google Play. Your data stays with you if you stop.</Text>
+            </View>
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
