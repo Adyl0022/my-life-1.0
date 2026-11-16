@@ -8,7 +8,10 @@ import { SAV_EMPTY, SavData, goalSaved, perMonth } from './savings';
 import { calcLeft, commitFor } from './moneyLeft';
 import { HEMPTY, HData, getDay, cupsGoal, goalPctOf, keyOfDate, dateOf, MOODS, WD, bestStreakAll } from './habit';
 import { cs } from './region';
-import { missedDoses } from './medMissed';
+import { missedDoses, medAdherence } from './medMissed';
+import { cycleInfo, cyclePatterns } from './cycle';
+import { ENERGY } from './patterns';
+import { mins as relaxMins, weekMins, relaxStreak } from './relax';
 
 export type Sp = { amt: number; date: string; cat?: string; name?: string; id?: number; goal?: number };
 export type Fin = { inc: Record<string, Record<string, number>>; spends: Sp[]; limits?: Record<string, number> };
@@ -80,7 +83,15 @@ export function scoreParts(c: Core, week: boolean): Part[] {
     const rs = ramadanState(c.puasa || PUASA_EMPTY, new Date());
     if (rs.phase === 'during') { const past = Math.max(1, rs.day - 1 - rs.excused); parts.push({ k: 'faith', label: 'Ramadan', pct: Math.min(100, Math.round((rs.fasted / past) * 100)), detail: rs.fasted + ' days fasted of ' + rs.day, c: '#34d399' }); }
   } catch (e) {}
-  const need: Record<string, Mod> = { habit: 'habit', tasks: 'planner', bills: 'finance', spend: 'finance', faith: 'islamic' };
+  // Relax: minutes against your daily goal on the Relax screen. Shown once you have done a session in the period.
+  { const rg = (c.hd && c.hd.rlGoal) || 10;
+    if (week) { let tot = 0, any = false; for (let o = -6; o <= 0; o++) { const m = relaxMins(getDay(c.hd, o)); if (m > 0) any = true; tot += Math.min(1, m / rg); }
+      if (any) parts.push({ k: 'relax', label: 'Relax', pct: Math.round((tot / 7) * 100), detail: weekMins(c.hd) + ' min this week, goal ' + rg + ' a day', c: '#8fe9e2' }); }
+    else { const m = relaxMins(getDay(c.hd, 0)); if (m > 0) parts.push({ k: 'relax', label: 'Relax', pct: Math.min(100, Math.round((m / rg) * 100)), detail: (Math.round(m * 10) / 10) + ' of ' + rg + ' min today', c: '#8fe9e2' }); }
+  }
+  // Medicine: doses ticked out of the doses that were due. Only counts when you have medicines saved.
+  if (c.hd && c.hd.meds && c.hd.meds.length) { const ad = medAdherence(c.hd, new Date(), week ? 7 : 1); if (ad.due > 0) parts.push({ k: 'meds', label: 'Medicine', pct: ad.pct, detail: ad.taken + ' of ' + ad.due + (ad.due === 1 ? ' dose' : ' doses') + ' taken ' + (week ? 'this week' : 'today'), c: '#5ee7df' }); }
+  const need: Record<string, Mod> = { habit: 'habit', relax: 'habit', meds: 'habit', tasks: 'planner', bills: 'finance', spend: 'finance', faith: 'islamic' };
   return parts.filter((p) => !need[p.k] || modOn(need[p.k]));
 }
 export const lifeScore = (p: Part[]) => (p.length ? Math.round(p.reduce((a, b) => a + b.pct, 0) / p.length) : 0);
@@ -98,12 +109,18 @@ export function weekly(c: Core) {
     mk('Sleep a night', avg(-6, 0, (x) => x.sleep, true), avg(-13, -7, (x) => x.sleep, true), (n) => (Math.round(n * 10) / 10) + ' h', true),
     mk('Daily score', dayAvg(-6, 0), dayAvg(-13, -7), (n) => Math.round(n) + '%', true),
   ];
+  // Relax, energy and medicine only appear once there is something logged in either week.
+  const eAvg = (a: number, b: number) => avg(a, b, (x) => ((x.en ?? -1) >= 0 ? 4 - x.en : 0), true);
+  const rAvg = (a: number, b: number) => avg(a, b, (x) => relaxMins(x));
+  if (rAvg(-6, 0) > 0 || rAvg(-13, -7) > 0) rows.push(mk('Relax a day', rAvg(-6, 0), rAvg(-13, -7), (n) => (Math.round(n * 10) / 10) + ' min', true));
+  if (eAvg(-6, 0) > 0 || eAvg(-13, -7) > 0) rows.push(mk('Energy', eAvg(-6, 0), eAvg(-13, -7), (n) => (n > 0 ? ENERGY[Math.max(0, Math.min(3, 4 - Math.round(n)))][0] : 'None'), true));
+  if (c.hd && c.hd.meds && c.hd.meds.length) { const a1 = medAdherence(c.hd, new Date(), 7), a0 = medAdherence(c.hd, new Date(), 7, -7); if (a1.due > 0 || a0.due > 0) rows.push(mk('Medicine taken', a1.pct, a0.pct, (n) => Math.round(n) + '%', true)); }
   let best = -1, worst = -1, bp = -1, wp = 101;
   for (let o = -6; o <= 0; o++) if (hasData(c, o)) { const p = dayPct(c, o); if (p > bp) { bp = p; best = o; } if (p < wp) { wp = p; worst = o; } }
   const dn = (o: number) => WD[dateOf(o).getDay()];
   let head = 'Log a few days to see your weekly review.';
   const cand = rows.filter((r) => r.d !== null && r.d !== 0).map((r) => ({ r, s: (r.good ? 1 : -1) * Math.abs(r.d as number) }));
-  if (cand.length) { const top = cand.sort((a, b) => b.s - a.s)[0]; head = top.r.l.replace(' a day', '').replace(' a night', '') + ' is ' + ((top.r.d as number) > 0 ? 'up ' : 'down ') + Math.abs(top.r.d as number) + '% on last week.'; }
+  if (cand.length) { const top = cand.sort((a, b) => b.s - a.s)[0]; head = top.r.l.replace(' a day', '').replace(' a night', '').replace(' taken', '') + ' is ' + ((top.r.d as number) > 0 ? 'up ' : 'down ') + Math.abs(top.r.d as number) + '% on last week.'; }
   else if (best !== -1) head = 'Your best day was ' + dn(best) + '.';
   return { rows, best: best !== -1 ? { day: dn(best), pct: bp } : null, worst: worst !== -1 && worst !== best ? { day: dn(worst), pct: wp } : null, head };
 }
@@ -124,11 +141,27 @@ export function patterns(c: Core): string[] {
   cmp((x) => x.sleep >= 7, 'you sleep 7 h or more', 'on shorter nights', 's');
   cmp((x) => x.cups >= cg, 'you reach your water goal', 'on other days', 'w');
   cmp((x) => x.steps >= goal, 'you reach your step goal', 'on other days', 't');
+  cmp((x) => (x.rl || []).length > 0, 'you do a relax session', 'on other days', 'r');
+  // Your own energy rating (never the estimate) against sleep, water and steps
+  const en: ReturnType<typeof getDay>[] = [];
+  for (let o = -59; o <= 0; o++) { const x = getDay(c.hd, o); if ((x.en ?? -1) >= 0) en.push(x); }
+  const en3 = (x: any) => 3 - (x.en as number);
+  const cmpE = (f: (x: any) => boolean, hi: string, lo: string) => {
+    const a = en.filter(f), b = en.filter((x) => !f(x));
+    if (a.length < 3 || b.length < 3) return;
+    const ma = a.reduce((s2, x) => s2 + en3(x), 0) / a.length, mb = b.reduce((s2, x) => s2 + en3(x), 0) / b.length;
+    if (ma - mb >= 0.5) out.push('On days ' + hi + ', your energy averages ' + ENERGY[Math.max(0, Math.min(3, 3 - Math.round(ma)))][0].toLowerCase() + ', against ' + ENERGY[Math.max(0, Math.min(3, 3 - Math.round(mb)))][0].toLowerCase() + ' ' + lo + '.');
+  };
+  cmpE((x) => x.sleep >= 7, 'you sleep 7 h or more', 'on shorter nights');
+  cmpE((x) => x.cups >= cg, 'you reach your water goal', 'on other days');
+  cmpE((x) => x.steps >= goal, 'you reach your step goal', 'on other days');
+  // Cycle: only when the person turned it on
+  if (c.hd && c.hd.cyOn) { try { cyclePatterns(c.hd).forEach((p) => out.push(p.title + '. ' + p.detail)); } catch (e) {} }
   const sum = [0, 0, 0, 0, 0, 0, 0], cnt = [0, 0, 0, 0, 0, 0, 0];
   for (let o = -27; o <= 0; o++) if (hasData(c, o)) { const w = dateOf(o).getDay(); sum[w] += dayPct(c, o); cnt[w]++; }
   let bw = -1, bv = -1; for (let w = 0; w < 7; w++) if (cnt[w] >= 2 && sum[w] / cnt[w] > bv) { bv = sum[w] / cnt[w]; bw = w; }
   if (bw >= 0) out.push('Your strongest day is ' + ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][bw] + ', averaging ' + Math.round(bv) + ' out of 100.');
-  return out.slice(0, 3);
+  return out.slice(0, 5);
 }
 
 export function tips(c: Core, week: boolean): Tip[] {
@@ -160,6 +193,36 @@ export function tips(c: Core, week: boolean): Tip[] {
       add({ id: 'medmiss', title: md.length === 1 ? '1 missed dose in the last 7 days' : md.length + ' missed doses in the last 7 days', sub: (Object.keys(by).length > 1 ? 'Most often: ' + top + ' (' + by[top] + '). ' : top + '. ') + 'Open Medicine to see which ones.', why: 'Counted from medicines that were due and not ticked. Ticking a dose late still counts as taken. A personal record, not medical advice.', go: '/medicine', k: 'medicine', pri: 76 });
     }
   }
+  // Medicine due right now
+  if (!week && c.hd && c.hd.meds && c.hd.meds.length) {
+    const od = missedDoses(c.hd, now, 1).filter((x) => x.status === 'overdue' && x.off === 0)[0];
+    if (od) { const tm2 = /^(\d{1,2}):(\d{2})$/.exec(od.med.time); const late = tm2 ? Math.max(1, Math.round((now.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate(), +tm2[1], +tm2[2]).getTime()) / 60000)) : 0; add({ id: 'meddue', title: 'Time to take ' + od.med.name, sub: (late ? late + ' min past its time. ' : '') + 'Tick it in Medicine once you have taken it.', why: 'Your medicine time has passed and it is not ticked yet. A personal record, not medical advice.', go: '/medicine', k: 'medicine', pri: 84 }); }
+    else { const ad = medAdherence(c.hd, now, 7); if (ad.due >= 7 && ad.taken === ad.due) add({ id: 'medgood', title: 'Every dose taken this week', sub: ad.taken + ' of ' + ad.due + ' doses ticked. Well done.', why: 'Counted from the doses ticked in Medicine over the last 7 days.', go: '/medicine', k: 'medicine', pri: 28 }); }
+  }
+  // Relax
+  { const rg = c.hd.rlGoal || 10, m0 = relaxMins(ht), st = relaxStreak(c.hd), wm = weekMins(c.hd);
+    if (!week) {
+      if (m0 <= 0 && ht.mood >= 0 && ht.mood <= 1) add({ id: 'relaxlow', title: 'Feeling low? Try a short breathing session', sub: 'Two or three minutes in Relax can settle you.', why: 'You rated your mood low today and have not done a relax session yet.', go: '/relax', k: 'relax', pri: 68 });
+      else if (m0 <= 0 && (st >= 2 || hr >= 16)) add({ id: 'relax', title: st >= 2 ? 'Keep your ' + st + '-day relax streak' : 'Take ' + rg + ' minutes to unwind', sub: st >= 2 ? 'One short session today keeps it going.' : 'Breathing or a calm sit from the Relax screen.', why: 'No relax session is logged today. Your goal is ' + rg + ' minutes a day.', go: '/relax', k: 'relax', pri: 42 });
+      else if (m0 > 0 && m0 < rg) add({ id: 'relaxmore', title: (Math.round((rg - m0) * 10) / 10) + ' more minutes to reach your relax goal', sub: 'You are at ' + (Math.round(m0 * 10) / 10) + ' of ' + rg + ' minutes today.', why: 'Counted from the sessions you finished in Relax today.', go: '/relax', k: 'relax', pri: 36 });
+    } else if (wm > 0) {
+      let dys = 0; for (let o = -6; o <= 0; o++) if (relaxMins(getDay(c.hd, o)) > 0) dys++;
+      add({ id: 'relaxweek', title: wm + ' minutes of relax this week', sub: dys + ' of 7 days. Your goal is ' + rg + ' minutes a day.', why: 'Counted from the sessions you finished in Relax over the last 7 days.', go: '/relax', k: 'relax', pri: 30 });
+    }
+  }
+  // Energy (your own rating from Habit & Health)
+  { const lowE = (o: number) => { const e = getDay(c.hd, o).en; return e !== undefined && e >= 2; };
+    let lows = 0; for (let o = -3; o <= 0; o++) if (lowE(o)) lows++;
+    if (lows >= 3) add({ id: 'energystreak', title: 'Tired on ' + lows + ' of the last 4 days', sub: 'Check your sleep and water. If it keeps up, a doctor can help.', why: 'You rated your energy tired or exhausted on most recent days. A personal record, not medical advice.', go: '/habit', k: 'energy', pri: 74 });
+    else if (!week && lowE(0)) add({ id: 'energylow', title: 'Your energy is low today', sub: ht.sleep > 0 && ht.sleep < 6 ? 'Short sleep may be why. An early night helps.' : ht.cups < cg / 2 ? 'Water is low. Drink a glass.' : 'A short walk or a few minutes in Relax can help.', why: 'You rated your energy tired or exhausted today.', go: '/habit', k: 'energy', pri: 64 });
+  }
+  // Cycle (only when turned on in Habit & Health)
+  if (c.hd && c.hd.cyOn) { try {
+    const ci = cycleInfo(c.hd);
+    if (ci.onPeriod) { const e0 = getDay(c.hd, 0).en; if ((e0 !== undefined && e0 >= 2) || (ht.sleep > 0 && ht.sleep < 6)) add({ id: 'cyrest', title: 'Go gently today', sub: 'You are on day ' + (ci.cycleDay || 1) + ' of your period and energy is low. Rest and warm drinks can help.', why: 'You marked a period day, and today you logged tired energy or short sleep.', go: '/cycle', k: 'cycle', pri: 62 }); }
+    else if (ci.nextOff != null && ci.nextOff >= 0 && ci.nextOff <= 3) add({ id: 'cysoon', title: ci.nextOff === 0 ? 'Period expected today' : ci.nextOff === 1 ? 'Period expected tomorrow' : 'Period expected in ' + ci.nextOff + ' days', sub: 'An estimate from your own marks. Mark the first day when it starts.', why: 'Worked out on your phone from the period days you marked. It can be off by a few days.', go: '/cycle', k: 'cycle', pri: 66 });
+    else if (ci.nextOff != null && ci.nextOff < 0 && ci.nextOff >= -14) add({ id: 'cylate', title: 'Period is ' + -ci.nextOff + (ci.nextOff === -1 ? ' day' : ' days') + ' later than the estimate', sub: 'Cycles vary. Mark the first day when it starts.', why: 'The estimate comes from your marked cycles and is not a diagnosis. Stress, travel and sleep can shift it.', go: '/cycle', k: 'cycle', pri: 58 });
+  } catch (e) {} }
   // Health spending (Health category in My Finance)
   { const ymC = ymOf(new Date()), d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); const ymP = ymOf(d0);
     const hs = (ym: string) => ((c.fin && c.fin.spends) || []).filter((x) => x.cat === 'Health' && (x.date || '').slice(0, 7) === ym).reduce((a, x) => a + (x.amt || 0), 0);
@@ -298,6 +361,7 @@ export function tips(c: Core, week: boolean): Tip[] {
 export const hideTip = (c: Core, id: string, days = 7) => { const d = dateOf(days); c.setOff({ ...(c.off || {}), [id]: keyOfDate(d) }); };
 
 export function records(c: Core) {
+  const k0 = (o: number) => keyOfDate(dateOf(o));
   let bs = 0, bsd = '', bw = 0, bwd = '', bsc = 0, bscd = '';
   for (let o = -120; o <= 0; o++) {
     const x = getDay(c.hd, o); const k = tk(o);
@@ -305,7 +369,8 @@ export function records(c: Core) {
     if (x.cups > bw) { bw = x.cups; bwd = k; }
     if (hasData(c, o)) { const p = dayPct(c, o); if (p > bsc) { bsc = p; bscd = k; } }
   }
-  return { streak: bestStreakAll(c.hd), steps: bs, stepsDate: bsd, water: bw, waterDate: bwd, score: bsc, scoreDate: bscd };
+  let br = 0, brd = ''; for (let o = -120; o <= 0; o++) { const m = relaxMins(getDay(c.hd, o)); if (m > br) { br = m; brd = k0(o); } }
+  return { streak: bestStreakAll(c.hd), steps: bs, stepsDate: bsd, water: bw, waterDate: bwd, score: bsc, scoreDate: bscd, relax: br, relaxDate: brd, relaxStreak: relaxStreak(c.hd) };
 }
 
 // Which modules a tip needs. A tip is shown only when all of them are on.
@@ -317,7 +382,7 @@ export const tipMods = (id: string): Mod[] => {
   return [cat === 'Health' ? 'habit' : cat === 'Faith' ? 'islamic' : cat === 'Tasks' ? 'planner' : cat === 'Vehicle' ? 'record' : 'finance'];
 };
 export const tipCat = (id: string): string => {
-  if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend|medmiss)$/.test(id)) return 'Health';
+  if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend|medmiss|meddue|medgood|relax|relaxlow|relaxmore|relaxweek|energystreak|energylow|cyrest|cysoon|cylate)$/.test(id)) return 'Health';
   if (/^(fast|fastnext|kahfi|zikir|tasbih|ramtoday|qadha|ramsoon|sunat|ramgap)$/.test(id)) return 'Faith';
   if (/^(overdue|duetoday|event)$/.test(id)) return 'Tasks';
   if (/^(part-|ren-|cpk-|odo)/.test(id)) return 'Vehicle';
