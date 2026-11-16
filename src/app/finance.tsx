@@ -83,8 +83,9 @@ export default function Finance() {
   const gMax = Math.max(...gm.map((x) => x.v), 1);
   const gc = gm[5].v, gp = gm[4].v, gd = gc - gp; const gPct = gp > 0 ? Math.round(Math.abs(gd) / gp * 100) : 0;
   const spent = d.spends.filter((p) => p.cat !== 'Savings').reduce((a, p) => a + p.amt, 0);
-  // The list is always in date order, newest first, whatever order the entries were typed in. Same day: the one added last is on top.
-  const byDate = [...d.spends].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  // The list follows the Sort by choice: newest date first (default), oldest date first, or the order the entries were added.
+  const [sortBy, setSortBy] = useStored<'new' | 'old' | 'add'>('ml_spend_sort', 'new');
+  const byDate = [...d.spends].sort((a, b) => sortBy === 'add' ? b.id - a.id : sortBy === 'old' ? (a.date || '').localeCompare(b.date || '') || a.id - b.id : (b.date || '').localeCompare(a.date || '') || b.id - a.id);
   const monthSpent = d.spends.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
   const tr = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, t: sumOf(d.inc[k.key]) }; });
   const maxT = Math.max(...tr.map((x) => x.t), 1);
@@ -265,6 +266,16 @@ export default function Finance() {
             ) : null}
             {d.spends.length === 0 ? (
               <View style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}><Text style={{ textAlign: 'center', color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18 }}>No spending yet. Type what you bought, the amount, pick a category and tap Add.</Text></View>
+            ) : null}
+            {d.spends.length > 1 ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '700' }}>Sort by</Text>
+                {([['new', 'Newest'], ['old', 'Oldest'], ['add', 'Added']] as ['new' | 'old' | 'add', string][]).map(([k, t]) => (
+                  <Pressable key={k} onPress={() => setSortBy(k)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: sortBy === k ? '#ffc46b' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: sortBy === k ? '#ffc46b' : 'rgba(255,255,255,.22)' }}>
+                    <Text style={{ color: sortBy === k ? '#0b1030' : W, fontSize: 12, fontWeight: '700' }}>{t}</Text>
+                  </Pressable>
+                ))}
+              </View>
             ) : null}
             <View style={{ marginTop: 6 }}>
               {byDate.map((p, i) => (
