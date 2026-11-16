@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useMergedSpends } from '../../lib/vehicleSpend';
 import React, { useState } from 'react';
 import { FastMonths } from '../../components/FastMonths';
 import { StatsBg } from '../../components/PageBg';
@@ -65,7 +67,9 @@ export default function Stats() {
   const total = metric === 'time' ? Math.floor(sum / 60) + ' h ' + (sum % 60) + ' m' : String(sum);
   const hasData = sum > 0;
   const [hd] = useStored('ml_habit', HEMPTY);
-  const [fin] = useStored<{ spends: { amt: number; date: string }[] }>('ml_finance', { spends: [] } as any);
+  const [fin0] = useStored<{ spends: { amt: number; date: string }[] }>('ml_finance', { spends: [] } as any);
+  const finSpends = useMergedSpends(fin0 && fin0.spends);
+  const fin = useMemo(() => ({ ...fin0, spends: finSpends }), [fin0, finSpends]);
   const cg = cupsGoal(hd);
   const core = useCore();
   const ds = debtSummary(core.debts); const incNow = incomeOf(core);

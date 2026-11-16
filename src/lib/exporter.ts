@@ -3,6 +3,10 @@ import { getText, DEFAULT_NAME } from './store';
 import { calcLeft, commitFor, MONTHS as MN3 } from './moneyLeft';
 import { goalLines, goalSaved } from './savings';
 import { cs, cu } from './region';
+import { getItem } from './store';
+import { mergeVeh, VEH_KEY } from './vehicleSpend';
+const getRec = () => getItem<any>('ml_record', { data: {} });
+const getMode = () => getItem<any>(VEH_KEY, 'ask');
 
 export type Sheet = { name: string; head: string[]; rows: (string | number)[][] };
 export type Chart = { title: string; kind: 'bars' | 'hbars' | 'line' | 'donut'; labels: string[]; values: number[]; unit?: string; color?: string };
@@ -69,7 +73,7 @@ export async function buildReport(sel: string[], per: number): Promise<Report> {
   }
   if (sel.includes('finance')) {
     const f = g('finance', 'ml_finance'); const d = g('finance', 'ml_debts'); const sv = g('finance', 'ml_savings');
-    const allSp = ((f && f.spends) || []) as any[];
+    const allSp = mergeVeh((f && f.spends) || [], await getRec(), await getMode()) as any[];
     const inPSp = allSp.filter((s: any) => inP(s.date));
     const sp = inPSp.filter((s: any) => s.cat !== 'Savings');
     const put = inPSp.filter((s: any) => s.cat === 'Savings');
@@ -78,7 +82,7 @@ export async function buildReport(sel: string[], per: number): Promise<Report> {
     const inc: [string, string, number][] = [];
     Object.keys((f && f.inc) || {}).sort().forEach((m) => { if (inP(m)) Object.keys(f.inc[m] || {}).forEach((s) => inc.push([m, s, num(f.inc[m][s])])); });
     const tin = inc.reduce((a, r) => a + r[2], 0); const tsp = sp.reduce((a: number, s: any) => a + num(s.amt), 0); const tsv = put.reduce((a: number, s: any) => a + num(s.amt), 0);
-    if (sp.length) sheets.push({ name: 'Spending', head: ['Date', 'Item', 'Category', 'Amount (' + cu() + ')'], rows: sp.map((s: any) => [s.date || '', s.name || '', s.cat || '', num(s.amt)]) });
+    if (sp.length) sheets.push({ name: 'Spending', head: ['Date', 'Item', 'Category', 'Amount (' + cu() + ')', 'Remark'], rows: sp.map((s: any) => [s.date || '', s.name || '', s.cat || '', num(s.amt), s.note || '']) });
     if (put.length) sheets.push({ name: 'Savings entries', head: ['Date', 'Item', 'Goal', 'Amount (' + cu() + ')'], rows: put.map((s: any) => [s.date || '', s.name || '', gname(s.goal) || 'No goal chosen', num(s.amt)]) });
     if (inc.length) sheets.push({ name: 'Income', head: ['Month', 'Source', 'Amount (' + cu() + ')'], rows: inc });
     const debts = (d && d.debts) || [];

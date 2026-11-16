@@ -3,7 +3,7 @@
 import { DebtData, isActive, amountDue } from './debts';
 import { cs } from './region';
 
-export type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number };
+export type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string; src?: string };
 const pad = (n: number) => String(n).padStart(2, '0');
 export const ymKey = (d: Date) => d.getFullYear() + '-' + pad(d.getMonth() + 1);
 export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

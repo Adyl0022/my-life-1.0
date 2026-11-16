@@ -39,7 +39,7 @@ export default function Insights() {
   const has = (o: number) => { const x = getDay(hd, o); return x.cups > 0 || x.sleep > 0 || x.steps > 0; };
   const dayPct = (o: number) => goalPctOf(getDay(hd, o), goal, cg);
   const avgPct = (from: number, to: number) => { let n = 0, t = 0; for (let o = from; o <= to; o++) if (has(o)) { n++; t += dayPct(o); } return n ? Math.round(t / n) : 0; };
-  const spends = (fin && fin.spends) || [];
+  const spends = (fin && fin.spends) || [];  // already includes vehicle maintenance when the person switched it on (see useCore)
   const spendOn = (o: number) => { const k = keyOfDate(dateOf(o)); return spends.filter((x) => x.date === k).reduce((a, b) => a + (b.amt || 0), 0); };
   const spendSum = (from: number, to: number) => { let t = 0; for (let o = from; o <= to; o++) t += spendOn(o); return t; };
   const ht = getDay(hd, 0);
