@@ -8,6 +8,7 @@ import { SAV_EMPTY, SavData, goalSaved, perMonth } from './savings';
 import { calcLeft, commitFor } from './moneyLeft';
 import { HEMPTY, HData, getDay, cupsGoal, goalPctOf, keyOfDate, dateOf, MOODS, WD, bestStreakAll } from './habit';
 import { cs } from './region';
+import { missedDoses } from './medMissed';
 
 export type Sp = { amt: number; date: string; cat?: string; name?: string; id?: number; goal?: number };
 export type Fin = { inc: Record<string, Record<string, number>>; spends: Sp[]; limits?: Record<string, number> };
@@ -150,6 +151,15 @@ export function tips(c: Core, week: boolean): Tip[] {
   // Shift worker: sleep debt over last 7 days
   let debt = 0, logged = 0; for (let o = -6; o <= 0; o++) { const s = getDay(c.hd, o).sleep; if (s > 0) { logged++; debt += Math.max(0, 7 - s); } }
   if (logged >= 3 && debt >= 5) add({ id: 'debt', title: 'Sleep debt: ' + (Math.round(debt * 10) / 10) + ' h this week', sub: 'Try an earlier bedtime or a short nap before your next shift.', why: 'Counted as hours below 7 h on the nights you logged. After night shifts, a 20 to 30 minute nap helps.', go: '/habit', k: 'sleep', pri: 75 });
+  // Missed medicine (from the Medicine screen): doses that were due in the last 7 days and not ticked
+  if (c.hd && c.hd.meds && c.hd.meds.length) {
+    const md = missedDoses(c.hd, now, 7).filter((x) => x.status === 'missed');
+    if (md.length) {
+      const by: Record<string, number> = {}; md.forEach((x) => { by[x.med.name] = (by[x.med.name] || 0) + 1; });
+      const top = Object.keys(by).sort((a, b) => by[b] - by[a])[0];
+      add({ id: 'medmiss', title: md.length === 1 ? '1 missed dose in the last 7 days' : md.length + ' missed doses in the last 7 days', sub: (Object.keys(by).length > 1 ? 'Most often: ' + top + ' (' + by[top] + '). ' : top + '. ') + 'Open Medicine to see which ones.', why: 'Counted from medicines that were due and not ticked. Ticking a dose late still counts as taken. A personal record, not medical advice.', go: '/medicine', k: 'medicine', pri: 76 });
+    }
+  }
   // Health spending (Health category in My Finance)
   { const ymC = ymOf(new Date()), d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); const ymP = ymOf(d0);
     const hs = (ym: string) => ((c.fin && c.fin.spends) || []).filter((x) => x.cat === 'Health' && (x.date || '').slice(0, 7) === ym).reduce((a, x) => a + (x.amt || 0), 0);
@@ -307,7 +317,7 @@ export const tipMods = (id: string): Mod[] => {
   return [cat === 'Health' ? 'habit' : cat === 'Faith' ? 'islamic' : cat === 'Tasks' ? 'planner' : cat === 'Vehicle' ? 'record' : 'finance'];
 };
 export const tipCat = (id: string): string => {
-  if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend)$/.test(id)) return 'Health';
+  if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend|medmiss)$/.test(id)) return 'Health';
   if (/^(fast|fastnext|kahfi|zikir|tasbih|ramtoday|qadha|ramsoon|sunat|ramgap)$/.test(id)) return 'Faith';
   if (/^(overdue|duetoday|event)$/.test(id)) return 'Tasks';
   if (/^(part-|ren-|cpk-|odo)/.test(id)) return 'Vehicle';

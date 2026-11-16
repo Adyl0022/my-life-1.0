@@ -14,6 +14,7 @@ import { CardArt } from '../components/CardArt';
 import { PageArt } from '../components/PageArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
+import { missedDoses } from '../lib/medMissed';
 import { HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
 
 const T = '#5ee7df';
@@ -36,6 +37,12 @@ export default function Medicine() {
   const [rep, setRep] = useState<'every' | 'weekdays' | 'pick'>('every'); const [pick, setPick] = useState<number[]>([]);
   const [ic, setIc] = useState('medicine'); const [err, setErr] = useState('');
   const meds = h.meds || [];
+  const [clock, setClock] = useState(Date.now());
+  React.useEffect(() => { const t = setInterval(() => setClock(Date.now()), 60000); return () => clearInterval(t); }, []);
+  const miss = missedDoses(h, new Date(clock), 7);
+  const missToday = miss.filter((x) => x.off === 0);
+  const stOf = (id: string) => { const x = missToday.find((y) => y.med.id === id); return x ? x.status : ''; };
+  const missedAll = miss.filter((x) => x.status === 'missed');
   const today = dateOf(0); const tk = keyOfDate(today);
   const taken = getDay(h, 0).med || [];
   const due = meds.filter((m) => medDue(m, today));
@@ -59,13 +66,14 @@ export default function Medicine() {
   const Chip = ({ on, t, onPress }: { on: boolean; t: string; onPress: () => void }) => (
     <Pressable onPress={onPress} style={{ paddingVertical: 8, paddingHorizontal: 15, borderRadius: 999, backgroundColor: on ? T : 'rgba(255,255,255,.12)' }}><Text style={{ color: on ? '#06222a' : W, fontSize: 12.5, fontWeight: '800' }}>{t}</Text></Pressable>
   );
-  const Row = ({ m, check }: { m: Med; check?: boolean }) => { const on = taken.includes(m.id); return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 9, paddingVertical: 11, paddingHorizontal: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.09)' }}>
+  const Row = ({ m, check }: { m: Med; check?: boolean }) => { const on = taken.includes(m.id); const st = check && !on ? stOf(m.id) : ''; return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 9, paddingVertical: 11, paddingHorizontal: 12, borderRadius: 18, backgroundColor: st === 'missed' ? 'rgba(255,120,140,.16)' : 'rgba(255,255,255,.09)', borderWidth: st ? 1 : 0, borderColor: st === 'missed' ? 'rgba(255,140,160,.55)' : 'rgba(255,196,107,.5)' }}>
       <HeadIcon k={m.ic || 'medicine'} size={38} />
       <View style={{ flex: 1 }}>
         <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{m.name}</Text>
         <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{(m.dose ? m.dose + ' · ' : '') + to12(m.time)}</Text>
         <View style={{ alignSelf: 'flex-start', marginTop: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 10 }}>{medRepeat(m)}</Text></View>
+        {st ? <View style={{ alignSelf: 'flex-start', marginTop: 4, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: st === 'missed' ? 'rgba(255,120,140,.3)' : 'rgba(255,196,107,.28)' }}><Text style={{ color: st === 'missed' ? '#ffb3c0' : '#ffd593', fontSize: 10.5, fontWeight: '800' }}>{st === 'missed' ? 'Missed · tap the circle if you took it' : 'Overdue · take it now'}</Text></View> : null}
       </View>
       {check ? (
         <Pressable accessibilityLabel={on ? 'Mark ' + m.name + ' as not taken' : 'Mark ' + m.name + ' as taken'} onPress={() => toggle(m.id)} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: on ? T : 'rgba(255,255,255,.4)', backgroundColor: on ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{on ? <Text style={{ color: '#06222a', fontWeight: '800', fontSize: 16 }}>✓</Text> : null}</Pressable>
@@ -131,6 +139,7 @@ export default function Medicine() {
                   <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Today's medicine</Text>
                   <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>{!meds.length ? 'Add a medicine to get reminders.' : !due.length ? 'Nothing due today.' : nextOne ? (due.length - done) + ' left to take. Next: ' + nextOne.name + ' at ' + to12(nextOne.time) : 'All done for today.'}</Text>
                   <Text style={{ color: '#ffd593', fontSize: 11, marginTop: 4 }}>Not ticked? You get a nudge after 1 hour.</Text>
+                  {missToday.some((x) => x.status === 'missed') ? <Text style={{ color: '#ffb3c0', fontSize: 11.5, fontWeight: '800', marginTop: 4 }}>{missToday.filter((x) => x.status === 'missed').length + ' missed today'}</Text> : null}
                 </View>
               </Glass>
               {Platform.OS === 'android' && meds.length > 0 ? (
@@ -173,6 +182,12 @@ export default function Medicine() {
                       <View style={{ flex: 1, height: 10, borderRadius: 99, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden' }}><View style={{ width: (x.n ? (x.k / x.n) * 100 : 0) + '%', height: '100%', backgroundColor: full ? T : '#ffc46b' }} /></View>
                       <Text style={{ color: full ? T : 'rgba(255,255,255,.75)', width: 38, textAlign: 'right', fontSize: 12.5, fontWeight: '800' }}>{x.n ? x.k + '/' + x.n : '-'}</Text>
                     </View>); })}
+                  {missedAll.length ? (
+                    <View style={{ marginTop: 14, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,120,140,.14)', borderWidth: 1, borderColor: 'rgba(255,140,160,.45)' }}>
+                      <Text style={{ color: '#ffb3c0', fontSize: 13, fontWeight: '800' }}>{'Missed in the last 7 days (' + missedAll.length + ')'}</Text>
+                      {missedAll.slice(0, 12).map((x, i) => <Text key={i} style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, marginTop: 5 }}>{(x.off === 0 ? 'Today' : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][x.date.getDay()] + ' ' + x.date.getDate()) + ' · ' + x.med.name + ' · ' + to12(x.med.time)}</Text>)}
+                    </View>
+                  ) : week.some((x) => x.n > 0) ? <Text style={{ color: T, fontSize: 12.5, fontWeight: '700', marginTop: 12 }}>No missed doses in the last 7 days.</Text> : null}
                   <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 12, lineHeight: 15 }}>Only days when a medicine was due are counted. A personal record, not medical advice.</Text>
                 </Glass>
               ) : null}
