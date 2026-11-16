@@ -16,7 +16,7 @@ import { MoneyLeft } from '../components/MoneyLeft';
 import { TOP } from '../lib/layout';
 import { cs, cu, cw, useRegion } from '../lib/region';
 
-type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number };
+type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -64,6 +64,9 @@ export default function Finance() {
   const [editKey, setEditKey] = useState(''); const [editUnit, setEditUnit] = useState<'rm' | 'cnt'>('rm'); const [editVal, setEditVal] = useState('');
   const [limKey, setLimKey] = useState(''); const [limVal, setLimVal] = useState('');
   const [fDate, setFDate] = useState(todayStr()); const [fName, setFName] = useState(''); const [fAmt, setFAmt] = useState(''); const [fCat, setFCat] = useState('Food'); const [fGoal, setFGoal] = useState(0); const [fPre, setFPre] = useState('');
+  const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remVal, setRemVal] = useState('');
+  const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
+  const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
   const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
 
   const selY = parseInt(ym.slice(0, 4), 10), selM = parseInt(ym.slice(5, 7), 10) - 1;
@@ -107,8 +110,8 @@ export default function Finance() {
       const k = fPre.slice(1); const g = { id: sav.nextId, name: kindOf(k).name || 'Other', kind: k, target: 0, place: '', due: '', start: 0, out: [], made: todayStr() } as any;
       setSav({ goals: [...sav.goals, g], nextId: sav.nextId + 1 }); fGoal2 = g.id;
     }
-    setD({ ...d, spends: [{ id: d.nextId, name: fName.trim() || (fCat === 'Savings' ? (fPre ? (kindOf(fPre.slice(1)).name || 'Other') : ((sav.goals.find((g) => g.id === fGoal) || { name: fCat }).name)) : fCat), cat: fCat, amt: n, date: fDate || todayStr(), ...(fCat === 'Savings' && fGoal2 ? { goal: fGoal2 } : {}) }, ...d.spends], nextId: d.nextId + 1 });
-    setFName(''); setFAmt(''); setFGoal(0); setFPre('');
+    setD({ ...d, spends: [{ id: d.nextId, name: fName.trim() || (fCat === 'Savings' ? (fPre ? (kindOf(fPre.slice(1)).name || 'Other') : ((sav.goals.find((g) => g.id === fGoal) || { name: fCat }).name)) : fCat), cat: fCat, amt: n, date: fDate || todayStr(), ...(fNote.trim() ? { note: fNote.trim() } : {}), ...(fCat === 'Savings' && fGoal2 ? { goal: fGoal2 } : {}) }, ...d.spends], nextId: d.nextId + 1 });
+    setFName(''); setFAmt(''); setFGoal(0); setFPre(''); setFNote('');
   };
   const dateText = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MON[parseInt(p[1], 10) - 1] : ''; };
   const diffTxt = gc === 0 && gp === 0 ? '-' : gd === 0 ? 'Same' : (gd > 0 ? '+' : '-') + cs() + rnd(Math.abs(gd));
@@ -249,6 +252,12 @@ export default function Finance() {
             <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 6 }}>Last 6 months, in {cu()}. Under each month: ▲ orange means you spent that much more than the month before, ▼ green means that much less.</Text>
             <DateField value={fDate} onChange={setFDate} style={{ marginTop: 12 }} />
             <Inp style={{ marginTop: 8 }} value={fName} onChangeText={setFName} placeholder="What did you buy?" />
+            <Inp style={{ marginTop: 8 }} value={fNote} onChangeText={setFNote} placeholder="Remark (optional)" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+              {NOTE_QUICK.map((t) => { const on = fNote.split(',').map((x) => x.trim()).includes(t); return (
+                <Pressable key={t} onPress={() => quickNote(t)} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: on ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '600' }}>{t}</Text></Pressable>
+              ); })}
+            </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
               <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
               <Pressable onPress={addSpend}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>+ Add</Text></LinearGradient></Pressable>
@@ -279,16 +288,26 @@ export default function Finance() {
             ) : null}
             <View style={{ marginTop: 6 }}>
               {byDate.map((p, i) => (
-                <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}</Text>
-                    <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{p.cat + ' · ' + dateText(p.date)}</Text>
+                <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
+                    <Pressable style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemVal(p.note || ''); } }}>
+                      <Text style={{ color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}</Text>
+                      <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{p.cat + ' · ' + dateText(p.date)}</Text>
+                      {p.note ? <Text style={{ color: '#ffd593', fontSize: 12, marginTop: 1 }} numberOfLines={2}>{p.note}</Text> : null}
+                    </Pressable>
+                    <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(p.amt)}</Text>
+                    <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>
                   </View>
-                  <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(p.amt)}</Text>
-                  <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>
+                  {remId === p.id ? (
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                      <View style={{ flex: 1 }}><Inp value={remVal} onChangeText={setRemVal} placeholder="Remark (optional)" autoFocus /></View>
+                      <Pressable onPress={() => { const v = remVal.trim(); setD({ ...d, spends: d.spends.map((x) => x.id === p.id ? { ...x, note: v || undefined } : x) }); setRemId(0); }} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: '#ffc46b' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
+                    </View>
+                  ) : null}
                 </View>
               ))}
+              {d.spends.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to add or change its remark.</Text> : null}
             </View>
           </Glass>
 

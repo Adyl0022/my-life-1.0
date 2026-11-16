@@ -12,6 +12,7 @@ import { useRegion, countryOf } from '../lib/region';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useHidden, modOnName } from '../lib/hidden';
+import { useStored } from '../lib/store';
 
 const MODS = ['All', 'Planner', 'Islamic', 'Finance', 'Record', 'Habit', 'Family', 'System'];
 
@@ -26,6 +27,9 @@ export default function Search() {
   // The holiday entry follows the chosen country, so it never says Malaysia for someone elsewhere.
   const IDX = useMemo(() => SEARCH_INDEX.map((x) => { if (x.t !== 'Malaysia events' || rg.cc === 'MY') return x; const cn = countryOf(rg.cc); return { ...x, t: cn.name + ' events', s: 'Public holidays and other big dates in ' + cn.name, k: 'public holiday cuti umum holidays events ' + cn.name.toLowerCase() }; }), [rg.cc]);
   const res = useMemo(() => { const w = ql.split(/\s+/).filter(Boolean); return IDX.filter((x) => { if (!modOnName(x.m)) return false; if (mod !== 'All' && x.m !== mod) return false; const hay = (x.t + ' ' + x.s + ' ' + x.k + ' ' + x.m).toLowerCase(); return w.every((t) => hay.indexOf(t) >= 0); }); }, [ql, mod, hid.off.join(','), IDX]);
+  const [fin] = useStored<any>('ml_finance', null);
+  // Spending entries match by name, category or remark.
+  const spRes = useMemo(() => { const w = ql.split(/\s+/).filter(Boolean); if (!w.length || (mod !== 'All' && mod !== 'Finance') || !modOnName('Finance')) return [] as any[]; return (((fin && fin.spends) || []) as any[]).filter((x) => { const hay = ((x.name || '') + ' ' + (x.cat || '') + ' ' + (x.note || '')).toLowerCase(); return w.every((q2) => hay.indexOf(q2) >= 0); }).sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))).slice(0, 8); }, [ql, mod, fin, hid.off.join(',')]);
   const open = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }
@@ -60,9 +64,21 @@ export default function Search() {
               </Pressable>
             ))}
           </ScrollView>
-          <Text style={{ marginTop: 14, color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700', letterSpacing: 1.2 }}>{ql ? res.length + ' result' + (res.length === 1 ? '' : 's') : 'Everything in My Life'}</Text>
+          <Text style={{ marginTop: 14, color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700', letterSpacing: 1.2 }}>{ql ? (res.length + spRes.length) + ' result' + (res.length === 1 ? '' : 's') : 'Everything in My Life'}</Text>
         </View>
         <ScrollView style={{ marginTop: 8 }} contentContainerStyle={{ gap: 8, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+          {spRes.map((x: any) => (
+            <Pressable key={'sp' + x.id} onPress={() => router.push('/finance' as any)}>
+              <Glass radius={18} style={{ paddingVertical: 11, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#ffc46b', shadowColor: '#ffc46b', shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '700' }} numberOfLines={1}>{x.name} · {Number(x.amt || 0).toFixed(2)}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{(x.cat || '') + ' · ' + (x.date || '') + (x.note ? ' · ' + x.note : '')}</Text>
+                </View>
+                <Text style={{ color: '#ffc46b', fontSize: 11, fontWeight: '700' }}>Spending</Text>
+              </Glass>
+            </Pressable>
+          ))}
           {res.map((r) => (
             <Pressable key={r.t + r.h} onPress={() => open(r.h)}>
               <Glass radius={18} style={{ paddingVertical: 11, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -75,7 +91,7 @@ export default function Search() {
               </Glass>
             </Pressable>
           ))}
-          {res.length === 0 && <Glass radius={18} style={{ padding: 18 }}><Text style={{ textAlign: 'center', fontSize: 13, lineHeight: 19, color: 'rgba(255,255,255,.75)' }}>Nothing found. Try another word, for example "yasin", "oil" or "budget".</Text></Glass>}
+          {res.length === 0 && spRes.length === 0 && <Glass radius={18} style={{ padding: 18 }}><Text style={{ textAlign: 'center', fontSize: 13, lineHeight: 19, color: 'rgba(255,255,255,.75)' }}>Nothing found. Try another word, for example "yasin", "oil" or "budget".</Text></Glass>}
         </ScrollView>
         {!!note && <View style={{ position: 'absolute', left: 20, right: 20, bottom: 30, alignItems: 'center' }}><Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 18, backgroundColor: 'rgba(20,26,70,.92)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{note}</Text></Glass></View>}
       </SafeAreaView>
