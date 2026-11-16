@@ -28,6 +28,7 @@ const PERKS = [
   'Family Planner',
   'Save Quran recitations offline',
   'Body hologram in Time Machine',
+  'Pattern Finder in Habit and Health',
 ];
 
 function Btn({ t, onPress, solid }: { t: string; onPress: () => void; solid?: boolean }) {

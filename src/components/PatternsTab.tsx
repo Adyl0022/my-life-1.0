@@ -1,4 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { Locked } from './Paywall';
+import { usePro } from '../lib/pro';
 import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from './Txt';
@@ -27,6 +29,7 @@ const Tile = ({ ic, v, l }: { ic: string; v: string; l: string }) => (
 
 // The first tab of Habit & Health. It only reads what is already logged.
 export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) => void; onToday: () => void }) {
+  const pro = usePro(); // the pattern finder card is part of the subscription
   const goal = h.goal || 8000, cg = cupsGoal(h);
   const t = getDay(h, 0);
   const est = t.en != null && t.en >= 0 ? { lvl: t.en, own: true, why: 'Your own rating' } : (() => { const e = energyEstimate(t, cg, goal); return e ? { lvl: e.lvl, own: false, why: e.why } : null; })();
@@ -75,7 +78,8 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
       <Pressable onPress={onToday} style={{ marginTop: 10 }}><Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>Log today  ›</Text></Pressable>
     </Glass>
 
-    <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+    <Locked on={!pro} mt={12}>
+    <Glass radius={24} style={{ padding: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><HeadIcon k="link" /><View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Patterns we noticed</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Last 30 days · possible links, not proof</Text></View></View>
       {shown.length === 0 ? (
         <View style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.08)' }}>
@@ -100,6 +104,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
         </View>
       ) : null}
     </Glass>
+    </Locked>
 
     <TimeMachine h={h} setH={setH} />
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
