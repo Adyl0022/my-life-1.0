@@ -29,6 +29,7 @@ export default function Medicine() {
   // Without "exact timing" Android may hold a reminder back by many minutes, even an hour. Tell the person and let them turn it on.
   const [exact, setExact] = useState<boolean | null>(null);
   React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
+  const [ring, setRing] = useStored<boolean>('ml_med_ring', true);
   const askExact = async () => { try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); } catch (e) { /* ignore */ } };
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState(''); const [dose, setDose] = useState(''); const [time, setTime] = useState('');
@@ -132,7 +133,20 @@ export default function Medicine() {
                   <Text style={{ color: '#ffd593', fontSize: 11, marginTop: 4 }}>Not ticked? You get a nudge after 1 hour.</Text>
                 </View>
               </Glass>
-              {exact === false && meds.length > 0 ? (
+              {Platform.OS === 'android' && meds.length > 0 ? (
+                <Glass radius={22} style={{ padding: 14, marginTop: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Never late</Text>
+                      <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, lineHeight: 17, marginTop: 3 }}>{ring !== false ? 'Medicine reminders use an alarm-style timer so your phone cannot hold them back. A small alarm icon may show in the status bar.' : 'Off. Your phone may delay a reminder to save battery.'}</Text>
+                    </View>
+                    <Pressable onPress={() => setRing(ring === false)} accessibilityLabel="Never late reminders" style={{ width: 52, height: 30, borderRadius: 15, backgroundColor: ring !== false ? '#ffc46b' : 'rgba(255,255,255,.18)', justifyContent: 'center', paddingHorizontal: 3 }}>
+                      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: ring !== false ? '#1b1038' : '#fff', alignSelf: ring !== false ? 'flex-end' : 'flex-start' }} />
+                    </Pressable>
+                  </View>
+                </Glass>
+              ) : null}
+              {exact === false && meds.length > 0 && ring !== false ? (
                 <Glass radius={22} style={{ padding: 14, marginTop: 12, backgroundColor: 'rgba(255,196,107,.14)', borderColor: 'rgba(255,196,107,.4)', borderWidth: 1 }}>
                   <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Reminders may arrive late</Text>
                   <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>Your phone is not set to deliver reminders on the minute, so a medicine reminder can be held back, sometimes by an hour. Turn on exact timing so it arrives at the time you set.</Text>

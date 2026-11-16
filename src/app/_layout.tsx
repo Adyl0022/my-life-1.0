@@ -61,7 +61,8 @@ function AlertSync() {
   const [hb, , okh] = useStored<{ meds?: { id: string; name: string; dose: string; time: string }[]; days?: Record<string, { med?: string[] }>; rlRem?: string; cyOn?: boolean; cyRem?: boolean }>('ml_habit', {});
   const todayK = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
   const medsNow = (hb && hb.meds) || []; const medTaken = (hb && hb.days && hb.days[todayK] && hb.days[todayK].med) || [];
-  useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncMedAlerts(medsNow, medTaken, t.md !== false && hid.on('habit')); }, [okh, ok2, hid.ready, JSON.stringify(medsNow), JSON.stringify(medTaken), t.md, todayK]);
+  const [medRing] = useStored<boolean>('ml_med_ring', true);
+  useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncMedAlerts(medsNow, medTaken, t.md !== false && hid.on('habit'), medRing !== false); }, [okh, ok2, hid.ready, JSON.stringify(medsNow), JSON.stringify(medTaken), t.md, todayK, medRing]);
   useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncRelaxAlert(hb && hb.rlRem, hid.on('habit')); }, [okh, ok2, hid.ready, hb && hb.rlRem]);
   const cyNext = hb && hb.cyOn && hb.days ? cycleInfo(hb as any).nextOff : null;
   useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncCycleAlert(cyNext, !!(hb && hb.cyOn) && hb.cyRem !== false && hid.on('habit')); }, [okh, ok2, hid.ready, cyNext, hb && hb.cyOn, hb && hb.cyRem]);
