@@ -58,11 +58,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Quran Audio",
-  "s": "Listen to all 30 juz and 114 surahs, 4 reciters",
+  "s": "Listen to all 30 juz and 114 surahs, 4 reciters, and save them for offline",
   "m": "Islamic",
   "c": "#5ee7b5",
   "h": "QuranAudio.dc.html",
-  "k": "quran audio listen dengar bacaan juzuk juz surah qari reciter alafasy sudais muaiqly husary mengaji tilawah"
+  "k": "quran audio listen dengar bacaan juzuk juz surah qari reciter alafasy sudais muaiqly husary mengaji tilawah download muat turun offline luar talian wifi simpan resume sambung continue cari search"
  },
  {
   "t": "Islamic Hub",
@@ -170,11 +170,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Spending Tracker",
-  "s": "What you bought and spent",
+  "s": "What you bought and spent today and this month",
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Finance.dc.html",
-  "k": "spending belanja expense perbelanjaan beli petrol makan food kategori category"
+  "k": "spending belanja expense perbelanjaan beli petrol makan food kategori category today spending belanja hari ini remark catatan susun sort edit vehicle kenderaan maintenance count kira"
  },
  {
   "t": "Commitments and debts",
@@ -218,11 +218,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Maintenance Spending",
-  "s": "Top cost each month, by year",
+  "s": "Top cost each month, by year. Can count in My Finance",
   "m": "Record",
   "c": "#ff8fab",
   "h": "Record.dc.html",
-  "k": "maintenance penyelenggaraan repair baiki servis service bengkel belanja spending tahun year"
+  "k": "maintenance penyelenggaraan repair baiki servis service bengkel belanja spending tahun year my finance vehicle kira masuk finance today spending"
  },
  {
   "t": "Fuel log",
@@ -262,7 +262,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "habit health kesihatan langkah steps water air sleep tidur mood goal sasaran"
+  "k": "habit health kesihatan langkah steps water air sleep tidur mood goal sasaran cycle kitaran haid period relax medicine ubat energy tenaga"
  },
  {
   "t": "Patterns",
@@ -274,11 +274,19 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Medicine reminder",
-  "s": "Reminder for your medicine, again after 1 hour",
+  "s": "Reminders, missed doses and editing your medicine",
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "medicine medication ubat reminder peringatan dose dos pill capsule kapsul tablet syrup sirap injection suntikan drops titis inhaler cream krim vitamin ikon icon"
+  "k": "medicine medication ubat reminder peringatan dose dos pill capsule kapsul tablet syrup sirap injection suntikan drops titis inhaler cream krim vitamin ikon icon edit ubah kemaskini missed terlepas lupa never late exact alarm tepat masa overdue lewat"
+ },
+ {
+  "t": "Cycle & Wellbeing",
+  "s": "Private period tracker with estimates. Turn on in Settings",
+  "m": "Habit",
+  "c": "#ff8fab",
+  "h": "Habit.dc.html",
+  "k": "cycle kitaran haid period datang bulan menstruation tracker symptoms simptom cramps flow wellbeing"
  },
  {
   "t": "Experiments",
@@ -394,19 +402,19 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Insights",
-  "s": "Life score and smart suggestions",
+  "s": "Life score, weekly review and smart suggestions",
   "m": "System",
   "c": "#5ee7df",
   "h": "Insights.dc.html",
-  "k": "insights score skor life cadangan suggestion tips weekly mingguan"
+  "k": "insights score skor life cadangan suggestion tips weekly mingguan relax energy tenaga medicine ubat cycle kitaran patterns corak tips"
  },
  {
   "t": "Stats",
-  "s": "App usage, last 30 days",
+  "s": "App usage, health trends and money",
   "m": "System",
   "c": "#5ee7df",
   "h": "Stats.dc.html",
-  "k": "stats statistik usage penggunaan spending chart graf"
+  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang"
  },
  {
   "t": "Settings",
@@ -442,11 +450,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Export my data",
-  "s": "Excel, PDF, CSV or a backup, including savings goals and Money Left",
+  "s": "Excel, PDF, CSV or a backup. Choose which modules, including turned-off ones",
   "m": "System",
   "c": "#5ee7df",
   "h": "Export.dc.html",
-  "k": "export eksport backup sandaran excel pdf csv xlsx download muat turun data tabung savings goals money left had kategori category limits laporan report simpanan"
+  "k": "export eksport backup sandaran excel pdf csv xlsx download muat turun data tabung savings goals money left had kategori category limits laporan report simpanan module modul turned off dimatikan pilih choose"
  },
  {
   "t": "Reset all data",
