@@ -18,7 +18,7 @@ export async function syncFamilyAlerts(me: string, tasks: PlanTask[], events: Pl
       await Notifications.scheduleNotificationAsync({
         identifier: t.id,
         content: { title: t.title, body: t.body, sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'family' } as any,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'family', delivery: 'alarmClock' } as any,
       });
     }
   } catch (e) { /* ignore */ }

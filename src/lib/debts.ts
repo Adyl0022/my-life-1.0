@@ -41,7 +41,7 @@ export async function syncDebtAlerts(data: DebtData): Promise<boolean> {
         await Notifications.scheduleNotificationAsync({
           identifier: 'debt-' + d.id + '-' + ym,
           content: { title: d.name + (data.ahead === 0 ? ' is due today' : data.ahead === 1 ? ' is due tomorrow' : ' is due in ' + data.ahead + ' days'), body: 'Payment of ' + amt + '. Open My Finance to mark it paid.', sound: true },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'debts' } as any,
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'debts', delivery: 'alarmClock' } as any,
         });
       }
     }

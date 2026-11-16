@@ -26,7 +26,7 @@ export async function syncEventAlerts(events: PEvent[], tg: Toggles): Promise<vo
       await Notifications.scheduleNotificationAsync({
         identifier: 'event-' + t.e.id + '-' + t.at.getTime(),
         content: { title: t.e.name, body: 'Event ' + t.when + '. Open Planner for details.', sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'events' } as any,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'events', delivery: 'alarmClock' } as any,
       });
     }
   } catch (e) { /* ignore */ }
@@ -46,7 +46,7 @@ export async function syncZikirAlerts(tg: Toggles): Promise<void> {
       await Notifications.scheduleNotificationAsync({
         identifier: 'zikir-' + k,
         content: { title, body: 'Time for your ' + (k === 'morning' ? 'morning' : 'evening') + ' zikir. Open Islamic Hub.', sound: false },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: m, channelId: 'zikir' } as any,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: m, channelId: 'zikir', delivery: 'alarmClock' } as any,
       });
     }
   } catch (e) { /* ignore */ }
@@ -66,7 +66,7 @@ export async function syncBackupAlert(on: boolean, last: number): Promise<void> 
     await Notifications.scheduleNotificationAsync({
       identifier: 'backup-next',
       content: { title: 'Time for a backup', body: 'It has been a while. Save a copy of your data from Settings, Export.', sound: false },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'backup' } as any,
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'backup', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }
 }
@@ -99,7 +99,7 @@ export async function syncRenewAlerts(rec: RenData, tg: Toggles, on: boolean): P
       await Notifications.scheduleNotificationAsync({
         identifier: t.id,
         content: { title: t.title, body: t.body, sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals' } as any,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals', delivery: 'alarmClock' } as any,
       });
     }
   } catch (e) { /* ignore */ }
@@ -116,7 +116,7 @@ export async function syncWeekAlert(tg: Toggles): Promise<void> {
     await Notifications.scheduleNotificationAsync({
       identifier: 'week-review',
       content: { title: 'Your week in My Life', body: 'See how your week went. Open Insights and tap Week.', sound: false },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 20, minute: 0, channelId: 'week' } as any,
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 20, minute: 0, channelId: 'week', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }
 }
@@ -181,7 +181,7 @@ export async function syncRelaxAlert(time: string | undefined, on: boolean): Pro
     await Notifications.scheduleNotificationAsync({
       identifier: 'rlx-rem',
       content: { title: 'Time to relax', body: 'A few quiet minutes: breathe or meditate in Habit & Health.', sound: false },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: +t[1], minute: +t[2], channelId: 'relax' } as any,
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: +t[1], minute: +t[2], channelId: 'relax', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }
 }
@@ -219,7 +219,7 @@ export async function syncCycleAlert(daysTo: number | null, on: boolean): Promis
     await Notifications.scheduleNotificationAsync({
       identifier: 'cyc-next',
       content: { title: 'Reminder from My Life', body: 'Open My Life to see your reminder.', sound: false },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'cycle' } as any,
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'cycle', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }
 }
@@ -248,7 +248,7 @@ export async function syncNoteAlerts(notes: NoteRem[], on: boolean): Promise<voi
       await Notifications.scheduleNotificationAsync({
         identifier: n.id,
         content: { title: n.title, body: n.body, sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(n.at), channelId: 'notes' } as any,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(n.at), channelId: 'notes', delivery: 'alarmClock' } as any,
       });
     }
   } catch (e) { /* ignore */ }
