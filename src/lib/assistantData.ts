@@ -1,3 +1,4 @@
+import { mergeVeh, VEH_KEY, VMode } from './vehicleSpend';
 import { goalSaved } from './savings';
 import { useEffect } from 'react';
 import { useStored, getItem, getItemStrict, setItem } from './store';
@@ -44,7 +45,10 @@ function kmBetween(sorted: { date: string; odo: number }[], from: string, to: st
 
 export function useReal(P: [string, number, number][]): Real {
   const [hd, , o1] = useStored<HData>('ml_habit', HEMPTY);
-  const [fin, , o2] = useStored<Fin>('ml_finance', { inc: {}, spends: [] } as any);
+  const [fin0, , o2] = useStored<Fin>('ml_finance', { inc: {}, spends: [] } as any);
+  const [rec0] = useStored<any>('ml_record', { data: {} });
+  const [vm0] = useStored<VMode>(VEH_KEY, 'ask');
+  const fin = { ...fin0, spends: mergeVeh(fin0 && fin0.spends, rec0, vm0) } as Fin;
   const [nts] = useStored<{ notes: any[] }>('ml_notes', { notes: [] });
   const [pl, , o3] = useStored<Pl>('ml_planner', { events: [], tasks: [] } as any);
   const [rec, , o4] = useStored<RecData>('ml_record', { cats: ['Motorcycle'], sel: 0, data: {}, nextId: 1 });

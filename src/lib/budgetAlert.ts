@@ -5,6 +5,7 @@ import { getItem, getItemStrict, setItem } from './store';
 import { DEBT_EMPTY } from './debts';
 import { calcLeft, commitFor, ymKey } from './moneyLeft';
 import { cs } from './region';
+import { mergeVeh, VEH_KEY } from './vehicleSpend';
 import { ensureHandler, setup } from './adhan';
 
 export type BudgetCfg = { on: boolean; sent: Record<string, number> };
@@ -18,6 +19,7 @@ export async function checkBudget(): Promise<void> {
   try {
     const cfg = await getItemStrict<BudgetCfg>('ml_budget', BUDGET_EMPTY, 1); if (!cfg || !cfg.on) return;
     const fin: any = await getItem('ml_finance', { inc: {}, spends: [] }); const debts: any = await getItem('ml_debts', DEBT_EMPTY);
+    fin.spends = mergeVeh(fin.spends, await getItem<any>('ml_record', { data: {} }), await getItem<any>(VEH_KEY, 'ask'));
     const now = new Date(); const ym = ymKey(now);
     const income = Object.keys((fin.inc || {})[ym] || {}).reduce((a, k) => a + (fin.inc[ym][k] || 0), 0);
     const dk = ym + '-' + String(now.getDate()).padStart(2, '0');

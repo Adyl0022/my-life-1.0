@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { mergeVeh, VEH_KEY, VMode } from './vehicleSpend';
 import { modOn, Mod } from './hidden';
 import { useStored } from './store';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram } from './fasting';
@@ -19,7 +21,7 @@ export type Tip = { id: string; title: string; sub: string; why: string; go: str
 
 export const useCore = (): Core => {
   const [hd] = useStored('ml_habit', HEMPTY);
-  const [fin] = useStored<Fin>('ml_finance', { inc: {}, spends: [] } as any);
+  const [fin0] = useStored<Fin>('ml_finance', { inc: {}, spends: [] } as any);
   const [pl] = useStored<Pl>('ml_planner', { events: [], tasks: [] } as any);
   const [rec] = useStored<{ data: Record<string, Veh> }>('ml_record', { data: {} } as any);
   const [tas] = useStored<{ day: string; total: number }>('ml_tasbih', { day: '', total: 0 });
@@ -27,6 +29,8 @@ export const useCore = (): Core => {
   const [puasa] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
   const [sav] = useStored<SavData>('ml_savings', SAV_EMPTY);
   const [off, setOff] = useStored<Record<string, string>>('ml_tips_off', {});
+  const [vm] = useStored<VMode>(VEH_KEY, 'ask');
+  const fin = useMemo(() => ({ ...fin0, spends: mergeVeh(fin0 && fin0.spends, rec as any, vm) }) as Fin, [fin0, rec, vm]);
   return { hd, fin, pl, rec, tas, debts, puasa, sav, off, setOff };
 };
 

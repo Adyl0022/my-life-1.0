@@ -36,7 +36,7 @@ export function TodaySpend({ spends }: { spends: Sp[] }) {
       <Text style={{ color: dim, fontSize: 12.5, marginTop: 2 }}>{count === 0 ? 'No spending yet today' : count + (count === 1 ? ' item' : ' items') + ' today'}</Text>
       {has && mode !== 'ask' ? (
           <Pressable onPress={() => setMode(mode === 'yes' ? 'no' : 'yes')} hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: mode === 'yes' ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: mode === 'yes' ? '#ffc46b' : 'rgba(255,255,255,.22)' }}>
-            <Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{mode === 'yes' ? 'With vehicle maintenance' : 'Without vehicle maintenance'}</Text>
+            <Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{mode === 'yes' ? 'Vehicle maintenance counted in My Finance' : 'Vehicle maintenance not counted'}</Text>
           </Pressable>
       ) : null}
       {inc && veh > 0 ? (
@@ -50,7 +50,7 @@ export function TodaySpend({ spends }: { spends: Sp[] }) {
       {has && mode === 'ask' ? (
         <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,196,107,.14)', borderWidth: 1, borderColor: 'rgba(255,196,107,.4)' }}>
           <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Vehicle maintenance found</Text>
-          <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>I found maintenance spending in your My Record. Do you want to include it in today's spending here? You can change this any time.</Text>
+          <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>I found maintenance spending in your My Record. Include it in My Finance? It will count in today's spending, Money Left, charts, Insights and exports. You can change this any time. Edit or delete it in My Record.</Text>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             <Pressable onPress={() => setMode('no')} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>No, keep it apart</Text></Pressable>
             <Pressable onPress={() => setMode('yes')} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: '#ffc46b', alignItems: 'center' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Yes, include</Text></Pressable>

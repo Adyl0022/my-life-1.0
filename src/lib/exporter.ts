@@ -3,6 +3,10 @@ import { getText, DEFAULT_NAME } from './store';
 import { calcLeft, commitFor, MONTHS as MN3 } from './moneyLeft';
 import { goalLines, goalSaved } from './savings';
 import { cs, cu } from './region';
+import { getItem } from './store';
+import { mergeVeh, VEH_KEY } from './vehicleSpend';
+const getRec = () => getItem<any>('ml_record', { data: {} });
+const getMode = () => getItem<any>(VEH_KEY, 'ask');
 
 export type Sheet = { name: string; head: string[]; rows: (string | number)[][] };
 export type Chart = { title: string; kind: 'bars' | 'hbars' | 'line' | 'donut'; labels: string[]; values: number[]; unit?: string; color?: string };
@@ -69,7 +73,7 @@ export async function buildReport(sel: string[], per: number): Promise<Report> {
   }
   if (sel.includes('finance')) {
     const f = g('finance', 'ml_finance'); const d = g('finance', 'ml_debts'); const sv = g('finance', 'ml_savings');
-    const allSp = ((f && f.spends) || []) as any[];
+    const allSp = mergeVeh((f && f.spends) || [], await getRec(), await getMode()) as any[];
     const inPSp = allSp.filter((s: any) => inP(s.date));
     const sp = inPSp.filter((s: any) => s.cat !== 'Savings');
     const put = inPSp.filter((s: any) => s.cat === 'Savings');

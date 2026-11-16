@@ -14,6 +14,7 @@ import { useStored } from '../lib/store';
 import { Commitments } from '../components/Commitments';
 import { MoneyLeft } from '../components/MoneyLeft';
 import { TodaySpend } from '../components/TodaySpend';
+import { useMergedSpends, useVehMode, VEH_CAT, VEH_COLOR } from '../lib/vehicleSpend';
 import { TOP } from '../lib/layout';
 import { cs, cu, cw, useRegion } from '../lib/region';
 
@@ -27,7 +28,7 @@ const CATS: [string, string][] = [['Food', '#ffc46b'], ['Petrol', '#7c9cff'], ['
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
 const keyOf = (y: number, m: number) => y + '-' + String(m + 1).padStart(2, '0');
-const colorOf = (n: string) => (CATS.find((c) => c[0] === n) || CATS[CATS.length - 1])[1];
+const colorOf = (n: string) => n === VEH_CAT ? VEH_COLOR : (CATS.find((c) => c[0] === n) || CATS[CATS.length - 1])[1];
 const WARM = ['#ffc46b', '#ff8fab'] as [string, string];
 
 const FinArt = () => (
@@ -60,6 +61,7 @@ export default function Finance() {
   useRegion();
   const router = useRouter();
   const [d, setD] = useStored<Data>('ml_finance', EMPTY);
+  const all = useMergedSpends(d.spends); const [vmode] = useVehMode();
   const now = new Date(); const curY = now.getFullYear(); const curKey = keyOf(curY, now.getMonth());
   const [ym, setYm] = useState(curKey);
   const [editKey, setEditKey] = useState(''); const [editUnit, setEditUnit] = useState<'rm' | 'cnt'>('rm'); const [editVal, setEditVal] = useState('');
@@ -78,19 +80,19 @@ export default function Finance() {
   const open = (k: string, u: 'rm' | 'cnt') => { const n = ((u === 'cnt' ? d.cnt : d.inc)[ym] || {})[k] || 0; setEditKey(k); setEditUnit(u); setEditVal(n > 0 ? String(n) : ''); };
   const saveLine = (k: string) => {
     const n = parseFloat(editVal.replace(',', '.')); const un = UN[k]; const store = editUnit === 'cnt' && un ? 'cnt' : 'inc';
-    const all = { ...d[store] }; all[ym] = { ...all[ym], [k]: n > 0 ? n : 0 };
-    setD({ ...d, [store]: all }); setEditKey(''); setEditVal('');
+    const alls = { ...d[store] }; alls[ym] = { ...alls[ym], [k]: n > 0 ? n : 0 };
+    setD({ ...d, [store]: alls }); setEditKey(''); setEditVal('');
   };
-  const spendIn = (key: string) => d.spends.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === key).reduce((a, p) => a + p.amt, 0);
+  const spendIn = (key: string) => all.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === key).reduce((a, p) => a + p.amt, 0);
   const gk = (back: number) => { const x = new Date(curY, now.getMonth() - back, 1); return { key: keyOf(x.getFullYear(), x.getMonth()), label: MON[x.getMonth()] }; };
   const gm = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, v: spendIn(k.key), prev: spendIn(gk(b + 1).key) }; });
   const gMax = Math.max(...gm.map((x) => x.v), 1);
   const gc = gm[5].v, gp = gm[4].v, gd = gc - gp; const gPct = gp > 0 ? Math.round(Math.abs(gd) / gp * 100) : 0;
-  const spent = d.spends.filter((p) => p.cat !== 'Savings').reduce((a, p) => a + p.amt, 0);
+  const spent = all.filter((p) => p.cat !== 'Savings').reduce((a, p) => a + p.amt, 0);
   // The list follows the Sort by choice: newest date first (default), oldest date first, or the order the entries were added.
   const [sortBy, setSortBy] = useStored<'new' | 'old' | 'add'>('ml_spend_sort', 'new');
-  const byDate = [...d.spends].sort((a, b) => sortBy === 'add' ? b.id - a.id : sortBy === 'old' ? (a.date || '').localeCompare(b.date || '') || a.id - b.id : (b.date || '').localeCompare(a.date || '') || b.id - a.id);
-  const monthSpent = d.spends.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
+  const byDate = [...all].sort((a, b) => sortBy === 'add' ? b.id - a.id : sortBy === 'old' ? (a.date || '').localeCompare(b.date || '') || a.id - b.id : (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  const monthSpent = all.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
   const tr = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, t: sumOf(d.inc[k.key]) }; });
   const maxT = Math.max(...tr.map((x) => x.t), 1);
   const saveLimit = (k: string) => {
@@ -139,7 +141,7 @@ export default function Finance() {
             <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Income and spending at a glance</Text></View>
           </Glass>
 
-          <MoneyLeft ym={ym} income={total} spends={d.spends} />
+          <MoneyLeft ym={ym} income={total} spends={all} />
           <TodaySpend spends={d.spends} />
 
           <Pressable onPress={() => router.push('/savings')}>
@@ -275,10 +277,10 @@ export default function Finance() {
                 </View>
               </View>
             ) : null}
-            {d.spends.length === 0 ? (
+            {all.length === 0 ? (
               <View style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}><Text style={{ textAlign: 'center', color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18 }}>No spending yet. Type what you bought, the amount, pick a category and tap Add.</Text></View>
             ) : null}
-            {d.spends.length > 1 ? (
+            {all.length > 1 ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '700' }}>Sort by</Text>
                 {([['new', 'Newest'], ['old', 'Oldest'], ['add', 'Added']] as ['new' | 'old' | 'add', string][]).map(([k, t]) => (
@@ -293,13 +295,13 @@ export default function Finance() {
                 <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
-                    <Pressable style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '' }); } }}>
+                    <Pressable disabled={p.src === 'record'} style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '' }); } }}>
                       <Text style={{ color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{p.cat + ' · ' + dateText(p.date)}</Text>
                       {p.note ? <Text style={{ color: '#ffd593', fontSize: 12, marginTop: 1 }} numberOfLines={2}>{p.note}</Text> : null}
                     </Pressable>
                     <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(p.amt)}</Text>
-                    <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>
+                    {p.src === 'record' ? <View style={{ width: 34 }} /> : <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>}
                   </View>
                   {remId === p.id ? (
                     <View style={{ marginTop: 8 }}>
@@ -325,7 +327,7 @@ export default function Finance() {
                   ) : null}
                 </View>
               ))}
-              {d.spends.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
+              {all.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
             </View>
           </Glass>
 
@@ -337,8 +339,8 @@ export default function Finance() {
             </View>
             <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>Set a monthly limit for a category. The bar turns yellow when you are close and red when you go over.</Text>
             <View style={{ marginTop: 12, gap: 14 }}>
-              {CATS.filter((x) => x[0] !== 'Savings').map(([n, c]) => {
-                const t = d.spends.filter((p) => p.cat === n && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
+              {[...CATS.filter((x) => x[0] !== 'Savings'), ...(vmode === 'yes' ? [[VEH_CAT, VEH_COLOR] as [string, string]] : [])].map(([n, c]) => {
+                const t = all.filter((p) => p.cat === n && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
                 const lim = (d.limits || {})[n] || 0; const ratio = lim > 0 ? t / lim : 0;
                 const col = lim > 0 ? (ratio > 1 ? '#ff7a8a' : ratio >= 0.8 ? '#ffd24a' : c) : c;
                 const w = lim > 0 ? Math.min(100, Math.round(ratio * 100)) : monthSpent > 0 ? Math.round((t / monthSpent) * 100) : 0;
