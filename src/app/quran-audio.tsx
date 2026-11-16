@@ -121,7 +121,7 @@ export default function QuranAudio() {
               <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Saved recitations play without internet, and keep working even if the online service is unavailable.</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                 <Pressable onPress={() => { setTab(2); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.4)', borderWidth: 1, borderColor: TEAL }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Open Downloads</Text></Pressable>
-                <Pressable onPress={() => setHintOff(true)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: 'rgba(255,255,255,.8)', fontWeight: '700', fontSize: 13 }}>Dismiss</Text></Pressable>
+                <Pressable onPress={() => setHintOff(true)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.18)', borderWidth: 1, borderColor: 'rgba(255,107,129,.55)' }}><Text style={{ color: '#ffb3bf', fontWeight: '800', fontSize: 13 }}>Dismiss</Text></Pressable>
               </View>
             </Glass>
           ) : null}
