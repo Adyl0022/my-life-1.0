@@ -46,8 +46,8 @@ const PERKS: { e: string; t: string }[] = [
 ];
 
 // Small gold PRO tag that marks a feature of the yearly subscription.
-export const ProTag = ({ s = 10 }: { s?: number }) => (
-  <View style={{ paddingVertical: 2, paddingHorizontal: 6, borderRadius: 999, backgroundColor: 'rgba(255,196,107,.2)', borderWidth: 1, borderColor: 'rgba(255,196,107,.6)' }}><Text style={{ color: '#ffd9a0', fontSize: s, fontWeight: '800', letterSpacing: 1 }}>PRO</Text></View>
+export const ProTag = ({ s = 10, dark }: { s?: number; dark?: boolean }) => (
+  <View style={{ paddingVertical: 2, paddingHorizontal: 6, borderRadius: 999, backgroundColor: dark ? 'rgba(20,16,48,.7)' : 'rgba(255,196,107,.2)', borderWidth: 1, borderColor: 'rgba(255,196,107,.6)' }}><Text style={{ color: '#ffd9a0', fontSize: s, fontWeight: '800', letterSpacing: 1 }}>PRO</Text></View>
 );
 
 // A soft light that sweeps across a surface every few seconds.

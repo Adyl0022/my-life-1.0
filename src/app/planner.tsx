@@ -207,7 +207,7 @@ export default function Planner() {
           </Pressable>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14, marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Pill t="Family Planner" fam onPress={() => router.push('/family' as any)} />{!pro ? <ProTag s={9.5} /> : null}</View>
+            <Pill t="Family Planner" fam tag={!pro ? <ProTag s={9} dark /> : undefined} onPress={() => router.push('/family' as any)} />
             <Pill t="Date & Events" on={tab === 'events'} onPress={() => { setTab('events'); setEdit(null); }} />
             {d.cats.map((n, i) => <Pill key={n} t={n} on={tab === 'tasks' && i === cat} onPress={() => { setTab('tasks'); setCat(i); setEdit(null); setAddingCat(false); }} />)}
             {!addingCat && <Pill t="+ New category" onPress={() => { setAddingCat(true); setCatIn(''); }} />}
