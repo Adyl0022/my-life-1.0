@@ -1,30 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Defs, Pattern, Path, Rect } from 'react-native-svg';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
-import { IslamicBg, Header, VerseBlock } from '../components/IslamicUi';
+import { IslamicBg, Header, VerseBlock, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
 import { useStored } from '../lib/store';
 import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio } from '../lib/quranAudio';
-
-// Calm background for the text view: the same dark teal as the Islamic Hub with a soft star pattern, and no glowing lights behind the words.
-const TextBg = () => (
-  <>
-    <LinearGradient colors={['#0a0f2c', '#0f1f3d', '#0c3a3f']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-    <Svg pointerEvents="none" width="100%" height="100%" style={{ position: 'absolute', left: 0, top: 0 }}>
-      <Defs>
-        <Pattern id="qgeo" width={52} height={52} patternUnits="userSpaceOnUse">
-          <Path d="M26 4l5.5 11.5L43 10l-5.5 11.5L49 26l-11.5 4.5L43 42l-11.5-5.5L26 48l-5.5-11.5L9 42l5.5-11.5L3 26l11.5-4.5L9 10l11.5 5.5z" fill="none" stroke="#7df0c6" strokeWidth={1} opacity={0.1} />
-        </Pattern>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#qgeo)" />
-    </Svg>
-  </>
-);
 
 const TEAL = '#7df0c6';
 const Btn = ({ t, onPress, big }: { t: string; onPress: () => void; big?: boolean }) => (
@@ -59,7 +42,7 @@ export default function QuranAudio() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
-      {follow ? <TextBg /> : <IslamicBg />}
+      {follow ? <ReadBg /> : <IslamicBg />}
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Quran Audio" sub="Listen by juz or surah" />
         <ScrollView ref={scRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: active ? 190 : 30, gap: 10 }}>

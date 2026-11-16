@@ -4,7 +4,7 @@ import { Text } from '../../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Glass } from '../../components/Glass';
-import { IslamicBg, Header, ToolBar, VerseBlock, Credit, ReadPicker } from '../../components/IslamicUi';
+import { ReadBg, Header, ToolBar, VerseBlock, Credit, ReadPicker } from '../../components/IslamicUi';
 import { W } from '../../components/Ui';
 import { SURAH, BISMILLAH, partVerses, useIslamic, useLang, useSize, useRead, AR_SIZE } from '../../lib/islamic';
 
@@ -34,7 +34,7 @@ export default function SurahScreen() {
   const tapVerse = (n: number) => { if (lastN === n) { const nl = { ...isl.last }; delete nl[key]; setIsl({ ...isl, last: nl }); say('Last read cleared'); } else { setIsl({ ...isl, last: { ...isl.last, [key]: n }, lastKey: key }); say('Last read: verse ' + n); } };
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
-      <IslamicBg />
+      <ReadBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title={s.title} sub={s.sub} right={<Text style={{ color: W, fontSize: 22 }}>{s.ar}</Text>} />
         <ScrollView ref={scrollRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12 }}>
