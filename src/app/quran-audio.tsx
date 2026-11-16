@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
-import { IslamicBg, Header, VerseBlock, ReadBg } from '../components/IslamicUi';
+import { Header, VerseBlock, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
 import { useStored } from '../lib/store';
@@ -53,7 +53,7 @@ export default function QuranAudio() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
-      {follow ? <ReadBg /> : <IslamicBg />}
+      <ReadBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Quran Audio" sub="Listen by juz or surah" />
         <ScrollView ref={scRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: active ? 190 : 30, gap: 10 }}>
