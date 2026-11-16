@@ -15,7 +15,7 @@ import { OrbLive } from '../components/OrbLive';
 import { AssistantBase } from '../lib/assistantBase';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
-import { UnlockPage } from '../components/Paywall';
+import { AssistantUnlock } from '../components/AssistantUnlock';
 import { usePro } from '../lib/pro';
 
 const STARS: [number, number, number, number][] = Array.from({ length: 34 }, (_, i) => [(i * 37 + 11) % 100, (i * 53 + 7) % 96, 0.6 + ((i * 7) % 6) / 10, 0.25 + ((i * 13) % 6) / 10]);
@@ -214,7 +214,7 @@ function PrayerFeed({ onTimes }: { onTimes: (p: [string, number, number][]) => v
 
 export default function Assistant() {
   const pro = usePro();
-  return pro ? <AssistantInner /> : <UnlockPage title="My Life Assistant" text="Ask about your spending, tasks, health and more, and get answers from your own data. It works on your phone, so your data stays with you." />;
+  return pro ? <AssistantInner /> : <AssistantUnlock />;
 }
 function AssistantInner() {
   const name = useName();

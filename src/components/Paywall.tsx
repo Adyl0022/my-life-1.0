@@ -46,7 +46,7 @@ const PERKS: { e: string; t: string }[] = [
 ];
 
 // A soft light that sweeps across a surface every few seconds.
-function Shine({ delay = 0 }: { delay?: number }) {
+export function Shine({ delay = 0 }: { delay?: number }) {
   const x = React.useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const a = Animated.loop(Animated.sequence([
