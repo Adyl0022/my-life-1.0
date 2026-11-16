@@ -11,7 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, Path, LinearGradient as SvgGrad, Stop } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { Glass } from '../../components/Glass';
-import { openPaywall } from '../../components/Paywall';
+import { openPaywall, ProTag } from '../../components/Paywall';
 import { usePro } from '../../lib/pro';
 import { getDay, cupsGoal, goalPctOf, keyOfDate, dateOf } from '../../lib/habit';
 import { useHidden } from '../../lib/hidden';
@@ -177,7 +177,7 @@ export default function Insights() {
             ))}
             {(pro ? curCat === 'All' && allTips.length > 3 : pool.length > 3) && (
               <Pressable onPress={() => { if (!pro) { openPaywall(); return; } setShowAll(!showAll); }} style={{ alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 14 }}>
-                <Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{!pro ? 'Show more · Unlock' : showAll ? 'Show fewer' : 'Show all ' + allTips.length}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}><Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{!pro ? 'Show more' : showAll ? 'Show fewer' : 'Show all ' + allTips.length}</Text>{!pro ? <ProTag /> : null}</View>
               </Pressable>
             )}
           </View>

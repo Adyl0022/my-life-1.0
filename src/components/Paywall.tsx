@@ -45,6 +45,11 @@ const PERKS: { e: string; t: string }[] = [
   { e: '💡', t: 'Every Insights tip' },
 ];
 
+// Small gold PRO tag that marks a feature of the yearly subscription.
+export const ProTag = ({ s = 10 }: { s?: number }) => (
+  <View style={{ paddingVertical: 2, paddingHorizontal: 6, borderRadius: 999, backgroundColor: 'rgba(255,196,107,.2)', borderWidth: 1, borderColor: 'rgba(255,196,107,.6)' }}><Text style={{ color: '#ffd9a0', fontSize: s, fontWeight: '800', letterSpacing: 1 }}>PRO</Text></View>
+);
+
 // A soft light that sweeps across a surface every few seconds.
 export function Shine({ delay = 0 }: { delay?: number }) {
   const x = React.useRef(new Animated.Value(0)).current;

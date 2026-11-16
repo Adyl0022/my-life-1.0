@@ -7,6 +7,8 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
+import { ProTag } from '../components/Paywall';
+import { usePro } from '../lib/pro';
 import { PlannerArt } from '../components/PlannerArt';
 import { Inp, DateField, pickDate, Pill, SBtn, Sheet, Toast, todayStr, W, GP } from '../components/Ui';
 import { useStored } from '../lib/store';
@@ -62,6 +64,7 @@ const Ic = ({ t, onPress, label }: { t: string; onPress: () => void; label: stri
 
 export default function Planner() {
   const router = useRouter();
+  const pro = usePro();
   const [d, setD, ok] = useStored<Data>('ml_planner', EMPTY);
   const [tab, setTab] = useState<'events' | 'tasks'>('events');
   const [cat, setCat] = useState(0);
@@ -204,7 +207,7 @@ export default function Planner() {
           </Pressable>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14, marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-            <Pill t="Family Planner" fam onPress={() => router.push('/family' as any)} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Pill t="Family Planner" fam onPress={() => router.push('/family' as any)} />{!pro ? <ProTag s={9.5} /> : null}</View>
             <Pill t="Date & Events" on={tab === 'events'} onPress={() => { setTab('events'); setEdit(null); }} />
             {d.cats.map((n, i) => <Pill key={n} t={n} on={tab === 'tasks' && i === cat} onPress={() => { setTab('tasks'); setCat(i); setEdit(null); setAddingCat(false); }} />)}
             {!addingCat && <Pill t="+ New category" onPress={() => { setAddingCat(true); setCatIn(''); }} />}

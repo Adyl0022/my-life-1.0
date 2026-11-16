@@ -9,6 +9,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Bg, Blob } from '../../components/Bg';
 import { Glass } from '../../components/Glass';
 import { useHidden, useModOrder } from '../../lib/hidden';
+import { ProTag } from '../../components/Paywall';
+import { usePro } from '../../lib/pro';
 import { PlannerArt, IslamicArt, FinanceArt, RecordArt, HabitArt, HabitBanner, FamilyArt, ChipIcon, CARDS } from '../../components/dashArt';
 import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
@@ -44,6 +46,7 @@ export default function Home() {
   const router = useRouter();
   const hid = useHidden(); const mord = useModOrder();
   const name = useName();
+  const pro = usePro();
   const [hd] = useStored<HData>('ml_habit', HEMPTY); const ht = getDay(hd, 0); const hcg = cupsGoal(hd);
   const go = (k: string) => { const r = ({ Planner: '/planner', Islamic: '/islamic', Finance: '/finance', Record: '/record', Habit: '/habit', Family: '/family' } as Record<string, string>)[k]; if (r) router.push(r as any); };
   const usage = useUsage(16);
@@ -133,6 +136,7 @@ export default function Home() {
                     <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.35)', alignItems: 'center', justifyContent: 'center' }}><ChipIcon k={c.k} /></View>
                   </View>
                 </Glass>
+                {c.k === 'Family' && !pro ? <View pointerEvents="none" style={{ position: 'absolute', top: 9, right: 9 }}><ProTag s={9.5} /></View> : null}
               </Pressable>
             ))}
               </View>

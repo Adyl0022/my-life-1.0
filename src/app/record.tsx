@@ -9,7 +9,7 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, DateField, Sheet, SBtn, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
-import { Locked, openPaywall } from '../components/Paywall';
+import { Locked, openPaywall, ProTag } from '../components/Paywall';
 import { usePro } from '../lib/pro';
 import { Ext, ProfileCard, RenewCard, FuelCard, PartsCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
 import { TOP } from '../lib/layout';
@@ -248,7 +248,7 @@ export default function Record() {
                   : <View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '600' }}>{n}</Text></View>}
               </Pressable>
             ))}
-            {!addingCat ? <Pressable onPress={() => { if (!pro) { openPaywall(); return; } setAddingCat(true); setCatIn(''); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '600' }}>+ New category</Text></Pressable> : null}
+            {!addingCat ? <Pressable onPress={() => { if (!pro) { openPaywall(); return; } setAddingCat(true); setCatIn(''); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '600' }}>+ New category</Text>{!pro ? <ProTag /> : null}</View></Pressable> : null}
           </View>
           {addingCat ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>

@@ -9,7 +9,7 @@ import { W } from '../components/Ui';
 import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
 import { useStored } from '../lib/store';
 import { usePro } from '../lib/pro';
-import { openPaywall } from '../components/Paywall';
+import { openPaywall, ProTag } from '../components/Paywall';
 import { dlSupported, useDl, surahDone, juzDone, downloadSurah, downloadJuz, downloadAll, cancelDownload, deleteSurah, deleteAll, usage, fmtBytes, clearDlError, NET_KEY, NetPref } from '../lib/quranDl';
 import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio, getResume, resumeLast, Resume } from '../lib/quranAudio';
 import { Shine, GlowField } from '../components/Shine';
@@ -23,9 +23,6 @@ const RowPlay = ({ onPress }: { onPress: () => void }) => (
   <Shine label="Play" hitSlop={6} onPress={onPress} radius={19} style={{ width: 38, height: 38, backgroundColor: 'rgba(125,240,198,.16)', borderWidth: 1, borderColor: 'rgba(125,240,198,.4)' }}><PlayIcon size={17} color="#7df0c6" /></Shine>
 );
 
-const ProTag = ({ s = 10 }: { s?: number }) => (
-  <View style={{ paddingVertical: 2, paddingHorizontal: 6, borderRadius: 999, backgroundColor: 'rgba(255,196,107,.2)', borderWidth: 1, borderColor: 'rgba(255,196,107,.6)' }}><Text style={{ color: '#ffd9a0', fontSize: s, fontWeight: '800', letterSpacing: 1 }}>PRO</Text></View>
-);
 const DlBtn = ({ state, pct, onPress, lock }: { state: 'none' | 'busy' | 'done' | 'wait'; pct: number; onPress: () => void; lock?: boolean }) => (
   <Shine onPress={onPress} hitSlop={6} radius={19} disabled={state === 'done' || state === 'wait'} label={state === 'done' ? 'Saved on this phone' : state === 'busy' ? 'Cancel download' : 'Download to listen offline'} glow={state === 'busy' ? '#ffc46b' : '#7df0c6'} style={{ minWidth: lock ? 68 : 40, height: 38, paddingHorizontal: 8, backgroundColor: state === 'done' ? 'rgba(94,231,181,.3)' : 'rgba(255,255,255,.12)', opacity: state === 'wait' ? 0.4 : 1 }}>
     {state === 'busy' ? <Text style={{ color: W, fontSize: 11, fontWeight: '800' }}>{pct + '%'}</Text> : state === 'done' ? <CheckIcon size={17} color="#7df0c6" /> : lock ? (<View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><DownloadIcon size={17} color="rgba(255,255,255,.85)" /><ProTag s={9} /></View>) : <DownloadIcon size={17} color="rgba(255,255,255,.85)" />}
