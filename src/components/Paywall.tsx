@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Path, Rect, Circle, Ellipse, Defs, LinearGradient as SvgGrad, Stop } from 'react-native-svg';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { PER, usePrice, buyPro, restorePurchases } from '../lib/purchase';
@@ -19,12 +19,28 @@ const Lock = ({ s = 16, c = '#fff' }: { s?: number; c?: string }) => (
   <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Rect x="5" y="11" width="14" height="9" rx="2.5" /><Path d="M8 11V8a4 4 0 0 1 8 0v3" /></Svg>
 );
 
+// A human body standing on a hologram projector, with light beams and scan rings.
+const BodyHolo = ({ s = 34 }: { s?: number }) => (
+  <Svg width={s} height={s} viewBox="4 2 24 28">
+    <Defs>
+      <SvgGrad id="hb" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#d6fffb" /><Stop offset="1" stopColor="#2fd6c8" /></SvgGrad>
+      <SvgGrad id="hl" x1="0" y1="1" x2="0" y2="0"><Stop offset="0" stopColor="#5ee7df" stopOpacity="0.55" /><Stop offset="1" stopColor="#5ee7df" stopOpacity="0" /></SvgGrad>
+    </Defs>
+    <Path d="M8 27 L11.5 6 H20.5 L24 27 Z" fill="url(#hl)" />
+    <Circle cx="16" cy="6.2" r="2.6" fill="url(#hb)" />
+    <Path d="M11.6 10.4 C11.6 9.6 12.3 9.1 13.1 9.1 H18.9 C19.7 9.1 20.4 9.6 20.4 10.4 V16 C20.4 16.5 20 16.9 19.5 16.9 C19 16.9 18.7 16.5 18.7 16 V12 H18.2 V21.5 C18.2 22 17.8 22.4 17.3 22.4 C16.8 22.4 16.5 22 16.5 21.5 V16.6 H15.5 V21.5 C15.5 22 15.2 22.4 14.7 22.4 C14.2 22.4 13.8 22 13.8 21.5 V12 H13.3 V16 C13.3 16.5 13 16.9 12.5 16.9 C12 16.9 11.6 16.5 11.6 16 Z" fill="url(#hb)" />
+    <Ellipse cx="16" cy="24.2" rx="6" ry="1.7" fill="none" stroke="#5ee7df" strokeWidth="1.1" />
+    <Ellipse cx="16" cy="27" rx="9.5" ry="2.5" fill="none" stroke="#2fd6c8" strokeWidth="1.2" />
+    <Path d="M9 14.5 H23" stroke="#d6fffb" strokeWidth="0.8" strokeDasharray="1.6 1.6" opacity="0.8" />
+  </Svg>
+);
+
 const PERKS: { e: string; t: string }[] = [
   { e: '✨', t: 'Assistant' },
   { e: '📊', t: 'Spending & income trends' },
   { e: '👨‍👩‍👧', t: 'Family Planner' },
   { e: '🎧', t: 'Offline Quran recitations' },
-  { e: '🧬', t: 'Body hologram' },
+  { e: 'holo', t: 'Body hologram' },
   { e: '🔎', t: 'Pattern Finder' },
   { e: '🚗', t: 'Vehicle PDF & categories' },
   { e: '💡', t: 'Every Insights tip' },
@@ -88,7 +104,7 @@ export function PaywallHost() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 12, rowGap: 8 }}>
               {PERKS.map((p) => (
                 <View key={p.t} style={{ width: '48.5%', minHeight: 92, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(94,231,223,.22)', backgroundColor: 'rgba(255,255,255,.07)', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 8 }}>
-                  <Text style={{ fontSize: 26, lineHeight: 32 }}>{p.e}</Text>
+                  {p.e === 'holo' ? <View style={{ height: 34, justifyContent: 'center', marginTop: -2 }}><BodyHolo s={44} /></View> : <Text style={{ fontSize: 26, lineHeight: 32 }}>{p.e}</Text>}
                   <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginTop: 6, lineHeight: 16 }}>{p.t}</Text>
                 </View>
               ))}
