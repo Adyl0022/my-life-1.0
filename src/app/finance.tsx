@@ -13,6 +13,7 @@ import { Inp, DateField, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { Commitments } from '../components/Commitments';
 import { MoneyLeft } from '../components/MoneyLeft';
+import { TodaySpend } from '../components/TodaySpend';
 import { TOP } from '../lib/layout';
 import { cs, cu, cw, useRegion } from '../lib/region';
 
@@ -139,6 +140,7 @@ export default function Finance() {
           </Glass>
 
           <MoneyLeft ym={ym} income={total} spends={d.spends} />
+          <TodaySpend spends={d.spends} />
 
           <Pressable onPress={() => router.push('/savings')}>
             <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
