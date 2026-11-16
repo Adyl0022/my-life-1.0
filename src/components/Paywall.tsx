@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Svg, { Path, Rect, Circle, Defs, LinearGradient as SvgGrad, Stop } from 'react-native-svg';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { PER, usePrice, buyPro, restorePurchases } from '../lib/purchase';
@@ -21,21 +21,31 @@ const Lock = ({ s = 16, c = '#fff' }: { s?: number; c?: string }) => (
 
 // Modern line icons with a teal gradient stroke.
 function Ico({ k }: { k: string }) {
-  const sp = { fill: 'none', stroke: 'url(#ig)', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
+  const sp = { fill: 'rgba(255,255,255,.28)', stroke: '#fff', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
   return (
     <Svg width={26} height={26} viewBox="0 0 24 24">
-      <Defs><SvgGrad id="ig" x1="0" y1="0" x2="1" y2="1"><Stop offset="0" stopColor="#c8fffa" /><Stop offset="1" stopColor="#2fd6c8" /></SvgGrad></Defs>
       {k === 'assistant' && (<><Path {...sp} d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z" /><Path {...sp} d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z" /></>)}
-      {k === 'chart' && (<><Path {...sp} d="M5 20v-8M12 20V4M19 20v-5" /></>)}
+      {k === 'chart' && (<><Rect {...sp} x="4" y="12" width="4" height="8" rx="1.2" /><Rect {...sp} x="10" y="4" width="4" height="16" rx="1.2" /><Rect {...sp} x="16" y="9" width="4" height="11" rx="1.2" /></>)}
       {k === 'family' && (<><Circle {...sp} cx="9" cy="8" r="3" /><Path {...sp} d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><Circle {...sp} cx="17.5" cy="9" r="2.3" /><Path {...sp} d="M17 14.3c2.5.2 4.5 2.2 4.5 4.7" /></>)}
       {k === 'quran' && (<><Path {...sp} d="M4 14v-2a8 8 0 0 1 16 0v2" /><Rect {...sp} x="3" y="14" width="4" height="6" rx="2" /><Rect {...sp} x="17" y="14" width="4" height="6" rx="2" /></>)}
       {k === 'body' && (<><Circle {...sp} cx="12" cy="5" r="2.4" /><Path {...sp} d="M8 10.5l4 1 4-1M12 11.5V16M9.5 15.5L12 16l2.5-.5" /><Path {...sp} d="M4 20c2.5 1.6 13.5 1.6 16 0M7 18.2c2.8 1 7.2 1 10 0" /></>)}
       {k === 'pattern' && (<><Circle {...sp} cx="11" cy="11" r="6" /><Path {...sp} d="M20 20l-4.3-4.3M8.5 11.5l1.8 1.8L14 9" /></>)}
-      {k === 'car' && (<><Path {...sp} d="M4 15v-3l2-5h12l2 5v3z" /><Path {...sp} d="M4 12h16" /><Circle {...sp} cx="7.5" cy="17.5" r="1.6" /><Circle {...sp} cx="16.5" cy="17.5" r="1.6" /></>)}
+      {k === 'car' && (<><Path {...sp} d="M4 15v-3l2-5h12l2 5v3z" /><Circle {...sp} cx="7.5" cy="17.5" r="1.6" /><Circle {...sp} cx="16.5" cy="17.5" r="1.6" /></>)}
       {k === 'tip' && (<><Path {...sp} d="M9 18h6M10 21h4" /><Path {...sp} d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></>)}
     </Svg>
   );
 }
+
+const GRAD: Record<string, [string, string]> = {
+  assistant: ['#7f9bff', '#4b5cf0'],
+  chart: ['#3ee0b4', '#12a37f'],
+  family: ['#ff9db8', '#e8527f'],
+  quran: ['#4fd8f0', '#1b8fd0'],
+  body: ['#5ee7df', '#17a6a0'],
+  pattern: ['#c39bff', '#8a4fe0'],
+  car: ['#ffb86b', '#ee7d2a'],
+  tip: ['#ffe27a', '#f0a81c'],
+};
 
 const PERKS: { k: string; t: string }[] = [
   { k: 'assistant', t: 'My Life Assistant' },
@@ -93,7 +103,7 @@ export function PaywallHost() {
   return (
     <Modal visible={shown} transparent animationType="fade" onRequestClose={closePaywall} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: 'rgba(2,6,14,.9)', justifyContent: 'center', padding: 18 }}>
-        <View style={{ borderRadius: 30, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.28)', maxHeight: '94%' }}>
+        <View style={{ borderRadius: 30, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.28)', maxHeight: '96%' }}>
           <LinearGradient colors={['#0e4f50', '#0a2230', '#070f1c']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.7 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
           <LinearGradient pointerEvents="none" colors={['rgba(94,231,223,.30)', 'rgba(94,231,223,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 230 }} />
           <LinearGradient pointerEvents="none" colors={['rgba(47,214,200,0)', 'rgba(47,214,200,.14)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 200 }} />
@@ -105,9 +115,9 @@ export function PaywallHost() {
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 12, rowGap: 8 }}>
               {PERKS.map((p) => (
-                <View key={p.k} style={{ width: '48.5%', minHeight: 92, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.22)', backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 8 }}>
+                <View key={p.k} style={{ width: '48.5%', minHeight: 84, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.22)', backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 8 }}>
                   <LinearGradient colors={['rgba(255,255,255,.09)', 'rgba(255,255,255,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.6 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-                  <View style={{ width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(94,231,223,.12)', borderWidth: 1, borderColor: 'rgba(94,231,223,.35)', shadowColor: '#5ee7df', shadowOpacity: 0.6, shadowRadius: 10, shadowOffset: { width: 0, height: 0 }, elevation: 4 }}><Ico k={p.k} /></View>
+                  <LinearGradient colors={GRAD[p.k]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', shadowColor: GRAD[p.k][1], shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}><View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 20, borderTopLeftRadius: 15, borderTopRightRadius: 15, backgroundColor: 'rgba(255,255,255,.18)' }} /><Ico k={p.k} /></LinearGradient>
                   <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginTop: 8, lineHeight: 16 }}>{p.t}</Text>
                 </View>
               ))}
