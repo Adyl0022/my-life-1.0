@@ -9,6 +9,8 @@ import { HeadIcon, Face } from './HabitIcons';
 import { Inp } from './Ui';
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal, goalPctOf } from '../lib/habit';
 import { modOn } from '../lib/hidden';
+import { usePro } from '../lib/pro';
+import { openPaywall } from './Paywall';
 import { ENERGY, energyEstimate, dayLevel, hasAny, windowAvg } from '../lib/patterns';
 import { METRICS, Metric, fmtVal, series, future, weightFuture, memories, dstr, Fut } from '../lib/timeline';
 
@@ -78,7 +80,7 @@ function Guess({ hist, proj, color }: { hist: (number | null)[]; proj: number[];
 }
 
 export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void }) {
-  const router = useRouter();
+  const router = useRouter(); const pro = usePro();
   const goal = h.goal || 8000, cg = cupsGoal(h);
   const [tab, setTab] = useState<Tab>('cal');
   // Calendar
@@ -126,7 +128,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
         <HeadIcon k="week" size={34} />
         <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Time Machine</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Your days, past and ahead</Text></View>
       </View>
-      <Pressable onPress={() => router.push('/timemachine' as any)} accessibilityLabel="Open the body hologram" style={{ marginTop: 12, borderRadius: 16, overflow: 'hidden' }}>
+      <Pressable onPress={() => (pro ? router.push('/timemachine' as any) : openPaywall())} accessibilityLabel="Open the body hologram" style={{ marginTop: 12, borderRadius: 16, overflow: 'hidden' }}>
         <LinearGradient colors={['rgba(94,231,223,.28)', 'rgba(124,156,255,.3)', 'rgba(183,148,255,.3)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(143,233,226,.4)', borderRadius: 16 }}>
           <HeadIcon k="rbody" size={30} />
           <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Body hologram</Text><Text style={{ color: DIM, fontSize: 11.5, marginTop: 3 }}>Tap your body. Travel to the past or the future.</Text></View>

@@ -11,6 +11,8 @@ import { W } from '../components/Ui';
 import { Hologram } from '../components/Hologram';
 import { HologramSpin } from '../components/HologramSpin';
 import { HeartLog } from '../components/HeartLog';
+import { usePro } from '../lib/pro';
+import { UnlockPage } from '../components/Paywall';
 class Guard extends React.Component<{ onFail: () => void; children: React.ReactNode }, { bad: boolean }> {
   state = { bad: false };
   static getDerivedStateFromError() { return { bad: true }; }
@@ -57,7 +59,7 @@ const Hud = ({ rows, goal }: { rows: Row[]; goal: number }) => {
   );
 };
 
-export default function TimeMachinePage() {
+function TimeMachinePageInner() {
   const router = useRouter(); const { width } = useWindowDimensions();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [mode, setMode] = useState<'past' | 'future'>('past');
@@ -238,4 +240,9 @@ export default function TimeMachinePage() {
       </SafeAreaView>
     </View>
   );
+}
+
+export default function TimeMachinePage() {
+  const pro = usePro();
+  return pro ? <TimeMachinePageInner /> : <UnlockPage title="Body hologram" text="The body hologram is part of the yearly subscription. The rest of Time Machine stays open to everyone." />;
 }

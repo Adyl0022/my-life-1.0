@@ -10,6 +10,8 @@ import { Rise } from '../components/Anim';
 import { Ico, Note, W, DIM } from '../components/FamilyUi';
 import { useFamily, famError } from '../lib/family';
 import { trashList, famRestore, trashRemove, trashEmpty, nameOf, daysLeft, Trashed } from '../lib/familyData';
+import { usePro } from '../lib/pro';
+import { UnlockPage } from '../components/Paywall';
 
 const KIND: Record<string, { t: string; ic: string; c: string }> = {
   task: { t: 'Task', ic: 'tasks', c: '#5ee7df' },
@@ -18,7 +20,7 @@ const KIND: Record<string, { t: string; ic: string; c: string }> = {
 };
 
 // Everything the family deleted in the last 7 days. Anyone can bring an item back; after 7 days it is removed for good.
-export default function FamilyTrash() {
+function FamilyTrashInner() {
   const f = useFamily();
   const info = f.info;
   const [list, setList] = useState<Trashed[] | null>(null);
@@ -66,4 +68,9 @@ export default function FamilyTrash() {
       </SafeAreaView>
     </View>
   );
+}
+
+export default function FamilyTrash() {
+  const pro = usePro();
+  return pro ? <FamilyTrashInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
 }

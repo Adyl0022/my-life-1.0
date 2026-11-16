@@ -13,12 +13,14 @@ import { useFamily, useAutoRefresh } from '../lib/family';
 import { useFamEvents, useFamTasks, peopleOf, dayDiff, timeText, FEvent, useReloadOnFocus } from '../lib/familyData';
 import { FamCalendar } from '../components/FamCalendar';
 import { LinearGradient } from 'expo-linear-gradient';
+import { usePro } from '../lib/pro';
+import { UnlockPage } from '../components/Paywall';
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 // Family activities: a visit, a school event, a trip. Everyone sees them and anyone can edit.
-export default function FamilyEvents() {
+function FamilyEventsInner() {
   const router = useRouter();
   const f = useFamily();
   const info = f.info;
@@ -83,4 +85,9 @@ export default function FamilyEvents() {
       </SafeAreaView>
     </View>
   );
+}
+
+export default function FamilyEvents() {
+  const pro = usePro();
+  return pro ? <FamilyEventsInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
 }

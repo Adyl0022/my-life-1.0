@@ -13,8 +13,10 @@ import { useFamily, useAutoRefresh, famCreate, famError, pickColor, isParent } f
 import { useFamTasks, useFamShop, useFamEvents, dayDiff, useReloadOnFocus } from '../lib/familyData';
 import { useLicense } from '../lib/license';
 import { useName } from '../lib/store';
+import { usePro } from '../lib/pro';
+import { UnlockPage } from '../components/Paywall';
 
-export default function Family() {
+function FamilyInner() {
   const router = useRouter();
   const lic = useLicense();
   const f = useFamily();
@@ -123,4 +125,9 @@ export default function Family() {
       </SafeAreaView>
     </View>
   );
+}
+
+export default function Family() {
+  const pro = usePro();
+  return pro ? <FamilyInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
 }

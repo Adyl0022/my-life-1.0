@@ -14,8 +14,10 @@ import { HouseChores, HouseRewards } from '../components/HouseChores';
 import { useFamily, useAutoRefresh, famError } from '../lib/family';
 import { useFamTasks, peopleOf, taskDone, taskLocked, dueText, dayDiff, FTask, useReloadOnFocus, famDelete } from '../lib/familyData';
 import { showAlert } from '../lib/dialog';
+import { usePro } from '../lib/pro';
+import { UnlockPage } from '../components/Paywall';
 
-export default function FamilyTasks() {
+function FamilyTasksInner() {
   const router = useRouter();
   const f = useFamily();
   const info = f.info;
@@ -119,4 +121,9 @@ export default function FamilyTasks() {
       </SafeAreaView>
     </View>
   );
+}
+
+export default function FamilyTasks() {
+  const pro = usePro();
+  return pro ? <FamilyTasksInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
 }

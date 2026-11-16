@@ -25,6 +25,9 @@ const PERKS = [
   'Spending by category and income trend',
   'Vehicle record PDF and extra categories',
   'Every tip in Insights',
+  'Family Planner',
+  'Save Quran recitations offline',
+  'Body hologram in Time Machine',
 ];
 
 function Btn({ t, onPress, solid }: { t: string; onPress: () => void; solid?: boolean }) {
