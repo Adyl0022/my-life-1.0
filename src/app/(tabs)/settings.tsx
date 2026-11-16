@@ -282,7 +282,7 @@ export default function Settings() {
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Notifications" />
                 {exact !== null ? <Text style={{ color: exact ? 'rgba(255,255,255,.72)' : '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{exact ? 'Exact timing is on. Reminders and prayer alerts arrive on the minute.' : 'Exact timing is off. Reminders and prayer alerts can arrive a few minutes late.'}</Text> : null}
-                <View style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} style={{ flex: 0 }} /> : null}<Btn t="Send a test notification" onPress={testNotif} style={{ flex: 0 }} /></View>
+                <View style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}<Btn t="Send a test notification" onPress={testNotif} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /></View>
               </Glass>
 
               {isAdmin ? <Pressable onPress={() => router.push('/admin' as any)}>
