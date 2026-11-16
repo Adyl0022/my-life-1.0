@@ -115,9 +115,8 @@ export function PaywallHost() {
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 12, rowGap: 8 }}>
               {PERKS.map((p) => (
-                <View key={p.k} style={{ width: '48.5%', minHeight: 84, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.22)', backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 8 }}>
-                  <LinearGradient colors={['rgba(255,255,255,.09)', 'rgba(255,255,255,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.6 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-                  <LinearGradient colors={GRAD[p.k]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', shadowColor: GRAD[p.k][1], shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5 }}><View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 20, borderTopLeftRadius: 15, borderTopRightRadius: 15, backgroundColor: 'rgba(255,255,255,.18)' }} /><Ico k={p.k} /></LinearGradient>
+                <View key={p.k} style={{ width: '48.5%', minHeight: 84, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.22)', backgroundColor: 'rgba(255,255,255,.07)', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 8 }}>
+                  <LinearGradient colors={GRAD[p.k]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', shadowColor: GRAD[p.k][1], shadowOpacity: 0.75, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,.45)', overflow: 'hidden' }}><View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 22, backgroundColor: 'rgba(255,255,255,.26)' }} /><Ico k={p.k} /></LinearGradient>
                   <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginTop: 8, lineHeight: 16 }}>{p.t}</Text>
                 </View>
               ))}
