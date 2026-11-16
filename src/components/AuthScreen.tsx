@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image } from 'react-native';
+import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image, Linking } from 'react-native';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect, Defs, Pattern, Stop, RadialGradient as SRG } from 'react-native-svg';
 import { GP, W } from './Ui';
 import { Blob } from './Bg';
 import { CodeBoxes } from './CodeBoxes';
+import { PRIVACY_URL } from '../lib/legal';
 import { pwLevel, PW_TEXT } from '../lib/pwstrength';
 import { signIn, signUp, verifyCode, resendSignup, sendReset, setNewPassword } from '../lib/auth';
 
@@ -292,6 +293,8 @@ export function AuthScreen() {
                   {busy ? <ActivityIndicator color="#fff" /> : <Text style={{ color: W, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 }}>{main[0]}</Text>}
                 </LinearGradient>
               </Pressable>
+
+              {mode === 'up' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 17, textAlign: 'center', marginTop: 12 }}>By creating an account you agree to the <Text onPress={() => Linking.openURL(PRIVACY_URL + '#terms')} accessibilityRole="link" style={{ color: TEAL, fontWeight: '700' }}>Terms</Text> and <Text onPress={() => Linking.openURL(PRIVACY_URL + '#privacy')} accessibilityRole="link" style={{ color: TEAL, fontWeight: '700' }}>Privacy Policy</Text>.</Text> : null}
 
               <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 12 }}>
                 {mode === 'in' ? link('Forgot password?', () => go('forgot')) : null}
