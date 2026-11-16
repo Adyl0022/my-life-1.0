@@ -12,7 +12,6 @@ export type Qari = { id: string; name: string; match: string[]; skip?: string[] 
 export const QARIS: Qari[] = [
   { id: 'alafasy', name: 'Mishary Alafasy', match: ['alafasy', 'afasy'] },
   { id: 'sudais', name: 'Abdul Rahman As-Sudais', match: ['sudais', 'sudays'] },
-  { id: 'ghamdi', name: 'Saad Al-Ghamdi', match: ['ghamdi', 'ghamadi', 'ghamidi'] },
   { id: 'muaiqly', name: 'Maher Al-Muaiqly', match: ['muaiqly', 'mu\'aiqly', 'muaiqaly', 'maher'] },
   { id: 'husary', name: 'Mahmoud Khalil Al-Husary', match: ['husary', 'hussary', 'husari'], skip: ['mujawwad', 'muallim', 'teacher'] },
 ];

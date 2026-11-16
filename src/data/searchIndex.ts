@@ -58,11 +58,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Quran Audio",
-  "s": "Listen to all 30 juz and 114 surahs, 5 reciters",
+  "s": "Listen to all 30 juz and 114 surahs, 4 reciters",
   "m": "Islamic",
   "c": "#5ee7b5",
   "h": "QuranAudio.dc.html",
-  "k": "quran audio listen dengar bacaan juzuk juz surah qari reciter alafasy sudais ghamdi muaiqly husary mengaji tilawah"
+  "k": "quran audio listen dengar bacaan juzuk juz surah qari reciter alafasy sudais muaiqly husary mengaji tilawah"
  },
  {
   "t": "Islamic Hub",
