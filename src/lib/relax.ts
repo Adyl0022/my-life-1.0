@@ -30,12 +30,14 @@ export const relaxStreak = (h: HData) => {
   return n;
 };
 export const recentSess = (h: HData, max = 6) => {
-  const out: { when: string; r: RSess }[] = [];
+  const out: { when: string; r: RSess; off: number; idx: number }[] = [];
   for (let i = 0; i > -30 && out.length < max; i--) {
-    const x = getDay(h, i); const list = [...(x.rl || [])].reverse();
-    for (const r of list) { if (out.length >= max) break; out.push({ when: i === 0 ? 'Today' : i === -1 ? 'Yesterday' : dateOf(i).getDate() + '/' + (dateOf(i).getMonth() + 1), r }); }
+    const x = getDay(h, i); const n = (x.rl || []).length; const list = [...(x.rl || [])].reverse();
+    list.forEach((r, j) => { if (out.length >= max) return; out.push({ when: i === 0 ? 'Today' : i === -1 ? 'Yesterday' : dateOf(i).getDate() + '/' + (dateOf(i).getMonth() + 1), r, off: i, idx: n - 1 - j }); });
   }
   return out;
 };
+// Remove one saved session (day offset + position in that day's list).
+export const delSess = (h: HData, off: number, idx: number): HData => { const k = keyOfDate(dateOf(off)); const x = getDay(h, off); return { ...h, days: { ...h.days, [k]: { ...x, rl: (x.rl || []).filter((_, i) => i !== idx) } } }; };
 export const addSess = (h: HData, r: RSess): HData => { const k = keyOfDate(dateOf(0)); const x = getDay(h, 0); return { ...h, days: { ...h.days, [k]: { ...x, rl: [...(x.rl || []), r].slice(-40) } } }; };
 export const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };

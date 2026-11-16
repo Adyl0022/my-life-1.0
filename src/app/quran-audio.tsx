@@ -193,7 +193,7 @@ export default function QuranAudio() {
                 <Glass radius={22} style={{ padding: 14 }}>
                   <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Downloading {d.label}</Text>
                   <View style={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: pct + '%', height: 8, backgroundColor: TEAL }} /></View>
-                  <Pressable onPress={cancelDownload} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
+                  <Pressable onPress={cancelDownload} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>{d.stopping ? 'Stopping…' : 'Cancel'}</Text></Pressable>
                 </Glass>
               ) : null}
               <Glass radius={22} style={{ padding: 14 }}>

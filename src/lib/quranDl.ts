@@ -32,8 +32,8 @@ const q = (qid: string): QIdx => { const i = idx as Idx; if (!i[qid]) i[qid] = {
 export const fileUri = (dir: string, qid: string, s: number, a: number) => dir + qid + '/' + s + '_' + a + '.mp3';
 
 // ---- progress state shared with the screen
-export type DlState = { busy: boolean; label: string; done: number; total: number; err: string; version: number };
-let st: DlState = { busy: false, label: '', done: 0, total: 0, err: '', version: 0 };
+export type DlState = { busy: boolean; label: string; done: number; total: number; err: string; version: number; stopping: boolean };
+let st: DlState = { busy: false, label: '', done: 0, total: 0, err: '', version: 0, stopping: false };
 const subs = new Set<() => void>();
 const set = (p: Partial<DlState>) => { st = { ...st, ...p }; subs.forEach((f) => f()); };
 export const useDl = (): DlState => {
@@ -42,7 +42,23 @@ export const useDl = (): DlState => {
   return st;
 };
 let cancel = false;
-export const cancelDownload = () => { cancel = true; };
+const live = new Set<any>(); // downloads in flight, so Cancel can stop them at once
+let abortCtl: AbortController | null = null;
+export const cancelDownload = () => {
+  if (!st.busy || cancel) return;
+  cancel = true; set({ stopping: true });
+  live.forEach((d) => { try { d.cancelAsync(); } catch (e) { /* ignore */ } });
+  try { abortCtl && abortCtl.abort(); } catch (e) { /* ignore */ }
+};
+// One verse file, with a time limit so a stuck connection can never freeze the download or the Cancel button.
+async function getFile(FS: any, url: string, to: string): Promise<boolean> {
+  const d = FS.createDownloadResumable(url, to);
+  live.add(d);
+  const timer = setTimeout(() => { try { d.cancelAsync(); } catch (e) { /* ignore */ } }, 30000);
+  try { const r = await d.downloadAsync(); return !!r && r.status === 200; } catch (e) { return false; }
+  finally { clearTimeout(timer); live.delete(d); }
+}
+let bProg: { done: number } | null = null; // verses finished in a whole-Quran download
 
 // ---- what is on the phone
 export const surahDone = (qid: string, s: number): boolean => { const x = idx && idx[qid] && idx[qid].s[String(s)]; return !!x && x.total > 0 && Object.keys(x.files).length >= x.total; };
@@ -87,7 +103,8 @@ export async function netOk(): Promise<{ ok: boolean; msg: string }> {
 }
 
 async function getList(qid: string, ident: string, kind: 's' | 'j', n: number): Promise<[number, number][]> {
-  const r = await fetch(API + (kind === 's' ? '/surah/' : '/juz/') + n + '/' + ident);
+  const ac = new AbortController(); abortCtl = ac; const to = setTimeout(() => ac.abort(), 20000);
+  let r: any; try { r = await fetch(API + (kind === 's' ? '/surah/' : '/juz/') + n + '/' + ident, { signal: ac.signal }); } finally { clearTimeout(to); }
   const j = await r.json(); const ay: any[] = (j && j.data && j.data.ayahs) || [];
   const out: [number, number][] = []; const urls: Record<string, string> = {};
   ay.forEach((a) => { if (!a || !a.audio) return; const s = (a.surah && a.surah.number) || n; const k = s + ':' + a.numberInSurah; out.push([s, a.numberInSurah]); urls[k] = String(a.audio).replace(/^http:/, 'https:'); });
@@ -116,16 +133,18 @@ async function oneUnit(qid: string, ident: string, kind: 's' | 'j', n: number, l
       const [s, a] = todo[at++]; const to = fileUri(dir, qid, s, a);
       let ok = false;
       for (let t = 0; t < 3 && !ok && !cancel; t++) {
-        try { const r = await FS.downloadAsync(urls[s + ':' + a], to); ok = r && r.status === 200; if (!ok) await FS.deleteAsync(to, { idempotent: true }).catch(() => {}); } catch (e) { /* retry */ }
+        ok = await getFile(FS, urls[s + ':' + a], to);
+        if (!ok) await FS.deleteAsync(to, { idempotent: true }).catch(() => {});
       }
       if (!ok) { if (!cancel) { cancel = true; throw new Error('download'); } return; }
       let bytes = 0; try { const i = await FS.getInfoAsync(to); bytes = (i && i.size) || 1; } catch (e) { bytes = 1; }
       if (!qi.s[String(s)]) qi.s[String(s)] = { total: 0, files: {} };
       qi.s[String(s)].files[String(a)] = bytes; done++;
-      if (!batch) set({ done });
+      if (!batch) set({ done }); else if (bProg) { bProg.done++; set({ done: bProg.done }); }
     }
   };
-  await Promise.all([worker(), worker(), worker()]);
+  if (batch && bProg) { bProg.done += list.length - todo.length; set({ done: bProg.done }); }
+  await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
   if (cancel) { await saveIdx(); return false; }
   if (kind === 'j') qi.j[String(n)] = list;
   await saveIdx(); set({ version: st.version + 1 });
@@ -140,21 +159,25 @@ export async function downloadJuz(qid: string, ident: string, j: number, title: 
 }
 export async function downloadAll(qid: string, ident: string, names: string[]): Promise<boolean> {
   return run(async () => {
-    for (let s = 1; s <= 114 && !cancel; s++) {
-      if (surahDone(qid, s)) { set({ done: s }); continue; }
-      const ok = await oneUnit(qid, ident, 's', s, 'Surah ' + s + ' of 114 · ' + (names[s - 1] || ''), true); if (!ok) return false;
-      set({ done: s, label: 'Surah ' + s + ' of 114 · ' + (names[s - 1] || '') });
-    }
-    return !cancel;
-  }, 'Whole Quran', 114);
+    bProg = { done: 0 };
+    try {
+      for (let s = 1; s <= 114 && !cancel; s++) {
+        const label = 'Surah ' + s + ' of 114 · ' + (names[s - 1] || '');
+        set({ label });
+        if (surahDone(qid, s)) { bProg.done += ((idx as Idx)[qid].s[String(s)] || { total: 0 }).total; set({ done: bProg.done }); continue; }
+        const ok = await oneUnit(qid, ident, 's', s, label, true); if (!ok) return false;
+      }
+      return !cancel;
+    } finally { bProg = null; }
+  }, 'Whole Quran', 6236);
 }
 async function run(f: () => Promise<boolean>, label: string, total: number): Promise<boolean> {
   if (!dlSupported) return false;
   if (st.busy) { set({ err: 'Another download is running. Wait for it or cancel it first.' }); return false; }
   const n = await netOk(); if (!n.ok) { set({ err: n.msg }); return false; }
-  cancel = false; await loadIdx(); set({ busy: true, label, done: 0, total, err: '' });
-  try { const ok = await f(); set({ busy: false, err: ok ? '' : cancel ? 'Download stopped. What was saved stays on the phone.' : '' }); return ok; }
-  catch (e) { await saveIdx(); set({ busy: false, err: 'Download failed. Check your internet and try again. What was saved stays on the phone.' }); return false; }
+  cancel = false; await loadIdx(); set({ busy: true, label, done: 0, total, err: '', stopping: false });
+  try { const ok = await f(); set({ busy: false, stopping: false, err: ok ? '' : cancel ? 'Download stopped. What was saved stays on the phone.' : '' }); return ok; }
+  catch (e) { await saveIdx(); set({ busy: false, stopping: false, err: cancel ? 'Download stopped. What was saved stays on the phone.' : 'Download failed. Check your internet and try again. What was saved stays on the phone.' }); return false; }
 }
 export const clearDlError = () => set({ err: '' });
 

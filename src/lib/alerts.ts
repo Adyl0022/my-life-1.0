@@ -191,11 +191,13 @@ export async function scheduleRelaxEnd(seconds: number): Promise<void> {
   try {
     await cancelPrefix('rlx-end');
     if (!(await setup())) return;
-    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('relax', { name: 'Relax reminder', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#8fe9e2' });
+    // Own channel with higher importance so the bell sounds and shows on a locked screen.
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('relax-end', { name: 'Relax timer finished', importance: Notifications.AndroidImportance.HIGH, lightColor: '#8fe9e2', vibrationPattern: [0, 250, 150, 250] });
     await Notifications.scheduleNotificationAsync({
       identifier: 'rlx-end',
       content: { title: 'Session complete', body: 'Well done. Take a moment before you carry on.', sound: true },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: Math.max(5, Math.round(seconds)), channelId: 'relax' } as any,
+      // alarmClock delivery: the phone cannot hold the notification back while the screen is off (same as medicine reminders).
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(Date.now() + Math.max(5, Math.round(seconds)) * 1000), channelId: 'relax-end', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }
 }

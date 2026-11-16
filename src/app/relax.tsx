@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, Animated, Easing, AccessibilityInfo, Vibra
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
@@ -15,7 +15,7 @@ import { PageArt } from '../components/PageArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
-import { BREATH, STYLES, LOOK, mins, fmtMin, weekMins, relaxStreak, recentSess, addSess, nowHM } from '../lib/relax';
+import { BREATH, STYLES, LOOK, mins, fmtMin, weekMins, relaxStreak, recentSess, addSess, delSess, nowHM } from '../lib/relax';
 import { dayKind } from '../lib/cycle';
 import { scheduleRelaxEnd, cancelRelaxEnd } from '../lib/alerts';
 
@@ -137,7 +137,7 @@ export default function Relax() {
   const [bk, setBk] = useState('box'); const [bl, setBl] = useState(180);
   const [mk, setMk] = useState('sit'); const [ml, setMl] = useState(10); const [cust, setCust] = useState(false); const [cm, setCm] = useState('');
   const [run, setRun] = useState<Run | null>(null); const [reduce, setReduce] = useState(false);
-  const [rem, setRem] = useState(''); const [remErr, setRemErr] = useState('');
+  const [rem, setRem] = useState(''); const [remErr, setRemErr] = useState(''); const [delKey, setDelKey] = useState<string | null>(null);
   useEffect(() => { try { AccessibilityInfo.isReduceMotionEnabled().then(setReduce); } catch (e) {} }, []);
   const goal = h.rlGoal || 10; const bell = h.rlBell !== false;
   const today = mins(getDay(h, 0));
@@ -215,7 +215,22 @@ export default function Relax() {
                     </View>
                   </Glass>
                   <Cap t="RECENT" />
-                  {recentSess(h).length ? recentSess(h).map((x, i) => { const L = LOOK[x.r.k] || { name: 'Session', ic: 'relax', med: false }; return <Row key={i} ic={L.ic} n={L.name + ' · ' + fmtMin(x.r.s / 60) + ' min'} d={x.when + ', ' + x.r.at} />; }) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 13 }}>No sessions yet. Try a 1 minute breathing exercise.</Text>}
+                  {recentSess(h).length ? recentSess(h).map((x) => { const L = LOOK[x.r.k] || { name: 'Session', ic: 'relax', med: false }; const key = x.off + ':' + x.idx; const ask = delKey === key; return (
+                    <View key={key} style={{ marginBottom: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.09)' }}>
+                        <HeadIcon k={L.ic} size={40} />
+                        <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{L.name + ' · ' + fmtMin(x.r.s / 60) + ' min'}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{x.when + ', ' + x.r.at}</Text></View>
+                        {!ask ? <Pressable onPress={() => setDelKey(key)} hitSlop={10} accessibilityLabel={'Delete ' + L.name + ' record'} style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.1)' }}><Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" fill="none" stroke="rgba(255,255,255,.85)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /></Svg></Pressable> : null}
+                      </View>
+                      {ask ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingHorizontal: 4 }}>
+                          <Text style={{ color: '#ffc2cc', fontSize: 12.5, flex: 1 }}>Delete this record?</Text>
+                          <Chip on={false} t="Keep" onPress={() => setDelKey(null)} />
+                          <Pressable onPress={() => { setH(delSess(h, x.off, x.idx)); setDelKey(null); }} accessibilityLabel="Confirm delete" style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#ff8fa3' }}><Text style={{ color: '#3a0a16', fontSize: 13, fontWeight: '800' }}>Delete</Text></Pressable>
+                        </View>
+                      ) : null}
+                    </View>
+                  ); }) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 13 }}>No sessions yet. Try a 1 minute breathing exercise.</Text>}
                   <Glass radius={24} style={{ marginTop: 14, padding: 14 }}>
                     <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Daily goal</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>{[5, 10, 15, 20].map((m) => <Chip key={m} on={goal === m} t={m + ' min'} onPress={() => setH({ ...h, rlGoal: m })} />)}</View>
