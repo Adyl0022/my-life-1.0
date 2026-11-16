@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +26,10 @@ export default function Medicine() {
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'today' | 'week' | 'all'>('today');
+  // Without "exact timing" Android may hold a reminder back by many minutes, even an hour. Tell the person and let them turn it on.
+  const [exact, setExact] = useState<boolean | null>(null);
+  React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
+  const askExact = async () => { try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); } catch (e) { /* ignore */ } };
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState(''); const [dose, setDose] = useState(''); const [time, setTime] = useState('');
   const [rep, setRep] = useState<'every' | 'weekdays' | 'pick'>('every'); const [pick, setPick] = useState<number[]>([]);
@@ -127,6 +132,13 @@ export default function Medicine() {
                   <Text style={{ color: '#ffd593', fontSize: 11, marginTop: 4 }}>Not ticked? You get a nudge after 1 hour.</Text>
                 </View>
               </Glass>
+              {exact === false && meds.length > 0 ? (
+                <Glass radius={22} style={{ padding: 14, marginTop: 12, backgroundColor: 'rgba(255,196,107,.14)', borderColor: 'rgba(255,196,107,.4)', borderWidth: 1 }}>
+                  <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Reminders may arrive late</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>Your phone is not set to deliver reminders on the minute, so a medicine reminder can be held back, sometimes by an hour. Turn on exact timing so it arrives at the time you set.</Text>
+                  <Pressable onPress={askExact} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#ffc46b' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Turn on exact timing</Text></Pressable>
+                </Glass>
+              ) : null}
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 14 }}>
                 <Chip on={tab === 'today'} t="Today" onPress={() => setTab('today')} /><Chip on={tab === 'week'} t="Week" onPress={() => setTab('week')} /><Chip on={tab === 'all'} t="All medicines" onPress={() => setTab('all')} />
               </View>
