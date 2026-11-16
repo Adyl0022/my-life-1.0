@@ -83,8 +83,8 @@ export default function Finance() {
   const gMax = Math.max(...gm.map((x) => x.v), 1);
   const gc = gm[5].v, gp = gm[4].v, gd = gc - gp; const gPct = gp > 0 ? Math.round(Math.abs(gd) / gp * 100) : 0;
   const spent = d.spends.filter((p) => p.cat !== 'Savings').reduce((a, p) => a + p.amt, 0);
-  // The list is always in date order, oldest first, whatever order the entries were typed in. Same day: the order they were added.
-  const byDate = [...d.spends].sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.id - b.id);
+  // The list is always in date order, newest first, whatever order the entries were typed in. Same day: the one added last is on top.
+  const byDate = [...d.spends].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
   const monthSpent = d.spends.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
   const tr = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, t: sumOf(d.inc[k.key]) }; });
   const maxT = Math.max(...tr.map((x) => x.t), 1);
