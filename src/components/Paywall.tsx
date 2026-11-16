@@ -94,7 +94,7 @@ export function PaywallHost() {
   const go = async (fn: typeof buyPro) => { setBusy(true); const r = await fn(); setBusy(false); setMsg(r.msg); if (r.ok) closePaywall(); };
   return (
     <Modal visible={shown} transparent animationType="fade" onRequestClose={closePaywall} statusBarTranslucent>
-      <View style={{ flex: 1, backgroundColor: 'rgba(2,6,14,.9)', justifyContent: 'center', padding: 18 }}>
+      <View style={{ flex: 1, backgroundColor: '#02060e', justifyContent: 'center', padding: 18 }}>
         <View style={{ borderRadius: 30, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.28)', maxHeight: '96%' }}>
           <LinearGradient colors={['#0e4f50', '#0a2230', '#070f1c']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.7 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
           <LinearGradient pointerEvents="none" colors={['rgba(94,231,223,.30)', 'rgba(94,231,223,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 230 }} />
