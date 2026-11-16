@@ -13,7 +13,7 @@ import { Rise } from '../components/Anim';
 import { Avatar, Pill, Btn, Field, Note, Label, W, DIM } from '../components/FamilyUi';
 import { useFamily, useAutoRefresh, famError, famNewCode, famSetInvites, famDeleteAll, famRemove, famSetRole, famTransfer, famLeave, famForget, famAddProfile, famSetBirthday, famProfileBirthday, famMemberBirthday, famRemoveProfile, famRename, showCode, pickColor, isParent, FMember } from '../lib/family';
 import { usePro } from '../lib/pro';
-import { UnlockPage } from '../components/Paywall';
+import { FamilyUnlock } from '../components/ThemedUnlock';
 
 const bdText = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? Number(m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1] + ' ' + m[1] : v; };
 const ROLE: Record<string, string> = { owner: 'Owner', parent: 'Parent', member: 'Member' };
@@ -195,5 +195,5 @@ function FamilyMembersInner() {
 
 export default function FamilyMembers() {
   const pro = usePro();
-  return pro ? <FamilyMembersInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
+  return pro ? <FamilyMembersInner /> : <FamilyUnlock />;
 }

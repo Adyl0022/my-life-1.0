@@ -15,7 +15,7 @@ import { useFamily, useAutoRefresh, famError } from '../lib/family';
 import { useFamTasks, peopleOf, taskDone, taskLocked, dueText, dayDiff, FTask, useReloadOnFocus, famDelete } from '../lib/familyData';
 import { showAlert } from '../lib/dialog';
 import { usePro } from '../lib/pro';
-import { UnlockPage } from '../components/Paywall';
+import { FamilyUnlock } from '../components/ThemedUnlock';
 
 function FamilyTasksInner() {
   const router = useRouter();
@@ -125,5 +125,5 @@ function FamilyTasksInner() {
 
 export default function FamilyTasks() {
   const pro = usePro();
-  return pro ? <FamilyTasksInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
+  return pro ? <FamilyTasksInner /> : <FamilyUnlock />;
 }

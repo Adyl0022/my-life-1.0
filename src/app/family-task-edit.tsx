@@ -12,7 +12,7 @@ import { Avatar, Btn, Chip, Field, Label, Note, W, DIM } from '../components/Fam
 import { useFamily, famError } from '../lib/family';
 import { useFamTasks, peopleOf, taskSave, famDelete, REPEATS, REMINDS, dateText, timeText, Repeat } from '../lib/familyData';
 import { usePro } from '../lib/pro';
-import { UnlockPage } from '../components/Paywall';
+import { FamilyUnlock } from '../components/ThemedUnlock';
 
 // Add or edit one task. Everyone in the family can do this (and delete, which is undoable for 7 days).
 function FamilyTaskEditInner() {
@@ -131,5 +131,5 @@ function FamilyTaskEditInner() {
 
 export default function FamilyTaskEdit() {
   const pro = usePro();
-  return pro ? <FamilyTaskEditInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
+  return pro ? <FamilyTaskEditInner /> : <FamilyUnlock />;
 }

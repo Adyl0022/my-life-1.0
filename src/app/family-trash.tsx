@@ -11,7 +11,7 @@ import { Ico, Note, W, DIM } from '../components/FamilyUi';
 import { useFamily, famError } from '../lib/family';
 import { trashList, famRestore, trashRemove, trashEmpty, nameOf, daysLeft, Trashed } from '../lib/familyData';
 import { usePro } from '../lib/pro';
-import { UnlockPage } from '../components/Paywall';
+import { FamilyUnlock } from '../components/ThemedUnlock';
 
 const KIND: Record<string, { t: string; ic: string; c: string }> = {
   task: { t: 'Task', ic: 'tasks', c: '#5ee7df' },
@@ -72,5 +72,5 @@ function FamilyTrashInner() {
 
 export default function FamilyTrash() {
   const pro = usePro();
-  return pro ? <FamilyTrashInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
+  return pro ? <FamilyTrashInner /> : <FamilyUnlock />;
 }

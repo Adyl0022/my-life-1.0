@@ -14,7 +14,7 @@ import { useFamEvents, useFamTasks, peopleOf, dayDiff, timeText, FEvent, useRelo
 import { FamCalendar } from '../components/FamCalendar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePro } from '../lib/pro';
-import { UnlockPage } from '../components/Paywall';
+import { FamilyUnlock } from '../components/ThemedUnlock';
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -89,5 +89,5 @@ function FamilyEventsInner() {
 
 export default function FamilyEvents() {
   const pro = usePro();
-  return pro ? <FamilyEventsInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
+  return pro ? <FamilyEventsInner /> : <FamilyUnlock />;
 }

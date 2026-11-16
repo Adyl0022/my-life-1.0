@@ -15,7 +15,7 @@ import { HouseWishes } from '../components/HouseWishes';
 import { useFamily, useAutoRefresh, famError } from '../lib/family';
 import { useFamShop, shopSave, shopBought, shopClear, famDelete, nameOf, SHOP_CATS, FShop, useReloadOnFocus } from '../lib/familyData';
 import { usePro } from '../lib/pro';
-import { UnlockPage } from '../components/Paywall';
+import { FamilyUnlock } from '../components/ThemedUnlock';
 
 // One list for the whole family. Anyone can add, tick off, edit or delete. Bought items stay until "Clear bought".
 function FamilyShopInner() {
@@ -127,5 +127,5 @@ function FamilyShopInner() {
 
 export default function FamilyShop() {
   const pro = usePro();
-  return pro ? <FamilyShopInner /> : <UnlockPage title="Family Planner" text="Family Planner is part of the yearly subscription. Subscribe to share tasks, plans and lists with your family." />;
+  return pro ? <FamilyShopInner /> : <FamilyUnlock />;
 }
