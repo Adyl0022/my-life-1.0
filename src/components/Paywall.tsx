@@ -20,11 +20,11 @@ const Lock = ({ s = 16, c = '#fff' }: { s?: number; c?: string }) => (
 );
 
 const PERKS: { e: string; t: string }[] = [
-  { e: '🤖', t: 'Assistant' },
+  { e: '✨', t: 'Assistant' },
   { e: '📊', t: 'Spending & income trends' },
   { e: '👨‍👩‍👧', t: 'Family Planner' },
   { e: '🎧', t: 'Offline Quran recitations' },
-  { e: '🧍', t: 'Body hologram' },
+  { e: '🧬', t: 'Body hologram' },
   { e: '🔎', t: 'Pattern Finder' },
   { e: '🚗', t: 'Vehicle PDF & categories' },
   { e: '💡', t: 'Every Insights tip' },
