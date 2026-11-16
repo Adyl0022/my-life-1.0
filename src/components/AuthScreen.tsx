@@ -91,9 +91,10 @@ function Rock({ size, seed, id }: { size: number; seed: number; id: string }) {
   );
 }
 const FRAG = [[-150, 78, 16, 1.1], [-95, 62, 12, -1.4], [-40, 90, 9, 1.8], [20, 70, 14, -1.0], [75, 96, 8, 2.0], [130, 66, 13, -1.6], [170, 84, 10, 1.3]] as const;
-function Collision({ left, top, ang, dur, gap, delay, id }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string }) {
+function Collision({ left, top, ang, dur, gap, delay, id, on = true }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string; on?: boolean }) {
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {
+    if (!on) { p.setValue(0); return; } // keyboard open: the scene is hidden, so stop animating and save battery
     const l = Animated.loop(Animated.sequence([
       Animated.delay(delay),
       Animated.timing(p, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: true }),
@@ -101,7 +102,7 @@ function Collision({ left, top, ang, dur, gap, delay, id }: { left: string; top:
       Animated.timing(p, { toValue: 0, duration: 0, useNativeDriver: true }),
     ]));
     l.start(); return () => l.stop();
-  }, []);
+  }, [on]);
   const HIT = 0.4; // moment of impact
   const go = (from: number) => p.interpolate({ inputRange: [0, HIT, 1], outputRange: [from, 0, 0] });
   const gone = p.interpolate({ inputRange: [0, 0.02, HIT - 0.01, HIT], outputRange: [0, 1, 1, 0] });
@@ -115,6 +116,9 @@ function Collision({ left, top, ang, dur, gap, delay, id }: { left: string; top:
         <Svg width={90} height={90} viewBox="-45 -45 90 90"><Defs><SRG id={id + 'fl'} cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#fff6e6" stopOpacity="1" /><Stop offset="0.35" stopColor="#ffd9a8" stopOpacity="0.55" /><Stop offset="1" stopColor="#ffb98a" stopOpacity="0" /></SRG></Defs><Circle cx={0} cy={0} r={45} fill={'url(#' + id + 'fl)'} /></Svg>
       </Animated.View>
       <Animated.View style={{ position: 'absolute', left: -30, top: -30, width: 60, height: 60, borderRadius: 30, borderWidth: 1.5, borderColor: 'rgba(143,233,226,.7)', opacity: p.interpolate({ inputRange: [0, HIT, HIT + 0.04, HIT + 0.3, 1], outputRange: [0, 0, 0.7, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT, HIT + 0.3, 1], outputRange: [0.3, 0.3, 3.2, 3.2] }) }] }} />
+      {[[-120, -50, 2.4], [-70, 70, 1.8], [90, -80, 2.2], [130, 40, 1.8], [10, -110, 2.6], [-40, 120, 2], [60, 105, 1.6], [-150, 10, 2]].map((q, i) => (
+        <Animated.View key={'s' + i} style={{ position: 'absolute', left: q[0], top: q[1], width: q[2], height: q[2], borderRadius: 4, backgroundColor: '#fff', shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 }, opacity: p.interpolate({ inputRange: [0, HIT + 0.02 + i * 0.012, HIT + 0.07 + i * 0.012, HIT + 0.22 + i * 0.012, 1], outputRange: [0, 0, 1, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT + 0.02 + i * 0.012, HIT + 0.07 + i * 0.012, HIT + 0.22 + i * 0.012, 1], outputRange: [1, 1, 2.6, 1, 1] }) }] }} />
+      ))}
       {FRAG.map((f, i) => {
         const rad = (f[0] * Math.PI) / 180; const dx = Math.cos(rad) * f[1], dy = Math.sin(rad) * f[1];
         const ease = (n: number) => p.interpolate({ inputRange: [0, HIT, HIT + 0.2, 1], outputRange: [0, 0, n * 0.62, n] });
@@ -129,6 +133,24 @@ function Collision({ left, top, ang, dur, gap, delay, id }: { left: string; top:
         const ease = (n: number) => p.interpolate({ inputRange: [0, HIT, HIT + 0.25, 1], outputRange: [0, 0, n * 0.7, n] });
         return <Animated.View key={'d' + i} style={{ position: 'absolute', left: -1.2, top: -1.2, width: 2.4, height: 2.4, borderRadius: 2, backgroundColor: i % 2 ? '#ffd9a8' : '#cfe9ff', opacity: p.interpolate({ inputRange: [0, HIT - 0.001, HIT, 0.7, 1], outputRange: [0, 0, 0.9, 0.4, 0] }), transform: [{ translateX: ease(Math.cos(a) * d * 1.6) }, { translateY: ease(Math.sin(a) * d * 1.6) }] }} />;
       })}
+    </View>
+  );
+}
+// A far-away, softly blurred ringed planet in the corner for depth (static).
+function Planet() {
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', right: -96, bottom: -78, width: 250, height: 250 }}>
+      <Svg width={250} height={250} viewBox="-125 -125 250 250">
+        <Defs>
+          <SRG id="pl" cx="32%" cy="28%" r="85%"><Stop offset="0" stopColor="#9d8cff" stopOpacity="0.85" /><Stop offset="0.5" stopColor="#5a4fc4" stopOpacity="0.6" /><Stop offset="1" stopColor="#1a1560" stopOpacity="0.15" /></SRG>
+          <SRG id="plg" cx="50%" cy="50%" r="50%"><Stop offset="0.6" stopColor="#7c6cff" stopOpacity="0.28" /><Stop offset="1" stopColor="#7c6cff" stopOpacity="0" /></SRG>
+        </Defs>
+        <Circle cx={0} cy={0} r={125} fill="url(#plg)" />
+        <Circle cx={0} cy={0} r={72} fill="url(#pl)" />
+        <Rect x={-125} y={-3} width={250} height={0.1} fill="none" />
+        <Path d="M-118 22 A118 30 -18 0 1 118 -22" fill="none" stroke="rgba(143,233,226,.45)" strokeWidth={3} transform="rotate(-14)" />
+        <Path d="M-104 26 A104 25 -18 0 1 104 -26" fill="none" stroke="rgba(190,180,255,.35)" strokeWidth={2} transform="rotate(-14)" />
+      </Svg>
     </View>
   );
 }
@@ -313,8 +335,9 @@ export function AuthScreen() {
       <Drift size={320} color="rgba(255,143,224,0.26)" x={-130} y={520} dx={55} dy={-40} dur={8000} />
       <Wallpaper />
       <Sky shooting={false} />
-      <Collision left="70%" top="9%" ang={24} dur={15000} gap={2500} delay={1200} id="c1" />
-      <Collision left="26%" top="84%" ang={-18} dur={17000} gap={3500} delay={7000} id="c2" />
+      <Planet />
+      <Collision left="70%" top="9%" ang={24} dur={15000} gap={2500} delay={1200} id="c1" on={!kb} />
+      <Collision left="26%" top="84%" ang={-18} dur={17000} gap={3500} delay={7000} id="c2" on={!kb} />
       <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-start', paddingBottom: 16 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View style={{ height: topA }} />
         {kb ? null : (
