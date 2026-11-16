@@ -8,6 +8,7 @@ import { Glass } from './Glass';
 import { HeadIcon, Face } from './HabitIcons';
 import { Inp } from './Ui';
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal, goalPctOf } from '../lib/habit';
+import { modOn } from '../lib/hidden';
 import { ENERGY, energyEstimate, dayLevel, hasAny, windowAvg } from '../lib/patterns';
 import { METRICS, Metric, fmtVal, series, future, weightFuture, memories, dstr, Fut } from '../lib/timeline';
 
@@ -175,7 +176,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
               {[['Steps', sd.steps > 0 ? Math.round(sd.steps).toLocaleString() : 'No record'], ['Water', sd.cups > 0 ? sd.cups + ' of ' + cg + ' glasses' : 'No record'], ['Sleep', sd.sleep > 0 ? (Math.round(sd.sleep * 10) / 10) + ' h' : 'No record'], ['Mood', sd.mood >= 0 ? MOODS[sd.mood][0] : 'No record'], ['Energy', sd.en != null && sd.en >= 0 ? ENERGY[sd.en][0] : sEst ? ENERGY[sEst.lvl][0] + ' (estimated)' : 'No record']].map(([a, b]) => (
                 <View key={a} style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: DIM, fontSize: 12.5 }}>{a}</Text><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{b}</Text></View>
               ))}
-              {sd.fast ? <Text style={{ color: T, fontSize: 12, fontWeight: '700', marginTop: 4 }}>Fasting day</Text> : null}
+              {sd.fast && modOn('islamic') ? <Text style={{ color: T, fontSize: 12, fontWeight: '700', marginTop: 4 }}>Fasting day</Text> : null}
               {sd.note ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, marginTop: 6, fontStyle: 'italic' }}>“{sd.note}”</Text> : null}
             </View>
           ) : <Text style={{ color: DIM, fontSize: 12.5, marginTop: 6 }}>Nothing was logged on this day. Forgot? Tap Edit this day.</Text>) : (
@@ -186,10 +187,12 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
               <Stp l="Water" v={sd.cups + ' / ' + cg} onM={() => put({ cups: Math.max(0, sd.cups - 1) })} onP={() => put({ cups: sd.cups + 1 })} />
               <Stp l="Sleep" v={(Math.round(sd.sleep * 10) / 10) + ' h'} onM={() => put({ sleep: Math.max(0, sd.sleep - 0.5) })} onP={() => put({ sleep: Math.min(14, sd.sleep + 0.5) })} />
               <Stp l="Steps" v={Math.round(sd.steps).toLocaleString('en-MY')} onM={() => put({ steps: Math.max(0, sd.steps - 500) })} onP={() => put({ steps: sd.steps + 500 })} />
+              {modOn('islamic') ? (
               <Pressable onPress={() => put({ fast: !sd.fast })} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: sd.fast ? T : 'rgba(255,255,255,.4)', backgroundColor: sd.fast ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{sd.fast ? <Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>✓</Text> : null}</View>
                 <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Fasting</Text>
               </Pressable>
+              ) : null}
               <Inp value={sd.note || ''} onChangeText={(v: string) => put({ note: v })} placeholder="Note for this day" style={{ marginTop: 10 }} />
             </View>)}
         </View>

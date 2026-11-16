@@ -361,6 +361,7 @@ export default function Stats() {
             </>);
           })()}
 
+          {hid.on('islamic') ? (
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {
@@ -379,7 +380,9 @@ export default function Stats() {
             })()}
           </Glass>
           </Rise>
+          ) : null}
 
+          {hid.on('finance') ? (
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {
@@ -397,6 +400,7 @@ export default function Stats() {
             })()}
           </Glass>
           </Rise>
+          ) : null}
 
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>

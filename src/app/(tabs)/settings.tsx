@@ -211,7 +211,7 @@ export default function Settings() {
 
   const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['md', 'Medicine reminders', 'At the time you set, and again an hour later'], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
   const hid = useHidden();
-  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : k === 'md' ? hid.on('habit') : true));
+  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : k === 'md' ? hid.on('habit') : k === 'pr' || k === 'zk' ? hid.on('islamic') : true));
   const isDel = dlg === 'delete';
   const [fam, setFam] = useState<{ name: string; role: string; n: number } | null>(null);
   const askDelete = () => {

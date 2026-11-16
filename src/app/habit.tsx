@@ -14,6 +14,7 @@ import { PatternsTab } from '../components/PatternsTab';
 import { ENERGY, energyEstimate } from '../lib/patterns';
 import { SleepSchedule } from '../components/SleepSchedule';
 import { useStored } from '../lib/store';
+import { useHidden } from '../lib/hidden';
 import { CardArt } from '../components/CardArt';
 import { mins, fmtMin, weekMins, relaxStreak } from '../lib/relax';
 import { cycleInfo, statusText, SYMS } from '../lib/cycle';
@@ -167,6 +168,7 @@ export default function Habit() {
     })();
     return () => { alive = false; sub && sub.remove(); timer && clearInterval(timer); };
   }, [h.auto, retry]);
+  const hidM = useHidden(); const isl = hidM.on('islamic'), finOn = hidM.on('finance');
   const dow = dateOf(0).getDay(); const sunnahDay = dow === 1 || dow === 4;
   const [pz, setPz] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
   const rs = ramadanState(pz, new Date()); const owed = qadhaOwed(pz, new Date()); const inRam = rs.phase === 'during';
@@ -177,17 +179,17 @@ export default function Habit() {
   };
   type Sg = { t: string; b: string; tag: string; to?: string };
   const sg: Sg[] = [];
-  if (t.sleep > 0 && t.sleep < 6) sg.push({ t: 'Rest early tonight', b: 'Short on sleep. End the day with a calm Tasbih.', tag: 'Sleep · Tasbih', to: '/tasbih' });
-  if (t.mood >= 0 && t.mood <= 1) sg.push({ t: 'Take a calm moment', b: 'Feeling low? A few minutes of Tasbih can settle the heart.', tag: 'Mood · Tasbih', to: '/tasbih' });
-  if (t.cups < cg / 2) sg.push({ t: 'Drink a glass now', b: 'Have a glass before the next prayer time.', tag: 'Water · Prayer', to: '/prayer' });
-  if (t.steps < goal * 0.5) sg.push({ t: 'Take a short walk', b: 'A walk after prayer adds easy steps.', tag: 'Steps · Prayer', to: '/prayer' });
-  if (t.cups <= cg / 2) sg.push({ t: 'Bring your own water', b: 'Skip the bought drinks and track the savings.', tag: 'Water · Finance', to: '/finance' });
-  if (inRam) {
+  if (t.sleep > 0 && t.sleep < 6) sg.push(isl ? { t: 'Rest early tonight', b: 'Short on sleep. End the day with a calm Tasbih.', tag: 'Sleep · Tasbih', to: '/tasbih' } : { t: 'Rest early tonight', b: 'Short on sleep. Wind down with a calm Relax session.', tag: 'Sleep · Relax', to: '/relax' });
+  if (t.mood >= 0 && t.mood <= 1) sg.push(isl ? { t: 'Take a calm moment', b: 'Feeling low? A few minutes of Tasbih can settle the heart.', tag: 'Mood · Tasbih', to: '/tasbih' } : { t: 'Take a calm moment', b: 'Feeling low? A few minutes of Relax can settle you.', tag: 'Mood · Relax', to: '/relax' });
+  if (t.cups < cg / 2) sg.push(isl ? { t: 'Drink a glass now', b: 'Have a glass before the next prayer time.', tag: 'Water · Prayer', to: '/prayer' } : { t: 'Drink a glass now', b: 'You are below half of your water goal.', tag: 'Water' });
+  if (t.steps < goal * 0.5) sg.push(isl ? { t: 'Take a short walk', b: 'A walk after prayer adds easy steps.', tag: 'Steps · Prayer', to: '/prayer' } : { t: 'Take a short walk', b: 'A short walk adds easy steps.', tag: 'Steps' });
+  if (finOn && t.cups <= cg / 2) sg.push({ t: 'Bring your own water', b: 'Skip the bought drinks and track the savings.', tag: 'Water · Finance', to: '/finance' });
+  if (isl && inRam) {
     if (t.cups < cg / 2) sg.push({ t: 'Spread your water tonight', b: 'You are fasting. Sip between iftar and sahur to reach ' + cg + ' glasses.', tag: 'Ramadan · Water', to: '/puasa' });
     if (t.sleep > 0 && t.sleep < 6) sg.push({ t: 'Sleep is short in Ramadan', b: 'Try a short nap in the afternoon to keep your energy up.', tag: 'Ramadan · Sleep', to: '/puasa' });
   }
-  if (sunnahDay && !t.fast && !inRam) sg.push({ t: 'Sunnah fasting day', b: 'Drink plenty at sahur and iftar so you stay at your water goal.', tag: 'Water · Prayer', to: '/prayer' });
-  if (gp >= 70) sg.push({ t: 'Great day!', b: 'Goal reached. Log a small saving to match.', tag: 'Goal · Finance', to: '/finance' });
+  if (isl && sunnahDay && !t.fast && !inRam) sg.push({ t: 'Sunnah fasting day', b: 'Drink plenty at sahur and iftar so you stay at your water goal.', tag: 'Water · Prayer', to: '/prayer' });
+  if (gp >= 70) sg.push(finOn ? { t: 'Great day!', b: 'Goal reached. Log a small saving to match.', tag: 'Goal · Finance', to: '/finance' } : { t: 'Great day!', b: 'Goal reached. Keep it going tomorrow.', tag: 'Goal' });
   if (!sg.length) sg.push({ t: 'Keep going', b: 'Log today to get personal suggestions.', tag: 'Life Link' });
   const sgs = sg.slice(0, 3);
 
@@ -402,13 +404,15 @@ export default function Habit() {
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="note" t="Today's note" /><Lbl t="Why do you feel this way? (optional)" />
             <Inp value={t.note || ''} onChangeText={(v: string) => put({ note: v })} placeholder="e.g. Long shift, but a good rest" multiline style={{ marginTop: 8, minHeight: 44 }} />
+            {isl ? (<>
             <Pressable onPress={toggleFast} style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: t.fast ? T : 'rgba(255,255,255,.4)', backgroundColor: t.fast ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{t.fast && <Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>✓</Text>}</View>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Fasting today</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 4 }}>{inRam ? 'Ramadan day ' + rs.day + ' of ' + rs.r.len + '.' : sunnahDay ? 'Today is a sunnah fasting day (' + (dow === 1 ? 'Monday' : 'Thursday') + ').' : 'Sunnah fasts: Monday, Thursday and the white days.'}</Text></View>
             </Pressable>
             <Pressable onPress={() => router.push('/puasa' as any)} style={{ marginTop: 10 }}><Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{(inRam ? rs.fasted + ' of ' + rs.r.len + ' days fasted' : owed > 0 ? owed + (owed === 1 ? ' missed fast' : ' missed fasts') + ' to make up' : 'Open Fasting') + ' ›'}</Text></Pressable>
+            </>) : null}
           </Glass>
-          <View style={{ marginTop: 12 }}><HealthSpend /></View>
+          {finOn ? <View style={{ marginTop: 12 }}><HealthSpend /></View> : null}
           </>)}
           {tab === 'progress' && (<>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
