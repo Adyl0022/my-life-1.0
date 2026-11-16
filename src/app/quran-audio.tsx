@@ -3,6 +3,7 @@ import { View, ScrollView, Pressable, TextInput, Dimensions } from 'react-native
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Header, VerseBlock, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
@@ -84,20 +85,32 @@ export default function QuranAudio() {
               {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
               {info.verses.map((v, i) => (
                 <View key={v.n} onLayout={(e) => { ys.current[info.num + ':' + v.n] = e.nativeEvent.layout.y + 90; }}>
-                  <VerseBlock v={v} size={size} lang={lang} arOnly={arOnly} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />
+                  <VerseBlock v={v} size={size} lang={lang} arOnly={arOnly} bleed={16} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />
                 </View>
               ))}
             </Glass>
           ) : (<>
           {last && a.phase === 'idle' && (qs || []).some((q) => q.id === last.qid && q.identifier) ? (
-            <Glass solid radius={22} style={{ padding: 14, backgroundColor: 'rgba(13,28,58,.95)' }}>
-              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>CONTINUE WHERE YOU STOPPED</Text>
-              <Text numberOfLines={1} style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 4 }}>{last.title}</Text>
-              <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 2 }}>{last.qari + ' · ' + last.label + ' · ' + (last.index + 1) + '/' + last.total}</Text>
-              <View style={{ marginTop: 10, alignSelf: 'flex-start' }}>
-                <Shine label="Continue" radius={22} onPress={() => { const q = (qs || []).find((x) => x.id === last.qid && x.identifier); if (q) resumeLast(last, q); }} style={{ flexDirection: 'row', gap: 8, paddingVertical: 10, paddingHorizontal: 18, backgroundColor: '#7df0c6' }}>
-                  <PlayIcon size={16} color="#06231c" /><Text style={{ color: '#06231c', fontWeight: '800', fontSize: 13 }}>Continue</Text>
-                </Shine>
+            <Glass solid radius={24} style={{ padding: 0, backgroundColor: '#0e2a3f', borderWidth: 1, borderColor: 'rgba(125,240,198,.35)' }}>
+              <LinearGradient pointerEvents="none" colors={['rgba(125,240,198,.34)', 'rgba(94,231,223,.10)', 'rgba(124,156,255,.16)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+              <View style={{ padding: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><PlayIcon size={20} color="#7df0c6" /></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4 }}>CONTINUE WHERE YOU STOPPED</Text>
+                    <Text numberOfLines={1} style={{ color: W, fontSize: 17, fontWeight: '800', marginTop: 3 }}>{last.title}</Text>
+                    <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 2 }}>{last.qari + ' · ' + last.label}</Text>
+                  </View>
+                </View>
+                <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.16)', marginTop: 14, overflow: 'hidden' }}>
+                  <LinearGradient colors={['#7df0c6', '#7c9cff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ width: Math.max(4, Math.min(100, ((last.index + 1) / Math.max(1, last.total)) * 100)) + '%', height: 6, borderRadius: 3 }} />
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                  <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, fontWeight: '600' }}>{'Verse ' + (last.index + 1) + ' of ' + last.total}</Text>
+                  <Shine label="Continue" radius={22} onPress={() => { const q = (qs || []).find((x) => x.id === last.qid && x.identifier); if (q) resumeLast(last, q); }} style={{ flexDirection: 'row', gap: 8, paddingVertical: 10, paddingHorizontal: 20, backgroundColor: '#7df0c6' }}>
+                    <PlayIcon size={16} color="#06231c" /><Text style={{ color: '#06231c', fontWeight: '800', fontSize: 13.5 }}>Continue</Text>
+                  </Shine>
+                </View>
               </View>
             </Glass>
           ) : null}

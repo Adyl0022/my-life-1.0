@@ -66,7 +66,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     if ((hd.heart || []).length && !(hd.heart || []).some((x) => x.d === dk) && !sk.includes('heart')) todo.push('heart');
     const cy = cycleInfo(hd); if (hd.cyOn && !td.pd && cy.nextOff != null && cy.nextOff <= 2 && !sk.includes('period')) todo.push('period');
     const cur = todo[0]; cur0 = cur; const head = (t: string, sub: string, onSub?: () => void) => (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{'QUICK LOG' + (todo.length ? ' · ' + todo.length + ' LEFT' : '')}</Text>
         <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>{t}</Text>
         {onSub ? <Pressable onPress={onSub} hitSlop={8}><Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '700', marginTop: 2 }}>{sub}</Text></Pressable> : <Text numberOfLines={1} style={{ color: dim, fontSize: 11, marginTop: 2 }}>{sub}</Text>}
@@ -114,7 +114,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
         )}
       </View>); }
     else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', (td.sy || []).length ? 'Noted: ' + (td.sy || []).join(', ') : 'Everything is in')}
-      <Pressable onPress={() => { setUsy((td.sy || []).filter((y) => UNWELL.includes(y))); setUnw(true); }} hitSlop={8}><Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>{(td.sy || []).length ? 'Edit ›' : 'Feeling unwell? ›'}</Text></Pressable></>);
+      <Pressable key={(td.sy || []).length ? 'sy-edit' : 'sy-new'} onPress={() => { setUsy((td.sy || []).filter((y) => UNWELL.includes(y))); setUnw(true); }} hitSlop={8} style={{ flexShrink: 0 }}><Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>{(td.sy || []).length ? 'Edit ›' : 'Feeling unwell? ›'}</Text></Pressable></>);
   } else if (kind === 'usage') {
     body = (<>
       <View>

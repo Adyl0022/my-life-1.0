@@ -402,7 +402,7 @@ export default function Settings() {
                   <View key={t} style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}><Text style={{ color: '#5ee7df', fontSize: 13 }}>✓</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}>{t}</Text></View>
                 ))}
               </Glass>
-              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center' }}>© 2026 Adli Syahmi. All rights reserved.</Text>
+              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center' }}>Copyright (c) 2026 Adli Syahmi. All rights reserved.</Text>
             </View>
           )}
         </ScrollView>

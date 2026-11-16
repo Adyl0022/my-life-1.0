@@ -29,7 +29,7 @@ const Ico = ({ n, c = 'rgba(255,255,255,.55)' }: { n: 'user' | 'mail' | 'lock' |
 export function Field({ icon, secret, bad, ...p }: any) {
   const [f, setF] = useState(false); const [show, setShow] = useState(false);
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', height: 48, borderRadius: 15, paddingHorizontal: 14, marginBottom: 9, backgroundColor: f ? '#2c5a78' : '#2e2d6c', borderWidth: 1.2, borderColor: bad ? 'rgba(255,107,129,.85)' : f ? 'rgba(143,233,226,.75)' : 'rgba(255,255,255,.13)', shadowColor: TEAL, shadowOpacity: f ? 0.55 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', height: 44, borderRadius: 14, paddingHorizontal: 14, marginBottom: 8, backgroundColor: f ? '#2c5a78' : '#2e2d6c', borderWidth: 1.2, borderColor: bad ? 'rgba(255,107,129,.85)' : f ? 'rgba(143,233,226,.75)' : 'rgba(255,255,255,.13)', shadowColor: TEAL, shadowOpacity: f ? 0.55 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
       <Ico n={icon} c={f ? TEAL : undefined} />
       <TextInput {...p} secureTextEntry={secret && !show} onFocus={(e: any) => { setF(true); p.onFocus && p.onFocus(e); }} onBlur={(e: any) => { setF(false); p.onBlur && p.onBlur(e); }} placeholderTextColor="rgba(255,255,255,.38)" underlineColorAndroid="transparent" importantForAutofill="no" selectionColor="#8fe9e2" maxFontSizeMultiplier={1.1}
         style={[{ flex: 1, minWidth: 0, backgroundColor: 'transparent', color: W, fontSize: 15, marginLeft: 11, paddingVertical: 0, outlineStyle: 'none' } as any, p.style]} />
@@ -197,7 +197,12 @@ export function AuthScreen() {
   const toEnd = () => { setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300); };
   // Same starting height on sign in and register, a little lower on taller phones.
   const { height: winH } = useWindowDimensions();
-  const top = Math.max(40, Math.min(66, Math.round(winH * 0.06)));
+  // Register is taller, so its header sits closer to the top; Sign in is shorter, so it sits a little lower and looks balanced.
+  const topUp = Math.max(40, Math.min(76, Math.round(winH * 0.07)));
+  const topIn = Math.max(52, Math.min(120, Math.round(winH * 0.125)));
+  const wantTop = kb ? 36 : mode === 'up' || mode === 'reset' ? topUp : topIn;
+  const topA = useRef(new Animated.Value(wantTop)).current;
+  useEffect(() => { Animated.timing(topA, { toValue: wantTop, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start(); }, [wantTop]);
   useEffect(() => {
     const a = Keyboard.addListener('keyboardDidShow', () => setKb(true)); const b = Keyboard.addListener('keyboardDidHide', () => setKb(false));
     return () => { a.remove(); b.remove(); };
@@ -252,7 +257,8 @@ export function AuthScreen() {
       <Drift size={320} color="rgba(255,143,224,0.26)" x={-130} y={520} dx={55} dy={-40} dur={8000} />
       <Wallpaper />
       <Sky />
-      <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-start', paddingTop: top, paddingBottom: 16 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-start', paddingBottom: 16 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Animated.View style={{ height: topA }} />
         {kb ? null : (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 0, paddingBottom: 8, paddingLeft: 22, paddingRight: 70 }}>
             <View style={{ width: 96, height: 96, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 170, height: 170, transform: [{ scale: 0.52 }] }}><Logo /></View></View>
@@ -264,15 +270,15 @@ export function AuthScreen() {
         )}
         <ScrollView ref={scrollRef} style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: 6, paddingBottom: 20 }}>
 
-          <View style={{ borderRadius: 26, padding: 16, backgroundColor: '#3b3a7e', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.42)', borderBottomColor: 'rgba(0,0,0,.38)', borderBottomWidth: 2, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 22, shadowOffset: { width: 0, height: 14 }, elevation: 16 }}>
+          <View style={{ borderRadius: 24, padding: 14, backgroundColor: '#3b3a7e', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.42)', borderBottomColor: 'rgba(0,0,0,.38)', borderBottomWidth: 2, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 22, shadowOffset: { width: 0, height: 14 }, elevation: 16 }}>
             <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
             {tabs ? (
               <View style={{ flexDirection: 'row', padding: 4, borderRadius: 16, backgroundColor: 'rgba(15,12,60,.45)', marginBottom: 12 }}>
                 {(['in', 'up'] as const).map((m) => (
                   <Pressable key={m} onPress={() => { if (m !== mode) { setPw(''); setPw2(''); } go(m); }} style={{ flex: 1 }}>
                     {mode === m
-                      ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></LinearGradient>
-                      : <View style={{ paddingVertical: 10, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, fontWeight: '700' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></View>}
+                      ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, borderRadius: 12, alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></LinearGradient>
+                      : <View style={{ paddingVertical: 9, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, fontWeight: '700' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></View>}
                   </Pressable>
                 ))}
               </View>
@@ -292,7 +298,7 @@ export function AuthScreen() {
               {info ? <View style={{ padding: 10, borderRadius: 12, backgroundColor: 'rgba(143,233,226,.12)', borderWidth: 1, borderColor: 'rgba(143,233,226,.35)', marginBottom: 12 }}><Text style={{ color: TEAL, fontSize: 12.5, lineHeight: 17 }}>{info}</Text></View> : null}
 
               <Pressable onPress={main[1]} disabled={busy} style={{ shadowColor: '#8a7bff', shadowOpacity: 0.7, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8, borderRadius: 18 }}>
-                <LinearGradient colors={['#7c9cff', '#9a8cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.75 : 1 }}>
+                <LinearGradient colors={['#7c9cff', '#9a8cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.75 : 1 }}>
                   {busy ? <ActivityIndicator color="#fff" /> : <Text style={{ color: W, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 }}>{main[0]}</Text>}
                 </LinearGradient>
               </Pressable>
