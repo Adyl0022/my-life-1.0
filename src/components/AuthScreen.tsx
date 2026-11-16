@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Keyboard, Linking, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image } from 'react-native';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, Rect, Defs, Pattern, Stop, Mask, LinearGradient as SLG, RadialGradient as SRG } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Line, Defs, Pattern, Stop, RadialGradient as SRG } from 'react-native-svg';
 import { GP, W } from './Ui';
 import { Blob } from './Bg';
 import { CodeBoxes } from './CodeBoxes';
@@ -177,36 +177,68 @@ function Geo() {
 export function Wallpaper() { return <Geo />; }
 
 // Background of the sign in and register screens: slow aurora lights, a crown of Islamic star pattern that fades out toward the form, and a calm night sky.
-function Crown() {
+// The background tells what the app holds: one logo in the middle and small tiles for each part of the app drifting around it,
+// joined by faint dotted lines. Each tile uses the colour of its module (Planner blue, Islamic Hub green, Finance amber, Record pink, Habit purple).
+type SatK = 'calendar' | 'crescent' | 'coin' | 'heart' | 'book' | 'check' | 'drop' | 'bike';
+const SAT: { k: SatK; dx: number; dy: number; rgb: string; dur: number; amp: number }[] = [
+  { k: 'crescent', dx: -148, dy: -26, rgb: '94,231,181', dur: 5200, amp: 6 },
+  { k: 'calendar', dx: 150, dy: -44, rgb: '124,156,255', dur: 6100, amp: 5 },
+  { k: 'coin', dx: 160, dy: 34, rgb: '255,196,107', dur: 5600, amp: 6 },
+  { k: 'heart', dx: -160, dy: 40, rgb: '183,148,255', dur: 6600, amp: 5 },
+  { k: 'book', dx: -92, dy: -74, rgb: '94,231,181', dur: 7000, amp: 4 },
+  { k: 'check', dx: 96, dy: -80, rgb: '124,156,255', dur: 5900, amp: 5 },
+  { k: 'drop', dx: -112, dy: 96, rgb: '94,231,223', dur: 6400, amp: 4 },
+  { k: 'bike', dx: 118, dy: 100, rgb: '255,143,171', dur: 5400, amp: 5 },
+];
+const SatGlyph = ({ k, c }: { k: SatK; c: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    {k === 'calendar' && <><Rect x="3.5" y="5" width="17" height="15.5" rx="3" /><Path d="M3.5 10h17M8 3v4M16 3v4" /><Circle cx="8.5" cy="14.5" r="1" /><Circle cx="12.5" cy="14.5" r="1" /></>}
+    {k === 'crescent' && <><Path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /><Path d="M17 3.5v3M15.5 5h3" /></>}
+    {k === 'coin' && <><Circle cx="12" cy="12" r="8.5" /><Path d="M12 7v10M14.6 9.6c-.4-1-1.4-1.5-2.6-1.5-1.5 0-2.6.7-2.6 1.8 0 2.4 5.4 1.2 5.4 3.6 0 1.1-1.1 1.9-2.8 1.9-1.3 0-2.3-.6-2.7-1.6" /></>}
+    {k === 'heart' && <><Path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" /><Path d="M7.5 12h2.2l1.4-2.4 2 5 1.4-2.6h2" /></>}
+    {k === 'book' && <><Path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5M12 6.5C14 5 17 4.5 20 5v13c-3-.5-6 0-8 1.5M12 6.5v13" /></>}
+    {k === 'check' && <><Circle cx="12" cy="12" r="8.5" /><Path d="M8 12.3l2.8 2.8 5.4-5.6" /></>}
+    {k === 'drop' && <Path d="M12 3.5s6 6.2 6 10.6a6 6 0 0 1-12 0C6 9.7 12 3.5 12 3.5z" />}
+    {k === 'bike' && <><Circle cx="6" cy="16" r="3.2" /><Circle cx="18" cy="16" r="3.2" /><Path d="M6 16l3.6-7h4.2l4.2 7M13.8 9l-1.4-3H10M9.6 9l2.6 7" /></>}
+  </Svg>
+);
+function Sat({ k, x, y, rgb, dur, amp, i, on }: { k: SatK; x: number; y: number; rgb: string; dur: number; amp: number; i: number; on: boolean }) {
+  const t = useRef(new Animated.Value(0)).current; const fade = useRef(new Animated.Value(0)).current;
+  useEffect(() => { const a = Animated.loop(Animated.sequence([Animated.timing(t, { toValue: 1, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(t, { toValue: 0, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true })])); a.start(); return () => a.stop(); }, []);
+  useEffect(() => { Animated.timing(fade, { toValue: on ? 1 : 0, duration: on ? 700 : 150, delay: on ? 250 + i * 110 : 0, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }, [on]);
+  return (
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: x - 23, top: y - 23, width: 46, height: 46, opacity: fade, transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [-amp, amp] }) }, { scale: fade.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }] }}>
+      <View style={{ flex: 1, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(' + rgb + ',.14)', borderWidth: 1, borderColor: 'rgba(' + rgb + ',.42)', shadowColor: 'rgb(' + rgb + ')', shadowOpacity: 0.45, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
+        <SatGlyph k={k} c={'rgb(' + rgb + ')'} />
+      </View>
+    </Animated.View>
+  );
+}
+function Satellites({ w, cy, scale, on }: { w: number; cy: number; scale: number; on: boolean }) {
+  const cx = w / 2; const pts = SAT.filter((a) => scale >= 0.8 || (a.dy > -60 && a.dy < 90)).map((a) => ({ ...a, x: cx + a.dx * scale, y: Math.max(30, cy + a.dy * scale) }));
   return (
     <View pointerEvents="none" style={FULL}>
-      <Svg width="100%" height="100%">
-        <Defs>
-          <Pattern id="geo2" width="60" height="60" patternUnits="userSpaceOnUse">
-            <Path d="M30 4L36.5 17L50.5 13.5L47 27.5L60 34L47 40.5L50.5 54.5L36.5 51L30 64L23.5 51L9.5 54.5L13 40.5L0 34L13 27.5L9.5 13.5L23.5 17Z" transform="translate(0 -4)" fill="none" stroke="rgba(143,233,226,0.22)" strokeWidth={1} />
-            <Circle cx="30" cy="30" r="2" fill="rgba(255,213,147,0.38)" />
-          </Pattern>
-          <SLG id="fade" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#fff" stopOpacity="0.85" /><Stop offset="0.2" stopColor="#fff" stopOpacity="0.4" /><Stop offset="0.4" stopColor="#fff" stopOpacity="0" /></SLG>
-          <Mask id="crownMask" x="0" y="0" width="100%" height="100%"><Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" /></Mask>
-          <SRG id="halo" cx="50%" cy="14%" r="55%"><Stop offset="0" stopColor="#8a7bff" stopOpacity="0.55" /><Stop offset="1" stopColor="#0a0f2c" stopOpacity="0" /></SRG>
-        </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#halo)" />
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#geo2)" mask="url(#crownMask)" />
+      <Svg width="100%" height="100%" style={{ opacity: on ? 1 : 0 }}>
+        {pts.map((a, i) => {
+          const dx = a.x - cx, dy = a.y - cy, len = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / len, uy = dy / len;
+          return <Line key={i} x1={cx + ux * 62 * scale} y1={cy + uy * 62 * scale} x2={a.x - ux * 28} y2={a.y - uy * 28} stroke={'rgba(' + a.rgb + ',.34)'} strokeWidth={1.1} strokeDasharray="2 6" strokeLinecap="round" />;
+        })}
       </Svg>
+      {pts.map((a, i) => <Sat key={a.k} k={a.k} x={a.x} y={a.y} rgb={a.rgb} dur={a.dur} amp={a.amp} i={i} on={on} />)}
     </View>
   );
 }
-function AuthBg() {
+function AuthBg({ w, cy, scale, on }: { w: number; cy: number; scale: number; on: boolean }) {
   return (
     <>
       <LinearGradient colors={['#080c27', '#171061', '#0d1f55', '#08122e']} locations={[0, 0.38, 0.72, 1]} style={FULL} />
       <Drift size={460} color="rgba(106,77,240,0.55)" x={-170} y={-120} dx={60} dy={40} dur={9000} />
       <Drift size={380} color="rgba(94,231,223,0.30)" x={140} y={300} dx={-50} dy={50} dur={11000} />
       <Drift size={360} color="rgba(255,143,224,0.24)" x={-150} y={560} dx={55} dy={-45} dur={10000} />
-      <Crown />
-      {SKY.filter((_, i) => i % 2 === 0).map((t, i) => <Twinkle key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
+      <Svg width="100%" height="100%" style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none"><Defs><SRG id="halo2" cx="50%" cy="16%" r="55%"><Stop offset="0" stopColor="#8a7bff" stopOpacity="0.5" /><Stop offset="1" stopColor="#0a0f2c" stopOpacity="0" /></SRG></Defs><Rect x="0" y="0" width="100%" height="100%" fill="url(#halo2)" /></Svg>
+      {SKY.filter((_, i) => i % 3 === 0).map((t, i) => <Twinkle key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
+      <Satellites w={w} cy={cy} scale={scale} on={on} />
       <Shoot left="4%" top="5%" delay={1500} gap={6500} />
-      <Shoot left="38%" top="12%" delay={7200} gap={9000} angle={32} />
       <Mote left="14%" delay={0} dur={9000} size={3} color="#8fe9e2" />
       <Mote left="62%" delay={3000} dur={10000} size={3} color="#ffd593" />
       <Mote left="86%" delay={1800} dur={9500} size={3} color="#ff8fe0" />
@@ -234,7 +266,8 @@ export function AuthScreen() {
   // The logo stays pinned at the top; it hides while the keyboard is open so the form always has room.
   const [kb, setKb] = useState(false);
   // Every mode starts at the same height so the logo never jumps. Short phones get a smaller header.
-  const { height: winH } = useWindowDimensions();
+  const { height: winH, width: winW0 } = useWindowDimensions();
+  const winW = Math.min(winW0, 520);
   const compact = winH < 720;
   const topPad = compact ? 20 : Math.max(24, Math.min(90, Math.round((winH - 755) / 2)));
   useEffect(() => {
@@ -284,7 +317,7 @@ export function AuthScreen() {
   const lbl = (t: string) => ({ label: t });
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#080c27', zIndex: 60, overflow: 'hidden' }}>
-      <AuthBg />
+      <AuthBg w={winW} cy={topPad + (compact ? 42 : 56)} scale={compact ? 0.72 : winW < 360 ? 0.85 : 1} on={!kb} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: topPad, paddingBottom: 28 }}>
           {kb ? null : (
