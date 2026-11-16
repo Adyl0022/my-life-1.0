@@ -6,6 +6,7 @@ import { useStored } from './store';
 import { syncPrayerAlerts, clearPrayerAlerts, Alert, TG_DEFAULT, Toggles } from './adhan';
 import { Platform, AppState } from 'react-native';
 import { withNavBar } from './permNav';
+import { calcMonth, inMalaysiaArea } from './prayerCalc';
 
 export const ZONES: { code: string; name: string; lat: number; lon: number }[] = [
   { code: 'WLY01', name: 'Kuala Lumpur & Putrajaya', lat: 3.139, lon: 101.687 },
@@ -35,8 +36,12 @@ const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct
 const myNow = () => new Date(Date.now() + 8 * 3600 * 1000); // wall clock in Malaysia (UTC+8) read via getUTC*
 const mk = (key: string, name: string, h: number, m: number): PT => ({ key, name, h, m, time12: f12(h, m) });
 
-export type Place = { zone: string; lat: number; lon: number; auto: boolean };
-type Month = { zone: string; prayers: any[]; src: 'waktusolat' | 'jakim' };
+export type Place = { zone: string; lat: number; lon: number; auto: boolean; off?: number; method?: string }; // off: clock offset in seconds (28800 for Malaysian sources)
+type Month = { zone: string; prayers: any[]; src: 'waktusolat' | 'jakim' | 'calc'; method?: string };
+const DEV_OFF = () => -new Date().getTimezoneOffset() * 60; // this phone's own clock offset in seconds
+const devNow = () => new Date(Date.now() + DEV_OFF() * 1000); // wall clock of the phone, read via getUTC*
+// Clock offset (seconds) used for the given day of a month: Malaysian time for the online sources, the phone's clock for calculated places.
+function dayOff(m: Month, d: Date): number { if (m.src !== 'calc') return 8 * 3600; const row = m.prayers.find((x) => x.day === d.getUTCDate()); return row ? row.off : DEV_OFF(); }
 const HOSTS = ['https://api.waktusolat.app/v2', 'https://api.waktusolat.app/api/v2'];
 
 async function getJson(url: string) { const r = await fetch(url); if (!r.ok) throw new Error('http ' + r.status); return r.json(); }
@@ -63,6 +68,10 @@ async function monthJakim(zone: string, y?: number, mo?: number): Promise<Month>
   return { zone, prayers: j.prayerTime, src: 'jakim' };
 }
 function dayFrom(m: Month, d: Date): PT[] | null {
+  if (m.src === 'calc') {
+    const row = m.prayers.find((x) => x.day === d.getUTCDate()); if (!row) return null;
+    return NAMES.map(([k, n]) => { const s = ((row[k] + row.off) % 86400 + 86400) % 86400; return mk(k, n, Math.floor(s / 3600), Math.floor((s % 3600) / 60)); });
+  }
   if (m.src === 'waktusolat') {
     const row = m.prayers.find((x) => x.day === d.getUTCDate()); if (!row) return null;
     return NAMES.map(([k, n]) => { const s = ((row[k] + 8 * 3600) % 86400 + 86400) % 86400; return mk(k, n, Math.floor(s / 3600), Math.floor((s % 3600) / 60)); });
@@ -87,7 +96,7 @@ async function whereAmI(fresh = false): Promise<{ lat: number; lon: number }> {
 }
 
 // Rough Malaysia box (Peninsular, Sabah, Sarawak). Used only to warn people who are clearly somewhere else.
-export const inMalaysia = (lat: number, lon: number) => lat >= 0.8 && lat <= 7.5 && lon >= 99.5 && lon <= 119.5;
+export const inMalaysia = (lat: number, lon: number) => inMalaysiaArea(lat, lon);
 
 export type Mode = { auto: boolean; zone: string };
 export function usePrayer(passive = false) {
@@ -108,7 +117,7 @@ export function usePrayer(passive = false) {
   const [alarms] = useStored<Record<string, boolean>>('ml_prayer_alerts', { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true });
   const hid = useHidden();
   const [clock, setClock] = useState(0);
-  const dayId = myNow().toISOString().slice(0, 10);
+  const dayId = new Date(Date.now() + (place ? place.off ?? 28800 : 28800) * 1000).toISOString().slice(0, 10);
   // Re-check the location when the app comes back after being away for 5+ minutes (never on permission dialogs, which only blink the app).
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -125,7 +134,7 @@ export function usePrayer(passive = false) {
     let alive = true;
     (async () => {
       setStatus((x) => (x === 'ready' ? x : 'loading'));
-      const nd = myNow(); const y = nd.getUTCFullYear(), mo = nd.getUTCMonth() + 1;
+      let nd = myNow(); let y = nd.getUTCFullYear(), mo = nd.getUTCMonth() + 1; let intl = false;
       try {
         let m: Month; let lat: number, lon: number; let auto = mode.auto;
         let get: (yy: number, mm: number) => Promise<Month>;
@@ -137,7 +146,10 @@ export function usePrayer(passive = false) {
             else { if (alive) setStatus(e && e.message === 'denied' ? 'denied' : 'error'); return; }
           }
           lat = c.lat; lon = c.lon;
-          get = (yy, mm) => cached(`ml_pt_gps_${lat.toFixed(2)}_${lon.toFixed(2)}_${yy}-${mm}`, async () => {
+          // Outside Malaysia: work the times out on the phone, on the phone's own clock. Nothing is sent online.
+          intl = !inMalaysia(lat, lon);
+          if (intl) { nd = devNow(); y = nd.getUTCFullYear(); mo = nd.getUTCMonth() + 1; }
+          get = intl ? (yy, mm) => Promise.resolve({ zone: 'CALC', src: 'calc', ...calcMonth(lat, lon, yy, mm) } as Month) : (yy, mm) => cached(`ml_pt_gps_${lat.toFixed(2)}_${lon.toFixed(2)}_${yy}-${mm}`, async () => {
             try { return await monthByGps(lat, lon, yy, mm); } catch (e) {
               const z = [...ZONES].sort((a, b) => Math.hypot(a.lat - lat, a.lon - lon) - Math.hypot(b.lat - lat, b.lon - lon))[0];
               try { return await monthByZoneWs(z.code, yy, mm); } catch (e2) { return monthJakim(z.code, yy, mm); }
@@ -153,7 +165,7 @@ export function usePrayer(passive = false) {
           if (alive) setLocName('');
         }
         const t = dayFrom(m, nd); if (!t) throw new Error('nodate');
-        if (alive) { setMonth(m); setTimes(t); setPlace({ zone: m.zone, lat, lon, auto }); setStatus('ready'); setUpdAt(Date.now()); }
+        if (alive) { setMonth(m); setTimes(t); setPlace({ zone: m.zone, lat, lon, auto, off: dayOff(m, nd), method: m.method }); setStatus('ready'); setUpdAt(Date.now()); }
         // Next month too, when the alert window (12 days) crosses the month end.
         const dim = new Date(Date.UTC(y, mo, 0)).getUTCDate();
         if (nd.getUTCDate() + 12 > dim) { try { const m2 = await get(mo === 12 ? y + 1 : y, mo === 12 ? 1 : mo + 1); if (alive) setMonth2(m2); } catch (e) { if (alive) setMonth2(null); } } else if (alive) setMonth2(null);
@@ -167,17 +179,18 @@ export function usePrayer(passive = false) {
     if (!hid.on('islamic')) { clearPrayerAlerts(); return; } // Islamic Hub is off: no prayer alerts
     const list: Alert[] = [];
     for (let i = 0; i < 12; i++) {
-      const d = new Date(Date.now() + 8 * 3600 * 1000 + i * 86400000);
-      const src = d.getUTCMonth() === myNow().getUTCMonth() ? month : month2;
+      const offMs = (place.off ?? 28800) * 1000;
+      const d = new Date(Date.now() + offMs + i * 86400000);
+      const src = d.getUTCMonth() === new Date(Date.now() + offMs).getUTCMonth() ? month : month2;
       if (!src) break;
       const day = dayFrom(src, d); if (!day) continue;
-      day.filter((p) => p.key !== 'syuruk' && alarms[p.key]).forEach((p) => list.push({ key: p.key, name: p.name, at: new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), p.h - 8, p.m)) }));
+      day.filter((p) => p.key !== 'syuruk' && alarms[p.key]).forEach((p) => list.push({ key: p.key, name: p.name, at: new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), p.h, p.m) - dayOff(src, d) * 1000) }));
     }
-    const zn = ZONES.find((x) => x.code === place.zone)?.name.split(' (')[0] || place.zone;
+    const zn = place.zone === 'CALC' ? 'your location' : ZONES.find((x) => x.code === place.zone)?.name.split(' (')[0] || place.zone;
     if (list.length) syncPrayerAlerts(list, zn); else clearPrayerAlerts();
   }, [month, month2, place, JSON.stringify(alarms), tgs.pr, tgs.qh, lead, hid.ready, hid.on('islamic')]);
 
-  const nd = myNow(); const mins = nd.getUTCHours() * 60 + nd.getUTCMinutes();
+  const nd = new Date(Date.now() + (place ? place.off ?? 28800 : 28800) * 1000); const mins = nd.getUTCHours() * 60 + nd.getUTCMinutes();
   const pick = (list: PT[]) => { let i = list.findIndex((p) => p.h * 60 + p.m > mins); const tomorrow = i < 0 && list.length > 0; if (tomorrow) i = 0; return list.length ? { ...list[i], tomorrow, idx: i, diff: list[i].h * 60 + list[i].m - mins + (tomorrow ? 1440 : 0) } : null; };
   const next = pick(times);
   const solat = times.filter((t) => t.key !== 'syuruk');

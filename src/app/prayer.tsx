@@ -8,7 +8,7 @@ import Svg, { Circle, Path, G, Text as SText } from 'react-native-svg';
 import { Glass } from '../components/Glass';
 import { IslamicBg, Header, Ic } from '../components/IslamicUi';
 import { Sheet, SBtn, W } from '../components/Ui';
-import { usePrayer, ZONES, qiblaBearing, inMalaysia } from '../lib/prayer';
+import { usePrayer, ZONES, qiblaBearing } from '../lib/prayer';
 import { useStored } from '../lib/store';
 
 const COL: any = { fajr: 'rgba(124,156,255,.35)', syuruk: 'rgba(255,196,107,.35)', dhuhr: 'rgba(255,196,107,.35)', asr: 'rgba(255,143,171,.35)', maghrib: 'rgba(183,148,255,.35)', isha: 'rgba(94,231,223,.3)' };
@@ -18,7 +18,7 @@ export default function Prayer() {
   const [alarms, setAlarms] = useStored<Record<string, boolean>>('ml_prayer_alerts', { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true });
   const [pick, setPick] = useState(false);
   const pl = pr.place;
-  const zn = pl ? (ZONES.find((x) => x.code === pl.zone)?.name.split(' (')[0] || 'Zone ' + pl.zone) : 'Choose location';
+  const zn = pl ? (pl.zone === 'CALC' ? (pr.locName || 'Your location') : (ZONES.find((x) => x.code === pl.zone)?.name.split(' (')[0] || 'Zone ' + pl.zone)) : 'Choose location';
   const label = pr.mode.auto ? 'Auto · ' + zn : zn;
   const q = pl ? qiblaBearing(pl.lat, pl.lon) : 292;
   const [heading, setHeading] = useState<number | null>(null);
@@ -56,15 +56,15 @@ export default function Prayer() {
             <View style={{ flex: 1 }}>
               <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: '700', letterSpacing: 1.2 }}>{pr.mode.auto ? 'YOUR LOCATION' : 'SELECTED ZONE'}</Text>
               <Text style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 1 }} numberOfLines={2}>{pr.mode.auto && pr.locName ? pr.locName : zn}</Text>
-              <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 1 }}>{pl ? 'Zone ' + pl.zone + (pr.mode.auto ? ' · ' + pl.lat.toFixed(3) + ', ' + pl.lon.toFixed(3) : '') : '—'}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 1 }}>{pl ? (pl.zone === 'CALC' ? 'Calculated on your phone' : 'Zone ' + pl.zone) + (pr.mode.auto ? ' · ' + pl.lat.toFixed(3) + ', ' + pl.lon.toFixed(3) : '') : '—'}</Text>
               {pr.updAt ? <Text style={{ color: 'rgba(255,255,255,.45)', fontSize: 10.5, marginTop: 2 }}>{'Last update at ' + (() => { const u = new Date(pr.updAt); return u.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][u.getMonth()] + ', ' + (((u.getHours() + 11) % 12) + 1) + ':' + String(u.getMinutes()).padStart(2, '0') + (u.getHours() < 12 ? ' am' : ' pm'); })()}</Text> : null}
             </View>
             {pr.mode.auto ? <Pressable onPress={pr.refreshLoc} accessibilityLabel="Refresh location" style={{ paddingVertical: 9, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(52,211,153,.3)', borderWidth: 1, borderColor: 'rgba(52,211,153,.6)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{pr.status === 'loading' ? 'Finding…' : '⟳ Refresh'}</Text></Pressable> : null}
           </Glass>
-          {pl && pl.auto && !inMalaysia(pl.lat, pl.lon) ? (
-            <Glass radius={22} style={{ padding: 14, borderWidth: 1, borderColor: 'rgba(255,213,147,.45)' }}>
-              <Text style={{ color: '#ffd593', fontSize: 13.5, fontWeight: '800' }}>You seem to be outside Malaysia</Text>
-              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>These times follow Malaysian (JAKIM) zones and may not be correct where you are. Please confirm with your local mosque or authority.</Text>
+          {pl && pl.auto && pl.method ? (
+            <Glass radius={22} style={{ padding: 14, borderWidth: 1, borderColor: 'rgba(125,240,198,.4)' }}>
+              <Text style={{ color: '#8fe9e2', fontSize: 13.5, fontWeight: '800' }}>Calculated for your location</Text>
+              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>{'You are outside Malaysia, so these times are worked out on your phone using the ' + pl.method + ' method. They can differ by a few minutes from your local mosque or authority, so please follow them if they publish their own times.'}</Text>
             </Glass>
           ) : null}
           {pr.times.length > 0 && (
@@ -94,7 +94,7 @@ export default function Prayer() {
             </Svg>
             <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, textAlign: 'center' }}>The green arrow points to the Kaaba. On your phone the dial turns as you turn; hold the phone flat and away from metal. On the web it shows the fixed bearing.</Text>
           </Glass>
-          <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, lineHeight: 18, marginHorizontal: 4 }}>Prayer times use official Malaysian (JAKIM) zones and are only accurate in Malaysia. In Auto mode your location finds the zone; only the coordinates are sent, and they are not saved to your account. Data comes through the public Waktu Solat API, which republishes e-solat JAKIM and is not affiliated with JAKIM. Alerts are saved here; phone notifications arrive with the phone build.</Text>
+          <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, lineHeight: 18, marginHorizontal: 4 }}>In Malaysia, prayer times use the official JAKIM zones. In Auto mode your location finds the zone; only the coordinates are sent, and they are not saved to your account. Outside Malaysia the times are calculated on your phone and nothing is sent. Data comes through the public Waktu Solat API, which republishes e-solat JAKIM and is not affiliated with JAKIM. Alerts are saved here; phone notifications arrive with the phone build.</Text>
         </ScrollView>
         {pick && <Sheet onClose={() => setPick(false)}><View style={{ padding: 14, maxHeight: '75%', borderRadius: 24, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800', marginBottom: 6 }}>Location</Text><ScrollView><Pressable onPress={() => { pr.setMode({ ...pr.mode, auto: true }); setPick(false); }} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: pr.mode.auto ? '#7df0c6' : W, fontSize: 14, fontWeight: '800' }}>Automatic (use my location)</Text></Pressable>{ZONES.map((x) => <Pressable key={x.code} onPress={() => { pr.setMode({ auto: false, zone: x.code }); setPick(false); }} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: !pr.mode.auto && x.code === pr.mode.zone ? '#7df0c6' : W, fontSize: 14, fontWeight: !pr.mode.auto && x.code === pr.mode.zone ? '800' : '600' }}>{x.name}</Text></Pressable>)}</ScrollView></View></Sheet>}
       </SafeAreaView>
