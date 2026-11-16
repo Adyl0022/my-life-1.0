@@ -22,7 +22,8 @@
       "backgroundColor": "#0a0f2c",
       "permissions": [
         "android.permission.health.READ_STEPS",
-        "android.permission.ACTIVITY_RECOGNITION"
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "allowBackup": false
     },

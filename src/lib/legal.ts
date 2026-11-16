@@ -73,7 +73,7 @@ export const FAQ: Sec[] = [
   { h: 'I forgot my PIN.', p: 'On the lock screen tap Forgot PIN. You can use your fingerprint or your account password to set a new PIN, or erase the app data and start fresh.' },
   { h: 'How do I set a medicine reminder?', p: 'Open Habit and Health, then the Today tab, and tap the Medication card. Tap + to add the medicine, its dose, the time and the days it repeats. You get a reminder at that time and again an hour later if you have not ticked it. My Life does not give dose advice.' },
   { h: 'How do I set a reminder?', p: 'Tap the search button on the Dashboard and choose Remind me, or open a note in Daily Planner, Notes & Reminders and tap the bell. Pick a time, and tap the buttons under Also alert me before if you want extra alerts. You can also tell the Assistant, for example "remind me tonight 9pm to charge phone".' },
-  { h: 'Notifications do not ring.', p: 'Use Settings, General, Send a test notification. If nothing shows, allow notifications for My Life in your phone settings and turn off battery saving for the app.' },
+  { h: 'Notifications do not ring.', p: 'Use Settings, General, Send a test notification. If nothing shows, allow notifications for My Life in your phone settings and turn off battery saving for the app. If they arrive a few minutes late, tap Turn on exact timing in the same place and allow Alarms & reminders.' },
   { h: 'Prayer times look wrong.', p: 'Open Islamic Hub and refresh your location. Times follow JAKIM and are only accurate in Malaysia. Please confirm with your local authority.' },
 ];
 

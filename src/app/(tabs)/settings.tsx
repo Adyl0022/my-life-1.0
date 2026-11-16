@@ -178,6 +178,13 @@ export default function Settings() {
   const [bkLast] = useStored<number>('ml_backup_last', 0);
   const mail = (subj: string, body: string) => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body)).catch(() => say('No email app found. Write to ' + SUPPORT_EMAIL + ' or ' + SUPPORT_EMAIL2));
   const info = 'App: My Life 1.0 (1.0.1, build 1)\nPhone: ' + Platform.OS + ' ' + String(Platform.Version) + '\n\n';
+  // Android 12+: without "Alarms & reminders" allowed, reminders and prayer alerts can arrive a few minutes late.
+  const [exact, setExact] = useState<boolean | null>(null);
+  React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
+  const askExact = async () => {
+    try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); say(r.granted ? 'Exact timing is on' : 'Not allowed yet. Turn on Alarms & reminders for My Life'); }
+    catch (e) { say('Could not open the setting. Open phone Settings, Apps, My Life, Alarms & reminders'); }
+  };
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');
     try {
@@ -274,7 +281,8 @@ export default function Settings() {
 
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Notifications" />
-                <View style={{ flexDirection: 'row', marginTop: 12 }}><Btn t="Send a test notification" onPress={testNotif} /></View>
+                {exact !== null ? <Text style={{ color: exact ? 'rgba(255,255,255,.72)' : '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{exact ? 'Exact timing is on. Reminders and prayer alerts arrive on the minute.' : 'Exact timing is off. Reminders and prayer alerts can arrive a few minutes late.'}</Text> : null}
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} /> : null}<Btn t="Send a test notification" onPress={testNotif} /></View>
               </Glass>
 
               {isAdmin ? <Pressable onPress={() => router.push('/admin' as any)}>
