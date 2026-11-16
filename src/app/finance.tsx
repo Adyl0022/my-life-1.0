@@ -64,7 +64,7 @@ export default function Finance() {
   const [editKey, setEditKey] = useState(''); const [editUnit, setEditUnit] = useState<'rm' | 'cnt'>('rm'); const [editVal, setEditVal] = useState('');
   const [limKey, setLimKey] = useState(''); const [limVal, setLimVal] = useState('');
   const [fDate, setFDate] = useState(todayStr()); const [fName, setFName] = useState(''); const [fAmt, setFAmt] = useState(''); const [fCat, setFCat] = useState('Food'); const [fGoal, setFGoal] = useState(0); const [fPre, setFPre] = useState('');
-  const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remVal, setRemVal] = useState('');
+  const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remF, setRemF] = useState({ name: '', amt: '', date: '', cat: 'Food', note: '' });
   const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
   const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
   const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
@@ -291,7 +291,7 @@ export default function Finance() {
                 <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
-                    <Pressable style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemVal(p.note || ''); } }}>
+                    <Pressable style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '' }); } }}>
                       <Text style={{ color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{p.cat + ' · ' + dateText(p.date)}</Text>
                       {p.note ? <Text style={{ color: '#ffd593', fontSize: 12, marginTop: 1 }} numberOfLines={2}>{p.note}</Text> : null}
@@ -300,14 +300,30 @@ export default function Finance() {
                     <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>
                   </View>
                   {remId === p.id ? (
-                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                      <View style={{ flex: 1 }}><Inp value={remVal} onChangeText={setRemVal} placeholder="Remark (optional)" autoFocus /></View>
-                      <Pressable onPress={() => { const v = remVal.trim(); setD({ ...d, spends: d.spends.map((x) => x.id === p.id ? { ...x, note: v || undefined } : x) }); setRemId(0); }} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: '#ffc46b' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
+                    <View style={{ marginTop: 8 }}>
+                      <DateField value={remF.date} onChange={(v: string) => setRemF({ ...remF, date: v })} />
+                      <Inp style={{ marginTop: 8 }} value={remF.name} onChangeText={(v: string) => setRemF({ ...remF, name: v })} placeholder="What did you buy?" />
+                      <Inp style={{ marginTop: 8 }} value={remF.amt} onChangeText={(v: string) => setRemF({ ...remF, amt: v })} keyboardType="decimal-pad" placeholder={'Amount (' + cu() + ')'} />
+                      {p.cat !== 'Savings' ? (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                          {CATS.filter((x) => x[0] !== 'Savings').map(([n, c]) => <Chip key={n} t={n} on={remF.cat === n} c={c} onPress={() => setRemF({ ...remF, cat: n })} />)}
+                        </View>
+                      ) : null}
+                      <Inp style={{ marginTop: 8 }} value={remF.note} onChangeText={(v: string) => setRemF({ ...remF, note: v })} placeholder="Remark (optional)" />
+                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                        <Pressable onPress={() => setRemId(0)} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
+                        <Pressable onPress={() => {
+                          const n = parseFloat(remF.amt.replace(',', '.')); if (!(n > 0)) return;
+                          const v = remF.note.trim();
+                          setD({ ...d, spends: d.spends.map((x) => x.id === p.id ? { ...x, name: remF.name.trim() || x.name, amt: n, date: remF.date || x.date, cat: p.cat === 'Savings' ? 'Savings' : remF.cat, note: v || undefined } : x) });
+                          setRemId(0);
+                        }} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: '#ffc46b', alignItems: 'center' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
+                      </View>
                     </View>
                   ) : null}
                 </View>
               ))}
-              {d.spends.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to add or change its remark.</Text> : null}
+              {d.spends.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
             </View>
           </Glass>
 
