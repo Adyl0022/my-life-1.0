@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, Pressable, Platform, Keyboard, TextInput } from 'react-native';
+import { View, ScrollView, Pressable, Platform, Keyboard, TextInput, Animated, Easing } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,6 +28,16 @@ import { stepWhy } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
 
 const T = '#5ee7df';
+// Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
+function SoftShow({ show, children }: { show: boolean; children: React.ReactNode }) {
+  const v = React.useRef(new Animated.Value(show ? 1 : 0)).current; const [mounted, setMounted] = React.useState(show);
+  React.useEffect(() => {
+    if (show) setMounted(true);
+    Animated.timing(v, { toValue: show ? 1 : 0, duration: show ? 700 : 900, easing: Easing.inOut(Easing.ease), useNativeDriver: false }).start(({ finished }) => { if (finished && !show) setMounted(false); });
+  }, [show]);
+  if (!mounted) return null;
+  return <Animated.View style={{ opacity: v, height: v.interpolate({ inputRange: [0, 1], outputRange: [0, 44] }), overflow: 'hidden', transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }] }}>{children}</Animated.View>;
+}
 const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '600' }}>{t}</Text>;
 const Ttl = ({ t, k, nm }: { t: string; k?: string; nm?: boolean }) => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: k && !nm ? 9 : 0 }}>{k ? <HeadIcon k={k} /> : null}<Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{t}</Text></View>;
 const Step = ({ t, onPress, label }: { t: string; onPress: () => void; label: string }) => (
@@ -256,6 +266,11 @@ export default function Habit() {
               <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
+            <SoftShow show={!!(t.sleep > 0 || t.bed || t.wake)}>
+              <Pressable onPress={() => { put({ sleep: 0, bed: '', wake: '' }); setBed(null); setWake(null); }} accessibilityLabel="Clear last night's sleep" style={{ alignSelf: 'flex-start', marginTop: 10,  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,143,171,.7)', backgroundColor: 'rgba(255,143,171,.14)' }}>
+                <Text style={{ color: '#ffb3c4', fontSize: 12.5, fontWeight: '800' }}>Clear last night's sleep</Text>
+              </Pressable>
+            </SoftShow>
             <SleepSchedule h={h} />
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={6} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
