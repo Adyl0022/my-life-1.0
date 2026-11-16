@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from './Txt';
 import { Glass } from './Glass';
@@ -15,6 +15,7 @@ const dim = 'rgba(255,255,255,.7)';
 export function TodaySpend({ spends }: { spends: Sp[] }) {
   const [mode, setMode] = useStored<'ask' | 'yes' | 'no'>('ml_today_veh', 'ask');
   const [rec] = useStored<{ data?: Record<string, { exps?: { amt: number; date: string }[] }> }>('ml_record', { data: {} });
+  const [ask, setAsk] = useState<'yes' | 'no' | null>(null); // waiting for the person to confirm a change
   const t = todayStr();
   const mine = (spends || []).filter((p) => p.cat !== 'Savings' && p.date === t);
   const fin = mine.reduce((a, p) => a + p.amt, 0);
@@ -35,7 +36,7 @@ export function TodaySpend({ spends }: { spends: Sp[] }) {
       <Text style={{ color: W, fontSize: 30, fontWeight: '800', marginTop: 8 }}>{cs() + money(total)}</Text>
       <Text style={{ color: dim, fontSize: 12.5, marginTop: 2 }}>{count === 0 ? 'No spending yet today' : count + (count === 1 ? ' item' : ' items') + ' today'}</Text>
       {has && mode !== 'ask' ? (
-          <Pressable onPress={() => setMode(mode === 'yes' ? 'no' : 'yes')} hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: mode === 'yes' ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: mode === 'yes' ? '#ffc46b' : 'rgba(255,255,255,.22)' }}>
+          <Pressable onPress={() => setAsk(mode === 'yes' ? 'no' : 'yes')} hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: mode === 'yes' ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: mode === 'yes' ? '#ffc46b' : 'rgba(255,255,255,.22)' }}>
             <Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{mode === 'yes' ? 'Vehicle maintenance counted in My Finance' : 'Vehicle maintenance not counted'}</Text>
           </Pressable>
       ) : null}
@@ -47,13 +48,24 @@ export function TodaySpend({ spends }: { spends: Sp[] }) {
       ) : null}
       <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Includes every category, such as Health and Bills. Savings are not counted as spending.</Text>
 
-      {has && mode === 'ask' ? (
+      {ask ? (
+        <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,120,120,.14)', borderWidth: 1, borderColor: 'rgba(255,150,150,.5)' }}>
+          <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{ask === 'yes' ? 'Are you sure?' : 'Stop counting vehicle maintenance?'}</Text>
+          <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>{ask === 'yes' ? 'This changes your whole My Finance: monthly totals, Money Left, category charts, Insights, Stats, the Assistant, budget alerts and exports will all include your vehicle maintenance from My Record. Those items can only be edited or deleted in My Record. Watch out for double counting if you also typed the same service as a spending.' : 'Your vehicle maintenance will be taken out of all My Finance figures again (totals, Money Left, charts, Insights, Stats, Assistant, budget alerts and exports). Nothing is deleted from My Record.'}</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+            <Pressable onPress={() => setAsk(null)} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
+            <Pressable onPress={() => { setMode(ask); setAsk(null); }} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: '#ffc46b', alignItems: 'center' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>{ask === 'yes' ? 'Yes, change it' : 'Yes, stop'}</Text></Pressable>
+          </View>
+        </View>
+      ) : null}
+
+      {has && mode === 'ask' && !ask ? (
         <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,196,107,.14)', borderWidth: 1, borderColor: 'rgba(255,196,107,.4)' }}>
           <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Vehicle maintenance found</Text>
           <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>I found maintenance spending in your My Record. Include it in My Finance? It will count in today's spending, Money Left, charts, Insights and exports. You can change this any time. Edit or delete it in My Record.</Text>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
             <Pressable onPress={() => setMode('no')} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>No, keep it apart</Text></Pressable>
-            <Pressable onPress={() => setMode('yes')} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: '#ffc46b', alignItems: 'center' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Yes, include</Text></Pressable>
+            <Pressable onPress={() => setAsk('yes')} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, backgroundColor: '#ffc46b', alignItems: 'center' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Yes, include</Text></Pressable>
           </View>
         </View>
       ) : null}
