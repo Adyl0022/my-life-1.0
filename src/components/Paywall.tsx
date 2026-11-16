@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, Pressable, ScrollView, Animated, Easing } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -136,11 +135,14 @@ export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?
   if (!on) return <View style={{ marginTop: mt }}>{children}</View>;
   return (
     <View style={{ marginTop: mt, borderRadius: radius, overflow: 'hidden' }}>
-      <View pointerEvents="none" style={{ opacity: 0.55 }}>{children}</View>
-      <Pressable onPress={openPaywall} accessibilityRole="button" accessibilityLabel={'Unlock, ' + PRICE + ' ' + PER} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-        <BlurView intensity={26} tint="dark" pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(10,15,44,.78)', borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' }}>
-          <Lock s={15} /><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>Unlock · {PRICE} {PER}</Text>
+      {/* The real card only sets the size. It is fully hidden, so nothing shows through. */}
+      <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ opacity: 0 }}>{children}</View>
+      <Pressable onPress={openPaywall} accessibilityRole="button" accessibilityLabel={'Unlock, ' + PRICE + ' ' + PER} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
+        <LinearGradient colors={['#1d1856', '#151a4a', '#0e2650']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+        <LinearGradient colors={['rgba(94,231,223,.16)', 'rgba(94,231,223,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 90 }} />
+        <View style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(124,156,255,.25)', borderWidth: 1, borderColor: 'rgba(124,156,255,.5)' }}><Lock s={22} /></View>
+        <View style={{ marginTop: 12, paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>Unlock · {PRICE} {PER}</Text>
         </View>
       </Pressable>
     </View>
