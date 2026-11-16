@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { getItem, setItem } from './store';
+import { fallbackList, fallbackUrl, reachable } from './quranFallback';
 
 // Downloaded Quran audio. Streaming stays the default; the person can save any surah or juz on this phone to listen offline.
 // Files are kept per verse (so a juz and a surah share them) in the app's own folder. Nothing here is synced or sent anywhere.
@@ -103,15 +104,27 @@ export async function netOk(): Promise<{ ok: boolean; msg: string }> {
 }
 
 async function getList(qid: string, ident: string, kind: 's' | 'j', n: number): Promise<[number, number][]> {
-  const ac = new AbortController(); abortCtl = ac; const to = setTimeout(() => ac.abort(), 20000);
-  let r: any; try { r = await fetch(API + (kind === 's' ? '/surah/' : '/juz/') + n + '/' + ident, { signal: ac.signal }); } finally { clearTimeout(to); }
-  const j = await r.json(); const ay: any[] = (j && j.data && j.data.ayahs) || [];
-  const out: [number, number][] = []; const urls: Record<string, string> = {};
-  ay.forEach((a) => { if (!a || !a.audio) return; const s = (a.surah && a.surah.number) || n; const k = s + ':' + a.numberInSurah; out.push([s, a.numberInSurah]); urls[k] = String(a.audio).replace(/^http:/, 'https:'); });
-  if (!out.length) throw new Error('empty');
-  pending = urls;
-  return out;
+  // Main service first; if it cannot be reached (or its audio address is dead), use the backup source.
+  try {
+    if (!ident) throw new Error('no edition');
+    const ac = new AbortController(); abortCtl = ac; const to = setTimeout(() => ac.abort(), 20000);
+    let r: any; try { r = await fetch(API + (kind === 's' ? '/surah/' : '/juz/') + n + '/' + ident, { signal: ac.signal }); } finally { clearTimeout(to); }
+    const j = await r.json(); const ay: any[] = (j && j.data && j.data.ayahs) || [];
+    const out: [number, number][] = []; const urls: Record<string, string> = {};
+    ay.forEach((a) => { if (!a || !a.audio) return; const s = (a.surah && a.surah.number) || n; const k = s + ':' + a.numberInSurah; out.push([s, a.numberInSurah]); urls[k] = String(a.audio).replace(/^http:/, 'https:'); });
+    if (!out.length) throw new Error('empty');
+    if (!audioOk) { audioOk = await reachable(urls[out[0][0] + ':' + out[0][1]]); if (!audioOk) throw new Error('audio host down'); }
+    pending = urls;
+    return out;
+  } catch (e) {
+    if (cancel) throw e;
+    const out = fallbackList(kind, n); const urls: Record<string, string> = {};
+    out.forEach(([s, a]) => { urls[s + ':' + a] = fallbackUrl(qid, s, a); });
+    pending = urls;
+    return out;
+  }
 }
+let audioOk = false; // set once the main audio host answered during this run
 let pending: Record<string, string> = {};
 
 // Download one unit (a surah or a juz). Verses already on the phone are skipped, so it can be resumed.
@@ -175,7 +188,7 @@ async function run(f: () => Promise<boolean>, label: string, total: number): Pro
   if (!dlSupported) return false;
   if (st.busy) { set({ err: 'Another download is running. Wait for it or cancel it first.' }); return false; }
   const n = await netOk(); if (!n.ok) { set({ err: n.msg }); return false; }
-  cancel = false; await loadIdx(); set({ busy: true, label, done: 0, total, err: '', stopping: false });
+  cancel = false; audioOk = false; await loadIdx(); set({ busy: true, label, done: 0, total, err: '', stopping: false });
   try { const ok = await f(); set({ busy: false, stopping: false, err: ok ? '' : cancel ? 'Download stopped. What was saved stays on the phone.' : '' }); return ok; }
   catch (e) { await saveIdx(); set({ busy: false, stopping: false, err: cancel ? 'Download stopped. What was saved stays on the phone.' : 'Download failed. Check your internet and try again. What was saved stays on the phone.' }); return false; }
 }

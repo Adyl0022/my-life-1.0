@@ -32,6 +32,7 @@ export default function QuranAudio() {
   const [qs, setQs] = useState<QariOpt[] | null>(null);
   const [bad, setBad] = useState(false);
   const [tab, setTab] = useState(0);
+  const [hintOff, setHintOff] = useStored<boolean>('ml_qdl_hint', false);
   const d = useDl();
   const [net, setNet] = useStored<NetPref>(NET_KEY, 'wifi');
   const pct = d.total > 0 ? Math.min(100, Math.round((d.done / d.total) * 100)) : 0;
@@ -111,6 +112,16 @@ export default function QuranAudio() {
                     <PlayIcon size={16} color="#06231c" /><Text style={{ color: '#06231c', fontWeight: '800', fontSize: 13.5 }}>Continue</Text>
                   </Shine>
                 </View>
+              </View>
+            </Glass>
+          ) : null}
+          {dlSupported && !hintOff && usage().bytes === 0 ? (
+            <Glass radius={20} style={{ padding: 14 }}>
+              <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Save your favourite recitations</Text>
+              <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Saved recitations play without internet, and keep working even if the online service is unavailable.</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                <Pressable onPress={() => { setTab(2); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.4)', borderWidth: 1, borderColor: TEAL }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Open Downloads</Text></Pressable>
+                <Pressable onPress={() => setHintOff(true)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: 'rgba(255,255,255,.8)', fontWeight: '700', fontSize: 13 }}>Dismiss</Text></Pressable>
               </View>
             </Glass>
           ) : null}
@@ -229,7 +240,7 @@ export default function QuranAudio() {
                     );
                   })}
                 </Glass>
-              ) : <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12.5, lineHeight: 18 }}>{cur ? 'Nothing saved for ' + cur.name + ' yet. Tap ⬇ next to a surah or juz to save it.' : ''}</Text>}
+              ) : <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12.5, lineHeight: 18 }}>{cur ? 'Nothing saved for ' + cur.name + ' yet. Tap ⬇ next to a surah or juz to save it. Saved recitations keep working without internet or if the online service is unavailable.' : ''}</Text>}
               {usage().bytes > 0 && !d.busy ? (
                 <Pressable onPress={() => setSure(sure === 'del' ? '' : 'del')} style={{ alignSelf: 'flex-start', paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: '#ff9aa9', fontWeight: '800', fontSize: 13 }}>Delete all downloads</Text></Pressable>
               ) : null}
@@ -246,7 +257,7 @@ export default function QuranAudio() {
             </View>
           )}
 
-          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>Audio streams over the internet by default. Tap ⬇ to save a surah or juz on this phone and listen offline; saved audio stays on this phone only and can be deleted in Downloads. The recitations come from the free Al-Quran Cloud service (alquran.cloud) and belong to their reciters. It keeps playing when the screen is off.</Text>
+          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>Audio streams over the internet by default. Tap ⬇ to save a surah or juz on this phone and listen offline; saved audio stays on this phone only and can be deleted in Downloads. The recitations come from the free Al-Quran Cloud service (alquran.cloud), with EveryAyah (everyayah.com) as a backup, and belong to their reciters. It keeps playing when the screen is off.</Text>
           </>)}
         </ScrollView>
 

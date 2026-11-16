@@ -6,6 +6,7 @@ import { getItem, setItem } from './store';
 
 // Quran audio, streamed verse by verse from the free Al-Quran Cloud service (nothing is stored on our side).
 // The reciter list is read from the service when the screen opens, so a reciter that is not offered there simply does not show.
+import { DEFAULT_ID, fallbackItems, reachable } from './quranFallback';
 const API = 'https://api.alquran.cloud/v1';
 
 export type Qari = { id: string; name: string; match: string[]; skip?: string[] };
@@ -56,8 +57,8 @@ export async function loadQaris(): Promise<QariOpt[]> {
   } catch (e) {
     // No internet: use the reciters seen last time, so downloaded recitations can still be played.
     const m = await readQariCache(); const ids = Object.keys(m || {});
-    if (!ids.length) throw e;
-    return QARIS.map((q) => ({ ...q, identifier: m[q.id] || null }));
+    // Nothing saved either: use the built-in names, so downloads and the backup source still work.
+    return QARIS.map((q) => ({ ...q, identifier: (ids.length && m[q.id]) || DEFAULT_ID[q.id] || null }));
   }
   return QARIS.map((q) => {
     const hit = eds.find((e) => {
@@ -74,7 +75,6 @@ const toItems = (ayahs: any[], fallbackSurah?: number): Item[] => ayahs.filter((
 });
 
 async function start(title: string, q: QariOpt, path: string, fallbackSurah?: number, kind: 's' | 'j' = 's', n = 0, startAt = 0) {
-  if (!q.identifier) return;
   const my = ++token;
   stop(true);
   set({ phase: 'loading', title, qari: q.name, items: [], index: 0, playing: false, err: '' });
@@ -83,10 +83,16 @@ async function start(title: string, q: QariOpt, path: string, fallbackSurah?: nu
     let items: Item[] | null = null;
     try { items = await localItems(q.id, kind, n); } catch (e) { items = null; }
     if (!items) {
-      const r = await fetch(API + path + '/' + q.identifier);
-      const j = await r.json();
+      // Main service first; if it cannot be reached (or its audio address is dead), use the backup source.
+      try {
+        if (!q.identifier) throw new Error('no edition');
+        const r = await fetch(API + path + '/' + q.identifier);
+        const j = await r.json();
+        items = toItems((j && j.data && j.data.ayahs) || [], fallbackSurah);
+        if (items.length && !(await reachable(items[0].url))) items = null;
+      } catch (e) { items = null; }
       if (my !== token) return;
-      items = toItems((j && j.data && j.data.ayahs) || [], fallbackSurah);
+      if (!items || !items.length) items = fallbackItems(q.id, kind, n);
     }
     if (my !== token) return;
     if (!items.length) throw new Error('empty');
