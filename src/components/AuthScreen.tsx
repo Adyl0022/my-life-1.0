@@ -200,7 +200,7 @@ export function AuthScreen() {
   // Register is taller, so its header sits closer to the top; Sign in is shorter, so it sits a little lower and looks balanced.
   const topUp = Math.max(40, Math.min(76, Math.round(winH * 0.07)));
   const topIn = Math.max(52, Math.min(210, Math.round((winH - 540) * 0.42)));
-  const wantTop = kb ? (mode === 'up' || mode === 'reset' ? 44 : Math.max(60, Math.min(110, Math.round(winH * 0.1)))) : mode === 'up' || mode === 'reset' ? topUp : topIn;
+  const wantTop = kb ? (mode === 'up' || mode === 'reset' ? 44 : Math.max(72, Math.min(120, Math.round(winH * 0.14)))) : mode === 'up' || mode === 'reset' ? topUp : topIn;
   const topA = useRef(new Animated.Value(wantTop)).current;
   useEffect(() => { Animated.timing(topA, { toValue: wantTop, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start(); }, [wantTop]);
   useEffect(() => {
