@@ -1,6 +1,9 @@
 import { Stack, usePathname } from 'expo-router';
-import { useEffect } from 'react';
+import { DialogHost } from '../components/DialogHost';
+import { useEffect, useRef } from 'react';
 import { trackModule } from '../lib/modules';
+import { useRegion } from '../lib/region';
+import { useHidden } from '../lib/hidden';
 import { warmKey } from '../lib/secure';
 warmKey();
 import { StatusBar } from 'expo-status-bar';
@@ -20,8 +23,12 @@ import { PaywallHost } from '../components/Paywall';
 import { FREEMIUM } from '../lib/edition';
 import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
-import { syncEventAlerts, syncZikirAlerts, syncBackupAlert, PEvent } from '../lib/alerts';
+import { cycleInfo } from '../lib/cycle';
+import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles } from '../lib/adhan';
+import { useFamily } from '../lib/family';
+import { useFamTasks, useFamEvents } from '../lib/familyData';
+import { syncFamilyAlerts } from '../lib/familyAlerts';
 
 // Keeps prayer alerts scheduled after the user has opened Prayer Times once (never asks for location on first launch).
 function Runner() { usePrayer(); return null; }
@@ -32,19 +39,60 @@ function PrayerSync() {
 // Re-plans debt due reminders whenever the app opens or the debts change.
 function DebtSync() {
   const [d, , ok] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
-  useEffect(() => { if (ok && Platform.OS !== 'web') syncDebtAlerts(d); }, [ok, JSON.stringify(d)]);
+  const hid = useHidden(); const fin = hid.on('finance');
+  // The reminder text carries the currency, so wait until the chosen one is loaded and re-plan if it changes.
+  const [rg, , rok] = useRegion();
+  // Finance turned off: the due reminders are cleared too.
+  useEffect(() => { if (ok && rok && hid.ready && Platform.OS !== 'web') syncDebtAlerts(fin ? d : { ...d, notify: false }); }, [ok, rok, rg.cur, hid.ready, fin, JSON.stringify(d)]);
   return null;
 }
 // Re-plans Planner event and daily zikir reminders when the app opens, or when events or the switches in Settings change.
 function AlertSync() {
   const [pl, , ok] = useStored<{ events: PEvent[] }>('ml_planner', { events: [] });
   const [tg, , ok2] = useStored<Partial<Toggles>>('ml_toggles', {});
-  const t = { ...TG_DEFAULT, ...tg };
-  useEffect(() => { if (ok && ok2 && Platform.OS !== 'web') syncEventAlerts(pl.events || [], t); }, [ok, ok2, JSON.stringify(pl.events || []), t.ev, t.qh]);
-  useEffect(() => { if (ok2 && Platform.OS !== 'web') syncZikirAlerts(t); }, [ok2, t.zk, t.qh]);
+  const hid = useHidden();
+  // A module that is turned off also stops its reminders.
+  const t = { ...TG_DEFAULT, ...tg }; t.ev = t.ev && hid.on('planner'); t.zk = t.zk && hid.on('islamic');
+  useEffect(() => { if (ok && ok2 && hid.ready && Platform.OS !== 'web') syncEventAlerts(pl.events || [], t); }, [ok, ok2, hid.ready, JSON.stringify(pl.events || []), t.ev, t.qh]);
+  useEffect(() => { if (ok2 && hid.ready && Platform.OS !== 'web') syncZikirAlerts(t); }, [ok2, hid.ready, t.zk, t.qh]);
+  // Reminders written inside notes. Only the parts that matter for the alert are watched, so typing in a note does not re-plan them.
+  const [nt, , okn] = useStored<{ notes?: { id: number; t: string; s: string; rm?: number; rd?: boolean; ra?: number[] }[] }>('ml_notes', { notes: [] });
+  const noteRems = ((nt && nt.notes) || []).filter((n) => n.rm).map((n) => ({ id: n.id, t: n.t, s: (n.s || '').slice(0, 300), rm: n.rm, rd: n.rd, ra: n.ra }));
+  useEffect(() => { if (okn && hid.ready && Platform.OS !== 'web') syncNoteAlerts(noteRems, hid.on('planner')); }, [okn, hid.ready, JSON.stringify(noteRems)]);
+  useEffect(() => { if (ok2 && Platform.OS !== 'web') syncWeekAlert({ ...t, ev: tg.ev !== false }); }, [ok2, tg.ev]);
+  const [hb, , okh] = useStored<{ meds?: { id: string; name: string; dose: string; time: string }[]; days?: Record<string, { med?: string[] }>; rlRem?: string; cyOn?: boolean; cyRem?: boolean }>('ml_habit', {});
+  const todayK = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+  const medsNow = (hb && hb.meds) || []; const medTaken = (hb && hb.days && hb.days[todayK] && hb.days[todayK].med) || [];
+  const [medRing] = useStored<boolean>('ml_med_ring', true);
+  useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncMedAlerts(medsNow, medTaken, t.md !== false && hid.on('habit'), medRing !== false); }, [okh, ok2, hid.ready, JSON.stringify(medsNow), JSON.stringify(medTaken), t.md, todayK, medRing]);
+  useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncRelaxAlert(hb && hb.rlRem, hid.on('habit')); }, [okh, ok2, hid.ready, hb && hb.rlRem]);
+  const cyNext = hb && hb.cyOn && hb.days ? cycleInfo(hb as any).nextOff : null;
+  useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncCycleAlert(cyNext, !!(hb && hb.cyOn) && hb.cyRem !== false && hid.on('habit')); }, [okh, ok2, hid.ready, cyNext, hb && hb.cyOn, hb && hb.cyRem]);
+  const [rc, , okr] = useStored<{ data?: Record<string, any> }>('ml_record', { data: {} });
+  useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncRenewAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify((rc && rc.data) || {}), tg.ev, t.qh]);
   const [bk, , okb] = useStored<number>('ml_backup_last', 0);
   const [bo, , okc] = useStored<boolean>('ml_backup_rem', false);
   useEffect(() => { if (okb && okc && Platform.OS !== 'web') syncBackupAlert(!!bo, bk); }, [okb, okc, bk, bo]);
+  return null;
+}
+// Plans reminders for family tasks and activities. It waits until the family lists are loaded, so a slow start never wipes them.
+function FamilySync() {
+  const [sess] = useSession(); const lic = useLicense();
+  const [tg, , ok] = useStored<Partial<Toggles>>('ml_toggles', {});
+  const hid = useHidden();
+  const f = useFamily();
+  const fid = f.info && lic.status === 'active' ? f.info.id : undefined;
+  const tk = useFamTasks(fid); const ev = useFamEvents(fid);
+  const t = { ...TG_DEFAULT, ...tg }; const plannerOn = hid.on('planner');
+  const had = useRef(false);
+  useEffect(() => { if (sess) had.current = true; else if (had.current && Platform.OS !== 'web') { had.current = false; syncFamilyAlerts('', [], [], t as Toggles, false); } }, [!!sess]);   // signed out: no family reminders of the old account
+  const key = JSON.stringify([f.info?.me, tk.rows.map((x) => [x.id, x.due_at, x.remind_min, x.done, x.assignees, x.title]), ev.rows.map((x) => [x.id, x.starts_at, x.remind_min, x.attendees, x.title])]);
+  useEffect(() => {
+    if (!ok || !hid.ready || Platform.OS === 'web' || !sess) return;
+    if (lic.status === 'locked' || f.state === 'none' || f.state === 'locked') { syncFamilyAlerts('', [], [], t as Toggles, false); return; }
+    if (!f.info || lic.status !== 'active' || !tk.ready || !ev.ready) return;
+    syncFamilyAlerts(f.info.me, tk.rows, ev.rows, t as Toggles, plannerOn);
+  }, [ok, hid.ready, sess?.user?.id, lic.status, f.state, tk.ready, ev.ready, plannerOn, t.ev, t.qh, key]);
   return null;
 }
 // Starts syncing as soon as the user is signed in, and again when the app comes back to the front.
@@ -72,8 +120,9 @@ function Checking() {
 export { ErrorBoundary } from 'expo-router';
 function Tracker() { const p = usePathname(); useEffect(() => { trackModule(p); }, [p]); return null; }
 export default function Root() {
+  useRegion(); // keeps the chosen currency ready for every screen and notification
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && !FREEMIUM && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && !FREEMIUM && lic.status === 'unknown' ? <Checking /> : null}<PaywallHost />{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
+  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><FamilySync /><DialogHost /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && !FREEMIUM && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && !FREEMIUM && lic.status === 'unknown' ? <Checking /> : null}<PaywallHost />{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }

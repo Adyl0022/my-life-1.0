@@ -1,0 +1,35 @@
+<!doctype html><html><body style="margin:0;background:#000"><canvas id="c" width="432" height="448"></canvas>
+<script type="module">
+import * as THREE from './three.module.js';
+import { BODY_MIN, BODY_MAX, BODY_POS, BODY_IDX } from './bodyMesh.js';
+const dec = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+const pb = dec(BODY_POS), ib = dec(BODY_IDX);
+const q = new Int16Array(pb.buffer, 0, pb.byteLength / 2), ix = new Uint16Array(ib.buffer, 0, ib.byteLength / 2);
+const pos = new Float32Array(q.length);
+for (let i = 0; i < q.length; i += 3) for (let k = 0; k < 3; k++) pos[i + k] = BODY_MIN[k] + ((q[i + k] + 32767) / 65534) * (BODY_MAX[k] - BODY_MIN[k]);
+const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setIndex(new THREE.BufferAttribute(ix, 1)); geo.computeVertexNormals();
+const VERT = `varying vec3 vN; varying vec3 vV; varying vec3 vP;
+void main(){ vP = position; vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`;
+const FRAG = `precision highp float; varying vec3 vN; varying vec3 vV; varying vec3 vP;
+uniform float uGlow; uniform vec3 uCol;
+float ln(float v, float w){ float f = fract(v); float d = min(f, 1.0 - f); return 1.0 - smoothstep(0.0, w, d); }
+void main(){
+  float fr = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.2);
+  float grid = max(ln(vP.y * 38.0, 0.07), ln(vP.x * 38.0 + vP.z * 12.0, 0.07)) * 0.55;
+  float a = (0.05 + fr * 0.75 + grid * (0.35 + 0.65 * uGlow));
+  gl_FragColor = vec4(uCol * (0.7 + fr), clamp(a * 0.55, 0.0, 0.95));
+}`;
+const W = 432, H = 448; const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.setClearColor(0x000000, 1);
+const scene = new THREE.Scene(); const cam = new THREE.PerspectiveCamera(26, W / H, 0.1, 50); cam.position.set(0, -0.12, 9.4); cam.lookAt(0, -0.12, 0);
+const g = new THREE.Group(); scene.add(g); const S = 2.05; const body = new THREE.Group(); body.scale.set(S, S, S); body.position.y = -2.0; g.add(body);
+body.add(new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { uGlow: { value: 0.4 }, uCol: { value: new THREE.Color(0x5ee7df) } }, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })));
+const organ = (r, col, p, s) => { const c = new THREE.Color(col); const ge = new THREE.SphereGeometry(r, 12, 9);
+  [new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.42, depthWrite: false, blending: THREE.AdditiveBlending }), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.07, wireframe: true, depthWrite: false, blending: THREE.AdditiveBlending })].forEach((m) => { const a = new THREE.Mesh(ge, m); a.position.set(...p); a.scale.set(...s); body.add(a); }); };
+organ(0.075, '#b794ff', [0, 1.69, 0], [1, 0.85, 1.1]);
+organ(0.06, '#7c9cff', [-0.075, 1.3, 0], [0.8, 1.55, 0.8]); organ(0.06, '#7c9cff', [0.075, 1.3, 0], [0.8, 1.55, 0.8]);
+organ(0.045, '#ff8fab', [0.035, 1.27, 0.03], [1, 1.1, 0.9]);
+window.shot = (deg) => { g.rotation.y = deg * Math.PI / 180; renderer.render(scene, cam); return canvas.toDataURL('image/png'); };
+window.ready = true;
+</script></body></html>

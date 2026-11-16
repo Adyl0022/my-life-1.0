@@ -26,7 +26,7 @@ export async function syncEventAlerts(events: PEvent[], tg: Toggles): Promise<vo
       await Notifications.scheduleNotificationAsync({
         identifier: 'event-' + t.e.id + '-' + t.at.getTime(),
         content: { title: t.e.name, body: 'Event ' + t.when + '. Open Planner for details.', sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'events' } as any,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'events', delivery: 'alarmClock' } as any,
       });
     }
   } catch (e) { /* ignore */ }
@@ -46,7 +46,7 @@ export async function syncZikirAlerts(tg: Toggles): Promise<void> {
       await Notifications.scheduleNotificationAsync({
         identifier: 'zikir-' + k,
         content: { title, body: 'Time for your ' + (k === 'morning' ? 'morning' : 'evening') + ' zikir. Open Islamic Hub.', sound: false },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: m, channelId: 'zikir' } as any,
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: m, channelId: 'zikir', delivery: 'alarmClock' } as any,
       });
     }
   } catch (e) { /* ignore */ }
@@ -66,7 +66,190 @@ export async function syncBackupAlert(on: boolean, last: number): Promise<void> 
     await Notifications.scheduleNotificationAsync({
       identifier: 'backup-next',
       content: { title: 'Time for a backup', body: 'It has been a while. Save a copy of your data from Settings, Export.', sound: false },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'backup' } as any,
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'backup', delivery: 'alarmClock' } as any,
     });
+  } catch (e) { /* ignore */ }
+}
+
+type RenData = { data?: Record<string, { renew?: { roadtax?: string; insurance?: string; licence?: string } }> };
+// Road tax, insurance and driving licence: a reminder 30 days before, 7 days before and on the day, at 9 am.
+export async function syncRenewAlerts(rec: RenData, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('renew-');
+    if (!on || !tg.ev) return;
+    const now = Date.now(); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    const L: [string, string][] = [['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Driving licence']];
+    Object.entries((rec && rec.data) || {}).forEach(([veh, v], vi) => {
+      const rn = (v && v.renew) || {};
+      L.forEach(([k, lab]) => {
+        const s = (rn as any)[k] as string | undefined; if (!s) return;
+        const [y, m, d] = s.split('-').map(Number); if (!y || !m || !d) return;
+        ([[30, 'in 30 days'], [7, 'in 7 days'], [0, 'today']] as [number, string][]).forEach(([back, when]) => {
+          const at = new Date(y, m - 1, d - back, 9, 0, 0);
+          if (at.getTime() <= now + 5000 || inQuiet(at, tg)) return;
+          todo.push({ id: 'renew-' + vi + '-' + k + '-' + back, at, title: lab + ' ' + (back === 0 ? 'expires today' : 'expires ' + when), body: (veh ? veh + '. ' : '') + 'Open My Record to see the date.' });
+        });
+      });
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('renewals', { name: 'Renewal reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ff8fab' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: t.id,
+        content: { title: t.title, body: t.body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals', delivery: 'alarmClock' } as any,
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Every Sunday at 8 pm: a nudge to look at the weekly review in Insights. Only when notifications are already allowed.
+export async function syncWeekAlert(tg: Toggles): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('week-');
+    if (!tg.ev) return;
+    const p = await Notifications.getPermissionsAsync(); if (p.status !== 'granted') return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('week', { name: 'Weekly review', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#7c9cff' });
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'week-review',
+      content: { title: 'Your week in My Life', body: 'See how your week went. Open Insights and tap Week.', sound: false },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 20, minute: 0, channelId: 'week', delivery: 'alarmClock' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}
+
+type MedRow = { id: string; name: string; dose: string; time: string; days?: number[] };
+// Medicine reminders: every day at the time set, and again one hour later if it is not ticked yet. Quiet hours do not mute these.
+export async function syncMedAlerts(meds: MedRow[], takenToday: string[], on: boolean, ring = true): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('med-');
+    if (!on || !meds.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('meds', { name: 'Medicine reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#5ee7df' });
+    const now = Date.now();
+    // Alarm-style delivery: the phone cannot hold the reminder back (needs exact timing to be allowed). The person can turn it off in Medicine.
+    const delivery = ring ? 'alarmClock' : 'bestEffort';
+    for (const m of meds.slice(0, 10)) {
+      const t = /^(\d{1,2}):(\d{2})$/.exec(m.time || ''); if (!t) continue;
+      const hh = +t[1], mm = +t[2];
+      const body = m.name + (m.dose ? ' · ' + m.dose : '');
+      const every = !m.days || m.days.length === 0 || m.days.length >= 7;
+      if (every) {
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'med-' + m.id + '-daily',
+          content: { title: 'Medicine reminder', body, sound: true },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hh, minute: mm, channelId: 'meds', delivery } as any,
+        });
+      } else {
+        for (const wd of m.days!) {
+          await Notifications.scheduleNotificationAsync({
+            identifier: 'med-' + m.id + '-wk' + wd,
+            content: { title: 'Medicine reminder', body, sound: true },
+            trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: wd + 1, hour: hh, minute: mm, channelId: 'meds', delivery } as any,
+          });
+        }
+      }
+      // One reminder an hour later for each of the next 7 days. Ticking the medicine in the app cancels that day's reminder.
+      for (let d = 0; d < 7; d++) {
+        if (d === 0 && takenToday.includes(m.id)) continue;
+        const at = new Date(); at.setDate(at.getDate() + d); at.setHours(hh + 1, mm, 0, 0);
+        if (!every && !m.days!.includes(at.getDay())) continue;
+        if (at.getTime() <= now + 5000) continue;
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'med-' + m.id + '-fu-' + at.getFullYear() + (at.getMonth() + 1) + at.getDate(),
+          content: { title: 'Did you take your medicine?', body, sound: true },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'meds', delivery } as any,
+        });
+      }
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Optional daily Relax reminder at a time the person sets.
+export async function syncRelaxAlert(time: string | undefined, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('rlx-rem');
+    const t = /^(\d{1,2}):(\d{2})$/.exec(time || '');
+    if (!on || !t) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('relax', { name: 'Relax reminder', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#8fe9e2' });
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'rlx-rem',
+      content: { title: 'Time to relax', body: 'A few quiet minutes: breathe or meditate in Habit & Health.', sound: false },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: +t[1], minute: +t[2], channelId: 'relax', delivery: 'alarmClock' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}
+// A soft bell when a meditation ends, in case the screen has locked.
+export async function scheduleRelaxEnd(seconds: number): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('rlx-end');
+    if (!(await setup())) return;
+    // Own channel with higher importance so the bell sounds and shows on a locked screen.
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('relax-end', { name: 'Relax timer finished', importance: Notifications.AndroidImportance.HIGH, lightColor: '#8fe9e2', vibrationPattern: [0, 250, 150, 250] });
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'rlx-end',
+      content: { title: 'Session complete', body: 'Well done. Take a moment before you carry on.', sound: true },
+      // alarmClock delivery: the phone cannot hold the notification back while the screen is off (same as medicine reminders).
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(Date.now() + Math.max(5, Math.round(seconds)) * 1000), channelId: 'relax-end', delivery: 'alarmClock' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}
+export async function cancelRelaxEnd(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try { await cancelPrefix('rlx-end'); } catch (e) { /* ignore */ }
+}
+
+// Two days before the estimated period, at 9 am. The text is deliberately plain so nothing private shows on the lock screen.
+export async function syncCycleAlert(daysTo: number | null, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('cyc-');
+    if (!on || daysTo == null) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('cycle', { name: 'Personal reminder', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#ff8fab' });
+    const at = new Date(); at.setDate(at.getDate() + daysTo - 2); at.setHours(9, 0, 0, 0);
+    if (at.getTime() <= Date.now() + 5000) return;
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'cyc-next',
+      content: { title: 'Reminder from My Life', body: 'Open My Life to see your reminder.', sound: false },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'cycle', delivery: 'alarmClock' } as any,
+    });
+  } catch (e) { /* ignore */ }
+}
+
+// A reminder set inside a note (Notes & Reminders). It rings at the exact time the person chose, so quiet hours and the Planner switch do not hold it back.
+export type NoteRem = { id: number; t: string; s: string; rm?: number; rd?: boolean; ra?: number[] };
+const AHEAD = (m: number) => (m >= 1440 ? (m / 1440 === 1 ? 'tomorrow' : 'in ' + m / 1440 + ' days') : m >= 60 ? 'in ' + (m / 60 === 1 ? '1 hour' : m / 60 + ' hours') : 'in ' + m + ' minutes');
+export async function syncNoteAlerts(notes: NoteRem[], on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('note-');
+    if (!on) return;
+    const now = Date.now();
+    const todo: { id: string; at: number; title: string; body: string }[] = [];
+    for (const n of (notes || []).filter((x) => x.rm && !x.rd)) {
+      const line = (n.s || '').split('\n').map((x) => x.replace(/^\s*([☐☑]|•|\d+\.)\s*/, '').trim()).find(Boolean) || '';
+      const title = (n.t || '').trim() || 'Reminder';
+      todo.push({ id: 'note-' + n.id + '-' + n.rm, at: n.rm as number, title, body: line.slice(0, 120) || 'Open Notes & Reminders for your note.' });
+      for (const m of (n.ra || []).filter((v) => v > 0 && v <= 10080).slice(0, 5)) todo.push({ id: 'note-' + n.id + '-' + n.rm + '-b' + m, at: (n.rm as number) - m * 60000, title, body: 'Coming up ' + AHEAD(m) + (line ? ' · ' + line.slice(0, 80) : '') });
+    }
+    const list = todo.filter((x) => x.at > now + 5000).sort((a, b) => a.at - b.at).slice(0, 60);
+    if (!list.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('notes', { name: 'Note reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ffc46b' });
+    for (const n of list) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: n.id,
+        content: { title: n.title, body: n.body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(n.at), channelId: 'notes', delivery: 'alarmClock' } as any,
+      });
+    }
   } catch (e) { /* ignore */ }
 }

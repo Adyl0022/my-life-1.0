@@ -67,15 +67,16 @@ grant execute on function public.is_active() to authenticated;
 grant execute on function public.redeem_code(text) to authenticated;
 grant select on public.licenses to authenticated;
 
--- Cloud data only for activated accounts.
+-- Cloud data: every signed-in account can save and read its own rows (the licence check was removed on 2026-11-12,
+-- so accounts from the Play edition, which has no activation step, are backed up too).
 drop policy if exists "own select" on public.user_data;
 drop policy if exists "own insert" on public.user_data;
 drop policy if exists "own update" on public.user_data;
 drop policy if exists "own delete" on public.user_data;
 drop policy if exists "own data" on public.user_data;
 create policy "own data" on public.user_data for all to authenticated
-  using (user_id = auth.uid() and public.is_active())
-  with check (user_id = auth.uid() and public.is_active());
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
 
 -- ===== How to make codes (run when someone has paid) =====
 -- Lifetime, 5 codes:

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useMergedSpends } from '../../lib/vehicleSpend';
 import React, { useState } from 'react';
 import { FastMonths } from '../../components/FastMonths';
 import { StatsBg } from '../../components/PageBg';
@@ -17,14 +19,20 @@ import { HeadIcon } from '../../components/HabitIcons';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useStored } from '../../lib/store';
 import { MODS } from '../../lib/modules';
+import { useHidden } from '../../lib/hidden';
 import { HEMPTY, getDay, cupsGoal, dateOf, keyOfDate, MOODS } from '../../lib/habit';
 import { useCore, weekly, records, hasData as hasHab, dayPct, incomeOf } from '../../lib/insights';
+import { mins as relaxMins, fmtMin } from '../../lib/relax';
+import { medAdherence } from '../../lib/medMissed';
+import { cycleInfo, statusText, SYMS, fmtD } from '../../lib/cycle';
+import { ENERGY } from '../../lib/patterns';
 import { debtSummary, remainingAt, amountDue, yearsMonths, payoffLabel } from '../../lib/debts';
 import { TOP } from '../../lib/layout';
 import { monthRows } from '../../lib/financeStats';
 import { goalSaved } from '../../lib/savings';
 import { healthMonths } from '../../components/BodyCards';
 import { sunatYear, qadhaOwed, ramadanState } from '../../lib/fasting';
+import { cs, useRegion } from '../../lib/region';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MI = ({ k, s = 30 }: { k: string; s?: number }) => {
@@ -45,7 +53,11 @@ const MI = ({ k, s = 30 }: { k: string; s?: number }) => {
 const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700', letterSpacing: 1.2 }}>{t.toUpperCase()}</Text>;
 
 export default function Stats() {
-  const [tab, setTab] = useState<'use' | 'health' | 'money'>('use');
+  useRegion();
+  const hid = useHidden();
+  const [tab0, setTab] = useState<'use' | 'health' | 'money'>('use');
+  // A tab whose module was turned off falls back to App use.
+  const tab: 'use' | 'health' | 'money' = tab0 === 'health' && !hid.on('habit') ? 'use' : tab0 === 'money' && !hid.on('finance') ? 'use' : tab0;
   const u = useUsage(16); const pro = usePro();
   const [metric, setMetric] = useState<'time' | 'opens'>('time');
   const days = u.days;
@@ -61,7 +73,9 @@ export default function Stats() {
   const total = metric === 'time' ? Math.floor(sum / 60) + ' h ' + (sum % 60) + ' m' : String(sum);
   const hasData = sum > 0;
   const [hd] = useStored('ml_habit', HEMPTY);
-  const [fin] = useStored<{ spends: { amt: number; date: string }[] }>('ml_finance', { spends: [] } as any);
+  const [fin0] = useStored<{ spends: { amt: number; date: string }[] }>('ml_finance', { spends: [] } as any);
+  const finSpends = useMergedSpends(fin0 && fin0.spends);
+  const fin = useMemo(() => ({ ...fin0, spends: finSpends }), [fin0, finSpends]);
   const cg = cupsGoal(hd);
   const core = useCore();
   const ds = debtSummary(core.debts); const incNow = incomeOf(core);
@@ -83,15 +97,25 @@ export default function Stats() {
   const last7 = [-6, -5, -4, -3, -2, -1, 0];
   const wd = last7.map((o) => ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dateOf(o).getDay()]);
   const spendOn = (o: number) => ((fin && fin.spends) || []).filter((x: any) => x.cat !== 'Savings' && x.date === keyOfDate(dateOf(o))).reduce((a, b) => a + (b.amt || 0), 0);
-  const trends = [
+  // Relax, energy and medicine join the list once there is something logged
+  const rl7 = last7.map((o) => relaxMins(getDay(hd, o)));
+  const en7 = last7.map((o) => { const e = getDay(hd, o).en; return e !== undefined && e >= 0 ? 4 - e : 0; });
+  const ad7 = hd.meds && hd.meds.length ? medAdherence(hd, new Date(), 7) : null;
+  type Tr = { t: string; k: string; c: string; v: number[]; fmt: (n: number) => string; unit: string; sum?: boolean };
+  const extraTr: Tr[] = [];
+  if (rl7.some((v) => v > 0)) extraTr.push({ t: 'Relax', k: 'relax', c: '#8fe9e2', v: rl7, fmt: (n: number) => fmtMin(n), unit: 'min a day' });
+  if (en7.some((v) => v > 0)) extraTr.push({ t: 'Energy', k: 'energy', c: '#ffc46b', v: en7, fmt: () => { const l = en7.filter((v) => v > 0); return ENERGY[Math.max(0, Math.min(3, 4 - Math.round(l.reduce((a, b) => a + b, 0) / l.length)))][0]; }, unit: 'on average' });
+  if (ad7 && ad7.due > 0) extraTr.push({ t: 'Medicine', k: 'medicine', c: '#5ee7df', v: ad7.daily, fmt: (n: number) => String(Math.round(n)), unit: 'of ' + ad7.due + ' doses taken', sum: true });
+  const trends: Tr[] = [
     { t: 'Steps', k: 'steps', c: '#34d399', v: last7.map((o) => getDay(hd, o).steps), fmt: (n: number) => Math.round(n).toLocaleString(), unit: 'a day' },
     { t: 'Water', k: 'water', c: '#5ee7df', v: last7.map((o) => getDay(hd, o).cups), fmt: (n: number) => String(Math.round(n * 10) / 10), unit: 'of ' + cg + ' glasses' },
     { t: 'Sleep', k: 'sleep', c: '#b794ff', v: last7.map((o) => getDay(hd, o).sleep), fmt: (n: number) => String(Math.round(n * 10) / 10), unit: 'hours a night' },
     { t: 'Mood', k: 'mood', c: '#ff8fab', v: last7.map((o) => { const m = getDay(hd, o).mood; return m >= 0 ? m + 1 : 0; }), fmt: (n: number) => { const lg = last7.map((o) => getDay(hd, o).mood).filter((m) => m >= 0); if (!lg.length) return 'None'; return MOODS[Math.max(0, Math.min(4, Math.round(lg.reduce((a, b) => a + b, 0) / lg.length)))][0]; }, unit: 'on average' },
-    { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => 'RM ' + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'in 7 days', sum: true },
+    ...extraTr,
+    { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'in 7 days', sum: true },
   ];
   const tot: Record<string, number> = u.mods;
-  const ranked = MODS.map((m) => ({ ...m, n: tot[m.k] || 0 })).filter((m) => m.n > 0).sort((a, b) => b.n - a.n);
+  const ranked = MODS.map((m) => ({ ...m, n: tot[m.k] || 0 })).filter((m) => m.n > 0 && hid.on(m.k as any)).sort((a, b) => b.n - a.n);
   const topN = ranked.length ? ranked[0].n : 1;
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
@@ -102,7 +126,7 @@ export default function Stats() {
         <ScrollView onScroll={navScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 130 }}>
           <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Stats</Text>
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 14 }}>
-            {([['use', 'App use'], ['health', 'Health'], ['money', 'Money']] as ['use' | 'health' | 'money', string][]).map(([k, n]) => (
+            {(([['use', 'App use'], ['health', 'Health'], ['money', 'Money']] as ['use' | 'health' | 'money', string][]).filter(([k]) => k === 'use' || (k === 'health' ? hid.on('habit') : hid.on('finance')))).map(([k, n]) => (
               <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
                 {tab === k ? (
                   <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
@@ -259,6 +283,87 @@ export default function Stats() {
           </Glass>
           </Rise>
 
+
+          {(() => {
+            const now = new Date();
+            const hasMeds = !!(hd.meds && hd.meds.length);
+            const a7 = hasMeds ? medAdherence(hd, now, 7) : null, a30 = hasMeds ? medAdherence(hd, now, 30) : null;
+            const el: number[] = [0, 0, 0, 0]; let en30 = 0, enSum = 0;
+            for (let o = -29; o <= 0; o++) { const e = getDay(hd, o).en; if (e !== undefined && e >= 0 && e <= 3) { el[e]++; en30++; enSum += 3 - e; } }
+            const ci = hd.cyOn ? cycleInfo(hd) : null;
+            const sy: Record<string, number> = {}; let flows = 0;
+            if (ci) for (let o = -89; o <= 0; o++) { const x = getDay(hd, o); (x.sy || []).forEach((q) => { if (SYMS.indexOf(q) >= 0) sy[q] = (sy[q] || 0) + 1; }); if (x.pd && x.fl !== undefined) flows++; }
+            const topSy = Object.keys(sy).sort((a, b) => sy[b] - sy[a]).slice(0, 3);
+            const tile = (a: string, b: string, c: string) => (
+              <View key={a} style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{a}</Text><Text style={{ color: c, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{b}</Text></View>
+            );
+            return (<>
+              {a7 && a30 && (a7.due > 0 || a30.due > 0) ? (
+                <Rise i={4}>
+                <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HeadIcon k="medicine" size={24} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>Medicine</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Doses ticked</Text></View>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                    {tile('Last 7 days', a7.due ? a7.pct + '%' : 'None', a7.pct >= 80 ? '#7df0c6' : '#ffd593')}
+                    {tile('Last 30 days', a30.due ? a30.pct + '%' : 'None', a30.pct >= 80 ? '#7df0c6' : '#ffd593')}
+                    {tile('Not ticked (7 d)', String(a7.due - a7.taken), a7.due - a7.taken > 0 ? '#ff9db5' : '#7df0c6')}
+                  </View>
+                  {a30.per.map((x, i) => { const pc = Math.round((x.taken / x.due) * 100); return (
+                    <View key={x.med.id} style={{ marginTop: 11 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{x.med.name}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{x.taken} of {x.due}</Text></View>
+                      <View style={{ marginTop: 5 }}><FillBar p={pc} color={pc >= 80 ? '#5ee7df' : '#ffc46b'} delay={i * 80} dep={pc} /></View>
+                    </View>
+                  ); })}
+                  <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 10, lineHeight: 16 }}>Counted from the doses you ticked in Medicine over the last 30 days. A personal record, not medical advice.</Text>
+                </Glass>
+                </Rise>
+              ) : null}
+
+              {en30 > 0 ? (
+                <Rise i={4}>
+                <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HeadIcon k="energy" size={24} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>Energy</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 30 days</Text></View>
+                  <Text style={{ color: '#ffd593', fontSize: 15, fontWeight: '800', marginTop: 10 }}>{ENERGY[Math.max(0, Math.min(3, 3 - Math.round(enSum / en30)))][0]} on average</Text>
+                  {ENERGY.map((e, i) => (
+                    <View key={e[0]} style={{ marginTop: 10 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '600' }}>{e[0]}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{el[i]} {el[i] === 1 ? 'day' : 'days'}</Text></View>
+                      <View style={{ marginTop: 5 }}><FillBar p={Math.round((el[i] / en30) * 100)} color={e[1]} delay={i * 80} dep={el.join()} /></View>
+                    </View>
+                  ))}
+                  <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 10, lineHeight: 16 }}>Only the energy you rated yourself is counted, never the estimate.</Text>
+                </Glass>
+                </Rise>
+              ) : null}
+
+              {ci ? (
+                <Rise i={4}>
+                <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HeadIcon k="cycle" size={24} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>Cycle</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>From your marks</Text></View>
+                  <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, marginTop: 10 }}>{statusText(ci)}</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    {tile('Average cycle', ci.avgCycle + ' days', '#ff9db5')}
+                    {tile('Average period', ci.avgPeriod + ' days', '#ff9db5')}
+                    {tile('Periods marked', String(ci.periods.length), '#ffd593')}
+                  </View>
+                  {ci.periods.length > 0 ? (<>
+                    <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11, fontWeight: '700', letterSpacing: 1.1, marginTop: 14 }}>RECENT PERIODS</Text>
+                    {ci.periods.slice(-3).reverse().map((q) => (
+                      <View key={q.start} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}><Text style={{ color: '#fff', fontSize: 12.5 }}>{fmtD(dateOf(q.start))}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5 }}>{q.len} {q.len === 1 ? 'day' : 'days'}</Text></View>
+                    ))}
+                  </>) : null}
+                  {topSy.length > 0 ? (<>
+                    <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11, fontWeight: '700', letterSpacing: 1.1, marginTop: 14 }}>MOST NOTED SYMPTOMS</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                      {topSy.map((q) => <View key={q} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: 'rgba(255,143,171,.18)' }}><Text style={{ color: '#ffb3c6', fontSize: 12, fontWeight: '700' }}>{q} · {sy[q]}</Text></View>)}
+                    </View>
+                  </>) : null}
+                  <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 12, lineHeight: 16 }}>Worked out on your phone from the period days you marked. Estimates only, not medical advice.</Text>
+                </Glass>
+                </Rise>
+              ) : null}
+            </>);
+          })()}
+
+          {hid.on('islamic') ? (
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {
@@ -277,14 +382,16 @@ export default function Stats() {
             })()}
           </Glass>
           </Rise>
+          ) : null}
 
+          {hid.on('finance') ? (
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {
               const hm = healthMonths((fin && (fin as any).spends) || []); const mx = Math.max(...hm.map((m) => m.v), 1); const tot = hm.reduce((a, m) => a + m.v, 0);
               return (<>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Health spending</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 6 months</Text></View>
-                <Text style={{ color: '#ff9db5', fontSize: 20, fontWeight: '800', marginTop: 8 }}>RM {(Math.round(hm[hm.length - 1].v * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>  this month</Text></Text>
+                <Text style={{ color: '#ff9db5', fontSize: 20, fontWeight: '800', marginTop: 8 }}>{cs()}{(Math.round(hm[hm.length - 1].v * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>  this month</Text></Text>
                 {tot > 0 ? (<>
                   <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 60, marginTop: 12 }}>
                     {hm.map((m, i) => <View key={m.ym} style={{ flex: 1, height: 60, justifyContent: 'flex-end' }}><View style={{ height: Math.max(4, Math.round((m.v / mx) * 56)), borderRadius: 5, backgroundColor: i === hm.length - 1 ? '#ff8fab' : 'rgba(255,255,255,.35)' }} /></View>)}
@@ -295,6 +402,7 @@ export default function Stats() {
             })()}
           </Glass>
           </Rise>
+          ) : null}
 
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
@@ -308,6 +416,8 @@ export default function Stats() {
                   ['Most water', rc.water + ' glasses', fd(rc.waterDate), 'water'],
                   ['Best score', rc.score + ' / 100', fd(rc.scoreDate), 'insight'],
                   ['Longest streak', rc.streak + (rc.streak === 1 ? ' day' : ' days'), 'Goal at 70 or more', 'streak'],
+                  ...(rc.relax > 0 ? [['Longest relax', fmtMin(rc.relax) + ' min', fd(rc.relaxDate), 'relax']] : []),
+                  ...(rc.relaxStreak > 0 ? [['Relax streak', rc.relaxStreak + (rc.relaxStreak === 1 ? ' day' : ' days'), 'In a row now', 'relax']] : []),
                 ].map(([a, b, c, k]) => (
                   <View key={a} style={{ width: '47.5%', flexGrow: 1, borderRadius: 16, padding: 11, backgroundColor: 'rgba(255,255,255,.08)' }}>
                     <HeadIcon k={k} size={26} />
@@ -359,7 +469,7 @@ export default function Stats() {
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {
               const rows = monthRows(core, 6); const cur = rows[rows.length - 1]; const any = rows.some((r) => r.has);
-              const fm = (n: number) => 'RM ' + Math.round(Math.abs(n)).toLocaleString('en-MY');
+              const fm = (n: number) => cs() + Math.round(Math.abs(n)).toLocaleString('en-MY');
               const mxL = Math.max(...rows.map((r) => Math.abs(r.left)), 1); const mxS = Math.max(...rows.map((r) => r.savings), 1);
               const totS = rows.reduce((a, r) => a + r.savings, 0); const rate = cur.income > 0 ? Math.round((cur.savings / cur.income) * 100) : 0;
               const best = rows.filter((r) => r.income > 0).sort((a, b) => b.left - a.left)[0];
@@ -402,7 +512,7 @@ export default function Stats() {
               const nGoals = ((core.sav && core.sav.goals) || []).length; const totS = rows.reduce((a, r) => a + r.savings, 0);
               return (<>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Savings</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 6 months</Text></View>
-                <Text style={{ color: '#7df0c6', fontSize: 20, fontWeight: '800', marginTop: 8 }}>RM {Math.round(cur.savings).toLocaleString('en-MY')}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>{'  saved this month' + (cur.income > 0 && cur.savings > 0 ? ' (' + rate + '% of income)' : '')}</Text></Text>
+                <Text style={{ color: '#7df0c6', fontSize: 20, fontWeight: '800', marginTop: 8 }}>{cs()}{Math.round(cur.savings).toLocaleString('en-MY')}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>{'  saved this month' + (cur.income > 0 && cur.savings > 0 ? ' (' + rate + '% of income)' : '')}</Text></Text>
                 {nGoals > 0 ? (<>
                   {totS > 0 ? (<>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 60, marginTop: 12 }}>
@@ -410,7 +520,7 @@ export default function Stats() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>{rows.map((r) => <Text key={r.ym} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{r.label}</Text>)}</View>
                   </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Nothing saved in the last 6 months. Choose Savings in the Spending Tracker to start.</Text>}
-                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{'All goals together: RM ' + Math.round(goalsSaved).toLocaleString('en-MY') + ' across ' + nGoals + (nGoals === 1 ? ' goal.' : ' goals.')}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{'All goals together: ' + cs() + Math.round(goalsSaved).toLocaleString('en-MY') + ' across ' + nGoals + (nGoals === 1 ? ' goal.' : ' goals.')}</Text>
                 </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Create a goal in My Finance, Savings Goals, then put money into it from the Spending Tracker or a monthly commitment.</Text>}
               </>);
             })()}
@@ -454,7 +564,7 @@ export default function Stats() {
             <Rise i={4}>
             <Locked on={!pro} mt={12}><Glass style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
               <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Where your income goes</Text>
-              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{incNow > 0 ? 'This month, out of RM ' + Math.round(incNow).toLocaleString() : 'Add this month\'s income in My Finance to see the full split.'}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{incNow > 0 ? 'This month, out of ' + cs() + Math.round(incNow).toLocaleString() : 'Add this month\'s income in My Finance to see the full split.'}</Text>
               <View style={{ flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', marginTop: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
                 {segs.map((g) => <View key={g.n} style={{ width: (g.v / base) * 100 + '%', backgroundColor: g.c }} />)}
                 {freeAmt > 0 ? <View style={{ width: (freeAmt / base) * 100 + '%', backgroundColor: '#34d399' }} /> : null}
@@ -465,7 +575,7 @@ export default function Stats() {
                     <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
                     <Text style={{ flex: 1, color: '#fff', fontSize: 12.5 }}>{g.n}</Text>
                     <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{Math.round((g.v / base) * 100)}%</Text>
-                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', minWidth: 78, textAlign: 'right' }}>RM {Math.round(g.v).toLocaleString()}</Text>
+                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', minWidth: 78, textAlign: 'right' }}>{cs()}{Math.round(g.v).toLocaleString()}</Text>
                   </View>
                 ))}
               </View>
@@ -478,7 +588,7 @@ export default function Stats() {
             <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Debt remaining</Text>
-                <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>RM {Math.round(ds.totalLeft).toLocaleString()}</Text>
+                <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>{cs()}{Math.round(ds.totalLeft).toLocaleString()}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 90, marginTop: 14 }}>
                 {dm6.map((x, i) => (

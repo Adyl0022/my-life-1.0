@@ -1,9 +1,10 @@
+import { mergeVeh, VEH_KEY, VMode } from './vehicleSpend';
 import { goalSaved } from './savings';
 import { useEffect } from 'react';
 import { useStored, getItem, getItemStrict, setItem } from './store';
 import { HEMPTY, HData, keyOfDate, dateOf, cupsGoal, getDay, bestStreakAll, BLANK } from './habit';
 import { DEBT_EMPTY, DebtData, debtSummary, ymOf } from './debts';
-import { commitFor } from './moneyLeft';
+import { commitFor, calcLeft } from './moneyLeft';
 import { PUASA_EMPTY, PuasaData } from './fasting';
 import { Fin, Pl, scoreParts, lifeScore, incomeOf, Core } from './insights';
 import { TG_DEFAULT, Toggles } from './adhan';
@@ -21,7 +22,9 @@ export type Real = {
   tg: Toggles; lock: LockCfg;
   P: [string, number, number][]; // prayer times today, empty when the place is not known yet
   spends: { id: number; name: string; cat: string; amt: number; date: string }[]; days: Record<string, { mood: number; cups: number; sleep: number; steps: number }>;
+  noteList: { t: string; s: string; rm?: number; rd?: boolean }[];
   plTasks: { id: number; name: string; due: string; prio: string; status: string }[]; plEvents: { id: number; name: string; date: string; done: boolean }[];
+  parts: { k: string; label: string; pct: number; detail: string }[]; allow: number;
   incomeLast: number; commit: number; limits: Record<string, number>; goals: { id: number; name: string; target: number; place: string; due: string; saved: number }[];
 };
 
@@ -42,7 +45,11 @@ function kmBetween(sorted: { date: string; odo: number }[], from: string, to: st
 
 export function useReal(P: [string, number, number][]): Real {
   const [hd, , o1] = useStored<HData>('ml_habit', HEMPTY);
-  const [fin, , o2] = useStored<Fin>('ml_finance', { inc: {}, spends: [] } as any);
+  const [fin0, , o2] = useStored<Fin>('ml_finance', { inc: {}, spends: [] } as any);
+  const [rec0] = useStored<any>('ml_record', { data: {} });
+  const [vm0] = useStored<VMode>(VEH_KEY, 'ask');
+  const fin = { ...fin0, spends: mergeVeh(fin0 && fin0.spends, rec0, vm0) } as Fin;
+  const [nts] = useStored<{ notes: any[] }>('ml_notes', { notes: [] });
   const [pl, , o3] = useStored<Pl>('ml_planner', { events: [], tasks: [] } as any);
   const [rec, , o4] = useStored<RecData>('ml_record', { cats: ['Motorcycle'], sel: 0, data: {}, nextId: 1 });
   const [tas, , o5] = useStored<{ day: string; total: number }>('ml_tasbih', { day: '', total: 0 });
@@ -82,7 +89,9 @@ export function useReal(P: [string, number, number][]): Real {
     goals: ((sav && sav.goals) || []).map((g: any) => ({ id: g.id, name: g.name, target: g.target, place: g.place || '', due: g.due || '', saved: goalSaved(g, spends as any, debts) })),
     spends: spends as any, days: (hd.days || {}) as any,
     plTasks: ((pl && pl.tasks) || []).map((x: any) => ({ id: x.id, name: x.name, due: x.due || '', prio: x.prio || 'Medium', status: x.status })),
+    noteList: ((nts && nts.notes) || []).map((n: any) => ({ t: n.t || '', s: n.s || '', rm: n.rm, rd: n.rd })),
     plEvents: ((pl && pl.events) || []).map((e: any) => ({ id: e.id, name: e.name, date: e.date, done: !!e.done })),
+    parts: scoreParts(core, false).map((x) => ({ k: x.k, label: x.label, pct: x.pct, detail: x.detail })), allow: (() => { try { const inc = incomeOf(core); return inc > 0 ? calcLeft({ ym, income: inc, commit: commitFor(debts, ym), spends: spends as any }).allowance : 0; } catch (e) { return 0; } })(),
     incomeLast: incomeLastMonth(fin), commit: commitFor(debts, ym), limits: ((fin as any).limits || {}) as Record<string, number>,
   };
 }
@@ -115,6 +124,11 @@ export async function persist(a: any): Promise<void> {
     if (a.type === 'mood') cur.mood = a.v - 1;
     if (a.type === 'cups') cur.cups = a.c;
     await setItem('ml_habit', { ...h, days: { ...(h.days || {}), [today]: cur } });
+  } else if (a.type === 'heart') {
+    const h: any = await getItemStrict('ml_habit', HEMPTY); if (h === null) return;
+    const n = new Date(); const at = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+    const r: any = { id: String(id), d: today, at }; if (a.bpm != null) r.bpm = a.bpm; if (a.sys != null && a.dia != null) { r.sys = a.sys; r.dia = a.dia; }
+    await setItem('ml_habit', { ...h, heart: [...(h.heart || []), r].slice(-400) });
   } else if (a.type === 'task') {
     const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
     const nid = p.nextId || 1;
@@ -126,9 +140,40 @@ export async function persist(a: any): Promise<void> {
   } else if (a.type === 'taskdone') {
     const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
     await setItem('ml_planner', { ...p, tasks: (p.tasks || []).map((x: any) => (x.id === a.id ? { ...x, status: 'done' } : x)) });
+  } else if (a.type === 'undoTask') {
+    const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
+    const mine = (p.tasks || []).filter((x: any) => x.name === a.name).sort((x: any, y: any) => y.id - x.id)[0];
+    if (mine) await setItem('ml_planner', { ...p, tasks: (p.tasks || []).filter((x: any) => x.id !== mine.id) });
+  } else if (a.type === 'undoEvent') {
+    const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
+    const mine = (p.events || []).filter((x: any) => x.name === a.name && x.date === a.date).sort((x: any, y: any) => y.id - x.id)[0];
+    if (mine) await setItem('ml_planner', { ...p, events: (p.events || []).filter((x: any) => x.id !== mine.id) });
+  } else if (a.type === 'taskstatus') {
+    const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
+    await setItem('ml_planner', { ...p, tasks: (p.tasks || []).map((x: any) => (x.id === a.id ? { ...x, status: a.status } : x)) });
   } else if (a.type === 'undoSpend') {
     const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     await setItem('ml_finance', { ...f, spends: (f.spends || []).filter((x: any) => x.id !== a.id) });
+  } else if (a.type === 'remind') {
+    const n: any = await getItemStrict('ml_notes', { notes: [], seq: 1 }); if (n === null) return;
+    const id = n.seq || 1;
+    await setItem('ml_notes', { notes: [{ id, t: a.title, s: '', c: 2, pin: false, u: Date.now(), r: '', rm: a.rm }, ...(n.notes || [])], seq: id + 1 });
+  } else if (a.type === 'undoRemind') {
+    const n: any = await getItemStrict('ml_notes', { notes: [], seq: 1 }); if (n === null) return;
+    const mine = (n.notes || []).find((x: any) => x.t === a.title && x.rm === a.rm);
+    if (mine) await setItem('ml_notes', { ...n, notes: n.notes.filter((x: any) => x.id !== mine.id) });
+  } else if (a.type === 'shop') {
+    const n: any = await getItemStrict('ml_notes', { notes: [], seq: 1 }); if (n === null) return;
+    const lines = a.items.map((x: string) => '☐ ' + x).join('\n');
+    const ex = (n.notes || []).find((x: any) => (x.t || '').trim().toLowerCase() === 'shopping list');
+    if (ex) await setItem('ml_notes', { ...n, notes: n.notes.map((x: any) => (x.id === ex.id ? { ...x, s: (x.s ? x.s + '\n' : '') + lines, u: Date.now() } : x)) });
+    else { const id = n.seq || 1; await setItem('ml_notes', { notes: [{ id, t: 'Shopping list', s: lines, c: 2, pin: false, u: Date.now(), r: '' }, ...(n.notes || [])], seq: id + 1 }); }
+  } else if (a.type === 'undoShop') {
+    const n: any = await getItemStrict('ml_notes', { notes: [], seq: 1 }); if (n === null) return;
+    const ex = (n.notes || []).find((x: any) => (x.t || '').trim().toLowerCase() === 'shopping list'); if (!ex) return;
+    const drop = a.items.map((x: string) => '☐ ' + x); const keep = (ex.s || '').split('\n').filter((l: string) => drop.indexOf(l) < 0);
+    if (!keep.join('').trim()) await setItem('ml_notes', { ...n, notes: n.notes.filter((x: any) => x.id !== ex.id) });
+    else await setItem('ml_notes', { ...n, notes: n.notes.map((x: any) => (x.id === ex.id ? { ...x, s: keep.join('\n') } : x)) });
   } else if (a.type === 'note') {
     const n: any = await getItemStrict('ml_notes', { notes: [], seq: 1 }); if (n === null) return;
     const id = n.seq || 1;

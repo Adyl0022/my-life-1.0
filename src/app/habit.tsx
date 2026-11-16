@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, Pressable, Platform, Keyboard, TextInput } from 'react-native';
+import { View, ScrollView, Pressable, Platform, Keyboard, TextInput, Animated, Easing } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,14 +9,36 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, W } from '../components/Ui';
 import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
+import { HeartLog } from '../components/HeartLog';
+import { PatternsTab } from '../components/PatternsTab';
+import { ENERGY, energyEstimate } from '../lib/patterns';
+import { SleepSchedule } from '../components/SleepSchedule';
 import { useStored } from '../lib/store';
+import { useHidden } from '../lib/hidden';
+import { CardArt } from '../components/CardArt';
+import { mins, fmtMin, weekMins, relaxStreak } from '../lib/relax';
+import { cycleInfo, statusText, SYMS } from '../lib/cycle';
+import { useCycleSave } from '../lib/cycleHook';
 import { TOP } from '../lib/layout';
 import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
-import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, bestStreakAll, avgOf } from '../lib/habit';
+import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf, medDue, to12 } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
+import { sensorToday } from '../lib/stepSensor';
+import { stepWhy } from '../../modules/step-counter';
+import { useRegion } from '../lib/region';
 
 const T = '#5ee7df';
+// Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
+function SoftShow({ show, children }: { show: boolean; children: React.ReactNode }) {
+  const v = React.useRef(new Animated.Value(show ? 1 : 0)).current; const [mounted, setMounted] = React.useState(show);
+  React.useEffect(() => {
+    if (show) setMounted(true);
+    Animated.timing(v, { toValue: show ? 1 : 0, duration: show ? 700 : 900, easing: Easing.inOut(Easing.ease), useNativeDriver: false }).start(({ finished }) => { if (finished && !show) setMounted(false); });
+  }, [show]);
+  if (!mounted) return null;
+  return <Animated.View style={{ opacity: v, height: v.interpolate({ inputRange: [0, 1], outputRange: [0, 44] }), overflow: 'hidden', transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }] }}>{children}</Animated.View>;
+}
 const Lbl = ({ t }: { t: string }) => <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '600' }}>{t}</Text>;
 const Ttl = ({ t, k, nm }: { t: string; k?: string; nm?: boolean }) => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: k && !nm ? 9 : 0 }}>{k ? <HeadIcon k={k} /> : null}<Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{t}</Text></View>;
 const Step = ({ t, onPress, label }: { t: string; onPress: () => void; label: string }) => (
@@ -46,9 +68,10 @@ function Bars({ vals, labels, max, goal, color, hi }: { vals: number[]; labels: 
 }
 
 export default function Habit() {
+  useRegion();
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
-  const [tab, setTab] = useState<'today' | 'progress' | 'body'>('today');
+  const [tab, setTab] = useState<'patterns' | 'today' | 'progress' | 'body'>('patterns');
   const svRef = useRef<any>(null); const scrollY = useRef(0); const [kb, setKb] = useState(0);
   useEffect(() => {
     const sh = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -64,11 +87,16 @@ export default function Habit() {
   const [edit, setEdit] = useState(false); const [gv, setGv] = useState('');
   const hRef = useRef(h); hRef.current = h;
   const [autoMsg, setAutoMsg] = useState('');
-  const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState(''); const [wake, setWake] = useState('');
+  const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState<string | null>(null); const [wake, setWake] = useState<string | null>(null);
   const goal = h.goal || 8000;
   const cg = cupsGoal(h); const kg = latestKg(h);
   const t = getDay(h, 0);
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [keyOfDate(dateOf(0))]: { ...t, ...p } } });
+  const meds = h.meds || []; const taken = t.med || [];
+  const relaxToday = mins(t);
+  const { setPeriod } = useCycleSave(h, setH);
+  const medDue_ = meds.filter((m) => medDue(m, dateOf(0)));
+  const medNext = medDue_.filter((m) => !taken.includes(m.id)).sort((x, y) => (x.time < y.time ? -1 : 1))[0];
   const km = (t.steps * 0.00075).toFixed(1);
   const gp = goalPctOf(t, goal, cg);
   const stepPct = Math.min(t.steps / goal, 1);
@@ -85,13 +113,32 @@ export default function Habit() {
     if (!h.auto || Platform.OS === 'web') { setHcOn(false); setAutoMsg(''); return; }
     let sub: { remove: () => void } | null = null; let alive = true; let timer: any = null; let last = 0;
     const saveToday = (f: (td: HDay) => HDay) => { const cur = hRef.current; const key = keyOfDate(dateOf(0)); const td = { ...BLANKD, ...(cur.days[key] || {}) }; setH({ ...cur, days: { ...cur.days, [key]: f(td) } }); };
-    const startSensor = async (why: string) => {
+    // The phone's own step counter keeps counting while My Life is closed. Needs the Physical activity permission.
+    const sensorN = async (): Promise<number> => { const r = await sensorToday(); return 'n' in r ? r.n : -1; };
+    const sensorReady = async (): Promise<string> => {
       try {
         const { Pedometer } = require('expo-sensors');
-        if (!(await Pedometer.isAvailableAsync())) { setAutoMsg(why + ' This phone has no step sensor.'); return; }
-        const perm: any = await withNavBar(() => Pedometer.requestPermissionsAsync());
-        if (!perm.granted) { setAutoMsg('Allow Physical activity permission in phone settings to count steps.'); setH({ ...hRef.current, auto: false }); return; }
-        setAutoMsg(why);
+        let perm: any = await Pedometer.getPermissionsAsync();
+        if (!perm.granted) perm = await withNavBar(() => Pedometer.requestPermissionsAsync());
+        if (!perm.granted) return 'Allow Physical activity permission in phone settings to count steps.';
+        const r = await sensorToday();
+        return 'n' in r ? '' : 'Step sensor: ' + stepWhy(r.err) + '.';
+      } catch (e) { return 'Step sensor: ' + String((e as any)?.message || e).slice(0, 80); }
+    };
+    const startSensor = async (why: string) => {
+      try {
+        const bad = await sensorReady();
+        if (!bad) {
+          // All day count from the phone's sensor. Manual changes stay on top (adj), like with Health Connect.
+          setAutoMsg('Counting with your phone\'s step sensor, also when My Life is closed. Open My Life to refresh the total.');
+          const sync = async () => { try { const n = await sensorN(); if (alive && n >= 0) saveToday((td) => ({ ...td, hc: n, steps: Math.max(0, n + (td.adj || 0)) })); } catch (e) {} };
+          await sync(); timer = setInterval(sync, 30000);
+          return;
+        }
+        if (/permission/.test(bad)) { setAutoMsg(bad); setH({ ...hRef.current, auto: false }); return; }
+        const { Pedometer } = require('expo-sensors');
+        if (!(await Pedometer.isAvailableAsync())) { setAutoMsg(why + ' ' + bad); return; }
+        setAutoMsg(why + ' ' + bad);
         sub = Pedometer.watchStepCount((r: { steps: number }) => { if (!alive) return; const d = r.steps - last; last = r.steps; if (d > 0) saveToday((td) => ({ ...td, steps: td.steps + d })); });
       } catch (e) { setAutoMsg('Step counting is not available on this device.'); }
     };
@@ -99,11 +146,11 @@ export default function Habit() {
       try {
         const HC = require('react-native-health-connect');
         const st = await HC.getSdkStatus();
-        if (st !== HC.SdkAvailabilityStatus.SDK_AVAILABLE) { await startSensor(st === HC.SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED ? 'Update Health Connect in Play Store for all-day counting. For now steps count while this app is open.' : 'Health Connect is not on this phone, so steps count while this app is open.'); return; }
+        if (st !== HC.SdkAvailabilityStatus.SDK_AVAILABLE) { await startSensor(st === HC.SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED ? 'Update Health Connect in Play Store for more accurate counting.' : 'Health Connect is not on this phone.'); return; }
         await HC.initialize();
         let g = await HC.getGrantedPermissions();
         if (!g.some((x: any) => x.recordType === 'Steps')) g = await withNavBar(() => HC.requestPermission([{ accessType: 'read', recordType: 'Steps' }]));
-        if (!g.some((x: any) => x.recordType === 'Steps')) { await startSensor('Health Connect access was not allowed, so steps count while this app is open.'); return; }
+        if (!g.some((x: any) => x.recordType === 'Steps')) { await startSensor('Health Connect access was not allowed.'); return; }
         const read = async () => {
           const s0 = new Date(); s0.setHours(0, 0, 0, 0);
           const r = await HC.aggregateRecord({ recordType: 'Steps', timeRangeFilter: { operationType: 'between', startTime: s0.toISOString(), endTime: new Date().toISOString() } });
@@ -111,14 +158,17 @@ export default function Habit() {
         };
         const n0 = await read();
         if (!alive) return;
-        if (n0 <= 0) { await startSensor('No steps in Health Connect yet. Install Samsung Health or Google Fit for all-day counting. For now steps count while this app is open.'); return; }
+        if (n0 <= 0) { await startSensor('No steps in Health Connect yet. In Honor Health or Samsung Health, turn on sharing to Health Connect for Steps, then tap Check again.'); return; }
         setHcOn(true); setAutoMsg('');
-        const sync = async () => { try { const n = await read(); if (alive) saveToday((td) => ({ ...td, hc: n, steps: Math.max(0, n + (td.adj || 0)) })); } catch (e) {} };
+        // Health Connect and the phone's sensor count the same steps, so take the larger number, never the sum.
+        const sOn = !(await sensorReady());
+        const sync = async () => { try { const n = await read(); const sn = sOn ? await sensorN() : -1; const best = Math.max(n, sn); if (alive) saveToday((td) => ({ ...td, hc: best, steps: Math.max(0, best + (td.adj || 0)) })); } catch (e) {} };
         await sync(); timer = setInterval(sync, 60000);
-      } catch (e) { await startSensor('Health Connect is not available, so steps count while this app is open.'); }
+      } catch (e) { await startSensor('Health Connect is not available.'); }
     })();
     return () => { alive = false; sub && sub.remove(); timer && clearInterval(timer); };
   }, [h.auto, retry]);
+  const hidM = useHidden(); const isl = hidM.on('islamic'), finOn = hidM.on('finance');
   const dow = dateOf(0).getDay(); const sunnahDay = dow === 1 || dow === 4;
   const [pz, setPz] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
   const rs = ramadanState(pz, new Date()); const owed = qadhaOwed(pz, new Date()); const inRam = rs.phase === 'during';
@@ -129,17 +179,17 @@ export default function Habit() {
   };
   type Sg = { t: string; b: string; tag: string; to?: string };
   const sg: Sg[] = [];
-  if (t.sleep > 0 && t.sleep < 6) sg.push({ t: 'Rest early tonight', b: 'Short on sleep. End the day with a calm Tasbih.', tag: 'Sleep · Tasbih', to: '/tasbih' });
-  if (t.mood >= 0 && t.mood <= 1) sg.push({ t: 'Take a calm moment', b: 'Feeling low? A few minutes of Tasbih can settle the heart.', tag: 'Mood · Tasbih', to: '/tasbih' });
-  if (t.cups < cg / 2) sg.push({ t: 'Drink a glass now', b: 'Have a glass before the next prayer time.', tag: 'Water · Prayer', to: '/prayer' });
-  if (t.steps < goal * 0.5) sg.push({ t: 'Take a short walk', b: 'A walk after prayer adds easy steps.', tag: 'Steps · Prayer', to: '/prayer' });
-  if (t.cups <= cg / 2) sg.push({ t: 'Bring your own water', b: 'Skip the bought drinks and track the savings.', tag: 'Water · Finance', to: '/finance' });
-  if (inRam) {
+  if (t.sleep > 0 && t.sleep < 6) sg.push(isl ? { t: 'Rest early tonight', b: 'Short on sleep. End the day with a calm Tasbih.', tag: 'Sleep · Tasbih', to: '/tasbih' } : { t: 'Rest early tonight', b: 'Short on sleep. Wind down with a calm Relax session.', tag: 'Sleep · Relax', to: '/relax' });
+  if (t.mood >= 0 && t.mood <= 1) sg.push(isl ? { t: 'Take a calm moment', b: 'Feeling low? A few minutes of Tasbih can settle the heart.', tag: 'Mood · Tasbih', to: '/tasbih' } : { t: 'Take a calm moment', b: 'Feeling low? A few minutes of Relax can settle you.', tag: 'Mood · Relax', to: '/relax' });
+  if (t.cups < cg / 2) sg.push(isl ? { t: 'Drink a glass now', b: 'Have a glass before the next prayer time.', tag: 'Water · Prayer', to: '/prayer' } : { t: 'Drink a glass now', b: 'You are below half of your water goal.', tag: 'Water' });
+  if (t.steps < goal * 0.5) sg.push(isl ? { t: 'Take a short walk', b: 'A walk after prayer adds easy steps.', tag: 'Steps · Prayer', to: '/prayer' } : { t: 'Take a short walk', b: 'A short walk adds easy steps.', tag: 'Steps' });
+  if (finOn && t.cups <= cg / 2) sg.push({ t: 'Bring your own water', b: 'Skip the bought drinks and track the savings.', tag: 'Water · Finance', to: '/finance' });
+  if (isl && inRam) {
     if (t.cups < cg / 2) sg.push({ t: 'Spread your water tonight', b: 'You are fasting. Sip between iftar and sahur to reach ' + cg + ' glasses.', tag: 'Ramadan · Water', to: '/puasa' });
     if (t.sleep > 0 && t.sleep < 6) sg.push({ t: 'Sleep is short in Ramadan', b: 'Try a short nap in the afternoon to keep your energy up.', tag: 'Ramadan · Sleep', to: '/puasa' });
   }
-  if (sunnahDay && !t.fast && !inRam) sg.push({ t: 'Sunnah fasting day', b: 'Drink plenty at sahur and iftar so you stay at your water goal.', tag: 'Water · Prayer', to: '/prayer' });
-  if (gp >= 70) sg.push({ t: 'Great day!', b: 'Goal reached. Log a small saving to match.', tag: 'Goal · Finance', to: '/finance' });
+  if (isl && sunnahDay && !t.fast && !inRam) sg.push({ t: 'Sunnah fasting day', b: 'Drink plenty at sahur and iftar so you stay at your water goal.', tag: 'Water · Prayer', to: '/prayer' });
+  if (gp >= 70) sg.push(finOn ? { t: 'Great day!', b: 'Goal reached. Log a small saving to match.', tag: 'Goal · Finance', to: '/finance' } : { t: 'Great day!', b: 'Goal reached. Keep it going tomorrow.', tag: 'Goal' });
   if (!sg.length) sg.push({ t: 'Keep going', b: 'Log today to get personal suggestions.', tag: 'Life Link' });
   const sgs = sg.slice(0, 3);
 
@@ -176,19 +226,21 @@ export default function Habit() {
           <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <LinearGradient colors={['rgba(183,148,255,.45)', 'rgba(94,231,223,.25)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <Heart />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Small habits, big health</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>Mood, water, sleep and goals</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Small habits, big health</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Mood, water, sleep and goals</Text></View>
           </Glass>
 
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
-            {([['today', 'Today'], ['progress', 'Progress'], ['body', 'Body']] as ['today' | 'progress' | 'body', string][]).map(([k, n]) => (
+            {([['patterns', 'Patterns'], ['today', 'Today'], ['progress', 'Progress'], ['body', 'Body']] as ['patterns' | 'today' | 'progress' | 'body', string][]).map(([k, n]) => (
               <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
                 {tab === k ? (
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                ) : (<View style={{ paddingVertical: 8, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
+                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
+                ) : (<View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
               </Pressable>
             ))}
           </View>
+          {tab === 'patterns' || tab === 'progress' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>{tab === 'patterns' ? 'What the app notices in your records' : 'How you are doing, week by week'}</Text> : null}
 
+          {tab === 'patterns' && <PatternsTab h={h} setH={setH} onToday={() => setTab('today')} />}
           {tab === 'today' && (<>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="goal" t="Goal Tracker" />
@@ -211,13 +263,19 @@ export default function Habit() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed || t.bed || ''} onChangeText={setBed} placeholder="e.g. 08:30" style={{ marginTop: 4 }} /></View>
-              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake || t.wake || ''} onChangeText={setWake} placeholder="e.g. 15:30" style={{ marginTop: 4 }} /></View>
-              <Pressable onPress={() => { const b = bed || t.bed || '', w = wake || t.wake || ''; const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(''); setWake(''); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
+              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed ?? t.bed ?? ''} onChangeText={(x: string) => setBed(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 08:30" style={{ marginTop: 4 }} /></View>
+              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake ?? t.wake ?? ''} onChangeText={(x: string) => setWake(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 15:30" style={{ marginTop: 4 }} /></View>
+              <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
             </View>
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time like 08:30 and the hours fill in for you.</Text>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
+            <SoftShow show={!!(t.sleep > 0 || t.bed || t.wake)}>
+              <Pressable onPress={() => { put({ sleep: 0, bed: '', wake: '' }); setBed(null); setWake(null); }} accessibilityLabel="Clear last night's sleep" style={{ alignSelf: 'flex-start', marginTop: 10,  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,143,171,.7)', backgroundColor: 'rgba(255,143,171,.14)' }}>
+                <Text style={{ color: '#ffb3c4', fontSize: 12.5, fontWeight: '800' }}>Clear last night's sleep</Text>
+              </Pressable>
+            </SoftShow>
+            <SleepSchedule h={h} />
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={6} />
-            <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 2 }}>{tip[1]}</Text></View>
+            <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="water" t="Drink Water" /><Text style={{ color: t.cups >= cg ? '#7df0c6' : 'rgba(255,255,255,.7)', fontSize: 13, fontWeight: '800' }}>{t.cups} of {cg} glasses</Text></View>
@@ -262,21 +320,21 @@ export default function Habit() {
             {Platform.OS !== 'web' && (
               <Pressable onPress={() => setH({ ...h, auto: !h.auto })} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: h.auto ? T : 'rgba(255,255,255,.2)', padding: 3, alignItems: h.auto ? 'flex-end' : 'flex-start' }}><View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: W }} /></View>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>All-day count from Health Connect when it has data.</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 4 }}>All-day count from Health Connect or your phone's step sensor.</Text></View>
               </Pressable>
             )}
             {!!autoMsg && <Text style={{ color: '#ffc46b', fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{autoMsg}</Text>}
             {!!autoMsg && !hcOn && Platform.OS !== 'web' && (
               <View style={{ marginTop: 8, padding: 10, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.22)' }}>
                 <Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>Connect your health app</Text>
-                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, lineHeight: 16, marginTop: 3 }}>1. Open Samsung Health, then Settings and Health Connect, and allow it to share Steps.{'\n'}2. Come back here and tap Check again.{'\n'}Honor Health may not support Health Connect. Samsung Health is the best choice.</Text>
+                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, lineHeight: 16, marginTop: 3 }}>1. Open your health app (Honor Health or Samsung Health), then Settings and Health Connect, and allow it to share Steps.{'\n'}2. Open Health Connect and check that today's steps show there. If not, pull down on the health app to sync first.{'\n'}3. Come back here and tap Check again.</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                   <Pressable onPress={() => { try { require('react-native-health-connect').openHealthConnectSettings(); } catch (e) {} }} style={{ flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Open Health Connect</Text></Pressable>
                   <Pressable onPress={() => setRetry(retry + 1)} style={{ flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: T, alignItems: 'center' }}><Text style={{ color: '#0d1030', fontSize: 12.5, fontWeight: '800' }}>Check again</Text></Pressable>
                 </View>
               </View>
             )}
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect. Open My Life to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect and your phone\'s step sensor. Open My Life to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="mood" t="Mood" /><Text style={{ color: t.mood >= 0 ? MOODS[t.mood][1] : 'rgba(255,255,255,.6)', fontSize: 13, fontWeight: '800' }}>{t.mood >= 0 ? MOODS[t.mood][0] : 'How do you feel?'}</Text></View>
@@ -289,15 +347,72 @@ export default function Habit() {
             </View>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+            {(() => { const est = energyEstimate(t, cg, goal); const own = t.en != null && t.en >= 0; return (<>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><Ttl nm k="energy" t="Energy" /><Text style={{ color: own ? '#7df0c6' : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>{own ? 'YOUR RATING' : est ? 'ESTIMATED' : ''}</Text></View>
+            <Lbl t={own ? 'How you said you feel today' : est ? est.why : 'Log two things above and an estimate appears'} />
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
+              {ENERGY.map((e, i) => { const on = own && t.en === i; const guess = !own && est && est.lvl === i; return (
+                <Pressable key={e[0]} onPress={() => put({ en: on ? undefined : i })} style={{ flex: 1, paddingVertical: 9, paddingHorizontal: 2, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? e[1] : 'rgba(255,255,255,.1)', borderWidth: guess ? 1.5 : 0, borderColor: e[1] }}>
+                  <Text numberOfLines={2} style={{ color: on ? '#06222a' : W, fontSize: 11.5, fontWeight: '800', textAlign: 'center' }}>{e[0]}</Text>
+                </Pressable>); })}
+            </View>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8, lineHeight: 15 }}>{own ? 'Tap your choice again to go back to the estimate.' : 'This is a guess from what you logged. Tap how you really feel to replace it.'}</Text>
+            </>); })()}
+          </Glass>
+          <Pressable onPress={() => router.push('/medicine' as any)} accessibilityLabel="Open Medicine">
+            <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+              <CardArt kind="med" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Ttl nm k="medicine" t="Medication" />
+                <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>{meds.length ? 'Open ›' : '+ Add'}</Text>
+              </View>
+              <Lbl t={medDue_.length ? 'Today: ' + medDue_.filter((m) => taken.includes(m.id)).length + ' of ' + medDue_.length + ' taken' : meds.length ? 'No medicine due today' : 'Add a medicine to get reminders and tick it off each day'} />
+              {medDue_.length ? <View style={{ height: 10, borderRadius: 99, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: (medDue_.filter((m) => taken.includes(m.id)).length / medDue_.length) * 100 + '%', height: '100%', backgroundColor: T }} /></View> : null}
+              {medNext ? <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{'Next: ' + medNext.name + ' · ' + to12(medNext.time)}</Text> : null}
+            </Glass>
+          </Pressable>
+          <Pressable onPress={() => router.push('/relax' as any)} accessibilityLabel="Open Relax">
+            <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+              <CardArt kind="relax" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Ttl nm k="relax" t="Relax" />
+                <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Open ›</Text>
+              </View>
+              <Lbl t={'Today: ' + fmtMin(relaxToday) + ' of ' + (h.rlGoal || 10) + ' min'} />
+              <View style={{ height: 10, borderRadius: 99, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: Math.min(100, (relaxToday / (h.rlGoal || 10)) * 100) + '%', height: '100%', backgroundColor: T }} /></View>
+              <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{relaxStreak(h) + ' day streak · ' + fmtMin(weekMins(h)) + ' min this week'}</Text>
+            </Glass>
+          </Pressable>
+          {h.cyOn ? (
+            <Pressable onPress={() => router.push('/cycle' as any)} accessibilityLabel="Open Cycle">
+              <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+                <CardArt kind="cycle" />
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <Ttl nm k="cycle" t="Cycle" />
+                  <Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Open ›</Text>
+                </View>
+                <Lbl t={statusText(cycleInfo(h))} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                  <Pressable onPress={() => setPeriod(0, !t.pd)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: t.pd ? '#ff8fab' : 'rgba(255,255,255,.14)' }}><Text style={{ color: t.pd ? '#3a0f1c' : W, fontSize: 12.5, fontWeight: '800' }}>{t.pd ? 'Period today ✓' : 'Period started today'}</Text></Pressable>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                  {SYMS.map((s) => { const on = (t.sy || []).includes(s); return <Pressable key={s} onPress={() => put({ sy: on ? (t.sy || []).filter((x) => x !== s) : [...(t.sy || []), s] })} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: on ? T : 'rgba(255,255,255,.12)' }}><Text style={{ color: on ? '#06222a' : W, fontSize: 12, fontWeight: '800' }}>{s}</Text></Pressable>; })}
+                </View>
+              </Glass>
+            </Pressable>
+          ) : null}
+          <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="note" t="Today's note" /><Lbl t="Why do you feel this way? (optional)" />
             <Inp value={t.note || ''} onChangeText={(v: string) => put({ note: v })} placeholder="e.g. Long shift, but a good rest" multiline style={{ marginTop: 8, minHeight: 44 }} />
+            {isl ? (<>
             <Pressable onPress={toggleFast} style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: t.fast ? T : 'rgba(255,255,255,.4)', backgroundColor: t.fast ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{t.fast && <Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>✓</Text>}</View>
-              <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Fasting today</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>{inRam ? 'Ramadan day ' + rs.day + ' of ' + rs.r.len + '.' : sunnahDay ? 'Today is a sunnah fasting day (' + (dow === 1 ? 'Monday' : 'Thursday') + ').' : 'Sunnah fasts: Monday, Thursday and the white days.'}</Text></View>
+              <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Fasting today</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 4 }}>{inRam ? 'Ramadan day ' + rs.day + ' of ' + rs.r.len + '.' : sunnahDay ? 'Today is a sunnah fasting day (' + (dow === 1 ? 'Monday' : 'Thursday') + ').' : 'Sunnah fasts: Monday, Thursday and the white days.'}</Text></View>
             </Pressable>
             <Pressable onPress={() => router.push('/puasa' as any)} style={{ marginTop: 10 }}><Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{(inRam ? rs.fasted + ' of ' + rs.r.len + ' days fasted' : owed > 0 ? owed + (owed === 1 ? ' missed fast' : ' missed fasts') + ' to make up' : 'Open Fasting') + ' ›'}</Text></Pressable>
+            </>) : null}
           </Glass>
-          <View style={{ marginTop: 12 }}><HealthSpend /></View>
+          {finOn ? <View style={{ marginTop: 12 }}><HealthSpend /></View> : null}
           </>)}
           {tab === 'progress' && (<>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
@@ -308,11 +423,11 @@ export default function Habit() {
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               {wk.map((x, i) => { const ok = goalPctOf(x.d, goal, cg) >= 70; return (
                 <View key={i} style={{ flex: 1, alignItems: 'center', gap: 5 }}>
-                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: ok ? T : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}>{ok && <HeadIcon k="streak" size={22} />}</View>
-                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5 }}>{WD[x.dt.getDay()]}</Text>
+                  <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: ok ? T : 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center', borderWidth: x.o === 0 ? 2 : 0, borderColor: '#fff' }}>{ok && <HeadIcon k="streak" size={22} />}</View>
+                  <Text style={{ color: x.o === 0 ? '#fff' : 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: x.o === 0 ? '800' : '400' }}>{x.o === 0 ? 'Today' : WD[x.dt.getDay()]}</Text>
                 </View>); })}
             </View>
-            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{gp >= 70 ? 'Goal reached today, keep it going.' : 'Reach 70% today to extend it.'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 10 }}>{(gp >= 70 ? 'Goal reached today, keep it going.' : 'Reach 70% today to extend it.') + ' A lit flame is a day you reached your goal. The ring marks today.'}</Text>
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl k="week" t="This week" /><Lbl t="Last 7 days compared with the 7 before" />
@@ -329,8 +444,8 @@ export default function Habit() {
             {insOk ? (
               <View style={{ gap: 8, marginTop: 10 }}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(124,156,255,.22)' }}><Lbl t={'Goal met · ' + hiW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(hiW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12 }}>Sleep {sAvgL(hiW).toFixed(1)} h</Text></View>
-                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.09)' }}><Lbl t={'Below goal · ' + loW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(loW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12 }}>Sleep {sAvgL(loW).toFixed(1)} h</Text></View>
+                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(124,156,255,.22)' }}><Lbl t={'Goal met · ' + hiW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(hiW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>Sleep {sAvgL(hiW).toFixed(1)} h</Text></View>
+                  <View style={{ flex: 1, padding: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.09)' }}><Lbl t={'Below goal · ' + loW.length + ' days'} /><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 3 }}>Mood {mName(mAvg(loW))}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>Sleep {sAvgL(loW).toFixed(1)} h</Text></View>
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18 }}>{mAvg(hiW) - mAvg(loW) > 0.3 ? 'On days you reach your water goal your mood is higher. Keep drinking.' : mAvg(hiW) - mAvg(loW) < -0.3 ? 'No clear boost to your mood from water yet. Your sleep may matter more.' : 'Your mood looks similar either way so far. More days will make this clearer.'}</Text>
               </View>
@@ -342,7 +457,7 @@ export default function Habit() {
               {sgs.map((s, i) => (
                 <Pressable key={i} disabled={!s.to} onPress={() => s.to && router.push(s.to as any)} style={{ padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
                   <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{s.t}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>{s.b}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>{s.b}</Text>
                   <Text style={{ color: T, fontSize: 11, fontWeight: '700', marginTop: 6 }}>{s.tag}{s.to ? '  ›' : ''}</Text>
                 </Pressable>
               ))}
@@ -359,13 +474,12 @@ export default function Habit() {
                 </View>); })}
             </View>
           </Glass>
-          <Pressable onPress={() => router.push('/habit-history' as any)}>
-            <Glass radius={22} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>30-Day History</Text><Text style={{ color: W, fontSize: 20 }}>›</Text>
-            </Glass>
-          </Pressable>
           </>)}
           {tab === 'body' && (<>
+          <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+            <Ttl k="rheart" t="Heart log" /><Lbl t="Your own pulse and blood pressure notes" />
+            <HeartLog h={h} setH={setH} />
+          </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl k="weight" t="Weight & BMI" /><Lbl t={kg > 0 ? 'Your water goal follows your weight' : 'Add your weight to personalise your water goal'} />
             {kg > 0 && (

@@ -12,6 +12,7 @@ import { TOP } from '../lib/layout';
 import { useReveal } from '../lib/keyboard';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import { SAV_EMPTY, SavData, Goal, KINDS, kindOf, goalLines, goalSaved, perMonth, monthsUntil } from '../lib/savings';
+import { cs, cu, useRegion } from '../lib/region';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ICON: Record<string, string> = { motor: '🏍️', car: '🚗', house: '🏠', wedding: '💍', travel: '✈️', hajj: '🕋', emergency: '🛟', medical: '🩺', other: '⭐' };
@@ -35,6 +36,7 @@ const Chip = ({ t, on, c, onPress }: { t: string; on: boolean; c?: string; onPre
 const Lbl = ({ t }: { t: string }) => <Text style={{ color: dimC, fontSize: 11.5, marginTop: 2 }}>{t}</Text>;
 
 export default function Savings() {
+  useRegion();
   const router = useRouter(); const { kb, ref: sref, onScroll: sScroll, reveal } = useReveal();
   const [sv, setSv] = useStored<SavData>('ml_savings', SAV_EMPTY);
   const [fin, setFin] = useStored<any>('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 });
@@ -70,13 +72,13 @@ export default function Savings() {
     const n = num(amt); if (!(n > 0)) return;
     const id = (fin && fin.nextId) || 1;
     setFin({ ...fin, spends: [{ id, name: note.trim() || g.name, cat: 'Savings', amt: n, date: dt || todayStr(), goal: g.id }, ...spends], nextId: id + 1 });
-    setAmt(''); setNote(''); setMode(''); setOk('RM ' + money(n) + ' added to ' + g.name + '. It is also in your Spending Tracker and Money Left.');
+    setAmt(''); setNote(''); setMode(''); setOk(cs() + money(n) + ' added to ' + g.name + '. It is also in your Spending Tracker and Money Left.');
   };
   const withdraw = (g: Goal) => {
     const n = num(amt); if (!(n > 0)) return; const s = saved(g);
     const take = Math.min(n, s);
     setSv({ ...sv, goals: goals.map((x) => (x.id === g.id ? { ...x, out: [...(x.out || []), { id: Date.now(), amt: take, date: dt || todayStr(), note: note.trim() }] } : x)) });
-    setAmt(''); setNote(''); setMode(''); setOk('Took RM ' + money(take) + ' out of ' + g.name + '.');
+    setAmt(''); setNote(''); setMode(''); setOk('Took ' + cs() + money(take) + ' out of ' + g.name + '.');
   };
   const saveEdit = (g: Goal) => {
     const t = num(eTarget); if (!eName.trim() || !(t > 0)) return;
@@ -110,8 +112,8 @@ export default function Savings() {
           <Glass radius={26} style={{ marginTop: 14, paddingVertical: 14, paddingHorizontal: 16 }}>
             <LinearGradient colors={['rgba(94,231,181,.3)', 'rgba(124,156,255,.16)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
             <Text style={{ color: '#bff5df', fontSize: 11, fontWeight: '700', letterSpacing: 1.4 }}>TOTAL SAVED</Text>
-            <Text style={{ color: W, fontSize: 30, fontWeight: '800', marginTop: 3, letterSpacing: -0.5 }}>RM {money(totS)}</Text>
-            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 2 }}>{goals.length === 0 ? 'No goals yet. Tap New goal to start your first one.' : 'across ' + goals.length + (goals.length === 1 ? ' goal' : ' goals') + (totT > 0 ? ' · target RM ' + rnd(totT) + ' · ' + totP + '%' : '')}</Text>
+            <Text style={{ color: W, fontSize: 30, fontWeight: '800', marginTop: 3, letterSpacing: -0.5 }}>{cs()}{money(totS)}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 2 }}>{goals.length === 0 ? 'No goals yet. Tap New goal to start your first one.' : 'across ' + goals.length + (goals.length === 1 ? ' goal' : ' goals') + (totT > 0 ? ' · target ' + cs() + rnd(totT) + ' · ' + totP + '%' : '')}</Text>
             {goals.length > 0 ? <View style={{ marginTop: 10, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden' }}><View style={{ width: totP + '%', height: '100%', borderRadius: 4, backgroundColor: '#5ee7b5' }} /></View> : null}
           </Glass>
 
@@ -123,9 +125,9 @@ export default function Savings() {
                 {KINDS.map((k) => <Chip key={k.k} t={ICON[k.k] + ' ' + k.label} on={kind === k.k} c={k.color} onPress={() => pickKind(k.k)} />)}
               </View>
               <Inp onFocus={reveal} style={{ marginTop: 10 }} value={name} onChangeText={setName} placeholder="Name your goal, for example Wedding fund" />
-              <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={target} onChangeText={setTarget} placeholder="Target (RM)" />
+              <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={target} onChangeText={setTarget} placeholder={'Target (' + cu() + ')'} />
               <Inp onFocus={reveal} style={{ marginTop: 8 }} value={place} onChangeText={setPlace} placeholder="Kept in, e.g. Maybank" />
-              <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={start} onChangeText={setStart} placeholder="Already saved (RM), optional" />
+              <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={start} onChangeText={setStart} placeholder={'Already saved (' + cu() + '), optional'} />
               <Text style={{ color: dimC, fontSize: 11.5, marginTop: 10 }}>Target date (optional)</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
                 <View style={{ flex: 1 }}><DateField value={due || todayStr()} onChange={setDue} /></View>
@@ -157,13 +159,13 @@ export default function Savings() {
                 </View>
                 <View style={{ marginTop: 12, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden' }}><View style={{ width: pct + '%', height: '100%', borderRadius: 5, backgroundColor: done ? '#5ee7b5' : k.color }} /></View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
-                  <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>RM {money(s)}</Text>
-                  <Text style={{ color: dimC, fontSize: 13 }}>{noT ? 'No target yet' : 'of RM ' + money(g.target)}</Text>
+                  <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{cs()}{money(s)}</Text>
+                  <Text style={{ color: dimC, fontSize: 13 }}>{noT ? 'No target yet' : 'of ' + cs() + money(g.target)}</Text>
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>
-                  {noT ? 'Tap Edit and set a target amount to see your progress.' : done ? 'You have reached this goal. Well done.' : 'RM ' + money(left) + ' to go' + (pm ? ' · save about RM ' + rnd(pm) + ' a month to finish by ' + nice(g.due) : mu !== null && mu < 0 ? ' · the target date has passed' : '')}
+                  {noT ? 'Tap Edit and set a target amount to see your progress.' : done ? 'You have reached this goal. Well done.' : cs() + money(left) + ' to go' + (pm ? ' · save about ' + cs() + rnd(pm) + ' a month to finish by ' + nice(g.due) : mu !== null && mu < 0 ? ' · the target date has passed' : '')}
                 </Text>
-                {linked.length > 0 ? <Text style={{ color: '#bff5df', fontSize: 11.5, marginTop: 4 }}>{'Monthly commitment linked: ' + linked.map((x: any) => x.name + ' RM ' + rnd(x.monthly)).join(', ')}</Text> : null}
+                {linked.length > 0 ? <Text style={{ color: '#bff5df', fontSize: 11.5, marginTop: 4 }}>{'Monthly commitment linked: ' + linked.map((x: any) => x.name + ' ' + cs() + rnd(x.monthly)).join(', ')}</Text> : null}
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
                   <Btn t="+ Add money" c="#5ee7b5" dark onPress={() => openMode(g, 'add')} />
@@ -175,7 +177,7 @@ export default function Savings() {
                 {isOpen && (mode === 'add' || mode === 'out') ? (
                   <View style={{ marginTop: 12, gap: 8 }}>
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{mode === 'add' ? 'Add money to this goal' : 'Take money out of this goal'}</Text>
-                    <Inp onFocus={reveal} autoFocus keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder="Amount (RM)" onSubmitEditing={() => (mode === 'add' ? addMoney(g) : withdraw(g))} />
+                    <Inp onFocus={reveal} autoFocus keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={() => (mode === 'add' ? addMoney(g) : withdraw(g))} />
                     <Inp onFocus={reveal} value={note} onChangeText={setNote} placeholder={mode === 'add' ? 'Note (optional), e.g. March saving' : 'Why? (optional)'} />
                     <DateField value={dt} onChange={setDt} />
                     <Lbl t={mode === 'add' ? 'This is saved in your Spending Tracker under Savings, so Money Left counts it too.' : 'This lowers the goal only. Add the money back to your spending or income if you need to track it.'} />
@@ -188,7 +190,7 @@ export default function Savings() {
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Edit goal</Text>
                     <Inp onFocus={reveal} value={eName} onChangeText={setEName} placeholder="Goal name" />
                     <Inp onFocus={reveal} value={ePlace} onChangeText={setEPlace} placeholder="Kept in, e.g. Maybank" />
-                    <Inp onFocus={reveal} keyboardType="decimal-pad" value={eTarget} onChangeText={setETarget} placeholder="Target (RM)" />
+                    <Inp onFocus={reveal} keyboardType="decimal-pad" value={eTarget} onChangeText={setETarget} placeholder={'Target (' + cu() + ')'} />
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ flex: 1 }}><DateField value={eDue || todayStr()} onChange={setEDue} /></View>
                       {eDue ? <Pressable onPress={() => setEDue('')} style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>No date</Text></Pressable> : null}
@@ -220,7 +222,7 @@ export default function Savings() {
                           <Text style={{ color: W, fontSize: 13.5, fontWeight: '600' }} numberOfLines={1}>{l.note}</Text>
                           <Text style={{ color: dimC, fontSize: 11 }}>{(l.date ? nice(l.date.length === 7 ? l.date + '-01' : l.date) + ' · ' : '') + (l.src === 'tracker' ? 'Spending Tracker' : l.src === 'commit' ? 'Monthly commitment' : l.src === 'out' ? 'Taken out' : 'Opening amount')}</Text>
                         </View>
-                        <Text style={{ color: l.amt < 0 ? '#ff9aa9' : '#7df0c6', fontSize: 13.5, fontWeight: '800' }}>{(l.amt < 0 ? '- ' : '+ ') + 'RM ' + money(Math.abs(l.amt))}</Text>
+                        <Text style={{ color: l.amt < 0 ? '#ff9aa9' : '#7df0c6', fontSize: 13.5, fontWeight: '800' }}>{(l.amt < 0 ? '- ' : '+ ') + cs() + money(Math.abs(l.amt))}</Text>
                         {l.src === 'tracker' || l.src === 'out' ? <Pressable accessibilityLabel="Delete" onPress={() => rmLine(g, l)} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 13 }}>✕</Text></Pressable> : <View style={{ width: 32 }} />}
                       </View>
                     ))}

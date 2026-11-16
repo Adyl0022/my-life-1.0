@@ -1,19 +1,25 @@
+import { modOn } from './hidden';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { getItem, getItemStrict, setItem } from './store';
 import { DEBT_EMPTY } from './debts';
 import { calcLeft, commitFor, ymKey } from './moneyLeft';
+import { cs } from './region';
+import { mergeVeh, VEH_KEY } from './vehicleSpend';
+import { ensureHandler, setup } from './adhan';
 
 export type BudgetCfg = { on: boolean; sent: Record<string, number> };
 export const BUDGET_EMPTY: BudgetCfg = { on: true, sent: {} };
-const rm = (n: number) => 'RM ' + Math.round(n).toLocaleString('en-MY');
+const rm = (n: number) => cs() + Math.round(n).toLocaleString('en-MY');
 
 // Looks at this month after any spending or income is saved and sends one alert for each warning, once.
 export async function checkBudget(): Promise<void> {
+  if (!modOn('finance')) return; // My Finance is turned off
   if (Platform.OS === 'web') return;
   try {
     const cfg = await getItemStrict<BudgetCfg>('ml_budget', BUDGET_EMPTY, 1); if (!cfg || !cfg.on) return;
     const fin: any = await getItem('ml_finance', { inc: {}, spends: [] }); const debts: any = await getItem('ml_debts', DEBT_EMPTY);
+    fin.spends = mergeVeh(fin.spends, await getItem<any>('ml_record', { data: {} }), await getItem<any>(VEH_KEY, 'ask'));
     const now = new Date(); const ym = ymKey(now);
     const income = Object.keys((fin.inc || {})[ym] || {}).reduce((a, k) => a + (fin.inc[ym][k] || 0), 0);
     const dk = ym + '-' + String(now.getDate()).padStart(2, '0');
@@ -33,13 +39,20 @@ export async function checkBudget(): Promise<void> {
       if (c.daysLeft > 1 && c.allowance > 0 && c.today > c.allowance) out.push(['day:' + dk, 'Over today\'s limit', 'You spent ' + rm(c.today) + ' today. Your limit is about ' + rm(c.allowance) + ' a day to stay on track.']);
     }
     }
-    const todo = out.filter((x) => !cfg.sent[x[0]]); if (!todo.length) return;
-    const p = await Notifications.getPermissionsAsync(); if (p.status !== 'granted') return;
+    // A warning that no longer applies (spending was deleted or income went up) is forgotten, so it can ring again if it comes back.
+    const active = new Set(out.map((x) => x[0]));
+    const keep: Record<string, number> = {}; Object.keys(cfg.sent).forEach((k) => { if (k.indexOf(ym) >= 0 && active.has(k)) keep[k] = 1; });
+    const todo = out.filter((x) => !keep[x[0]]);
+    if (!todo.length) { if (Object.keys(keep).length !== Object.keys(cfg.sent).length) await setItem('ml_budget', { ...cfg, sent: keep }); return; }
+    if (!(await setup())) return; // asks for notification permission if it was never asked (before, no permission meant silence)
+    ensureHandler();
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('budget', { name: 'Budget alerts', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ffc46b' });
-    const sent: Record<string, number> = {}; Object.keys(cfg.sent).forEach((k) => { if (k.indexOf(ym) >= 0) sent[k] = 1; });
+    const sent: Record<string, number> = { ...keep };
     for (const [k, title, body] of todo) {
-      await Notifications.scheduleNotificationAsync({ content: { title, body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2, channelId: 'budget' } as any });
-      sent[k] = 1;
+      try {
+        await Notifications.scheduleNotificationAsync({ content: { title, body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2, channelId: 'budget' } as any });
+        sent[k] = 1; // only marked as sent when it was really scheduled, so a failure is tried again next time
+      } catch (e) { /* try again on the next save */ }
     }
     await setItem('ml_budget', { ...cfg, sent });
   } catch (e) { /* ignore */ }

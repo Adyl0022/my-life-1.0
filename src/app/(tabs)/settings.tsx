@@ -18,8 +18,12 @@ import { useIsAdmin } from '../../lib/admin';
 import { useLicense } from '../../lib/license';
 import { supabase } from '../../lib/supabase';
 import { Announcement } from '../../components/Announcement';
+import { RegionCard } from '../../components/RegionCard';
+import { ModulesCard } from '../../components/ModulesCard';
+import { useHidden } from '../../lib/hidden';
 import { markSeen, useAnnouncement } from '../../lib/announcement';
 import { useSession, signOut, checkPassword, setNewPassword, deleteAccount } from '../../lib/auth';
+import { call as famCall } from '../../lib/family';
 import { syncNow, syncState, wipeCloud } from '../../lib/sync';
 import { FREEMIUM } from '../../lib/edition';
 import { PRIVACY, TERMS, COPYRIGHT, WHATS_NEW, LICENCES, HOWTO, FAQ, SUPPORT_EMAIL, SUPPORT_EMAIL2, PRIVACY_URL, Sec } from '../../lib/legal';
@@ -34,9 +38,9 @@ const G = ['#34d399', '#5ee7df'] as [string, string];
 const GP = ['#7c9cff', '#b794ff'] as [string, string];
 
 const Ttl = ({ t }: { t: string }) => <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{t}</Text>;
-const Lbl = ({ t, style }: { t: string; style?: any }) => <Text style={[{ color: DIM, fontSize: 11.5, marginTop: 2, lineHeight: 16 }, style]}>{t}</Text>;
+const Lbl = ({ t, style }: { t: string; style?: any }) => <Text style={[{ color: DIM, fontSize: 11.5, marginTop: 5, lineHeight: 16 }, style]}>{t}</Text>;
 const TILE: Record<string, [string, string]> = {
-  ev: ['#7c9cff', '#5b7bff'], pr: ['#34d399', '#12a58a'], zk: ['#ffc46b', '#ff8f5a'], wt: ['#5ee7df', '#4a8dff'], qh: ['#b794ff', '#7059e8'],
+  ev: ['#7c9cff', '#5b7bff'], pr: ['#34d399', '#12a58a'], zk: ['#ffc46b', '#ff8f5a'], wt: ['#5ee7df', '#4a8dff'], md: ['#5ee7df', '#7c9cff'], qh: ['#b794ff', '#7059e8'],
   export: ['#5ee7b5', '#26b8c9'], lang: ['#c79bff', '#ff8fab'], pw: ['#7c9cff', '#9a7bff'], nd: ['#ffc46b', '#ff7a6b'], dev: ['#8aa4d8', '#5d6fa8'], bk: ['#5ee7df', '#3aa6c9'], log: ['#ff8fab', '#b794ff'],
 };
 function Glyph({ k }: { k: string }) {
@@ -47,6 +51,7 @@ function Glyph({ k }: { k: string }) {
       {k === 'pr' && <Path d="M3 21h18M5 21v-7M19 21v-7M7 14a5 5 0 0 1 10 0M12 4v3M10 21v-3a2 2 0 0 1 4 0v3" {...p} />}
       {k === 'zk' && <>{Array.from({ length: 8 }, (_, i) => { const t = (i / 8) * Math.PI * 2; return <Circle key={i} cx={12 + 7 * Math.cos(t)} cy={11 + 7 * Math.sin(t)} r={1.7} fill="#fff" />; })}<Path d="M12 18.5v3.2" {...p} /></>}
       {k === 'wt' && <Path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" {...p} />}
+      {k === 'md' && <><Path d="M8.5 4.5a3.5 3.5 0 0 1 5 0l6 6a3.5 3.5 0 0 1-5 5l-6-6a3.5 3.5 0 0 1 0-5z" {...p} /><Path d="M9 14.5l5.5-5.5" {...p} /></>}
       {k === 'qh' && <Path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" {...p} />}
       {k === 'export' && <Path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" {...p} />}
       {k === 'lang' && <><Circle cx={12} cy={12} r={9} {...p} /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" {...p} /></>}
@@ -146,6 +151,7 @@ export default function Settings() {
   const [name, setName] = useStored<string>('ml_name', DEFAULT_NAME);
   const [draft, setDraft] = useState<string | null>(null);
   const [nameMsg, setNameMsg] = useState('');
+  const [hd, setHd] = useStored<any>('ml_habit', { goal: 8000, days: {}, kg: [] });
   const [tg, setTg] = useStored<Record<string, boolean>>('ml_toggles', { ev: true, pr: true, zk: true, qh: true });
   const kb = useKb(); const sref = React.useRef<any>(null);
   const dlgR = React.useRef(''); 
@@ -169,11 +175,17 @@ export default function Settings() {
       setUpd(m[1] === cur ? 'latest' : 'new');
     } catch (e) { await wait; setUpd('err'); }
   };
-  const [lead, setLead] = useStored<number>('ml_prayer_lead', 0);
-  const [bkRem, setBkRem] = useStored<boolean>('ml_backup_rem', false);
+    const [bkRem, setBkRem] = useStored<boolean>('ml_backup_rem', false);
   const [bkLast] = useStored<number>('ml_backup_last', 0);
   const mail = (subj: string, body: string) => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body)).catch(() => say('No email app found. Write to ' + SUPPORT_EMAIL + ' or ' + SUPPORT_EMAIL2));
-  const info = 'App: My Life 1.0 (1.0.0, build 1)\nPhone: ' + Platform.OS + ' ' + String(Platform.Version) + '\n\n';
+  const info = 'App: My Life 1.0 (1.0.1, build 1)\nPhone: ' + Platform.OS + ' ' + String(Platform.Version) + '\n\n';
+  // Android 12+: without "Alarms & reminders" allowed, reminders and prayer alerts can arrive a few minutes late.
+  const [exact, setExact] = useState<boolean | null>(null);
+  React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
+  const askExact = async () => {
+    try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); say(r.granted ? 'Exact timing is on' : 'Not allowed yet. Turn on Alarms & reminders for My Life'); }
+    catch (e) { say('Could not open the setting. Open phone Settings, Apps, My Life, Alarms & reminders'); }
+  };
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');
     try {
@@ -198,8 +210,15 @@ export default function Settings() {
   const say = (t: string) => { setToast(t); setTimeout(() => setToast(''), 2200); };
   const close = () => { setDlg(''); setTyped(''); setPwv(''); setP1(''); setP2(''); setP3(''); setPwErr(''); };
 
-  const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['pr', 'Prayer times', 'Alert at each solat time'], ['zk', 'Daily zikir', "Morning and evening Al-Ma'thurat"], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
+  const TOG: [string, string, string][] = [['ev', 'Event reminders', 'Before each Planner event'], ['md', 'Medicine reminders', 'At the time you set, and again an hour later'], ['qh', 'Quiet hours', 'Mute alerts from 12 am to 5 am']];
+  const hid = useHidden();
+  const TOGSHOW = TOG.filter(([k]) => (k === 'ev' ? hid.on('planner') : k === 'md' ? hid.on('habit') : k === 'pr' || k === 'zk' ? hid.on('islamic') : true));
   const isDel = dlg === 'delete';
+  const [fam, setFam] = useState<{ name: string; role: string; n: number } | null>(null);
+  const askDelete = () => {
+    setFam(null); setDlg('delete');
+    famCall<any>('family_info').then((r) => { if (r && r.state === 'ready') setFam({ name: r.name, role: r.role, n: r.members.length }); }).catch(() => {});
+  };
   const canGo = isDel ? typed.trim().toUpperCase() === 'DELETE' && pwv.length > 0 : typed.trim().toUpperCase() === 'RESET';
 
   const [sess] = useSession(); const lic = useLicense(); const isAdmin = useIsAdmin(); const [busy, setBusy] = useState(false); const [synced, setSynced] = useState(syncState.last);
@@ -247,18 +266,24 @@ export default function Settings() {
           {tab === 0 && (
             <View style={{ gap: 12, marginTop: 14 }}>
               <Announcement />
+              <RegionCard />
+              <ModulesCard />
+              {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+                <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>
+                  <Sw on={!!hd.cyOn} />
+                </Pressable>
+                <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>{'Note: after you turn this on, open Habit & Health and go to the Today tab. The Cycle card appears below Relax. Tap Open on that card for the calendar, averages and reminder. Estimates only, not medical advice.'}</Text>
+              </Glass> : null}
               <Glass style={{ paddingVertical: 8, paddingHorizontal: 16 }}>
                 <View style={{ paddingTop: 8 }}><Ttl t="Reminders and notifications" /></View>
-                {TOG.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOG.length - 1} onPress={() => setTg({ ...tg, [k]: !tg[k] })} right={<Sw on={!!tg[k]} />} />)}
+                {TOGSHOW.map(([k, t, s], i) => <Row key={k} k={k} ic="x" t={t} sub={s} last={i === TOGSHOW.length - 1} onPress={() => setTg({ ...tg, [k]: tg[k] === false })} right={<Sw on={tg[k] !== false} />} />)}
               </Glass>
 
               <Glass style={{ padding: 16 }}>
-                <Ttl t="Prayer alert timing" />
-                <Lbl t="When to ring, relative to the solat time" style={{ marginBottom: 8 }} />
-                <View style={{ flexDirection: 'row', gap: 6 }}>{([[0, 'On time'], [5, '5 min'], [10, '10 min'], [15, '15 min']] as const).map(([v, n]) => (
-                  <Pressable key={v} onPress={() => setLead(v)} style={{ flex: 1, paddingVertical: 8, borderRadius: 12, alignItems: 'center', backgroundColor: lead === v ? 'rgba(124,156,255,.45)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{n}</Text></Pressable>))}</View>
-                {lead ? <Lbl t={'Rings ' + lead + ' minutes before each prayer'} style={{ marginTop: 8 }} /> : null}
-                <View style={{ flexDirection: 'row', marginTop: 12 }}><Btn t="Send a test notification" onPress={testNotif} /></View>
+                <Ttl t="Notifications" />
+                {exact !== null ? <Text style={{ color: exact ? 'rgba(255,255,255,.72)' : '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{exact ? 'Exact timing is on. Reminders and prayer alerts arrive on the minute.' : 'Exact timing is off. Reminders and prayer alerts can arrive a few minutes late.'}</Text> : null}
+                <View style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}<Btn t="Send a test notification" onPress={testNotif} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /></View>
               </Glass>
 
               {isAdmin ? <Pressable onPress={() => router.push('/admin' as any)}>
@@ -329,7 +354,7 @@ export default function Settings() {
                 {nameMsg ? <Text style={{ color: '#8fe9e2', fontSize: 12, marginTop: 6 }}>{nameMsg}</Text> : null}
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
                   <Btn t="Reset all data" kind="warn" onPress={() => setDlg('reset')} />
-                  <Btn t="Delete account" kind="danger" onPress={() => setDlg('delete')} />
+                  <Btn t="Delete account" kind="danger" onPress={askDelete} />
                 </View>
               </Glass>
             </View>
@@ -345,10 +370,10 @@ export default function Settings() {
                 {!FREEMIUM && upd === 'new' ? <Pressable onPress={() => Linking.openURL('https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest')} style={{ marginTop: 8 }}><LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999 }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Download the new version</Text></LinearGradient></Pressable> : null}
               </View>
               <Glass style={{ paddingHorizontal: 16 }}>
-                {[['Version', '1.0.0'], ['Build', '1'], ['Developed', 'November 2026'], ['Developer', 'Adli Syahmi']].map(([a, b], i) => <Row key={a} t={a} last={i === 3} right={<Text style={{ color: DIM, fontSize: 13 }}>{b}</Text>} />)}
+                {[['Version', '1.0.1'], ['Build', '1'], ['Developed', 'November 2026'], ['Developer', 'Adli Syahmi']].map(([a, b], i) => <Row key={a} t={a} last={i === 3} right={<Text style={{ color: DIM, fontSize: 13 }}>{b}</Text>} />)}
               </Glass>
               <Glass style={{ paddingHorizontal: 16 }}>
-                <Row t="What's new in 1.0.0" onPress={() => setDlg('new')} right={<Chev />} />
+                <Row t="What's new in 1.0.1" onPress={() => setDlg('new')} right={<Chev />} />
                 <Row t="Privacy Policy" onPress={() => setDlg('privacy')} right={<Chev />} />
                 <Row t="Privacy Policy on the web" onPress={() => Linking.openURL(PRIVACY_URL)} right={<Chev />} />
                 <Row t="Terms of Use" onPress={() => setDlg('terms')} right={<Chev />} />
@@ -378,7 +403,7 @@ export default function Settings() {
                   <View key={t} style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}><Text style={{ color: '#5ee7df', fontSize: 13 }}>✓</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}>{t}</Text></View>
                 ))}
               </Glass>
-              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center' }}>© 2026 Adli Syahmi. All rights reserved.</Text>
+              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center' }}>Copyright (c) 2026 Adli Syahmi. All rights reserved.</Text>
             </View>
           )}
         </ScrollView>
@@ -390,7 +415,7 @@ export default function Settings() {
         {dlg === 'privacy' && <Doc title="Privacy Policy" secs={PRIVACY} onClose={close} />}
         {dlg === 'terms' && <Doc title="Terms of Use" secs={TERMS} onClose={close} />}
         {dlg === 'copy' && <Doc title="Copyright and licence" secs={COPYRIGHT} onClose={close} />}
-        {dlg === 'new' && <Doc title="What's new in 1.0.0" secs={WHATS_NEW} onClose={close} />}
+        {dlg === 'new' && <Doc title="What's new in 1.0.1" secs={WHATS_NEW} onClose={close} />}
         {dlg === 'done' && (
           <Overlay onClose={() => { close(); router.replace('/' as any); }}><View style={{ padding: 22, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', alignItems: 'center' }}>
             <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: 'rgba(94,231,181,.25)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#5ee7b5', fontSize: 28, fontWeight: '800' }}>✓</Text></View>
@@ -435,10 +460,10 @@ export default function Settings() {
             {bk.created ? <Text style={{ color: '#8fe9e2', fontSize: 12.5, marginTop: 4 }}>Saved {bk.created}</Text> : null}
             <Text style={{ color: DIM, fontSize: 13, lineHeight: 19, marginTop: 8 }}>This backup holds:</Text>
             {bk.parts.map((n) => <Text key={n} style={{ color: W, fontSize: 13.5, marginTop: 3 }}>•  {n}</Text>)}
-            <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>These parts will be replaced with what is in the file. Anything else on this phone stays as it is. Photos such as receipts are not part of a backup.</Text>
+            <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>These parts will be replaced with what is in the file. Anything else on this phone stays as it is.{bk.images ? ' Receipt photos in the file are restored too.' : ''}</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
               <Btn t="Cancel" onPress={close} />
-              <Btn t="Restore" kind="primary" onPress={async () => { await applyBackup(bk); setDoneMsg('Your backup has been restored: ' + bk.parts.join(', ') + '.'); setBk(null); setDlg('done'); }} />
+              <Btn t="Restore" kind="primary" onPress={async () => { const np = await applyBackup(bk); setDoneMsg('Your backup has been restored: ' + bk.parts.join(', ') + '.' + (np > 0 ? ' ' + np + (np === 1 ? ' receipt photo' : ' receipt photos') + ' restored.' : '')); setBk(null); setDlg('done'); }} />
             </View>
           </View></Overlay>
         )}
@@ -480,6 +505,7 @@ export default function Settings() {
           <Overlay onClose={close}><View style={{ padding: 20, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
             <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>{isDel ? 'Delete your account?' : 'Reset all your data?'}</Text>
             <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{isDel ? 'This permanently deletes your account and everything in it: planner, notes, finance, records and habits, on all your devices. This cannot be undone. Export your data first if you want a copy.' : 'This erases ALL your data: planner, notes, finance, records and habits. Your account and login stay, and the saved copy online is erased too. This cannot be undone. Export your data first if you want a copy.'}</Text>
+            {isDel && fam ? <View style={{ marginTop: 10, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,213,147,.12)', borderWidth: 1, borderColor: 'rgba(255,213,147,.45)' }}><Text style={{ color: '#ffe0ad', fontSize: 12.5, lineHeight: 18 }}>{fam.role === 'owner' ? 'You are the owner of the family "' + fam.name + '" (' + fam.n + (fam.n === 1 ? ' member' : ' members') + '). Deleting your account also deletes that family for everyone: its members, tasks, activities and shopping list. To keep the family, close this and make another member the owner first (Daily Planner, Family, Members).' : 'You are in the family "' + fam.name + '". Deleting your account also removes you from it.'}</Text></View> : null}
             <Text style={{ color: W, fontSize: 12.5, fontWeight: '700', marginTop: 12, marginBottom: 6 }}>{isDel ? 'Type DELETE to confirm' : 'Type RESET to confirm'}</Text>
             <Inp autoCapitalize="characters" value={typed} onChangeText={setTyped} />
             {isDel && (<><Text style={{ color: W, fontSize: 12.5, fontWeight: '700', marginTop: 10, marginBottom: 6 }}>Enter your password</Text><Inp secureTextEntry value={pwv} onChangeText={setPwv} /></>)}

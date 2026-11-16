@@ -40,7 +40,7 @@ export async function getText(k: string): Promise<string | null> {
 // They must never be encrypted: the code that reads them compares the plain text. Encrypting the saved account id made the app
 // believe a different person had signed in, and it then cleared the phone's data and loaded the cloud copy again.
 const PLAIN_KEYS = ['ml_sync_meta', 'ml_sync_uid', 'ml_license_cache', 'ml_ann_seen', 'ml_ann_gone', 'ml_modules', 'ml_hours'];
-const isPlainKey = (k: string) => PLAIN_KEYS.includes(k) || k.startsWith('ml_pt_') || k.startsWith('ml_usage');
+const isPlainKey = (k: string) => PLAIN_KEYS.includes(k) || k.startsWith('ml_pt_') || k.startsWith('ml_usage') || k.startsWith('ml_famrows_') || k === 'ml_family_cache';
 // Reads one of those plain values. If an older version encrypted it by mistake, it is decrypted and saved back as plain text.
 // Throws when it is encrypted and cannot be opened right now, so the caller can wait instead of guessing.
 export async function readPlain(k: string): Promise<string | null> {

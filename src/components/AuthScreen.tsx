@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing } from 'react-native';
+import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image, Linking } from 'react-native';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect, Defs, Pattern, Stop, RadialGradient as SRG } from 'react-native-svg';
 import { GP, W } from './Ui';
 import { Blob } from './Bg';
 import { CodeBoxes } from './CodeBoxes';
+import { PRIVACY_URL } from '../lib/legal';
 import { pwLevel, PW_TEXT } from '../lib/pwstrength';
 import { signIn, signUp, verifyCode, resendSignup, sendReset, setNewPassword } from '../lib/auth';
 
@@ -28,9 +29,9 @@ const Ico = ({ n, c = 'rgba(255,255,255,.55)' }: { n: 'user' | 'mail' | 'lock' |
 export function Field({ icon, secret, bad, ...p }: any) {
   const [f, setF] = useState(false); const [show, setShow] = useState(false);
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', height: 48, borderRadius: 15, paddingHorizontal: 14, marginBottom: 9, backgroundColor: f ? '#2c5a78' : '#2e2d6c', borderWidth: 1.2, borderColor: bad ? 'rgba(255,107,129,.85)' : f ? 'rgba(143,233,226,.75)' : 'rgba(255,255,255,.13)', shadowColor: TEAL, shadowOpacity: f ? 0.55 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', height: 44, borderRadius: 14, paddingHorizontal: 14, marginBottom: 8, backgroundColor: f ? '#2c5a78' : '#2e2d6c', borderWidth: 1.2, borderColor: bad ? 'rgba(255,107,129,.85)' : f ? 'rgba(143,233,226,.75)' : 'rgba(255,255,255,.13)', shadowColor: TEAL, shadowOpacity: f ? 0.55 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
       <Ico n={icon} c={f ? TEAL : undefined} />
-      <TextInput {...p} secureTextEntry={secret && !show} onFocus={() => setF(true)} onBlur={(e: any) => { setF(false); p.onBlur && p.onBlur(e); }} placeholderTextColor="rgba(255,255,255,.38)" underlineColorAndroid="transparent" importantForAutofill="no" selectionColor="#8fe9e2" maxFontSizeMultiplier={1.1}
+      <TextInput {...p} secureTextEntry={secret && !show} onFocus={(e: any) => { setF(true); p.onFocus && p.onFocus(e); }} onBlur={(e: any) => { setF(false); p.onBlur && p.onBlur(e); }} placeholderTextColor="rgba(255,255,255,.38)" underlineColorAndroid="transparent" importantForAutofill="no" selectionColor="#8fe9e2" maxFontSizeMultiplier={1.1}
         style={[{ flex: 1, minWidth: 0, backgroundColor: 'transparent', color: W, fontSize: 15, marginLeft: 11, paddingVertical: 0, outlineStyle: 'none' } as any, p.style]} />
       {secret ? <Pressable onPress={() => setShow(!show)} hitSlop={10}><Ico n={show ? 'eye' : 'eyeoff'} /></Pressable> : null}
     </View>
@@ -75,6 +76,84 @@ function Shoot({ left, top, delay, gap, angle = 28 }: { left: string; top: strin
     </Animated.View>
   );
 }
+// Two slow asteroids drift towards each other, collide in a soft flash and break into pieces that drift apart and fade (login screen only).
+function rockPts(seed: number, n = 9) {
+  let a = seed * 9301 + 49297; const rnd = () => { a = (a * 9301 + 49297) % 233280; return a / 233280; };
+  return Array.from({ length: n }, (_, i) => { const t = (i / n) * Math.PI * 2; const r = 30 + rnd() * 18; return (Math.cos(t) * r).toFixed(1) + ',' + (Math.sin(t) * r).toFixed(1); }).join(' ');
+}
+function Rock({ size, seed, id }: { size: number; seed: number; id: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="-50 -50 100 100">
+      <Defs><SRG id={id} cx="35%" cy="30%" r="80%"><Stop offset="0" stopColor="#d9d3ff" /><Stop offset="0.55" stopColor="#8b86c9" /><Stop offset="1" stopColor="#4a4590" /></SRG></Defs>
+      <Path d={'M' + rockPts(seed).replace(/ /g, 'L') + 'Z'} fill={'url(#' + id + ')'} stroke="rgba(200,215,255,.55)" strokeWidth={2} />
+      <Circle cx={-8} cy={-6} r={7} fill="rgba(40,36,95,.35)" /><Circle cx={12} cy={9} r={5} fill="rgba(40,36,95,.3)" /><Circle cx={-2} cy={16} r={3.5} fill="rgba(40,36,95,.3)" />
+    </Svg>
+  );
+}
+const FRAG = [[-150, 78, 16, 1.1], [-95, 62, 12, -1.4], [-40, 90, 9, 1.8], [20, 70, 14, -1.0], [75, 96, 8, 2.0], [130, 66, 13, -1.6], [170, 84, 10, 1.3]] as const;
+function Collision({ left, top, ang, dur, gap, delay, id, on = true }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string; on?: boolean }) {
+  const p = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!on) { p.setValue(0); return; } // keyboard open: the scene is hidden, so stop animating and save battery
+    const l = Animated.loop(Animated.sequence([
+      Animated.delay(delay),
+      Animated.timing(p, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: true }),
+      Animated.delay(gap),
+      Animated.timing(p, { toValue: 0, duration: 0, useNativeDriver: true }),
+    ]));
+    l.start(); return () => l.stop();
+  }, [on]);
+  const HIT = 0.4; // moment of impact
+  const go = (from: number) => p.interpolate({ inputRange: [0, HIT, 1], outputRange: [from, 0, 0] });
+  const gone = p.interpolate({ inputRange: [0, 0.02, HIT - 0.01, HIT], outputRange: [0, 1, 1, 0] });
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', left: left as any, top: top as any, width: 0, height: 0 }}>
+      <View style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, transform: [{ rotate: ang + 'deg' }] }}>
+        <Animated.View style={{ position: 'absolute', left: -19, top: -19, opacity: gone, transform: [{ translateX: go(-120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '70deg'], extrapolate: 'clamp' }) }] }}><Rock size={38} seed={3} id={id + 'a'} /></Animated.View>
+        <Animated.View style={{ position: 'absolute', left: -14, top: -14, opacity: gone, transform: [{ translateX: go(120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '-90deg'], extrapolate: 'clamp' }) }] }}><Rock size={28} seed={7} id={id + 'b'} /></Animated.View>
+      </View>
+      <Animated.View style={{ position: 'absolute', left: -45, top: -45, opacity: p.interpolate({ inputRange: [0, HIT - 0.005, HIT + 0.01, HIT + 0.18, 1], outputRange: [0, 0, 0.95, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT, HIT + 0.18, 1], outputRange: [0.3, 0.4, 1.5, 1.5] }) }] }}>
+        <Svg width={90} height={90} viewBox="-45 -45 90 90"><Defs><SRG id={id + 'fl'} cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#fff6e6" stopOpacity="1" /><Stop offset="0.35" stopColor="#ffd9a8" stopOpacity="0.55" /><Stop offset="1" stopColor="#ffb98a" stopOpacity="0" /></SRG></Defs><Circle cx={0} cy={0} r={45} fill={'url(#' + id + 'fl)'} /></Svg>
+      </Animated.View>
+      <Animated.View style={{ position: 'absolute', left: -30, top: -30, width: 60, height: 60, borderRadius: 30, borderWidth: 1.5, borderColor: 'rgba(143,233,226,.7)', opacity: p.interpolate({ inputRange: [0, HIT, HIT + 0.04, HIT + 0.3, 1], outputRange: [0, 0, 0.7, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT, HIT + 0.3, 1], outputRange: [0.3, 0.3, 3.2, 3.2] }) }] }} />
+      {[[-120, -50, 2.4], [-70, 70, 1.8], [90, -80, 2.2], [130, 40, 1.8], [10, -110, 2.6], [-40, 120, 2], [60, 105, 1.6], [-150, 10, 2]].map((q, i) => (
+        <Animated.View key={'s' + i} style={{ position: 'absolute', left: q[0], top: q[1], width: q[2], height: q[2], borderRadius: 4, backgroundColor: '#fff', shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 }, opacity: p.interpolate({ inputRange: [0, HIT + 0.02 + i * 0.012, HIT + 0.07 + i * 0.012, HIT + 0.22 + i * 0.012, 1], outputRange: [0, 0, 1, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT + 0.02 + i * 0.012, HIT + 0.07 + i * 0.012, HIT + 0.22 + i * 0.012, 1], outputRange: [1, 1, 2.6, 1, 1] }) }] }} />
+      ))}
+      {FRAG.map((f, i) => {
+        const rad = (f[0] * Math.PI) / 180; const dx = Math.cos(rad) * f[1], dy = Math.sin(rad) * f[1];
+        const ease = (n: number) => p.interpolate({ inputRange: [0, HIT, HIT + 0.2, 1], outputRange: [0, 0, n * 0.62, n] });
+        return (
+          <Animated.View key={i} style={{ position: 'absolute', left: -f[2] / 2, top: -f[2] / 2, opacity: p.interpolate({ inputRange: [0, HIT - 0.001, HIT, 0.75, 1], outputRange: [0, 0, 1, 0.75, 0] }), transform: [{ translateX: ease(dx) }, { translateY: ease(dy) }, { rotate: p.interpolate({ inputRange: [0, HIT, 1], outputRange: ['0deg', '0deg', f[3] * 200 + 'deg'] }) }, { scale: p.interpolate({ inputRange: [0, HIT, 1], outputRange: [1, 1, 0.55] }) }] }}>
+            <Rock size={f[2]} seed={10 + i} id={id + 'f' + i} />
+          </Animated.View>
+        );
+      })}
+      {[...Array(10)].map((_, i) => {
+        const a = (i / 10) * Math.PI * 2 + 0.3; const d = 26 + (i % 4) * 14;
+        const ease = (n: number) => p.interpolate({ inputRange: [0, HIT, HIT + 0.25, 1], outputRange: [0, 0, n * 0.7, n] });
+        return <Animated.View key={'d' + i} style={{ position: 'absolute', left: -1.2, top: -1.2, width: 2.4, height: 2.4, borderRadius: 2, backgroundColor: i % 2 ? '#ffd9a8' : '#cfe9ff', opacity: p.interpolate({ inputRange: [0, HIT - 0.001, HIT, 0.7, 1], outputRange: [0, 0, 0.9, 0.4, 0] }), transform: [{ translateX: ease(Math.cos(a) * d * 1.6) }, { translateY: ease(Math.sin(a) * d * 1.6) }] }} />;
+      })}
+    </View>
+  );
+}
+// A far-away, softly blurred ringed planet in the corner for depth (static).
+function Planet() {
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', right: -96, bottom: -78, width: 250, height: 250 }}>
+      <Svg width={250} height={250} viewBox="-125 -125 250 250">
+        <Defs>
+          <SRG id="pl" cx="32%" cy="28%" r="85%"><Stop offset="0" stopColor="#9d8cff" stopOpacity="0.85" /><Stop offset="0.5" stopColor="#5a4fc4" stopOpacity="0.6" /><Stop offset="1" stopColor="#1a1560" stopOpacity="0.15" /></SRG>
+          <SRG id="plg" cx="50%" cy="50%" r="50%"><Stop offset="0.6" stopColor="#7c6cff" stopOpacity="0.28" /><Stop offset="1" stopColor="#7c6cff" stopOpacity="0" /></SRG>
+        </Defs>
+        <Circle cx={0} cy={0} r={125} fill="url(#plg)" />
+        <Circle cx={0} cy={0} r={72} fill="url(#pl)" />
+        <Rect x={-125} y={-3} width={250} height={0.1} fill="none" />
+        <Path d="M-118 22 A118 30 -18 0 1 118 -22" fill="none" stroke="rgba(143,233,226,.45)" strokeWidth={3} transform="rotate(-14)" />
+        <Path d="M-104 26 A104 25 -18 0 1 104 -26" fill="none" stroke="rgba(190,180,255,.35)" strokeWidth={2} transform="rotate(-14)" />
+      </Svg>
+    </View>
+  );
+}
 function Mote({ left, delay, dur, size, color }: { left: string; delay: number; dur: number; size: number; color: string }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -87,14 +166,14 @@ function Mote({ left, delay, dur, size, color }: { left: string; delay: number; 
   }, []);
   return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: left as any, bottom: 20, width: size, height: size, borderRadius: size, backgroundColor: color, shadowColor: color, shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 }, opacity: v.interpolate({ inputRange: [0, 0.15, 0.8, 1], outputRange: [0, 0.9, 0.7, 0] }), transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -640] }) }, { translateX: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 14, -8] }) }] }} />;
 }
-export function Sky() {
+export function Sky({ shooting = true }: { shooting?: boolean }) {
   return (
     <>
       {SKY.map((t, i) => <Twinkle key={i} x={t[0]} y={t[1]} s={t[2]} i={i} />)}
-      <Shoot left="2%" top="4%" delay={900} gap={3800} />
-      <Shoot left="40%" top="10%" delay={3600} gap={5200} angle={32} />
-      <Shoot left="-6%" top="38%" delay={6400} gap={6800} angle={22} />
-      <Shoot left="30%" top="62%" delay={9000} gap={7600} angle={26} />
+      {shooting ? <Shoot left="2%" top="4%" delay={900} gap={3800} /> : null}
+      {shooting ? <Shoot left="40%" top="10%" delay={3600} gap={5200} angle={32} /> : null}
+      {shooting ? <Shoot left="-6%" top="38%" delay={6400} gap={6800} angle={22} /> : null}
+      {shooting ? <Shoot left="30%" top="62%" delay={9000} gap={7600} angle={26} /> : null}
       <Mote left="10%" delay={0} dur={7500} size={4} color="#8fe9e2" />
       <Mote left="30%" delay={2400} dur={9000} size={3} color="#ffd593" />
       <Mote left="52%" delay={1100} dur={8000} size={4} color="#ff8fe0" />
@@ -122,25 +201,28 @@ export function Logo({ waves = true }: { waves?: boolean }) {
   useEffect(() => { const a = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })])); a.start(); return () => a.stop(); }, []);
   return (
     <View style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}>
-      {waves ? <><Wave delay={0} /><Wave delay={1600} /></> : null}
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] }) }] }}>
-        <Blob size={150} color="rgba(138,123,255,0.55)" />
-      </Animated.View>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit }] }}>
         <View style={{ position: 'absolute', left: 82, top: 2, width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff', shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 170, height: 170, transform: [{ rotate: orbit2 }] }}>
         <View style={{ position: 'absolute', left: 83, top: 160, width: 5, height: 5, borderRadius: 3, backgroundColor: '#ffd593', shadowColor: '#ffc46b', shadowOpacity: 1, shadowRadius: 7, shadowOffset: { width: 0, height: 0 } }} />
       </Animated.View>
-      <View style={{ width: 112, height: 112, borderRadius: 34, overflow: 'hidden', backgroundColor: '#1e2255', borderWidth: 1.2, borderColor: 'rgba(255,255,255,.26)' }}>
-        <LinearGradient colors={['#4b5889', '#262962', '#1a2250', '#2f7580']} locations={[0, 0.42, 0.7, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112 }} />
-        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112, transform: [{ rotate: inner }] }}>
-          <View style={{ position: 'absolute', left: 60, top: -30 }}><Blob size={90} color="rgba(94,231,223,0.35)" /></View>
+      {/* The same soft breathing glow as the old logo: one round purple light just beyond the icon. */}
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] }) }] }}>
+        <Blob size={150} color="rgba(138,123,255,0.55)" />
+      </Animated.View>
+      <View style={{ width: 112, height: 112, borderRadius: 28, backgroundColor: '#1e2255' }}>
+      <View style={{ width: 112, height: 112, borderRadius: 28, overflow: 'hidden' }}>
+        {/* Same icon as the home screen, built in layers: the three colour lights turn slowly behind the raised glass tile. */}
+        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -28, top: -28, width: 168, height: 168, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.75, 1] }), transform: [{ rotate: inner }] }}>
+          <Image source={require('../../assets/android-icon-background.png')} style={{ width: 168, height: 168 }} />
         </Animated.View>
-        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: 112, height: 112, transform: [{ rotate: inner2 }] }}>
-          <View style={{ position: 'absolute', left: -34, top: 62 }}><Blob size={90} color="rgba(183,148,255,0.35)" /></View>
-        </Animated.View>
-        <Svg width={112} height={112} viewBox="0 0 112 112" fill="none" style={{ position: 'absolute', left: 0, top: 0 }}><Path d="M27 82V30L56 63L85 30V82" stroke="#fff" strokeWidth={11} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+        <Image source={require('../../assets/android-icon-foreground.png')} style={{ position: 'absolute', left: -10, top: -10, width: 132, height: 132 }} />
+        {/* Glass sheen on the raised tile only (the icon's own background stays as it is). */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 21, top: 21, width: 70, height: 70, borderRadius: 20, overflow: 'hidden' }}>
+          <LinearGradient colors={['rgba(255,255,255,.3)', 'rgba(255,255,255,.06)', 'rgba(255,255,255,0)']} locations={[0, 0.4, 0.7]} start={{ x: 0.1, y: 0 }} end={{ x: 0.7, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, width: 70, height: 70 }} />
+        </View>
+      </View>
       </View>
     </View>
   );
@@ -188,9 +270,17 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [info, setInfo] = useState('');
   // The logo stays pinned at the top; it hides while the keyboard is open so the form always has room.
   const [kb, setKb] = useState(false);
+  const scrollRef = useRef<any>(null);
+  // When the keyboard covers the lower fields, scroll the form down so the focused password field, the button and the consent line stay visible.
+  const toEnd = () => { setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300); };
   // Same starting height on sign in and register, a little lower on taller phones.
   const { height: winH } = useWindowDimensions();
-  const top = Math.max(40, Math.min(150, Math.round(winH * 0.135)));
+  // Register is taller, so its header sits closer to the top; Sign in is shorter, so it sits a little lower and looks balanced.
+  const topUp = Math.max(40, Math.min(76, Math.round(winH * 0.07)));
+  const topIn = Math.max(52, Math.min(210, Math.round((winH - 540) * 0.42)));
+  const wantTop = kb ? (mode === 'up' || mode === 'reset' ? 44 : Math.max(72, Math.min(120, Math.round(winH * 0.14)))) : mode === 'up' || mode === 'reset' ? topUp : topIn;
+  const topA = useRef(new Animated.Value(wantTop)).current;
+  useEffect(() => { Animated.timing(topA, { toValue: wantTop, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start(); }, [wantTop]);
   useEffect(() => {
     const a = Keyboard.addListener('keyboardDidShow', () => setKb(true)); const b = Keyboard.addListener('keyboardDidHide', () => setKb(false));
     return () => { a.remove(); b.remove(); };
@@ -244,10 +334,14 @@ export function AuthScreen() {
       <Drift size={340} color="rgba(94,231,223,0.32)" x={150} y={250} dx={-45} dy={50} dur={9000} />
       <Drift size={320} color="rgba(255,143,224,0.26)" x={-130} y={520} dx={55} dy={-40} dur={8000} />
       <Wallpaper />
-      <Sky />
-      <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-start', paddingTop: top, paddingBottom: 16 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Sky shooting={false} />
+      <Planet />
+      <Collision left="70%" top="9%" ang={24} dur={15000} gap={2500} delay={1200} id="c1" on={!kb} />
+      <Collision left="26%" top="84%" ang={-18} dur={17000} gap={3500} delay={7000} id="c2" on={!kb} />
+      <KeyboardAvoidingView style={{ flex: 1, justifyContent: 'flex-start', paddingBottom: 16 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Animated.View style={{ height: topA }} />
         {kb ? null : (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 0, paddingBottom: 14, paddingLeft: 22, paddingRight: 70 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 0, paddingBottom: 8, paddingLeft: 22, paddingRight: 70 }}>
             <View style={{ width: 96, height: 96, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 170, height: 170, transform: [{ scale: 0.52 }] }}><Logo /></View></View>
             <View style={{ marginLeft: 6 }}>
               <Text style={{ color: W, fontSize: 28, fontWeight: '800', letterSpacing: 0.3 }}>My Life</Text>
@@ -255,17 +349,17 @@ export function AuthScreen() {
             </View>
           </View>
         )}
-        <ScrollView style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: 6, paddingBottom: 20 }}>
+        <ScrollView ref={scrollRef} style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ justifyContent: 'flex-start', paddingHorizontal: 22, paddingTop: 6, paddingBottom: 20 }}>
 
-          <View style={{ borderRadius: 26, padding: 16, backgroundColor: '#3b3a7e', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.42)', borderBottomColor: 'rgba(0,0,0,.38)', borderBottomWidth: 2, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 22, shadowOffset: { width: 0, height: 14 }, elevation: 16 }}>
+          <View style={{ borderRadius: 24, padding: 14, backgroundColor: '#3b3a7e', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.42)', borderBottomColor: 'rgba(0,0,0,.38)', borderBottomWidth: 2, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.55, shadowRadius: 22, shadowOffset: { width: 0, height: 14 }, elevation: 16 }}>
             <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
             {tabs ? (
               <View style={{ flexDirection: 'row', padding: 4, borderRadius: 16, backgroundColor: 'rgba(15,12,60,.45)', marginBottom: 12 }}>
                 {(['in', 'up'] as const).map((m) => (
                   <Pressable key={m} onPress={() => { if (m !== mode) { setPw(''); setPw2(''); } go(m); }} style={{ flex: 1 }}>
                     {mode === m
-                      ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></LinearGradient>
-                      : <View style={{ paddingVertical: 10, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, fontWeight: '700' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></View>}
+                      ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, borderRadius: 12, alignItems: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></LinearGradient>
+                      : <View style={{ paddingVertical: 9, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, fontWeight: '700' }}>{m === 'in' ? 'Sign in' : 'Register'}</Text></View>}
                   </Pressable>
                 ))}
               </View>
@@ -277,18 +371,20 @@ export function AuthScreen() {
               {mode === 'up' ? <Field icon="user" value={name} onChangeText={setName} placeholder="Your name" autoCapitalize="words" autoComplete="name" maxLength={30} /> : null}
               {mode !== 'verify' && mode !== 'reset' ? <><Field icon="mail" bad={emailBad} value={email} onChangeText={setEmail} onBlur={() => setEmailSeen(true)} placeholder="Email address" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" />{emailBad ? <Text style={{ color: '#ff9aa9', fontSize: 11.5, marginTop: -4, marginBottom: 9 }}>That does not look like a real email address.</Text> : null}</> : null}
               {mode === 'in' ? <Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password" autoCapitalize="none" autoCorrect={false} autoComplete="current-password" /> : null}
-              {mode === 'up' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password (8+ characters)" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat password" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
+              {mode === 'up' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="Password (8+ characters)" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat password" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
               {mode === 'verify' || mode === 'reset' ? <CodeBoxes value={code} onChange={setCode} length={6} shake={err} /> : null}
-              {mode === 'reset' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="New password (8+ characters)" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat new password" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
+              {mode === 'reset' ? <><Field icon="lock" secret value={pw} onChangeText={setPw} placeholder="New password (8+ characters)" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /><PwMeter pw={pw} /><Field icon="lock" secret value={pw2} onChangeText={setPw2} placeholder="Repeat new password" onFocus={toEnd} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" /></> : null}
 
               {err ? <View style={{ padding: 10, borderRadius: 12, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.4)', marginBottom: 12 }}><Text style={{ color: '#ffc2cc', fontSize: 12.5, lineHeight: 17 }}>{err}</Text></View> : null}
               {info ? <View style={{ padding: 10, borderRadius: 12, backgroundColor: 'rgba(143,233,226,.12)', borderWidth: 1, borderColor: 'rgba(143,233,226,.35)', marginBottom: 12 }}><Text style={{ color: TEAL, fontSize: 12.5, lineHeight: 17 }}>{info}</Text></View> : null}
 
               <Pressable onPress={main[1]} disabled={busy} style={{ shadowColor: '#8a7bff', shadowOpacity: 0.7, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8, borderRadius: 18 }}>
-                <LinearGradient colors={['#7c9cff', '#9a8cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.75 : 1 }}>
+                <LinearGradient colors={['#7c9cff', '#9a8cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.75 : 1 }}>
                   {busy ? <ActivityIndicator color="#fff" /> : <Text style={{ color: W, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 }}>{main[0]}</Text>}
                 </LinearGradient>
               </Pressable>
+
+              {mode === 'up' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 17, textAlign: 'center', marginTop: 12 }}>By creating an account you agree to the <Text onPress={() => Linking.openURL(PRIVACY_URL + '#terms')} accessibilityRole="link" style={{ color: TEAL, fontWeight: '700' }}>Terms</Text> and <Text onPress={() => Linking.openURL(PRIVACY_URL + '#privacy')} accessibilityRole="link" style={{ color: TEAL, fontWeight: '700' }}>Privacy Policy</Text>.</Text> : null}
 
               <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 12 }}>
                 {mode === 'in' ? link('Forgot password?', () => go('forgot')) : null}

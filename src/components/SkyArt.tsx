@@ -212,7 +212,7 @@ export function SkyArt({ period, offset = 0 }: { period: Period; offset?: number
       {period === 'Evening' && (<>
         <Pulse style={{ right: -90, top: 0 }}><Glow size={360} stops={[[0, 'rgba(255,170,110,.9)'], [0.38, 'rgba(255,90,120,.4)'], [0.7, 'rgba(0,0,0,0)']]} style={{ position: 'relative' }} /></Pulse>
         <Disc size={72} right={54} top={146} colors={['#fff0c8', '#ffb06b', '#ff6a5a']} glow="rgba(255,120,90,.65)" />
-        <LinearGradient colors={['rgba(255,130,100,0)', 'rgba(255,110,100,.45)']} style={{ position: 'absolute', left: 0, right: 0, top: 176, height: 90 }} />
+        <LinearGradient colors={['rgba(255,130,100,0)', 'rgba(255,110,100,.45)', 'rgba(255,110,100,0)']} locations={[0, 0.5, 1]} style={{ position: 'absolute', left: 0, right: 0, top: 176, height: 120 }} />
         <Cloud top={92} w={88} h={28} opacity={0.6} dur={44000} delay={0.18} color="#ffc2d1" />
         <Cloud top={146} w={68} h={22} opacity={0.5} dur={58000} delay={0.45} color="#ffd2bd" />
         <Cloud top={52} w={56} h={18} opacity={0.4} dur={66000} delay={0.52} color="#ffb3c8" />

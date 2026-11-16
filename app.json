@@ -2,7 +2,7 @@
   "expo": {
     "name": "My Life 1.0",
     "slug": "my-life",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -22,7 +22,8 @@
       "backgroundColor": "#0a0f2c",
       "permissions": [
         "android.permission.health.READ_STEPS",
-        "android.permission.ACTIVITY_RECOGNITION"
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "allowBackup": false
     },
@@ -97,6 +98,13 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain"
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": true
         }
       ]
     ],

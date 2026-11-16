@@ -31,16 +31,25 @@ class Chat extends AssistantBase {
   panelRef: any = null;
   subs: any[] = [];
   kb = 0;
+  kbOpen = false;
   componentDidMount() {
+    (this as any).weekly();
     if (Platform.OS === 'web') return;
     const set = (n: number) => { this.kb = n; (this as any).setState({ kbLift: n }); };
+    // Work out how far the input bar must rise. The bar's own current lift is added back, so a second keyboard event
+    // (the keyboard changing height, for example) can never wrongly drop the bar behind the keyboard.
+    const fit = (top: number, h: number) => {
+      if (this.panelRef && this.panelRef.measureInWindow) this.panelRef.measureInWindow((_x: number, y: number, _w: number, ph: number) => set(Math.max(0, Math.round(y + ph + (this.kb || 0) - top))));
+      else set(h);
+    };
     this.subs = [
       Keyboard.addListener('keyboardDidShow', (e: any) => {
-        const top = e.endCoordinates.screenY;
-        if (this.panelRef && this.panelRef.measureInWindow) this.panelRef.measureInWindow((_x: number, y: number, _w: number, h: number) => set(Math.max(0, Math.round(y + h - top + (this.kb || 0) * 0))));
-        else set(e.endCoordinates.height);
+        const top = e.endCoordinates.screenY, h = e.endCoordinates.height;
+        fit(top, h);
+        setTimeout(() => { if (this.kbOpen) fit(top, h); }, 120); // measure again once the layout has settled
+        this.kbOpen = true;
       }),
-      Keyboard.addListener('keyboardDidHide', () => set(0)),
+      Keyboard.addListener('keyboardDidHide', () => { this.kbOpen = false; set(0); }),
     ];
   }
   componentWillUnmount() { this.subs.forEach((x) => x.remove()); }
@@ -51,7 +60,8 @@ class Chat extends AssistantBase {
     const ms = st.lang === 'ms';
     const empty = st.msgs.length === 0;
     const more = !!st.more;
-    const pick = [0, 4, 5, 7].map((i) => v.starters[i]);
+    // Four starter cards: the usual ones first, then any others that are left when some modules are turned off.
+    const pick = [0, 4, 5, 7, 1, 6, 8, 2, 3, 9].map((id) => v.starters.find((q: any) => q.id === id)).filter(Boolean).slice(0, 4);
     const pill = (on: boolean, t: string, f: any) => (
       <Pressable key={t} onPress={f}>
         {on ? (
@@ -140,6 +150,9 @@ class Chat extends AssistantBase {
                 )}
                 {m.linkD === 'block' && (
                   <Pressable onPress={() => go(m.href)} style={{ marginTop: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{m.label}</Text></Pressable>
+                )}
+                {m.undoD === 'flex' && (
+                  <Pressable onPress={m.undo} style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{m.undoL}</Text></Pressable>
                 )}
                 <Text style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', marginTop: 6, textAlign: 'right' }}>{m.time}</Text>
               </>

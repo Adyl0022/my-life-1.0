@@ -4,6 +4,7 @@ import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { Glass } from '../components/Glass';
 import { IslamicBg, Header, Ic } from '../components/IslamicUi';
 import { W } from '../components/Ui';
@@ -16,7 +17,7 @@ import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram, k
 const Item = ({ t, s, c, ic = 'book', onPress }: { t: string; s: string; c: string; ic?: string; onPress: () => void }) => (
   <Pressable onPress={onPress}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
     <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c, alignItems: 'center', justifyContent: 'center' }}><Ic n={ic} size={22} /></View>
-    <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '700' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 2 }}>{s}</Text></View>
+    <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '700' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 4 }}>{s}</Text></View>
     <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
   </Glass></Pressable>
 );
@@ -35,6 +36,7 @@ export default function IslamicHub() {
   const lv = isl.last[lk];
   const go = (p: string) => router.push(p as any);
   const [pz] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
+  const [qres] = useStored<{ title?: string; label?: string; index?: number; total?: number } | null>('ml_qresume', null);
   const pst = (() => {
     const d = new Date(), rs = ramadanState(pz, d), ow = qadhaOwed(pz, d), po = pz.off || 0, marked = !!(pz.days || {})[keyD(d)];
     if (rs.phase === 'during') return { h: 'Ramadan day ' + rs.day + ' of ' + rs.r.len, b: marked ? 'Today is marked. ' + rs.fasted + ' days fasted so far.' : 'Mark today\'s fast. ' + rs.fasted + ' days fasted so far.' };
@@ -48,7 +50,7 @@ export default function IslamicHub() {
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <IslamicBg deco />
       <SafeAreaView style={{ flex: 1 }}>
-        <Header title="Islamic Hub" />
+        <Header title="Islamic Hub" right={<Pressable onPress={() => router.push('/islamic-settings' as any)} accessibilityLabel="Islamic Hub settings"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Circle cx={12} cy={12} r={3} /><Path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></Svg></Glass></Pressable>} />
         <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginHorizontal: 20, marginTop: 14 }}>
           {['Today', 'Quran', 'Zikir', 'Saved'].map((n, i) => (
             <Pressable key={n} onPress={() => setTab(i)} style={{ flex: 1 }}>
@@ -87,6 +89,11 @@ export default function IslamicHub() {
             </Glass></Pressable>
           </>)}
           {tab === 1 && (<>
+            <Pressable onPress={() => go('/quran-audio')}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(94,231,181,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="book" size={24} /></View>
+              <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>LISTEN</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>Quran Audio</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{qres && qres.title ? 'Continue · ' + qres.title + ' · ' + qres.label : 'All 30 juz and 114 surahs, 4 reciters'}</Text></View>
+              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
+            </Glass></Pressable>
             <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>FEATURED READINGS</Text>
             {FEATURED.map((k) => <Item key={k} ic="star" t={SURAH[k].title} s={SURAH[k].sub + (isl.bm[k] ? ' · Saved' : '')} c="rgba(255,196,107,.4)" onPress={() => go('/surah/' + k)} />)}
             <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginTop: 6 }}>ALL 114 SURAHS</Text>

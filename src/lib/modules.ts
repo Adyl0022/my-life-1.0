@@ -9,7 +9,7 @@ export const MODS: { k: string; name: string; c: string }[] = [
   { k: 'habit', name: 'Habit & Health', c: '#b794ff' },
 ];
 export const modOf = (path: string): string => {
-  if (path.startsWith('/planner') || path.startsWith('/notes')) return 'planner';
+  if (path.startsWith('/planner') || path.startsWith('/notes') || path.startsWith('/family')) return 'planner';
   if (['/islamic', '/prayer', '/mathurat', '/tasbih', '/puasa', '/tahlil', '/surah'].some((p) => path.startsWith(p))) return 'islamic';
   if (path.startsWith('/finance')) return 'finance';
   if (path.startsWith('/record')) return 'record';

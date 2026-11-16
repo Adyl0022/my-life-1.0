@@ -3,14 +3,15 @@ import { View, ScrollView, Pressable, Animated } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { PlannerArt } from '../components/PlannerArt';
-import { Inp, DateField, Pill, SBtn, Sheet, Toast, todayStr, W, GP } from '../components/Ui';
+import { Inp, DateField, pickDate, Pill, SBtn, Sheet, Toast, todayStr, W, GP } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
+import { useRegion, regionCountry } from '../lib/region';
 import { upcomingMy, fetchMy, EMPTY_CACHE, MyCache } from '../lib/myEvents';
 
 type Ev = { id: number; name: string; date: string; remind: string; done: boolean };
@@ -36,9 +37,9 @@ const MyRow = ({ leaving, fresh, children }: { leaving: boolean; fresh: boolean;
 };
 const Sec = ({ t, hint, right, c = '#8ea8ff', n }: { t: string; hint: string; right?: React.ReactNode; c?: string; n?: number }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 8, marginHorizontal: 2 }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, paddingLeft: 10, paddingRight: 12, borderRadius: 999, backgroundColor: c + '30', borderWidth: 1, borderColor: c + '66' }}>
+    <View style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, paddingLeft: 10, paddingRight: 12, borderRadius: 999, backgroundColor: c + '30', borderWidth: 1, borderColor: c + '66' }}>
       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: c, shadowColor: c, shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 }, elevation: 3 }} />
-      <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{t}</Text>
+      <Text numberOfLines={1} style={{ color: W, fontSize: 13.5, fontWeight: '800', flexShrink: 1 }}>{t}</Text>
       {n != null ? <View style={{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, backgroundColor: c, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0b1030', fontSize: 11, fontWeight: '800' }}>{n}</Text></View> : null}
     </View>
     <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginLeft: 10, flex: 1 }}>{hint}</Text>{right}
@@ -114,7 +115,7 @@ export default function Planner() {
           <LinearGradient colors={x.done ? ['#2fae7a', '#5ee7b5'] : GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 48, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 10, fontWeight: '700' }}>{okd ? MON[+p[1] - 1] : 'NEW'}</Text><Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>{okd ? p[2] : '--'}</Text>
           </LinearGradient>
-          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{(late ? 'Overdue · ' : '') + (x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind)}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{(late ? 'Overdue · ' : '') + (x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind)}</Text></View>
           <Ic t="✎" label="Edit" onPress={() => setEdit({ id: x.id, kind: 'event', name: x.name, note: '', prio: 'Medium', date: x.date, remind: x.remind })} />
           <Ic t="✕" label="Delete" onPress={() => { setD({ ...d, events: d.events.filter((y) => y.id !== x.id) }); setEdit(null); }} />
         </Raise>
@@ -133,7 +134,7 @@ export default function Planner() {
               {done ? <Text style={{ color: '#06241d', fontSize: 13, fontWeight: '800' }}>✓</Text> : null}
             </LinearGradient>
           </Pressable>
-          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: overdue ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{parts.join(' · ')}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: overdue ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{parts.join(' · ')}</Text></View>
           <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, backgroundColor: PB[x.prio] }}><Text style={{ color: PC[x.prio], fontSize: 11, fontWeight: '700' }}>{x.prio}</Text></View>
           <Ic t="✎" label="Edit" onPress={() => setEdit({ id: x.id, kind: 'task', name: x.name, note: x.note, prio: x.prio, date: x.due, remind: 'None' })} />
         </Raise>
@@ -144,8 +145,9 @@ export default function Planner() {
   const sorted = d.events.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const upcoming = sorted.filter((x) => !x.done), completed = sorted.filter((x) => x.done);
   const [mc, setMc, mcOk] = useStored<MyCache>('ml_myevents', EMPTY_CACHE);
-  useEffect(() => { if (!mcOk) return; fetchMy(mc, today).then((n) => { if (n) setMc(n); }); }, [mcOk, today]);
-  const my = upcomingMy(today, 5, mc);
+  const [rg] = useRegion();
+  useEffect(() => { if (!mcOk) return; fetchMy(mc, today, false, rg.cc).then((n) => { if (n) setMc(n); }); }, [mcOk, today, rg.cc]);
+  const my = upcomingMy(today, 5, mc, rg.cc);
   const mk = (e: any) => e.date + '|' + e.name;
   const [shown, setShown] = useState<{ e: any; leaving: boolean; fresh: boolean }[]>(() => my.map((e) => ({ e, leaving: false, fresh: false })));
   const myKey = my.map(mk).join(',');
@@ -185,11 +187,24 @@ export default function Planner() {
           </View>
           <Glass radius={26} style={{ marginTop: 14, padding: 16 }}>
             <LinearGradient colors={['rgba(124,156,255,.3)', 'rgba(183,148,255,.18)']} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
-            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Plan your day</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 2 }}>Events and tasks, all planned</Text>
+            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Plan your day</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>Events and tasks, all planned</Text>
           </Glass>
 
+          <Pressable onPress={() => router.push('/notes' as any)} accessibilityLabel="Notes and Reminders" style={{ marginTop: 12 }}>
+            <Glass radius={24}>
+              <LinearGradient colors={['rgba(255,149,0,.32)', 'rgba(255,31,90,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 }}>
+                <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.18)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 3h10l4 4v14H5z" /><Path d="M14 3v5h5M8 13h8M8 17h5" /></Svg>
+                </View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Notes &amp; Reminders</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4 }}>Notes, lists and things to remember</Text></View>
+                <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 22 }}>›</Text>
+              </View>
+            </Glass>
+          </Pressable>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14, marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-            <Pill t="Notes" warm onPress={() => router.push('/notes' as any)} />
+            <Pill t="Family Planner" fam onPress={() => router.push('/family' as any)} />
             <Pill t="Date & Events" on={tab === 'events'} onPress={() => { setTab('events'); setEdit(null); }} />
             {d.cats.map((n, i) => <Pill key={n} t={n} on={tab === 'tasks' && i === cat} onPress={() => { setTab('tasks'); setCat(i); setEdit(null); setAddingCat(false); }} />)}
             {!addingCat && <Pill t="+ New category" onPress={() => { setAddingCat(true); setCatIn(''); }} />}
@@ -203,8 +218,9 @@ export default function Planner() {
 
           {tab === 'events' ? (
             <View style={{ gap: 8 }}>
-              <Sec t="Malaysia events" hint="auto · official calendar" c="#ffd27d" n={my.length} />
+              <Sec t={regionCountry().flag + ' ' + regionCountry().name + ' events'} hint="auto · official calendar" c="#ffd27d" n={my.length} />
               <Glass radius={22} style={{ padding: 12, paddingBottom: 4 }}>
+                {shown.length === 0 ? <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12.5, paddingBottom: 10, lineHeight: 18 }}>No public holidays found for {regionCountry().name} yet. Connect to the internet once and they will appear here.</Text> : null}
                 {shown.map((sx) => {
                   const e = sx.e;
                   const added = d.events.some((y) => y.date === e.date && y.name === e.name);
@@ -268,9 +284,9 @@ export default function Planner() {
           <Sheet onClose={() => setAdd(null)}>
             <View style={{ padding: 20, gap: 10, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
               <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>{add.kind === 'task' ? 'New task' : 'New event'}</Text>
-              <Inp autoFocus value={add.name} onChangeText={(v: string) => setAdd({ ...add, name: v })} placeholder={add.kind === 'task' ? 'What needs to be done?' : 'Event name'} />
+              <Inp autoFocus value={add.name} onChangeText={(v: string) => setAdd({ ...add, name: v })} placeholder={add.kind === 'task' ? 'What needs to be done?' : 'Event name'} {...(add.kind === 'event' ? { onSubmitEditing: () => pickDate(add.date, (v) => setAdd({ ...add, date: v })) } : {})} />
               {add.kind === 'task' ? (<>
-                <Inp value={add.note} onChangeText={(v: string) => setAdd({ ...add, note: v })} placeholder="Note (optional)" />
+                <Inp value={add.note} onChangeText={(v: string) => setAdd({ ...add, note: v })} placeholder="Note (optional)" onSubmitEditing={() => pickDate(add.due, (v) => setAdd({ ...add, due: v }))} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>{PR.map((n) => (
                   <Pressable key={n} style={{ flex: 1 }} onPress={() => setAdd({ ...add, prio: n })}><View style={{ paddingVertical: 9, borderRadius: 12, alignItems: 'center', backgroundColor: add.prio === n ? PB[n] : 'rgba(255,255,255,.06)', borderWidth: 1, borderColor: add.prio === n ? PC[n] : 'rgba(255,255,255,.2)' }}><Text style={{ color: add.prio === n ? PC[n] : W, fontSize: 12.5, fontWeight: '700' }}>{n}</Text></View></Pressable>))}</View>
                 <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5 }}>Due</Text><DateField value={add.due} onChange={(v) => setAdd({ ...add, due: v })} style={{ flex: 1 }} /></View>

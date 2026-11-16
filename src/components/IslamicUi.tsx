@@ -128,6 +128,21 @@ function Lantern() {
     </Animated.View>
   );
 }
+// Calm background for reading screens: the same dark teal as the Islamic Hub with a soft star pattern, and no glowing lights behind the words.
+export const ReadBg = () => (
+  <>
+    <LinearGradient colors={['#0a0f2c', '#0f1f3d', '#0c3a3f']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+    <Svg pointerEvents="none" width="100%" height="100%" style={{ position: 'absolute', left: 0, top: 0 }}>
+      <Defs>
+        <Pattern id="rgeo" width={52} height={52} patternUnits="userSpaceOnUse">
+          <Path d="M26 4l5.5 11.5L43 10l-5.5 11.5L49 26l-11.5 4.5L43 42l-11.5-5.5L26 48l-5.5-11.5L9 42l5.5-11.5L3 26l11.5-4.5L9 10l11.5 5.5z" fill="none" stroke="#7df0c6" strokeWidth={1} opacity={0.1} />
+        </Pattern>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#rgeo)" />
+    </Svg>
+  </>
+);
+
 export const IslamicBg = ({ a = 'rgba(52,211,153,.4)', b = 'rgba(124,156,255,.35)', deco = false }: { a?: string; b?: string; deco?: boolean }) => (
   <>
     <LinearGradient colors={['#0a0f2c', '#0f1f3d', '#0c3a3f']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
@@ -166,22 +181,57 @@ export function Header({ title, sub, right }: { title: string; sub?: string; rig
     </View>
   );
 }
-export function ToolBar({ saved, onSave, size, onSize, lang, onLang }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void }) {
-  const T = ({ a, b, onPress, c }: any) => <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}><Text style={{ color: c || 'rgba(255,255,255,.85)', fontSize: 15, fontWeight: '800' }}>{a}</Text><Text style={{ color: c || 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '600', marginTop: 1 }}>{b}</Text></Pressable>;
+
+// Small panel above the toolbar to choose how a text is shown (with translation, Arabic only, ...). Uses the Islamic Hub greens.
+export type ReadOpt = { k: string; ic: string; t: string; sub: string };
+export function ReadPicker({ opts, mode, onMode, lang, onLang, onClose }: { opts: ReadOpt[]; mode: string; onMode: (k: string) => void; lang: string; onLang: (l: 'ms' | 'en') => void; onClose: () => void }) {
+  // Opens with a soft rise, fade and a small stagger on the rows; closes with a quick fade down.
+  const box = useRef(new Animated.Value(0)).current;
+  const rows = useRef(opts.map(() => new Animated.Value(0))).current;
+  useEffect(() => {
+    Animated.timing(box, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    Animated.stagger(55, rows.map((r) => Animated.timing(r, { toValue: 1, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }))).start();
+  }, []);
+  const close = () => { Animated.timing(box, { toValue: 0, duration: 150, easing: Easing.in(Easing.quad), useNativeDriver: true }).start(() => onClose()); };
+  return (
+    <>
+    {/* Tap anywhere outside the panel to close it. */}
+    <Pressable accessibilityLabel="Close options" onPress={close} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+    <Animated.View style={{ position: 'absolute', left: 20, right: 20, bottom: 84, borderRadius: 22, backgroundColor: '#0e2f3a', borderWidth: 1, borderColor: 'rgba(125,240,198,.3)', padding: 8, opacity: box, transform: [{ translateY: box.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }, { scale: box.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) }] }}>
+      {opts.map((o, i) => (
+        <Animated.View key={o.k} style={{ opacity: rows[i], transform: [{ translateY: rows[i].interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
+        <Pressable onPress={() => { onMode(o.k); if (o.k !== 'tr') close(); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 9, borderRadius: 14, backgroundColor: mode === o.k ? 'rgba(125,240,198,.2)' : 'transparent', borderWidth: mode === o.k ? 1.5 : 0, borderColor: 'rgba(125,240,198,.65)' }}>
+          <View style={{ width: 30, height: 30, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14 }}>{o.ic}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{o.t}</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{o.sub}</Text></View>
+          {o.k === 'tr' && mode === 'tr' ? (
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {(['ms', 'en'] as const).map((l) => <Pressable key={l} onPress={() => { onLang(l); close(); }} style={{ paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: lang === l ? 'rgba(125,240,198,.45)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{l === 'ms' ? 'BM' : 'EN'}</Text></Pressable>)}
+            </View>
+          ) : null}
+        </Pressable>
+        </Animated.View>
+      ))}
+    </Animated.View>
+    </>
+  );
+}
+export function ToolBar({ saved, onSave, size, onSize, lang, onLang, langLabel }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void; langLabel?: string }) {
+  const T = ({ a, b, onPress, c }: any) => <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}><Text style={{ color: c || 'rgba(255,255,255,.85)', fontSize: 15, fontWeight: '800' }}>{a}</Text><Text style={{ color: c || 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{b}</Text></Pressable>;
   return (
     <Glass radius={22} style={{ marginHorizontal: 20, marginBottom: 12, flexDirection: 'row' }}>
       <T a={saved ? '★' : '☆'} b={saved ? 'Saved' : 'Save'} c={saved ? '#ffd593' : undefined} onPress={onSave} />
       <T a="Aa" b={['S', 'M', 'L'][size]} onPress={onSize} />
-      <T a="文" b={lang === 'en' ? 'EN' : 'BM'} onPress={onLang} />
+      <T a="文" b={langLabel || (lang === 'en' ? 'EN' : 'BM')} onPress={onLang} />
     </Glass>
   );
 }
-export function VerseBlock({ v, size, lang, showNum = true, active, onPress, onLong, marked, last }: { v: Verse; size: number; lang: string; showNum?: boolean; active?: boolean; onPress?: () => void; onLong?: () => void; marked?: boolean; last?: boolean }) {
+export function VerseBlock({ v, size, lang, arOnly, showNum = true, active, onPress, onLong, marked, last, bleed }: { v: Verse; size: number; lang: string; arOnly?: boolean; showNum?: boolean; active?: boolean; onPress?: () => void; onLong?: () => void; marked?: boolean; last?: boolean; bleed?: number }) {
+  const full = !!active && !!bleed; // playing verse: solid box running edge to edge of its card
   return (
-    <Pressable onPress={onPress} onLongPress={onLong} delayLongPress={380} style={{ paddingVertical: 14, paddingHorizontal: 4, borderBottomWidth: last ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)', backgroundColor: active ? 'rgba(125,240,198,.12)' : 'transparent', borderRadius: active ? 14 : 0 }}>
+    <Pressable onPress={onPress} onLongPress={onLong} delayLongPress={380} style={{ paddingVertical: 14, paddingHorizontal: full ? 4 + (bleed as number) : 4, marginHorizontal: full ? -(bleed as number) : 0, borderBottomWidth: last || full ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)', backgroundColor: full ? 'rgba(125,240,198,.16)' : active ? 'rgba(125,240,198,.12)' : 'transparent', borderRadius: active && !full ? 14 : 0 }}>
       <Text style={{ color: W, fontSize: AR_SIZE[size] + 3, lineHeight: (AR_SIZE[size] + 3) * 1.9, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{showNum ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'  ﴿' + v.n + '﴾'}</Text> : null}{marked ? <Text style={{ color: '#ffd593', fontSize: 15 }}>{'  ★'}</Text> : null}</Text>
-      {v.rumi ? <Text style={{ color: '#8fe9e2', fontSize: M_SIZE[size] + 1, fontStyle: 'italic', lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{v.rumi}</Text> : null}
-      <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: M_SIZE[size] + 1, lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{lang === 'en' ? v.en : v.ms}</Text>
+      {v.rumi && !arOnly ? <Text style={{ color: '#8fe9e2', fontSize: M_SIZE[size] + 1, fontStyle: 'italic', lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{v.rumi}</Text> : null}
+      {arOnly ? null : <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: M_SIZE[size] + 1, lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{lang === 'en' ? v.en : v.ms}</Text>}
     </Pressable>
   );
 }
