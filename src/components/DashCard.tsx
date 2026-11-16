@@ -113,8 +113,15 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
           </ScrollView>
         )}
       </View>); }
-    else body = (<><HeadIcon k="week" size={40} />{head('All logged for today', (td.sy || []).length ? 'Noted: ' + (td.sy || []).join(', ') : 'Everything is in')}
-      <Pressable key={(td.sy || []).length ? 'sy-edit' : 'sy-new'} onPress={() => { setUsy((td.sy || []).filter((y) => UNWELL.includes(y))); setUnw(true); }} hitSlop={8} style={{ flexShrink: 0 }}><Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>{(td.sy || []).length ? 'Edit ›' : 'Feeling unwell? ›'}</Text></Pressable></>);
+    else body = (<><HeadIcon k="week" size={40} />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>QUICK LOG</Text>
+        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>All logged for today</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+          <Text numberOfLines={1} style={{ color: dim, fontSize: 11, flexShrink: 1 }}>{(td.sy || []).length ? 'Noted: ' + (td.sy || []).join(', ') : 'Everything is in'}</Text>
+          <Pressable onPress={() => { setUsy((td.sy || []).filter((y) => UNWELL.includes(y))); setUnw(true); }} hitSlop={8} style={{ flexShrink: 0, paddingLeft: 8 }}><Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>{(td.sy || []).length ? 'Edit ›' : 'Feeling unwell? ›'}</Text></Pressable>
+        </View>
+      </View></>);
   } else if (kind === 'usage') {
     body = (<>
       <View>
