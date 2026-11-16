@@ -7,6 +7,25 @@ import { useSession } from './auth';
 // Google Play handles the payment. RevenueCat only keeps track of who has an active subscription.
 export const PRICE = 'RM15';
 export const PER = 'a year';
+// Shown until Google Play tells us the price for this person's country (for example S$5.99 or Rp 49.000).
+let shownPrice = PRICE; let priceAsked = false;
+async function askPrice() {
+  if (priceAsked || !BILLING_READY) return; priceAsked = true;
+  try {
+    const m = sdk(); if (!m) { priceAsked = false; return; }
+    if (!configured) { priceAsked = false; return; }
+    const o = await m.getOfferings(); const cur = o?.current;
+    const pkg = cur?.annual || cur?.availablePackages?.[0];
+    const ps = pkg?.product?.priceString;
+    if (ps) { shownPrice = String(ps); emit(); } else priceAsked = false;
+  } catch { priceAsked = false; }
+}
+// The yearly price in the person's own currency, as Google Play shows it.
+export function usePrice(): string {
+  const [, n] = useState(0);
+  useEffect(() => { const f = () => n((x) => x + 1); subs.add(f); askPrice(); return () => { subs.delete(f); }; }, []);
+  return shownPrice;
+}
 export type BuyResult = { ok: boolean; msg: string };
 
 const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_KEY || '';
@@ -44,6 +63,7 @@ async function bind(uid: string) {
       boundTo = ''; await m.logOut(); setActive(false); return;
     }
     if (uid) setActive(hasPro(await m.getCustomerInfo()));
+    askPrice();
   } catch { /* offline: keep the last answer */ }
 }
 

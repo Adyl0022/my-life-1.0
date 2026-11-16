@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { Text } from './Txt';
 import { Glass } from './Glass';
-import { PRICE, PER, buyPro, restorePurchases } from '../lib/purchase';
+import { PER, usePrice, buyPro, restorePurchases } from '../lib/purchase';
 
 let shown = false;
 const subs = new Set<() => void>();
@@ -41,6 +41,7 @@ function Btn({ t, onPress, solid }: { t: string; onPress: () => void; solid?: bo
 
 // Shown on top of the whole app when a locked feature is tapped.
 export function PaywallHost() {
+  const PRICE = usePrice();
   const [, n] = useState(0); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   useEffect(() => { const f = () => { n((x) => x + 1); setMsg(''); }; subs.add(f); return () => { subs.delete(f); }; }, []);
   const go = async (fn: typeof buyPro) => { setBusy(true); const r = await fn(); setBusy(false); setMsg(r.msg); if (r.ok) closePaywall(); };
@@ -71,6 +72,7 @@ export function PaywallHost() {
 
 // Blurs a card and opens the unlock sheet when tapped. When `on` is false the card is shown as normal.
 export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?: number; radius?: number; children: React.ReactNode }) {
+  const PRICE = usePrice();
   if (!on) return <View style={{ marginTop: mt }}>{children}</View>;
   return (
     <View style={{ marginTop: mt, borderRadius: radius, overflow: 'hidden' }}>
@@ -87,6 +89,7 @@ export function Locked({ on, mt = 0, radius = 24, children }: { on: boolean; mt?
 
 // A full page shown instead of a locked screen.
 export function UnlockPage({ title, text }: { title: string; text: string }) {
+  const PRICE = usePrice();
   const router = useRouter();
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
