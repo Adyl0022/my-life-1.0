@@ -12,6 +12,7 @@ import { TOP } from '../lib/layout';
 const W = '#fff';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { packReceipts } from '../lib/storage';
+import { useHidden } from '../lib/hidden';
 import { MODS, buildReport, collect, toCsv, toHtml, toXlsxBase64, deliver, deliverPdf, stamp, fileStamp, Report } from '../lib/exporter';
 const IC: Record<string, React.ReactNode> = {
   planner: <><Rect x="4" y="5" width="16" height="15" rx="3" /><Path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4" /></>,
@@ -44,10 +45,16 @@ const PER = ['This month', '3 months', 'All time'];
 
 export default function Export() {
   const router = useRouter();
+  const hid = useHidden();
+  const isOff = (k: string) => k !== 'usage' && hid.off.indexOf(k) >= 0 && k !== 'family';
+  const seeded = React.useRef(false);
   const [inc, setInc] = useState<Record<string, boolean>>({ planner: true, islamic: true, finance: true, record: true, habit: true, usage: true });
   const [, setBkLast] = useStored<number>('ml_backup_last', 0);
   const [per, setPer] = useState(0); const [fmt, setFmt] = useState(3);
   const [phase, setPhase] = useState(0); const [msg, setMsg] = useState('');
+  // Modules turned off in Settings start unticked. The person can still tick them to export their saved data.
+  React.useEffect(() => { if (hid.ready && !seeded.current) { seeded.current = true; const off = MODS.filter((m) => isOff(m.k)); if (off.length) setInc((v) => { const n = { ...v }; off.forEach((m) => { n[m.k] = false; }); return n; }); } }, [hid.ready, hid.off.join()]);
+  const anyOff = MODS.some((m) => isOff(m.k));
   const sel = MODS.filter((m) => inc[m.k]).map((m) => m.k);
   const any = sel.length > 0;
   const isBk = FMT[fmt].k === 'json';
@@ -107,12 +114,13 @@ export default function Export() {
           </Glass>
 
           <Text style={{ color: W, fontSize: 14, fontWeight: '700', margin: 4, marginTop: 16 }}>What to include</Text>
+          {anyOff ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 17, marginHorizontal: 4, marginBottom: 8 }}>Modules you turned off are left out. Their data is still saved, so tick one if you want it in the file.</Text> : null}
           <View style={{ gap: 8 }}>
             {MODS.map((m) => (
               <Pressable key={m.k} onPress={() => { setInc({ ...inc, [m.k]: !inc[m.k] }); reset(); }}>
                 <Glass radius={18} style={{ paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <Ico k={m.k} />
-                  <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{m.name}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{m.sub}</Text></View>
+                  <View style={{ flex: 1 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{m.name}</Text>{isOff(m.k) ? <View style={{ paddingVertical: 2, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 10.5, fontWeight: '700' }}>Turned off</Text></View> : null}</View><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{m.sub}</Text></View>
                   <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: inc[m.k] ? '#5ee7df' : 'rgba(255,255,255,.45)', backgroundColor: inc[m.k] ? '#5ee7df' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{inc[m.k] ? <Text style={{ color: '#0a0f2c', fontSize: 13, fontWeight: '800' }}>✓</Text> : null}</View>
                 </Glass>
               </Pressable>
