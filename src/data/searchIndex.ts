@@ -57,6 +57,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "shopping list senarai membeli belah beli belah barang dapur grocery groceries checklist beli buy"
  },
  {
+  "t": "Quran Audio",
+  "s": "Listen to all 30 juz and 114 surahs, 5 reciters",
+  "m": "Islamic",
+  "c": "#5ee7b5",
+  "h": "QuranAudio.dc.html",
+  "k": "quran audio listen dengar bacaan juzuk juz surah qari reciter alafasy sudais ghamdi muaiqly husary mengaji tilawah"
+ },
+ {
   "t": "Islamic Hub",
   "s": "Prayer, Quran, zikir and fasting",
   "m": "Islamic",
