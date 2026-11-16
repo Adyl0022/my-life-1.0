@@ -3,9 +3,9 @@ import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
-import { IslamicBg, Header } from '../components/IslamicUi';
+import { IslamicBg, Header, VerseBlock } from '../components/IslamicUi';
 import { W } from '../components/Ui';
-import { SURAH_LIST } from '../lib/islamic';
+import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
 import { useStored } from '../lib/store';
 import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio } from '../lib/quranAudio';
 
@@ -22,6 +22,9 @@ export default function QuranAudio() {
   const [bad, setBad] = useState(false);
   const [tab, setTab] = useState(0);
   const a = useQuranAudio();
+  const [lang] = useLang(); const [size] = useSize();
+  const [text, setText] = useState(true);
+  const scRef = React.useRef<any>(null); const ys = React.useRef<Record<string, number>>({});
   const load = () => { setBad(false); loadQaris().then((r) => setQs(r)).catch(() => { setBad(true); setQs(null); }); };
   useEffect(load, []);
   const avail = (qs || []).filter((q) => q.identifier);
@@ -29,13 +32,33 @@ export default function QuranAudio() {
   const run = (f: (q: QariOpt) => void) => { if (cur) f(cur); };
   const it = a.items[a.index];
   const active = a.phase !== 'idle';
+  const meta = it ? SURAH_LIST.find((x) => x.num === it.surah) : undefined;
+  const info = meta ? SURAH[meta.key] : undefined;
+  const follow = active && a.phase !== 'error' && text && !!info;
+  const vkey = it ? it.surah + ':' + it.ayah : '';
+  // Keep the verse being read in view.
+  useEffect(() => { if (!follow || !it) return; const y = ys.current[vkey]; if (y !== undefined && scRef.current) scRef.current.scrollTo({ y: Math.max(0, y - 90), animated: true }); }, [vkey, follow]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <IslamicBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Quran Audio" sub="Listen by juz or surah" />
-        <ScrollView style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: active ? 150 : 30, gap: 10 }}>
+        <ScrollView ref={scRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: active ? 190 : 30, gap: 10 }}>
+          {follow && info ? (
+            <Glass radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
+              <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+                <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>NOW READING</Text>
+                <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{info.title}</Text>
+              </View>
+              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
+              {info.verses.map((v, i) => (
+                <View key={v.n} onLayout={(e) => { ys.current[info.num + ':' + v.n] = e.nativeEvent.layout.y + 90; }}>
+                  <VerseBlock v={v} size={size} lang={lang} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />
+                </View>
+              ))}
+            </Glass>
+          ) : (<>
           <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>RECITER</Text>
           {bad ? (
             <Glass radius={20} style={{ padding: 14 }}>
@@ -83,6 +106,7 @@ export default function QuranAudio() {
           ))}
 
           <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>Audio is streamed from the free Al-Quran Cloud service (alquran.cloud) and needs internet. The recitations belong to their reciters. It keeps playing when the screen is off.</Text>
+          </>)}
         </ScrollView>
 
         {active ? (
@@ -93,8 +117,9 @@ export default function QuranAudio() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ flex: 1, minWidth: 0 }}>
                       <Text numberOfLines={1} style={{ color: W, fontSize: 15, fontWeight: '800' }}>{a.title}</Text>
-                      <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{a.phase === 'loading' ? 'Loading…' : a.qari + (it ? ' · Verse ' + it.label + ' (' + (a.index + 1) + ' of ' + a.items.length + ')' : '')}</Text>
+                      <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{a.phase === 'loading' ? 'Loading…' : a.qari + (it ? ' · ' + it.label + ' · ' + (a.index + 1) + '/' + a.items.length : '')}</Text>
                     </View>
+                    <Pressable onPress={() => setText(!text)} hitSlop={6} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: text ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{text ? 'List' : 'Text'}</Text></Pressable>
                     <Btn t="✕" onPress={() => stop()} />
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18, marginTop: 10 }}>
