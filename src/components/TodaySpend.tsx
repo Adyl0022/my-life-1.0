@@ -19,13 +19,17 @@ export function TodaySpend({ spends }: { spends: Sp[] }) {
   const t = todayStr();
   const mine = (spends || []).filter((p) => p.cat !== 'Savings' && p.date === t);
   const fin = mine.reduce((a, p) => a + p.amt, 0);
-  const all: { amt: number; date: string }[] = [];
+  const all: { name?: string; amt: number; date: string }[] = [];
   Object.values((rec && rec.data) || {}).forEach((v) => (v && v.exps ? v.exps : []).forEach((e) => all.push(e)));
   const maint = all.filter((e) => e.date === t);
   const veh = maint.reduce((a, e) => a + (e.amt || 0), 0);
   const has = all.length > 0;
   const inc = mode === 'yes' && has;
   const total = fin + (inc ? veh : 0);
+  const rows: { k: string; name: string; sub: string; amt: number; v?: boolean }[] = [
+    ...mine.map((p) => ({ k: 'f' + p.id, name: p.name, sub: p.cat + (p.note ? ' · ' + p.note : ''), amt: p.amt })),
+    ...(inc ? maint.map((e, i) => ({ k: 'v' + i, name: e.name || 'Service', sub: 'Vehicle · From My Record', amt: e.amt || 0, v: true })) : []),
+  ];
   const count = mine.length + (inc ? maint.length : 0);
 
   return (
@@ -39,6 +43,20 @@ export function TodaySpend({ spends }: { spends: Sp[] }) {
           <Pressable onPress={() => setAsk(mode === 'yes' ? 'no' : 'yes')} hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: mode === 'yes' ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: mode === 'yes' ? '#ffc46b' : 'rgba(255,255,255,.22)' }}>
             <Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{mode === 'yes' ? 'Vehicle maintenance counted in My Finance' : 'Vehicle maintenance not counted'}</Text>
           </Pressable>
+      ) : null}
+      {rows.length > 0 ? (
+        <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
+          {rows.map((x, i) => (
+            <View key={x.k} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderTopWidth: i ? 1 : 0, borderTopColor: 'rgba(255,255,255,.08)' }}>
+              <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: x.v ? '#ff9f6b' : '#ffc46b', marginRight: 10 }} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }} numberOfLines={1}>{x.name}</Text>
+                <Text style={{ color: dim, fontSize: 11.5, marginTop: 1 }} numberOfLines={1}>{x.sub}</Text>
+              </View>
+              <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{cs() + money(x.amt)}</Text>
+            </View>
+          ))}
+        </View>
       ) : null}
       {inc && veh > 0 ? (
         <View style={{ marginTop: 6 }}>
