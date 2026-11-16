@@ -36,6 +36,7 @@ export default function IslamicHub() {
   const lv = isl.last[lk];
   const go = (p: string) => router.push(p as any);
   const [pz] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
+  const [qres] = useStored<{ title?: string; label?: string; index?: number; total?: number } | null>('ml_qresume', null);
   const pst = (() => {
     const d = new Date(), rs = ramadanState(pz, d), ow = qadhaOwed(pz, d), po = pz.off || 0, marked = !!(pz.days || {})[keyD(d)];
     if (rs.phase === 'during') return { h: 'Ramadan day ' + rs.day + ' of ' + rs.r.len, b: marked ? 'Today is marked. ' + rs.fasted + ' days fasted so far.' : 'Mark today\'s fast. ' + rs.fasted + ' days fasted so far.' };
@@ -90,7 +91,7 @@ export default function IslamicHub() {
           {tab === 1 && (<>
             <Pressable onPress={() => go('/quran-audio')}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(94,231,181,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="book" size={24} /></View>
-              <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>LISTEN</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>Quran Audio</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>All 30 juz and 114 surahs, 5 reciters</Text></View>
+              <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>LISTEN</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>Quran Audio</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{qres && qres.title ? 'Continue · ' + qres.title + ' · ' + qres.label : 'All 30 juz and 114 surahs, 5 reciters'}</Text></View>
               <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
             </Glass></Pressable>
             <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>FEATURED READINGS</Text>

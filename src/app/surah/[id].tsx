@@ -39,7 +39,7 @@ export default function SurahScreen() {
         <Header title={s.title} sub={s.sub} right={<Text style={{ color: W, fontSize: 22 }}>{s.ar}</Text>} />
         <ScrollView ref={scrollRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <View onLayout={(e) => { top.current = e.nativeEvent.layout.y; tryJump(); }}>
-          <Glass radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
+          <Glass solid radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6, backgroundColor: 'rgba(13,28,58,.95)' }}>
             {s.bismillah && <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: AR_SIZE[size] + 3, textAlign: 'center', lineHeight: (AR_SIZE[size] + 3) * 1.8 }}>{BISMILLAH.ar}</Text></View>}
             {mode === 'flow' ? (
               <View onLayout={(e) => { flowH.current = e.nativeEvent.layout.height; tryJump(); }} style={{ paddingVertical: 14 }}>

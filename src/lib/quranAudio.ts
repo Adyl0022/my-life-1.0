@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { createAudioPlaylist, setAudioModeAsync } from 'expo-audio';
 import { localItems, saveQariCache, readQariCache } from './quranDl';
+import { getItem, setItem } from './store';
 
 // Quran audio, streamed verse by verse from the free Al-Quran Cloud service (nothing is stored on our side).
 // The reciter list is read from the service when the screen opens, so a reciter that is not offered there simply does not show.
@@ -18,6 +19,12 @@ export const QARIS: Qari[] = [
 export type QariOpt = Qari & { identifier: string | null };
 
 export const JUZ_NAMES = ['Alif Lam Mim', 'Sayaqul', 'Tilkal Rusul', 'Lan Tanalu', 'Wal Muhsanat', 'La Yuhibbullah', 'Wa Iza Sami\'u', 'Wa Lau Annana', 'Qalal Mala\'u', 'Wa A\'lamu', 'Ya\'taziruna', 'Wa Ma Min Dabbah', 'Wa Ma Ubarri\'u', 'Rubama', 'Subhanalladzi', 'Qal Alam', 'Iqtaraba', 'Qad Aflaha', 'Wa Qalalladzina', 'A\'man Khalaqa', 'Utlu Ma Uhiya', 'Wa Man Yaqnut', 'Wa Mali', 'Fa Man Azlamu', 'Ilayhi Yuraddu', 'Ha Mim', 'Qala Fama Khatbukum', 'Qad Sami\'allah', 'Tabarakalladzi', 'Amma'];
+
+// Where the person stopped, kept on this phone so they can carry on after leaving the app.
+export type Resume = { qid: string; kind: 's' | 'j'; n: number; title: string; qari: string; index: number; label: string; total: number };
+export const RESUME_KEY = 'ml_qresume';
+export const getResume = () => getItem<Resume | null>(RESUME_KEY, null);
+export const clearResume = () => setItem(RESUME_KEY, null as any).catch(() => {});
 
 export type Item = { url: string; surah: number; ayah: number; label: string };
 export type AState = {
@@ -67,7 +74,7 @@ const toItems = (ayahs: any[], fallbackSurah?: number): Item[] => ayahs.filter((
   return { url: String(a.audio).replace(/^http:/, 'https:'), surah: sn, ayah: an, label: sn + ':' + an };
 });
 
-async function start(title: string, q: QariOpt, path: string, fallbackSurah?: number, kind: 's' | 'j' = 's', n = 0) {
+async function start(title: string, q: QariOpt, path: string, fallbackSurah?: number, kind: 's' | 'j' = 's', n = 0, startAt = 0) {
   if (!q.identifier) return;
   const my = ++token;
   stop(true);
@@ -85,16 +92,20 @@ async function start(title: string, q: QariOpt, path: string, fallbackSurah?: nu
     if (my !== token) return;
     if (!items.length) throw new Error('empty');
     if (Platform.OS !== 'web' && !modeSet) { modeSet = true; try { await setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true, interruptionMode: 'doNotMix' }); } catch (e) { /* ignore */ } }
+    const from = Math.max(0, Math.min(items.length - 1, startAt));
+    let armed = from === 0; if (!armed) setTimeout(() => { armed = true; }, 2500); // ignore the first updates (verse 1) until the jump to the saved verse happened
     pl = createAudioPlaylist({ sources: items.map((i) => ({ uri: i.url })), updateInterval: 400 });
     pl.addListener('playlistStatusUpdate', (s: any) => {
       if (my !== token) return;
       const i = Math.max(0, Math.min(items.length - 1, s.currentIndex || 0));
+      if (!armed) { if (i === from) armed = true; else return; }
       const finished = !s.playing && i === items.length - 1 && s.duration > 0 && s.currentTime >= s.duration - 0.3;
-      if (i !== st.index || !!s.playing !== st.playing) set({ index: i, playing: !!s.playing });
-      if (finished) { set({ playing: false }); }
+      if (i !== st.index || !!s.playing !== st.playing) { set({ index: i, playing: !!s.playing }); setItem(RESUME_KEY, { qid: q.id, kind, n, title, qari: q.name, index: i, label: items![i].label, total: items!.length } as Resume).catch(() => {}); }
+      if (finished) { set({ playing: false }); clearResume(); }
     });
-    set({ phase: 'ready', items, index: 0, playing: true });
+    set({ phase: 'ready', items, index: from, playing: true });
     try { pl.setActiveForLockScreen(true, { title: title, artist: q.name }); } catch (e) { /* ignore */ }
+    if (from > 0) { try { pl.skipTo(from); } catch (e) { /* start from the first verse */ } }
     pl.play();
   } catch (e) {
     if (my === token) set({ phase: 'error', err: 'Could not load the recitation. Check your internet and try again, or download it first to listen offline.' });
@@ -103,6 +114,8 @@ async function start(title: string, q: QariOpt, path: string, fallbackSurah?: nu
 
 export const playSurah = (num: number, title: string, q: QariOpt) => start(title, q, '/surah/' + num, num, 's', num);
 export const playJuz = (juz: number, q: QariOpt) => start('Juz ' + juz + ' · ' + JUZ_NAMES[juz - 1], q, '/juz/' + juz, undefined, 'j', juz);
+
+export const resumeLast = (r: Resume, q: QariOpt) => r.kind === 's' ? start(r.title, q, '/surah/' + r.n, r.n, 's', r.n, r.index) : start(r.title, q, '/juz/' + r.n, undefined, 'j', r.n, r.index);
 
 export function toggle() { if (!pl) return; try { if (st.playing) { pl.pause(); set({ playing: false }); } else { pl.play(); set({ playing: true }); } } catch (e) { /* ignore */ } }
 export function next() { if (!pl) return; try { pl.next(); } catch (e) { /* ignore */ } }
