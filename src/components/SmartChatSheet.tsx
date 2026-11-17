@@ -103,8 +103,8 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                       {sc.plusOk && sc.tier === 's' && !sc.gemmaOk && (
                         <Pressable onPress={() => start('p')} style={{ marginTop: 12, minHeight: 54, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Upgrade to Smart chat+'}</Text><Text style={{ color: 'rgba(143,233,226,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 1.5B · ' + sz(PLUS_MB)}</Text></Pressable>
                       )}
-                      {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title="Smart chat Max · Gemma 4" tag="12 GB+" sub={'Switch · Free · E4B · ' + sz(GEMMA_MB)} top={12} />}
-                      {sc.gemmaOk && sc.tier !== 'q' && <ProButton onPress={() => start('q')} title="Smart chat Max · Qwen 3.5" tag="12 GB+" sub={'Switch · Free · 4B int8 · ' + sz(QWEN_MB)} top={10} />}
+                      {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title="Smart chat Max · Gemma 4" tag="MIN. 12 GB RAM" sub={'Switch · Free · E4B · ' + sz(GEMMA_MB)} top={12} />}
+                      {sc.gemmaOk && sc.tier !== 'q' && <ProButton onPress={() => start('q')} title="Smart chat Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Switch · Free · 4B int8 · ' + sz(QWEN_MB)} top={10} />}
                       <Pressable onPress={sc.del} style={{ marginTop: 14, alignSelf: 'center', padding: 8 }}><Text style={{ color: '#ff8fab', fontSize: 13, fontWeight: '700' }}>Remove download</Text></Pressable>
                     </>
                   ) : sc.busy ? (
@@ -118,8 +118,8 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                     <>
                     <Pressable onPress={() => start()}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ minHeight: 56, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat'}</Text><Text style={{ color: 'rgba(4,32,31,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 0.5B · ' + sz(SMART_MB)}</Text></LinearGradient></Pressable>
                     {sc.plusOk && <Pressable onPress={() => start('p')} style={{ marginTop: 10, minHeight: 54, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Download Smart chat+'}</Text><Text style={{ color: 'rgba(143,233,226,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 1.5B · ' + sz(PLUS_MB)}</Text></Pressable>}
-                    {sc.gemmaOk && <ProButton onPress={() => start('g')} title="Smart chat Max · Gemma 4" tag="12 GB+" sub={(sc.resumeMB > 0 ? 'Resume · ' + sz(sc.resumeMB) + ' of ' : 'Download · Free · E4B · ') + sz(GEMMA_MB)} top={10} />}
-                    {sc.gemmaOk && <ProButton onPress={() => start('q')} title="Smart chat Max · Qwen 3.5" tag="12 GB+" sub={'Download · Free · 4B int8 · ' + sz(QWEN_MB)} top={10} />}
+                    {sc.gemmaOk && <ProButton onPress={() => start('g')} title="Smart chat Max · Gemma 4" tag="MIN. 12 GB RAM" sub={(sc.resumeMB > 0 ? 'Resume · ' + sz(sc.resumeMB) + ' of ' : 'Download · Free · E4B · ') + sz(GEMMA_MB)} top={10} />}
+                    {sc.gemmaOk && <ProButton onPress={() => start('q')} title="Smart chat Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Download · Free · 4B int8 · ' + sz(QWEN_MB)} top={10} />}
                     </>
                   )}
                   {!!err && <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{err}</Text>}
