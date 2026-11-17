@@ -64,7 +64,6 @@ export function LangWelcomeCard({ onLang, onAI, langName, showLang, ms }: { onLa
   const flags = FLAGS.slice(0, 4).join(' ');
   return (
     <View style={{ alignSelf: 'stretch', marginTop: 10 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -6, right: -6, top: -6, bottom: -6, borderRadius: 28, backgroundColor: '#7df0c6', opacity: env.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] }) }} />
       <Glass radius={22} style={{ paddingVertical: 10, paddingHorizontal: 10, borderColor: 'rgba(94,231,223,.5)', overflow: 'hidden' }}>
         <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 12.5, fontWeight: '800', letterSpacing: 0.3, marginLeft: 4, marginBottom: 8 }}>{ms ? 'Lebih banyak cara bersembang' : 'More ways to chat'}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -77,7 +76,7 @@ export function LangWelcomeCard({ onLang, onAI, langName, showLang, ms }: { onLa
             <Svg width={19} height={19} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" stroke="#fff" strokeWidth={1.8} fill="none" strokeLinejoin="round" /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" stroke="#fff" strokeWidth={1.4} fill="none" strokeLinejoin="round" /></Svg>
           </Tile>
         </View>
-        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 22, borderWidth: 1.5, borderColor: 'rgba(125,240,198,.95)', opacity: env }} />
+        <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 22, borderWidth: 1.5, borderColor: 'rgba(125,240,198,.95)', backgroundColor: 'rgba(125,240,198,.10)', opacity: env }} />
         <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, width: w * 0.35, opacity: sweep.interpolate({ inputRange: [0, 0.15, 0.85, 1], outputRange: [0, 1, 1, 0] }), transform: [{ translateX: sweep.interpolate({ inputRange: [0, 1], outputRange: [-w * 0.4, w * 1.1] }) }, { skewX: '-20deg' }] }}>
           <LinearGradient colors={['rgba(125,240,198,0)', 'rgba(125,240,198,.32)', 'rgba(125,240,198,0)']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1 }} />
         </Animated.View>
