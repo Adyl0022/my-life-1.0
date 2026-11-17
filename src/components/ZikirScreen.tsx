@@ -7,6 +7,7 @@ import { Text } from './Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from './Glass';
 import { Shine } from './Shine';
+import { CountButton } from './CountButton';
 import { ReadBg, Header, ToolBar, Pending, Credit, ReadPicker } from './IslamicUi';
 import { W } from './Ui';
 import { Part, KIND_COL, partVerses, useIslamic, useLang, useZRead, dayKey, nm } from '../lib/islamic';
@@ -122,12 +123,7 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
               ) : null}
             </ScrollView>
             {tg ? (
-              <View style={{ marginTop: 8 }}>
-                <Shine onPress={tapCount} radius={20} glow={cnt >= tg ? '#34d399' : '#ffc46b'} label="Count" style={{ height: 62, borderWidth: 1, borderColor: cnt >= tg ? 'rgba(52,211,153,.8)' : 'rgba(255,196,107,.5)' }}>
-                  <LinearGradient colors={cnt >= tg ? ['rgba(52,211,153,.55)', 'rgba(52,211,153,.4)'] : ['rgba(255,196,107,.32)', 'rgba(255,143,90,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-                  <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>{cnt >= tg ? 'Completed ✓ · tap to restart' : 'Tap to count  ·  ' + cnt + ' of ' + tg}</Text>
-                </Shine>
-              </View>
+              <View style={{ marginTop: 8 }}><CountButton cnt={cnt} tg={tg} onPress={tapCount} /></View>
             ) : null}
           </View>
         </Glass>
