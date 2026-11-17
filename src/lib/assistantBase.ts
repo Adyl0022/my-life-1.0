@@ -7,6 +7,8 @@ import { think, fix } from './assistantBrain';
 import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
+import { chatReply } from './assistantChat';
+import { smartOk, smartReady, smartAsk, sensitiveReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 export class AssistantBase extends React.Component<any, any> {
@@ -287,6 +289,10 @@ export class AssistantBase extends React.Component<any, any> {
     const isAfford = /(mampu|afford|boleh ke|boleh saya beli|patut ke|should i buy|can i buy|worth it)/i.test(q);
     const act = isAfford ? null : this.parseAct(q, qf);
     if (!act && !cmdWater) {
+      const ch = chatReply(q, lang);
+      if (ch) return { m: mk(ch), patch: {}, act: null };
+    }
+    if (!act && !cmdWater) {
       let th = null;
       try { th = think(this, q, lang); } catch (e) { th = null; }
       if (th) return { m: th.m, patch: Object.assign({}, th.patch), act: th.act };
@@ -530,7 +536,7 @@ export class AssistantBase extends React.Component<any, any> {
           m = mk(L('You are welcome. I am here whenever you need me.', 'Sama-sama. Saya ada bila-bila masa awak perlukan.'));
           break;
         case 'who':
-          m = mk(L('I am the My Life assistant. I am not a chatbot on the internet. I read your own data on this device and put the answer together using rules written for this app.', 'Saya pembantu My Life. Saya bukan chatbot di internet. Saya baca data awak sendiri dalam peranti ini dan susun jawapan menggunakan peraturan yang ditulis untuk app ini.'));
+          m = mk(L('I am the My Life assistant. I am not a chatbot on the internet. I read your own data on this device and put the answer together using rules written for this app. For general questions I can use a small AI that runs on your phone, if you choose to download it.', 'Saya pembantu My Life. Saya bukan chatbot di internet. Saya baca data awak sendiri dalam peranti ini dan susun jawapan menggunakan peraturan yang ditulis untuk app ini. Untuk soalan umum, saya boleh guna AI kecil yang berjalan dalam telefon awak, kalau awak pilih untuk memuat turunnya.'));
           break;
         case 'privacy':
           m = mk(L('Your data is encrypted on this phone and backed up to your own account when you are signed in. I work offline, and nothing is sent to an AI service. You can also lock the app with a PIN or fingerprint in Settings, Security.', 'Data awak disulitkan dalam telefon ini dan disimpan ke akaun awak sendiri bila awak log masuk. Saya berfungsi tanpa internet, dan tiada apa dihantar ke perkhidmatan AI. Awak juga boleh kunci app dengan PIN atau cap jari di Settings, Security.'), { label: L('Open Security', 'Buka Security'), href: 'Settings.dc.html' });
@@ -557,7 +563,7 @@ export class AssistantBase extends React.Component<any, any> {
           break;
         }
         default:
-          m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford ' + cu() + '300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli ' + cu() + '300?"'));
+          m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford ' + cu() + '300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli ' + cu() + '300?"'), { fb: 1 });
       }
     }
     if (!patch.ctx) { const mkm = { steps: 'steps', dist: 'steps', sleep: 'sleep', water: 'water', mood: 'mood' }; const idd = this.pick(this.norm(fix(q))); patch.ctx = mkm[idd] ? { intent: 'metric', mkey: mkm[idd] } : (idd === 'spend' || idd === 'spendM') ? { intent: 'spend' } : {}; }
@@ -576,17 +582,34 @@ export class AssistantBase extends React.Component<any, any> {
     const lang = this.detect(q) || this.state.lang;
     this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
-    setTimeout(() => {
+    setTimeout(async () => {
       let r;
       try { r = this.reply(q, lang); } catch (e) {
         r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
+      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r);
       // Anything saved from here can be undone with one tap (or by typing "undo").
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
       this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
     }, 700);
+  }
+  // Questions with no written answer: a careful fixed reply for religion, health, law and money, then the small AI on the phone if it is downloaded,
+  // otherwise an offer to get it.
+  async fallbackAI(q, lang, r) {
+    try {
+      const sv = sensitiveReply(q, lang);
+      if (sv) { r.m = Object.assign({}, r.m, { text: sv, fb: 0 }); return r; }
+      if (smartOk && smartReady()) {
+        const a = await smartAsk(q, lang);
+        if (a) { r.m = Object.assign({}, r.m, { text: a, fb: 0 }); return r; }
+      } else if (smartOk && !this.state.smNo) {
+        const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI kecil yang berjalan dalam telefon awak (muat turun sekali, lebih kurang 550 MB).' : '\n\nI can also answer general questions with a small AI that runs on your phone (one-time download of about 550 MB).';
+        r.m = Object.assign({}, r.m, { text: r.m.text + more, sm: 1 });
+      }
+    } catch (e) { /* keep the normal reply */ }
+    return r;
   }
   offerX(q, code) {
     const lg = xlLang(code); const nm = lg ? lg.native : code;
@@ -605,6 +628,7 @@ export class AssistantBase extends React.Component<any, any> {
       try { r = this.reply(qe, 'en'); } catch (e) {
         r = { m: { me: false, text: 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
+      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(qe, 'en', r);
       try { r.m = await xlMsg(r.m, tl); } catch (e) { /* keep the English answer */ }
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
       this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
@@ -671,7 +695,7 @@ export class AssistantBase extends React.Component<any, any> {
         big: m.big, bigLbl: m.bigLbl, pct: m.pct < 0 ? 0 : m.pct, color: m.color || '#8fe9e2',
         text: m.text, time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
         undoD: m.uid && s.lastUndo && s.lastUndo.id === m.uid ? 'flex' : 'none', undo: () => this.undoLast(), undoL: L('Undo', 'Buat asal'),
-        xlD: m.xl ? 'flex' : 'none', xlYes: () => { if (this.props.onXl) this.props.onXl(m.xl); }, xlNo: () => { this.setState({ xlNo: true }); setItem('ml_xl_nosug', true); }, xlL: 'Set up ' + (m.xlName || ''),
+        xlD: (m.xl || m.sm) ? 'flex' : 'none', xlYes: () => { if (m.sm) { if (this.props.onSmart) this.props.onSmart(); } else if (this.props.onXl) this.props.onXl(m.xl); }, xlNo: () => { if (m.sm) { this.setState({ smNo: true }); setItem('ml_sm_no', true); } else { this.setState({ xlNo: true }); setItem('ml_xl_nosug', true); } }, xlL: m.sm ? 'Get Smart chat' : 'Set up ' + (m.xlName || ''),
         btnD: m.pid && s.pending && s.pending.id === m.pid ? 'flex' : 'none', yes: () => this.confirm(true), no: () => this.confirm(false), yesL: L('Save', 'Simpan'), noL: L('Cancel', 'Batal')
       };
     });

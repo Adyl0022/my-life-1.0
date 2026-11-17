@@ -17,6 +17,7 @@ import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
 import { AssistLangSheet } from '../components/AssistLangCard';
+import { SmartChatSheet } from '../components/SmartChatSheet';
 import { getItem } from '../lib/store';
 
 const STARS: [number, number, number, number][] = Array.from({ length: 34 }, (_, i) => [(i * 37 + 11) % 100, (i * 53 + 7) % 96, 0.6 + ((i * 7) % 6) / 10, 0.25 + ((i * 13) % 6) / 10]);
@@ -35,6 +36,7 @@ class Chat extends AssistantBase {
   kbOpen = false;
   componentDidMount() {
     (this as any).weekly();
+    getItem('ml_sm_no', false).then((v: any) => { if (v) (this as any).setState({ smNo: true }); });
     getItem('ml_xl_nosug', false).then((v: any) => { if (v) (this as any).setState({ xlNo: true }); });
     if (Platform.OS === 'web') return;
     const set = (n: number) => { this.kb = n; (this as any).setState({ kbLift: n }); };
@@ -260,7 +262,7 @@ export default function Assistant() {
   const [xl] = useAssistLang(); const packs = useLangPacks();
   // The chosen language is used only when its pack is on the phone, otherwise the Assistant keeps to English or Bahasa Malaysia.
   const tlang = xlOk && xl && packs.ready(xl) ? xl : '';
-  const [sheet, setSheet] = React.useState(false); const [auto, setAuto] = React.useState('');
+  const [smart, setSmart] = React.useState(false); const [sheet, setSheet] = React.useState(false); const [auto, setAuto] = React.useState('');
   const go = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }
@@ -281,7 +283,8 @@ export default function Assistant() {
       </Svg>
       <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 12 + TOP }}>
         {last ? <PrayerFeed onTimes={setP} /> : null}
-        {real.ready ? <Chat ref={chat} tlang={tlang} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
+        {real.ready ? <Chat ref={chat} tlang={tlang} onSmart={() => setSmart(true)} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
+        <SmartChatSheet visible={smart} onClose={() => setSmart(false)} />
         <AssistLangSheet visible={sheet} auto={auto} onClose={() => { setSheet(false); setAuto(''); }} />
         {!!note && <View style={{ position: 'absolute', left: 20, right: 20, bottom: 230, alignItems: 'center' }}><Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 18, backgroundColor: 'rgba(20,26,70,.92)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{note}</Text></Glass></View>}
       </SafeAreaView>
