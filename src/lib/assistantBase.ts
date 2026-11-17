@@ -13,6 +13,11 @@ import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartAsk, sensitiveReply, currentReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
+// A pasted text or a "summarise / rewrite" job is not a question about the person's own data. It goes straight to the AI,
+// so a word like "maintenance" or "medical" inside the text cannot trigger a written answer or a fixed reply.
+const textTask = (q: string) => q.length > 160 || /\b(summari[sz]e|summary|rewrite|paraphrase|proofread|ringkaskan|ringkasan|rumuskan|tulis semula)\b/i.test(q);
+const noAnswer = (hm: string, lang: string) => ({ me: false, time: hm, big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '', text: lang === 'ms' ? 'Maaf, saya tak dapat bantu itu sekarang.' : 'Sorry, I could not help with that right now.', fb: 1 });
+
 export class AssistantBase extends React.Component<any, any> {
   render(): any { return null; }
   constructor(props) {
@@ -593,7 +598,9 @@ export class AssistantBase extends React.Component<any, any> {
       try { r = this.reply(q, lang); } catch (e) {
         r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
-      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r);
+      const tt = textTask(q);
+      if (tt) r = { m: noAnswer(this.hm(), lang), patch: {} };
+      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r, tt);
       // Anything saved from here can be undone with one tap (or by typing "undo").
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
       this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
@@ -603,9 +610,9 @@ export class AssistantBase extends React.Component<any, any> {
   }
   // Questions with no written answer: a careful fixed reply for religion, health, law and money, then the small AI on the phone if it is downloaded,
   // otherwise an offer to get it.
-  async fallbackAI(q, lang, r) {
+  async fallbackAI(q, lang, r, tt = false) {
     try {
-      const sv = sensitiveReply(q, lang);
+      const sv = tt ? '' : sensitiveReply(q, lang);
       if (sv) { r.m = Object.assign({}, r.m, { text: sv, fb: 0 }); return r; }
       let note = '';
       if (onlineOn()) {
@@ -614,7 +621,7 @@ export class AssistantBase extends React.Component<any, any> {
         note = onlineNote(o.why, lang);
         if (!note) note = lang === 'ms' ? 'AI dalam talian tak dapat dihubungi sekarang. Cuba lagi sebentar.' : 'Online AI could not be reached right now. Try again in a moment.';
       }
-      const cr = currentReply(q, lang);
+      const cr = tt ? '' : currentReply(q, lang);
       if (cr) { r.m = Object.assign({}, r.m, { text: cr + (note ? '\n\n' + note : ''), fb: 0 }); return r; }
       if ((smartOk || gemmaOk) && smartReady()) {
         const a = await smartAsk(q, lang);
@@ -670,7 +677,9 @@ export class AssistantBase extends React.Component<any, any> {
       try { r = this.reply(qe, 'en'); } catch (e) {
         r = { m: { me: false, text: 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
-      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(qe, 'en', r);
+      const tt = textTask(qe);
+      if (tt) r = { m: noAnswer(this.hm(), 'en'), patch: {} };
+      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(qe, 'en', r, tt);
       try { r.m = await xlMsg(r.m, tl); } catch (e) { /* keep the English answer */ }
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
       this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));

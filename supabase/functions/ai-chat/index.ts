@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     if (!u || !u.user) return out({ ok: false, why: 'auth' }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const q = String(body.q || '').trim().slice(0, 500);
+    const q = String(body.q || '').trim().slice(0, 4000);
     const lang = body.lang === 'ms' ? 'ms' : 'en';
     if (!q) return out({ ok: false, why: 'empty' }, 400);
 
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     if (t === 'global') return out({ ok: false, why: 'global_limit' });
 
     const sys = 'You are My Life Assistant, a friendly helper inside the My Life app. '
-      + 'Reply in the same language the person writes in' + (lang === 'ms' ? ' (usually Bahasa Malaysia)' : '') + ', in at most 6 short sentences. '
+      + 'Reply in the same language the person writes in' + (lang === 'ms' ? ' (usually Bahasa Malaysia)' : '') + ', in at most 6 short sentences. If the person asks you to summarise a text or to give points, use short bullet points (at most 8) instead. '
       + 'You have no live internet access and your knowledge may be out of date, so say so for news, prices, scores, weather or who holds a post now. '
       + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
       + 'Do not give religious rulings, medical diagnosis, legal advice or investment advice; tell the person to ask a qualified person instead.';
