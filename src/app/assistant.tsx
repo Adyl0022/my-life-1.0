@@ -113,17 +113,22 @@ class Chat extends AssistantBase {
                 <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 15, marginTop: 6, textAlign: 'center' }}>{ms ? 'Apa awak nak tahu hari ini?' : 'What would you like to know today?'}</Text>
               </View>
               {/* Small cards and the language card stay near the input, where the thumb reaches. */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignSelf: 'stretch' }}>
-                {pick.map((q: any) => (
-                  <Pressable key={q.label} onPress={q.go} style={{ width: '48.5%' }}>
-                    <Glass radius={20} style={{ paddingVertical: 10, paddingHorizontal: 10, minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <LinearGradient colors={gradOf(q.bg)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
-                        <Svg width={19} height={19} viewBox="0 0 24 24"><Path d={q.d} {...stroke} /></Svg>
-                      </LinearGradient>
-                      <Text numberOfLines={3} style={{ flex: 1, color: '#fff', fontSize: 13, fontWeight: '700', lineHeight: 17 }}>{q.label}</Text>
-                    </Glass>
-                  </Pressable>
-                ))}
+              <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                {[0, 2].map((i) => pick.slice(i, i + 2).length ? (
+                  <View key={i} style={{ flexDirection: 'row', gap: 10 }}>
+                    {pick.slice(i, i + 2).map((q: any) => (
+                      <Pressable key={q.label} onPress={q.go} style={{ flex: 1 }}>
+                        <Glass radius={20} style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 10, minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <LinearGradient colors={gradOf(q.bg)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
+                            <Svg width={19} height={19} viewBox="0 0 24 24"><Path d={q.d} {...stroke} /></Svg>
+                          </LinearGradient>
+                          <Text numberOfLines={3} style={{ flex: 1, color: '#fff', fontSize: 13, fontWeight: '700', lineHeight: 17 }}>{q.label}</Text>
+                        </Glass>
+                      </Pressable>
+                    ))}
+                    {pick.slice(i, i + 2).length === 1 ? <View style={{ flex: 1 }} /> : null}
+                  </View>
+                ) : null)}
               </View>
               {xlOk ? (
                 <Pressable onPress={() => (this.props as any).onMore && (this.props as any).onMore()} accessibilityRole="button" accessibilityLabel="Chat in your language" style={{ alignSelf: 'stretch', marginTop: 10 }}>
