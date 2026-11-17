@@ -17,6 +17,7 @@ import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
 import { AssistLangSheet, LangPickedPopup } from '../components/AssistLangCard';
+import { ThinkingBubble } from '../components/ThinkingBubble';
 import { LangWelcomeCard } from '../components/LangWelcomeCard';
 import { SmartChatSheet } from '../components/SmartChatSheet';
 import { getItem } from '../lib/store';
@@ -110,7 +111,7 @@ class Chat extends AssistantBase {
           {empty && (
             <View style={{ flex: 1, alignItems: 'center' }}>
               {/* The orb and greeting sit in the middle of the space that is left, so the orb has room for its animation. */}
-              <View style={{ flex: 1, minHeight: 200, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' }}>
+              <View style={{ flex: 1, minHeight: 270, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch', paddingBottom: 16 }}>
                 <OrbLive size={92} />
                 <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 0 }}>{this.clean((ms ? 'Hai ' : 'Hi ') + this.fn())}</Text>
                 <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 15, marginTop: 6, textAlign: 'center' }}>{ms ? 'Apa awak nak tahu hari ini?' : 'What would you like to know today?'}</Text>
@@ -152,7 +153,7 @@ class Chat extends AssistantBase {
                   <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 20 }}>›</Text>
                 </Glass>
               </Pressable>
-              <Pressable onPress={() => (this as any).setState({ more: !more })} style={{ marginTop: 14, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Pressable onPress={() => (this as any).setState({ more: !more })} style={{ marginTop: 14, marginBottom: 6, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ color: 'rgba(255,255,255,.88)', fontSize: 12.5, fontWeight: '700' }}>{more ? (ms ? 'Tutup' : 'Show less') : (ms ? 'Lagi idea' : 'More ideas')}</Text>
                 <Svg width={14} height={14} viewBox="0 0 24 24"><Path d={more ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} {...stroke} strokeWidth={2.4} /></Svg>
               </Pressable>
@@ -216,9 +217,7 @@ class Chat extends AssistantBase {
           {v.typD === 'flex' && (
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
               <OrbSvg size={32} uid="ty" />
-              <Glass radius={20} style={{ paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', gap: 5, borderBottomLeftRadius: 6 }}>
-                {[0, 1, 2].map((d) => <View key={d} style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff', opacity: 0.5 + d * 0.2 }} />)}
-              </Glass>
+              <ThinkingBubble ms={ms} />
             </View>
           )}
         </ScrollView>
