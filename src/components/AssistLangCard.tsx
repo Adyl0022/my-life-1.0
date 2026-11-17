@@ -103,34 +103,74 @@ function Item({ mono, flag, tone, t, sub, on, have, busy, onPress, onRemove }: {
   );
 }
 
-// A short popup after a language is chosen: "Chinese has been selected".
+// A popup after a language is chosen: a flag with rings of light, a "language selected" badge, the name of the language and a bar that runs out as it closes.
+const SHOW_MS = 3000;
 export function LangPickedPopup({ code, onHide }: { code: string | null; onHide: () => void }) {
   const a = React.useRef(new Animated.Value(0)).current;
+  const pulse = React.useRef(new Animated.Value(0)).current;
+  const sweep = React.useRef(new Animated.Value(0)).current;
+  const bar = React.useRef(new Animated.Value(1)).current;
+  const [w, setW] = React.useState(300);
   React.useEffect(() => {
     if (code === null) return;
-    a.setValue(0);
-    Animated.timing(a, { toValue: 1, duration: 260, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }).start();
-    const t = setTimeout(() => { Animated.timing(a, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => onHide()); }, 2600);
-    return () => clearTimeout(t);
+    a.setValue(0); sweep.setValue(0); bar.setValue(1); pulse.setValue(0);
+    Animated.timing(a, { toValue: 1, duration: 300, easing: Easing.out(Easing.back(1.3)), useNativeDriver: false }).start();
+    Animated.timing(sweep, { toValue: 1, duration: 1000, delay: 250, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+    Animated.timing(bar, { toValue: 0, duration: SHOW_MS, easing: Easing.linear, useNativeDriver: false }).start();
+    const loop = Animated.loop(Animated.timing(pulse, { toValue: 1, duration: 1600, easing: Easing.out(Easing.quad), useNativeDriver: false }));
+    loop.start();
+    const t = setTimeout(() => { Animated.timing(a, { toValue: 0, duration: 220, useNativeDriver: false }).start(() => onHide()); }, SHOW_MS);
+    return () => { clearTimeout(t); loop.stop(); };
   }, [code]);
   if (code === null) return null;
   const lg = code ? xlLang(code) : null;
-  const name = lg ? lg.name : 'English / Bahasa Malaysia';
+  const rings = [0, 1, 2].map((k) => {
+    const sc = pulse.interpolate({ inputRange: [0, 1], outputRange: [1 + k * 0.1, 1.45 + k * 0.1] });
+    const op = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5 - k * 0.12, 0] });
+    return <Animated.View key={k} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 60, borderWidth: 2, borderColor: '#7df0c6', opacity: op, transform: [{ scale: sc }] }} />;
+  });
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
-      <Animated.View style={{ opacity: a, transform: [{ scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.88, 1] }) }], alignSelf: 'stretch' }}>
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, backgroundColor: 'rgba(4,6,24,.55)' }}>
+      <Animated.View style={{ opacity: a, transform: [{ scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) }], alignSelf: 'stretch' }}>
         <Pressable onPress={onHide}>
-          <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.55)', backgroundColor: '#151a4a', padding: 22, alignItems: 'center' }}>
-            <LinearGradient colors={['rgba(94,231,223,.28)', 'rgba(94,231,223,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
-            <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 62, height: 62, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}>
-              {lg ? <Text style={{ fontSize: 30 }}>{flagOf(code)}</Text> : <Globe s={30} />}
-            </LinearGradient>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800', marginTop: 14, textAlign: 'center' }}>{name + ' has been selected'}</Text>
-            {lg && lg.native !== lg.name ? <Text style={{ color: '#8fe9e2', fontSize: 16, fontWeight: '700', marginTop: 4 }}>{lg.native}</Text> : null}
-            <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 10, textAlign: 'center' }}>{lg ? 'You can now type in this language. Your words are translated on this phone.' : 'The Assistant answers in English or Bahasa Malaysia again.'}</Text>
+          <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ borderRadius: 32, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(125,240,198,.75)', backgroundColor: '#17204f', paddingTop: 30, alignItems: 'center' }}>
+            <LinearGradient colors={['#2c4a8f', '#17204f', '#151a4a']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+            <LinearGradient colors={['rgba(94,231,223,.4)', 'rgba(94,231,223,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 190 }} />
+            <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, width: w * 0.3, transform: [{ translateX: sweep.interpolate({ inputRange: [0, 1], outputRange: [-w * 0.4, w * 1.1] }) }, { skewX: '-20deg' }], opacity: sweep.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 1, 0] }) }}>
+              <LinearGradient colors={['rgba(255,255,255,0)', 'rgba(255,255,255,.14)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1 }} />
+            </Animated.View>
+            <View style={{ width: 112, height: 112, alignItems: 'center', justifyContent: 'center' }}>
+              <View pointerEvents="none" style={{ position: 'absolute', left: 8, right: 8, top: 8, bottom: 8 }}>{rings}</View>
+              <View style={{ width: 92, height: 92, borderRadius: 46, overflow: 'hidden', borderWidth: 3, borderColor: 'rgba(255,255,255,.35)' }}>
+                <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  {lg ? <Text style={{ fontSize: 44 }}>{flagOf(code)}</Text> : <Chat />}
+                </LinearGradient>
+              </View>
+              <View style={{ position: 'absolute', right: 2, bottom: 2, width: 34, height: 34, borderRadius: 17, backgroundColor: '#34d399', borderWidth: 3, borderColor: '#17204f', alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M5 12.5l4.5 4.5L19 7" stroke="#04201f" strokeWidth={3.4} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+              </View>
+              <Text style={{ position: 'absolute', left: -2, top: 6, color: '#b9fff0', fontSize: 14 }}>✦</Text>
+              <Text style={{ position: 'absolute', right: -4, top: 14, color: '#b9fff0', fontSize: 10 }}>✦</Text>
+              <Text style={{ position: 'absolute', right: 6, top: -8, color: '#b9fff0', fontSize: 11 }}>✦</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 22, paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(52,211,153,.18)', borderWidth: 1, borderColor: 'rgba(52,211,153,.55)' }}>
+              <Text style={{ color: '#8fe9c2', fontSize: 12, fontWeight: '800', letterSpacing: 0.6 }}>✓ LANGUAGE SELECTED</Text>
+            </View>
+            <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', marginTop: 12, textAlign: 'center' }}>{lg ? lg.name : 'English'}</Text>
+            <Text style={{ color: '#7df0e0', fontSize: 28, fontWeight: '800', marginTop: 2, textAlign: 'center' }}>{lg ? (lg.native !== lg.name ? lg.native : '') : 'Bahasa Malaysia'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 13, lineHeight: 19, marginTop: 12, paddingHorizontal: 22, textAlign: 'center' }}>{lg ? 'You can now type in this language. Your words are translated on this phone.' : 'The Assistant answers in English or Bahasa Malaysia again. No download needed.'}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap', justifyContent: 'center', paddingHorizontal: 16 }}>
+              {['Works offline', 'Private', 'Tap to close'].map((t) => <View key={t} style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.09)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 11.5, fontWeight: '600' }}>{t}</Text></View>)}
+            </View>
+            <View style={{ height: 4, alignSelf: 'stretch', marginTop: 22, backgroundColor: 'rgba(255,255,255,.1)' }}>
+              <Animated.View style={{ height: 4, width: bar.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }), backgroundColor: '#5ee7df' }} />
+            </View>
           </View>
         </Pressable>
       </Animated.View>
     </View>
   );
 }
+const Chat = () => (
+  <Svg width={46} height={46} viewBox="0 0 24 24"><Path d="M4 5h9a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3 3v-3H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" stroke="#06281c" strokeWidth={1.9} fill="none" strokeLinecap="round" strokeLinejoin="round" /><Path d="M11 17h2l3 3v-3h2a2 2 0 0 0 2-2v-4" stroke="#06281c" strokeWidth={1.9} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+);
