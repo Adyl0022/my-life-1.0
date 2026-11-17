@@ -80,9 +80,9 @@ function Item({ mono, flag, tone, t, sub, on, have, busy, onPress, onRemove }: {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={{ marginBottom: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: on ? 'rgba(94,231,223,.14)' : 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: on ? 'rgba(94,231,223,.75)' : 'rgba(255,255,255,.14)' }}>
-        {flag ? <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ fontSize: 25 }}>{mono}</Text></View> : <View style={{ width: 44, height: 44 }}>
-          <View style={{ position: 'absolute', left: 0, top: 0, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 2, borderColor: '#1c2358', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 16 }}>{'\uD83C\uDDEC\uD83C\uDDE7'}</Text></View>
-          <View style={{ position: 'absolute', right: 0, bottom: 0, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 2, borderColor: '#1c2358', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 16 }}>{'\uD83C\uDDF2\uD83C\uDDFE'}</Text></View>
+        {flag ? <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ fontSize: 25 }}>{mono}</Text></View> : <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', overflow: 'hidden' }}>
+          <Text style={{ position: 'absolute', left: 4, top: 3, fontSize: 19 }}>{'\uD83C\uDDEC\uD83C\uDDE7'}</Text>
+          <Text style={{ position: 'absolute', right: 3, bottom: 2, fontSize: 19 }}>{'\uD83C\uDDF2\uD83C\uDDFE'}</Text>
         </View>}
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t}</Text>
