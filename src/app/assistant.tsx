@@ -134,25 +134,13 @@ class Chat extends AssistantBase {
                   </View>
                 ) : null)}
               </View>
-              {xlOk ? (
-                <LangWelcomeCard
-                  onPress={() => (this.props as any).onMore && (this.props as any).onMore()}
-                  title={(this.props as any).tlang ? 'Language: ' + ((xlLang((this.props as any).tlang) || { native: (this.props as any).tlang }).native) : 'Chat in your language'}
-                  sub={(this.props as any).tlang ? 'Tap to change' : undefined}
-                />
-              ) : null}
-              <Pressable onPress={() => (this.props as any).onSmart && (this.props as any).onSmart()} accessibilityRole="button" accessibilityLabel="Smart chat and Online AI" style={{ alignSelf: 'stretch', marginTop: 10 }}>
-                <Glass radius={20} style={{ paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
-                    <Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" {...stroke} strokeWidth={1.8} /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" {...stroke} strokeWidth={1.4} /></Svg>
-                  </LinearGradient>
-                  <View style={{ flex: 1 }}>
-                    <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Smart chat and Online AI</Text>
-                    <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>Choose how I answer general questions</Text>
-                  </View>
-                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 20 }}>›</Text>
-                </Glass>
-              </Pressable>
+              <LangWelcomeCard
+                showLang={!!xlOk}
+                ms={ms}
+                onLang={() => (this.props as any).onMore && (this.props as any).onMore()}
+                onAI={() => (this.props as any).onSmart && (this.props as any).onSmart()}
+                langName={(this.props as any).tlang ? ((xlLang((this.props as any).tlang) || { native: (this.props as any).tlang }).native) : undefined}
+              />
               <Pressable onPress={() => (this as any).setState({ more: !more })} style={{ marginTop: 14, marginBottom: 6, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ color: 'rgba(255,255,255,.88)', fontSize: 12.5, fontWeight: '700' }}>{more ? (ms ? 'Tutup' : 'Show less') : (ms ? 'Lagi idea' : 'More ideas')}</Text>
                 <Svg width={14} height={14} viewBox="0 0 24 24"><Path d={more ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} {...stroke} strokeWidth={2.4} /></Svg>
