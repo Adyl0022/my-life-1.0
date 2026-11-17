@@ -98,7 +98,7 @@ export function currentReply(q: string, lang: string): string {
 }
 
 function clean(t: string, max = 900): string {
-  let r = (t || '').replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<\|[^|]*\|>/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trim();
+  let r = dedupe((t || '').replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<\|[^|]*\|>/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '')).trim();
   if (r.length > max) { r = r.slice(0, max); const i = Math.max(r.lastIndexOf('.'), r.lastIndexOf('!'), r.lastIndexOf('?')); if (i > 200) r = r.slice(0, i + 1); }
   return r;
 }
@@ -124,9 +124,22 @@ const KIND_RULE: { [k: string]: string } = {
   general: '',
 };
 
+// A small model sometimes repeats the same sentence again and again. Keep the first time only.
+function dedupe(t: string): string {
+  const seen = new Set<string>();
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9\u00c0-\uffff]+/g, ' ').trim();
+  const paras = t.split(/\n{2,}/).map((para) => {
+    if (/```/.test(para)) return para;
+    const sents = para.match(/[^.!?]+[.!?]*\s*/g) || [para];
+    const keep = sents.filter((x) => { const k = norm(x); if (k.length < 12) return true; if (seen.has(k)) return false; seen.add(k); return true; });
+    return keep.join('').trim();
+  }).filter((x) => x.trim());
+  return paras.join('\n\n');
+}
+
 // Text with the model's private "thinking" and special tokens removed, safe to show while it is still being written.
 function livePart(t: string): string {
-  return (t || '').replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<\|[^|]*\|?>?/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trimStart();
+  return dedupe((t || '').replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<\|[^|]*\|?>?/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trimStart());
 }
 
 // Warms the model up in the background (call when the Assistant opens), so the first question is not slow.
@@ -149,7 +162,7 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
     + KIND_RULE[kind]
     + (task || kind === 'code' || kind === 'chat' ? '' : (big ? 'Be thorough but not long-winded: a few short paragraphs or a short list is fine. ' : 'Keep it short and clear: up to 6 sentences. '))
     + 'You have no internet and your knowledge is old, so say so for news, prices, scores or who holds a post now. '
-    + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
+    + 'Be honest. If you are not sure, say so once in a short sentence, then give what you do know. Never repeat yourself. Never invent facts, numbers, dates, names or sources. '
     + 'For religious rulings, medical, legal or investment decisions, give only general information and suggest asking a qualified person.';
   const h = (hist || []).slice(-6);
   // While the model writes, the app reads what it has so far, so the words appear one by one.

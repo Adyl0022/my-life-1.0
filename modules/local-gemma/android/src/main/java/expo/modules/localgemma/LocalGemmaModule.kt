@@ -3,6 +3,8 @@ package expo.modules.localgemma
 import android.content.Context
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
+import com.google.ai.edge.litertlm.ConversationConfig
+import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.Engine
@@ -86,7 +88,8 @@ class LocalGemmaModule : Module() {
 
   private fun runOnce(prompt: String): String = synchronized(lock) {
     ensure()
-    val conv = engine!!.createConversation()
+    // Some randomness and a limit on the length stop the model from repeating the same sentence over and over.
+    val conv = engine!!.createConversation(ConversationConfig(samplerConfig = SamplerConfig(topK = 40, topP = 0.9, temperature = 0.7), maxOutputToken = 900))
     try { stream(conv, prompt) } finally { try { conv.close() } catch (x: Throwable) { } }
   }
 
