@@ -26,6 +26,7 @@ import { useSession, signOut, checkPassword, setNewPassword, deleteAccount } fro
 import { call as famCall } from '../../lib/family';
 import { syncNow, syncState, wipeCloud } from '../../lib/sync';
 import { FREEMIUM } from '../../lib/edition';
+import { AccountType } from '../../components/AccountType';
 import { PRIVACY, TERMS, COPYRIGHT, WHATS_NEW, LICENCES, HOWTO, FAQ, SUPPORT_EMAIL, SUPPORT_EMAIL2, PRIVACY_URL, Sec } from '../../lib/legal';
 import { TOP } from '../../lib/layout';
 import { useLock, setPin, patchLock, disableLock, bioReady, AFTER } from '../../lib/lock';
@@ -369,6 +370,7 @@ export default function Settings() {
                 {!FREEMIUM && <Pressable onPress={checkUpd} style={{ marginTop: 12, paddingVertical: 8, paddingHorizontal: 16, minWidth: 210, alignItems: 'center', borderRadius: 999, backgroundColor: upd === 'latest' || upd === 'web' ? 'rgba(94,231,181,.25)' : upd === 'new' ? 'rgba(124,156,255,.4)' : upd === 'err' ? 'rgba(255,196,107,.25)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{upd === 'busy' ? 'Checking...' : upd === 'latest' ? "You're up to date" : upd === 'web' ? 'The web version is always the latest' : upd === 'new' ? 'A new version is available' : upd === 'err' ? 'Could not check. Tap to try again' : 'Check for updates'}</Text></Pressable>}
                 {!FREEMIUM && upd === 'new' ? <Pressable onPress={() => Linking.openURL('https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest')} style={{ marginTop: 8 }}><LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999 }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Download the new version</Text></LinearGradient></Pressable> : null}
               </View>
+              {FREEMIUM ? <AccountType /> : null}
               <Glass style={{ paddingHorizontal: 16 }}>
                 {[['Version', '1.0.1'], ['Build', '1'], ['Developed', 'November 2026'], ['Developer', 'Adli Syahmi']].map(([a, b], i) => <Row key={a} t={a} last={i === 3} right={<Text style={{ color: DIM, fontSize: 13 }}>{b}</Text>} />)}
               </Glass>
