@@ -6,7 +6,7 @@ import { Text } from './Txt';
 import { useSmartChat, SMART_MB, PLUS_MB, GEMMA_MB, QWEN_MB } from '../lib/llm';
 
 // The "Smart chat Pro" (Gemma 4) button: gold, with a crown and a small SMARTEST tag, so it reads as the top choice.
-function ProButton({ onPress, title, sub, top, tag }: { onPress: () => void; title: string; sub: string; top: number; tag: string }) {
+function ProButton({ onPress, title, sub, top, tag, badge }: { onPress: () => void; title: string; sub: string; top: number; tag: string; badge?: string }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={title} style={{ marginTop: top }}>
       <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, padding: 1.5 }}>
@@ -17,7 +17,7 @@ function ProButton({ onPress, title, sub, top, tag }: { onPress: () => void; tit
           <View style={{ flex: 1 }}>
             <Text numberOfLines={1} style={{ color: '#ffe08a', fontSize: 14.5, fontWeight: '800' }}>{title}</Text>
             <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 3 }}>{sub}</Text>
-            <View style={{ alignSelf: 'flex-start', marginTop: 7, paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>{tag}</Text></View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7 }}><View style={{ paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>{tag}</Text></View>{badge ? <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: '#ffe08a' }}><Text style={{ color: '#4a2f00', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.5 }}>{badge}</Text></View> : null}</View>
           </View>
           <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" stroke="#ffe08a" strokeWidth={2.6} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
         </View>
@@ -116,7 +116,7 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                         <Pressable onPress={() => start('p')} style={{ marginTop: 12, minHeight: 54, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Upgrade to Smart chat+'}</Text><Text style={{ color: 'rgba(143,233,226,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 1.5B · ' + sz(PLUS_MB)}</Text></Pressable>
                       )}
                       {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title="Max · Gemma 4" tag="MIN. 12 GB RAM" sub={'Switch · Free · ' + sz(GEMMA_MB)} top={12} />}
-                      {sc.gemmaOk && sc.tier !== 'q' && <ProButton onPress={() => start('q')} title="Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Switch · Free · ' + sz(QWEN_MB)} top={10} />}
+                      {sc.gemmaOk && sc.tier !== 'q' && <ProButton onPress={() => start('q')} title="Max · Qwen 3.5" badge="RECOMMENDED" tag="MIN. 12 GB RAM" sub={'Switch · Free · ' + sz(QWEN_MB)} top={10} />}
                       <Pressable onPress={sc.del} style={{ marginTop: 14, alignSelf: 'center', padding: 8 }}><Text style={{ color: '#ff8fab', fontSize: 13, fontWeight: '700' }}>Remove download</Text></Pressable>
                     </>
                   ) : sc.busy ? (
@@ -131,7 +131,7 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                     <Pressable onPress={() => start()}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ minHeight: 56, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat'}</Text><Text style={{ color: 'rgba(4,32,31,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 0.5B · ' + sz(SMART_MB)}</Text></LinearGradient></Pressable>
                     {sc.plusOk && <Pressable onPress={() => start('p')} style={{ marginTop: 10, minHeight: 54, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Download Smart chat+'}</Text><Text style={{ color: 'rgba(143,233,226,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 1.5B · ' + sz(PLUS_MB)}</Text></Pressable>}
                     {sc.gemmaOk && <ProButton onPress={() => start('g')} title="Max · Gemma 4" tag="MIN. 12 GB RAM" sub={(sc.resumeMB > 0 ? 'Resume · ' + sz(sc.resumeMB) + ' of ' : 'Download · Free · ') + sz(GEMMA_MB)} top={10} />}
-                    {sc.gemmaOk && <ProButton onPress={() => start('q')} title="Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Download · Free · ' + sz(QWEN_MB)} top={10} />}
+                    {sc.gemmaOk && <ProButton onPress={() => start('q')} title="Max · Qwen 3.5" badge="RECOMMENDED" tag="MIN. 12 GB RAM" sub={'Download · Free · ' + sz(QWEN_MB)} top={10} />}
                     </>
                   )}
                   {!!err && <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{err}</Text>}
