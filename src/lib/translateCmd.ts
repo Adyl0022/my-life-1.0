@@ -24,10 +24,10 @@ export function parseTranslate(q: string): TrCmd | null {
   if (!s || s.length > 400) return null;
   let m: RegExpMatchArray | null;
   // translate to Chinese: text   |   terjemah ke bahasa cina: text
-  m = s.match(new RegExp('^(?:please |tolong )?(?:translate|terjemah(?:kan)?|tukar)\\s+(?:this |ini )?(?:to|into|ke|kepada|dalam)\\s+(?:bahasa )?' + LG + '\\s*[:,\\-]?\\s*(.+)$', 'i'));
+  m = s.match(new RegExp('^(?:please |tolong )?(?:translate|terjemah(?:kan)?|tukar)\\s+(?:this |ini |ayat ini |ayat ni |perkataan ini |perkataan ni )?(?:to|into|ke|kepada|dalam)\\s+(?:bahasa )?' + LG + '\\s*[:,\\-]?\\s*(.+)$', 'i'));
   if (m) { const t = strip(m[2]); if (t) return { to: code(m[1]), text: t }; }
   // translate text to Chinese   |   terjemahkan text ke bahasa cina
-  m = s.match(new RegExp('^(?:please |tolong )?(?:translate|terjemah(?:kan)?)\\s+(.+?)\\s+(?:to|into|ke|kepada|dalam)\\s+(?:bahasa )?' + LG + '\\s*[?.!]*$', 'i'));
+  m = s.match(new RegExp('^(?:please |tolong )?(?:translate|terjemah(?:kan)?|tukar|ubah)\\s+(?:perkataan |ayat |kata |the word |word |sentence )?(.+?)\\s+(?:to|into|ke|kepada|jadi|dalam)\\s+(?:bahasa )?' + LG + '\\s*[?.!]*$', 'i'));
   if (m) { const t = strip(m[1]); if (t) return { to: code(m[2]), text: t }; }
   // how do I say text in Chinese   |   macam mana nak cakap text dalam bahasa cina
   m = s.match(new RegExp('^(?:how (?:do|to) (?:i |you )?say|macam mana (?:nak )?(?:cakap|sebut|kata)|bagaimana (?:nak )?(?:cakap|sebut))\\s+(.+?)\\s+(?:in|dalam|ke)\\s+(?:bahasa )?' + LG + '\\s*[?.!]*$', 'i'));

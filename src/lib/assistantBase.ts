@@ -635,7 +635,8 @@ export class AssistantBase extends React.Component<any, any> {
       if (tc.to === '?india') text = ms ? 'Bahasa India yang mana? Hindi atau Tamil? Tulis semula, contohnya "terjemah ke Tamil: ..."' : 'Which Indian language? Hindi or Tamil? Write it again, for example "translate to Tamil: ..."';
       else {
         const dl = this.detect(tc.text);
-        const from = dl === 'ms' || dl === 'en' ? dl : (lang === 'ms' ? 'ms' : 'en');
+        let from = dl === 'ms' || dl === 'en' ? dl : (lang === 'ms' ? 'ms' : 'en');
+        if (from === tc.to) from = tc.to === 'ms' ? 'en' : 'ms'; // for example a single English word asked in Malay: "tukar cousin kepada melayu"
         const lg = tc.to === 'en' ? { name: 'English', native: 'English' } : tc.to === 'ms' ? { name: 'Bahasa Malaysia', native: 'Bahasa Malaysia' } : xlLang(tc.to);
         if (!lg) text = ms ? 'Maaf, saya belum boleh terjemah ke bahasa itu.' : 'Sorry, I cannot translate into that language yet.';
         else {
