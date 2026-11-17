@@ -219,7 +219,7 @@ class Chat extends AssistantBase {
             </ScrollView>
           )}
           <Glass radius={26} style={{ marginHorizontal: 20, marginTop: empty ? 0 : 12, minHeight: 54, flexDirection: 'row', alignItems: 'flex-end', paddingLeft: 18, paddingRight: 6, paddingVertical: 7, gap: 8 }}>
-            <TextInput value={v.draft} onChangeText={(t) => this.setState({ draft: t })} placeholder={v.ph} placeholderTextColor="rgba(255,255,255,.5)" multiline blurOnSubmit={false} textAlignVertical="center" style={{ flex: 1, minWidth: 0, minHeight: 40, maxHeight: 120, paddingTop: 10, paddingBottom: 10, color: '#fff', fontSize: 14, fontWeight: '600', outlineStyle: 'none' } as any} />
+            <TextInput value={v.draft} onChangeText={(t) => this.setState({ draft: t })} placeholder={v.ph} placeholderTextColor="rgba(255,255,255,.5)" multiline {...(Platform.OS === 'web' ? ({ rows: 1 } as any) : {})} blurOnSubmit={false} textAlignVertical="center" style={{ flex: 1, minWidth: 0, minHeight: 40, maxHeight: 120, paddingTop: 10, paddingBottom: 10, color: '#fff', fontSize: 14, fontWeight: '600', outlineStyle: 'none' } as any} />
             <Pressable onPress={v.send} accessibilityLabel="Send">
               <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
                 <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M5 12h14M13 6l6 6-6 6" {...stroke} /></Svg>

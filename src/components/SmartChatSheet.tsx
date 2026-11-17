@@ -59,8 +59,8 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 14 }}>
             <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Spark /></LinearGradient>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800' }}>Smart chat</Text>
-              <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>Beta · general questions, on your phone</Text>
+              <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800' }}>AI answers</Text>
+              <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>Beta · for questions with no written answer</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Close</Text></Pressable>
           </View>
@@ -68,8 +68,11 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
             <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: on ? 'rgba(94,231,223,.55)' : 'rgba(255,255,255,.16)', marginBottom: 18 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Online AI</Text>
-                  <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>Smarter answers, needs internet</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Online AI</Text>
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(124,156,255,.2)', borderWidth: 1, borderColor: 'rgba(124,156,255,.55)' }}><Text style={{ color: '#b9c9ff', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>NEEDS INTERNET</Text></View>
+                  </View>
+                  <Text style={{ color: DIM, fontSize: 12, marginTop: 3 }}>Smarter answers, through our server</Text>
                 </View>
                 <Switch value={on} onValueChange={setOn} trackColor={{ false: 'rgba(255,255,255,.2)', true: '#34d399' }} thumbColor="#fff" />
               </View>
@@ -79,12 +82,22 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
               </View>
               {on && !sess ? <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>You are not signed in, so Online AI cannot be used yet.</Text> : null}
             </View>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+              <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" stroke="#06281c" strokeWidth={2} fill="none" /><Path d="M11 18h2" stroke="#06281c" strokeWidth={2} strokeLinecap="round" /></Svg>
+              </LinearGradient>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Offline AI on your phone</Text>
+                  <View style={{ paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(52,211,153,.18)', borderWidth: 1, borderColor: 'rgba(52,211,153,.55)' }}><Text style={{ color: '#8fe9c2', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>NO INTERNET NEEDED</Text></View>
+                </View>
+                <Text style={{ color: DIM, fontSize: 12, marginTop: 3, lineHeight: 17 }}>Download once, then it works without internet. What you ask never leaves your phone.</Text>
+              </View>
+            </View>
             {!sc.ok ? (
-              <Text style={{ color: '#ffd9a0', fontSize: 13, lineHeight: 19 }}>Smart chat needs a newer version of the app and a phone with enough memory, so it is not available here.</Text>
+              <Text style={{ color: '#ffd9a0', fontSize: 13, lineHeight: 19 }}>Offline AI needs a newer version of the app and a phone with enough memory, so it is not available here.</Text>
             ) : (
               <>
-                <Point t="Answers general questions the Assistant has no written answer for." />
-                <Point t="Runs on this phone. What you ask never leaves it, and it works without internet." />
                 <Point t="A small model, so it can be wrong. For religion, health, law and money it will tell you to ask a qualified person instead." />
                 <Point t="It has no internet, so it does not know today's news or who holds a post now. For those it will say so." />
                 <Point t={'One-time download of about ' + sz(SMART_MB) + '. Use Wi-Fi.'} />

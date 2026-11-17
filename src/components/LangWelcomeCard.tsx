@@ -66,14 +66,14 @@ export function LangWelcomeCard({ onLang, onAI, langName, showLang, ms }: { onLa
     <View style={{ alignSelf: 'stretch', marginTop: 10 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -6, right: -6, top: -6, bottom: -6, borderRadius: 28, backgroundColor: '#7df0c6', opacity: env.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] }) }} />
       <Glass radius={22} style={{ paddingVertical: 10, paddingHorizontal: 10, borderColor: 'rgba(94,231,223,.5)', overflow: 'hidden' }}>
-        <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 12.5, fontWeight: '800', letterSpacing: 0.3, marginLeft: 4, marginBottom: 8 }}>{showLang ? (ms ? 'Bahasa dan Online AI' : 'Language and Online AI') : 'Online AI'}</Text>
+        <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 12.5, fontWeight: '800', letterSpacing: 0.3, marginLeft: 4, marginBottom: 8 }}>{showLang ? (ms ? 'Bahasa dan AI' : 'Language and AI') : 'AI'}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {showLang ? (
             <Tile onPress={onLang} label={langName ? langName : (ms ? 'Bahasa' : 'Language')} sub={langName ? (ms ? 'Ketik untuk tukar' : 'Tap to change') : (<View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>{FLAGS.slice(0, 2).map((f) => <Text key={f} style={{ fontSize: 13 }}>{f}</Text>)}<Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>+20</Text></View>)} colors={['#34d399', '#5ee7df']} nudge={nudgeL}>
               <Svg width={19} height={19} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} stroke="#06281c" strokeWidth={2} fill="none" /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="#06281c" strokeWidth={2} fill="none" strokeLinecap="round" /></Svg>
             </Tile>
           ) : null}
-          <Tile onPress={onAI} label="Online AI" sub={ms ? 'Apa saja' : 'Any topic'} colors={['#7c9cff', '#b794ff']} nudge={nudgeR}>
+          <Tile onPress={onAI} label="AI" sub={ms ? 'Apa saja' : 'Any topic'} colors={['#7c9cff', '#b794ff']} nudge={nudgeR}>
             <Svg width={19} height={19} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" stroke="#fff" strokeWidth={1.8} fill="none" strokeLinejoin="round" /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" stroke="#fff" strokeWidth={1.4} fill="none" strokeLinejoin="round" /></Svg>
           </Tile>
         </View>
