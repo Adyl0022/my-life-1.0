@@ -215,12 +215,12 @@ export function ReadPicker({ opts, mode, onMode, lang, onLang, onClose }: { opts
     </>
   );
 }
-export function ToolBar({ saved, onSave, size, onSize, lang, onLang, langLabel }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void; langLabel?: string }) {
+export function ToolBar({ saved, onSave, size, onSize, lang, onLang, langLabel, sizeLabel }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void; langLabel?: string; sizeLabel?: string }) {
   const T = ({ a, b, onPress, c }: any) => <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}><Text style={{ color: c || 'rgba(255,255,255,.85)', fontSize: 15, fontWeight: '800' }}>{a}</Text><Text style={{ color: c || 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{b}</Text></Pressable>;
   return (
     <Glass radius={22} style={{ marginHorizontal: 20, marginBottom: 12, flexDirection: 'row' }}>
       <T a={saved ? '★' : '☆'} b={saved ? 'Saved' : 'Save'} c={saved ? '#ffd593' : undefined} onPress={onSave} />
-      <T a="Aa" b={['S', 'M', 'L'][size]} onPress={onSize} />
+      <T a="Aa" b={sizeLabel || ['S', 'M', 'L'][size]} onPress={onSize} />
       <T a="文" b={langLabel || (lang === 'en' ? 'EN' : 'BM')} onPress={onLang} />
     </Glass>
   );
