@@ -55,7 +55,24 @@ export default function SurahScreen() {
               </View>
             ) : s.verses.map((v, i) => (
               <React.Fragment key={v.n}>
-                {key === 'kahfi10' && v.n === 101 && <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center', paddingVertical: 10 }}>· · · verses 11 to 100 omitted · · ·</Text>}
+                {key === 'kahfi10' && v.n === 101 && (
+                  <>
+                  <View style={{ marginVertical: 14, marginHorizontal: -4, borderRadius: 20, paddingVertical: 14, paddingHorizontal: 14, backgroundColor: 'rgba(125,240,198,.10)', borderWidth: 1, borderColor: 'rgba(125,240,198,.4)', alignItems: 'center' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#7df0c6', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06281c', fontSize: 13, fontWeight: '900' }}>✓</Text></View>
+                      <Text style={{ color: '#7df0c6', fontSize: 14, fontWeight: '800' }}>Verses 1–10 finished</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', marginVertical: 10, gap: 8 }}>
+                      <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,.22)' }} />
+                      <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 16 }}>۞</Text>
+                      <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,.22)' }} />
+                    </View>
+                    <Text style={{ color: W, fontSize: 13.5, fontWeight: '700', textAlign: 'center' }}>Next: the last 10 verses</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, marginTop: 2, textAlign: 'center' }}>Verses 101–110 · the middle part is not part of this reading</Text>
+                  </View>
+                  <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.12)' }} />
+                  </>
+                )}
                 <View onLayout={(e) => { ys.current[v.n] = e.nativeEvent.layout.y; if (v.n === +(jump || 0)) tryJump(); }}>
                 <VerseBlock v={v} size={size} lang={lang} arOnly={mode === 'ar'} marked={marks.includes(v.n)} active={lastN === v.n} last={i === s.verses.length - 1}
                   onPress={() => { tapVerse(v.n); }}
