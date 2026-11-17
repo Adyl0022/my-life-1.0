@@ -4,6 +4,33 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { Text } from './Txt';
 import { useSmartChat, SMART_MB, PLUS_MB, GEMMA_MB } from '../lib/llm';
+
+// The "Smart chat Pro" (Gemma 4) button: gold, with a crown and a small PREMIUM tag, so it reads as the top choice.
+function ProButton({ onPress, title, sub, top }: { onPress: () => void; title: string; sub: string; top: number }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={title} style={{ marginTop: top }}>
+      <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, padding: 1.5 }}>
+        <View style={{ borderRadius: 16.5, backgroundColor: '#241d3a', paddingVertical: 11, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
+            <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M4 8l4 4 4-7 4 7 4-4-2 10H6z" fill="#4a2f00" stroke="#4a2f00" strokeWidth={1.4} strokeLinejoin="round" /></Svg>
+          </LinearGradient>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <Text style={{ color: '#ffe08a', fontSize: 15, fontWeight: '800' }}>{title}</Text>
+              <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>PREMIUM</Text></View>
+            </View>
+            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 3 }}>{sub}</Text>
+          </View>
+          <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" stroke="#ffe08a" strokeWidth={2.6} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+        </View>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+// 550 MB stays MB, 1600 MB reads 1.6 GB.
+const sz = (mb: number) => (mb >= 1000 ? (Math.round(mb / 100) / 10) + ' GB' : mb + ' MB');
+
 import { useOnlineAi } from '../lib/onlineAi';
 import { useSession } from '../lib/auth';
 
@@ -62,10 +89,10 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                 <Point t="Runs on this phone. What you ask never leaves it, and it works without internet." />
                 <Point t="A small model, so it can be wrong. For religion, health, law and money it will tell you to ask a qualified person instead." />
                 <Point t="It has no internet, so it does not know today's news or who holds a post now. For those it will say so." />
-                <Point t={'One-time download of about ' + SMART_MB + ' MB. Use Wi-Fi.'} />
-                <Point t={'Smart chat+ (about ' + PLUS_MB + ' MB, better sentences and Bahasa Malaysia) only appears on phones with about 6 GB of memory or more. Other phones use the ' + SMART_MB + ' MB Smart chat.'} />
+                <Point t={'One-time download of about ' + sz(SMART_MB) + '. Use Wi-Fi.'} />
+                <Point t={'Smart chat+ (about ' + sz(PLUS_MB) + ', better sentences and Bahasa Malaysia) only appears on phones with about 6 GB of memory or more. Other phones use the ' + sz(SMART_MB) + ' Smart chat.'} />
                 {sc.plusOk && <Point t="Your phone is strong enough for Smart chat+. It is slower and uses more memory." />}
-                <Point t={'Smart chat Pro (Gemma 4, about ' + GEMMA_MB + ' MB) is the smartest on-device choice. It only appears on phones with about 8 GB of memory or more, needs free space, and is slower. Use Wi-Fi. If the download stops, it can be resumed.'} />
+                <Point t={'Smart chat Pro (Gemma 4, about ' + sz(GEMMA_MB) + ') is the smartest on-device choice. It only appears on phones with about 8 GB of memory or more, needs free space, and is slower. Use Wi-Fi. If the download stops, it can be resumed.'} />
                 <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 14, backgroundColor: 'rgba(255,190,90,.12)', borderWidth: 1, borderColor: 'rgba(255,190,90,.4)', marginBottom: 8 }}>
                   <Text style={{ flex: 1, color: '#ffd9a0', fontSize: 12.5, lineHeight: 18 }}>Please note: the AI on your phone is small. Sometimes it cannot answer correctly, and it may be wrong or give an answer that sounds sure but is not true. Check important facts, such as people, dates, numbers and news, with an official source.</Text>
                 </View>
@@ -76,25 +103,23 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                         <Text style={{ flex: 1, color: '#8fe9c2', fontSize: 14, fontWeight: '800' }}>{sc.tier === 'g' ? 'Smart chat Pro (Gemma 4) is ready' : sc.tier === 'p' ? 'Smart chat+ is ready' : 'Smart chat is ready'}</Text>
                       </View>
                       {sc.plusOk && sc.tier === 's' && !sc.gemmaOk && (
-                        <Pressable onPress={() => start('p')} style={{ marginTop: 12, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Upgrade to Smart chat+ · ' + PLUS_MB + ' MB'}</Text></Pressable>
+                        <Pressable onPress={() => start('p')} style={{ marginTop: 12, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Upgrade to Smart chat+ · ' + sz(PLUS_MB)}</Text></Pressable>
                       )}
-                      {sc.gemmaOk && sc.tier !== 'g' && (
-                        <Pressable onPress={() => start('g')} style={{ marginTop: 12, minHeight: 46, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,212,94,.7)', backgroundColor: 'rgba(255,212,94,.1)' }}><Text style={{ color: '#ffd45e', fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{'Upgrade to Smart chat Pro (Gemma 4) · ' + GEMMA_MB + ' MB'}</Text></Pressable>
-                      )}
+                      {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title={'Upgrade to Smart chat Pro'} sub={'Gemma 4 · ' + sz(GEMMA_MB)} top={12} />}
                       <Pressable onPress={sc.del} style={{ marginTop: 14, alignSelf: 'center', padding: 8 }}><Text style={{ color: '#ff8fab', fontSize: 13, fontWeight: '700' }}>Remove download</Text></Pressable>
                     </>
                   ) : sc.busy ? (
                     <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
-                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{'Downloading... ' + sc.pct + '%' + (sc.totalMB > 0 ? '  (' + sc.doneMB + ' of ' + sc.totalMB + ' MB)' : '')}</Text>
+                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{'Downloading... ' + sc.pct + '%' + (sc.totalMB > 0 ? '  (' + sz(sc.doneMB) + ' of ' + sz(sc.totalMB) + ')' : '')}</Text>
                       <View style={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden', marginTop: 10 }}><View style={{ height: 8, borderRadius: 4, width: sc.pct + '%', backgroundColor: '#5ee7df' }} /></View>
                       {sc.speed > 0 && <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 8 }}>{sc.speed.toFixed(1) + ' MB/s' + (sc.eta > 0 ? '  ·  about ' + (sc.eta >= 60 ? Math.ceil(sc.eta / 60) + ' min' : sc.eta + ' sec') + ' left' : '')}</Text>}
                       <Pressable onPress={sc.cancel} style={{ marginTop: 12, alignSelf: 'flex-start' }}><Text style={{ color: DIM, fontSize: 13, fontWeight: '700' }}>Cancel</Text></Pressable>
                     </View>
                   ) : (
                     <>
-                    <Pressable onPress={() => start()}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat · ' + SMART_MB + ' MB'}</Text></LinearGradient></Pressable>
-                    {sc.plusOk && <Pressable onPress={() => start('p')} style={{ marginTop: 10, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Download Smart chat+ · ' + PLUS_MB + ' MB'}</Text></Pressable>}
-                    {sc.gemmaOk && <Pressable onPress={() => start('g')} style={{ marginTop: 10, minHeight: 46, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,212,94,.7)', backgroundColor: 'rgba(255,212,94,.1)' }}><Text style={{ color: '#ffd45e', fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{(sc.resumeMB > 0 ? 'Resume Smart chat Pro (Gemma 4) · ' + sc.resumeMB + ' of ' : 'Download Smart chat Pro (Gemma 4) · ') + GEMMA_MB + ' MB'}</Text></Pressable>}
+                    <Pressable onPress={() => start()}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat · ' + sz(SMART_MB)}</Text></LinearGradient></Pressable>
+                    {sc.plusOk && <Pressable onPress={() => start('p')} style={{ marginTop: 10, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Download Smart chat+ · ' + sz(PLUS_MB)}</Text></Pressable>}
+                    {sc.gemmaOk && <ProButton onPress={() => start('g')} title={(sc.resumeMB > 0 ? 'Resume Smart chat Pro' : 'Download Smart chat Pro')} sub={'Gemma 4 · ' + (sc.resumeMB > 0 ? sz(sc.resumeMB) + ' of ' : '') + sz(GEMMA_MB)} top={10} />}
                     </>
                   )}
                   {!!err && <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{err}</Text>}
