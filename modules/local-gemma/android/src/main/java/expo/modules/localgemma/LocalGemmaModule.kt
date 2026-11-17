@@ -52,21 +52,10 @@ class LocalGemmaModule : Module() {
     return e
   }
 
-  // Loads the model. The phone's graphics chip is tried first (much faster). If it ever fails, or the app crashed while trying it,
-  // that is remembered and the normal processor is used from then on.
+  // Loads the model on the phone's normal processor. (The graphics chip was tried, but on some phones it closes the whole app on the first
+  // question, so it is switched off.)
   private fun ensure() {
     if (engine != null) return
-    val p = prefs()
-    val st = p.getString("gpu", "") ?: ""
-    if (st == "trying") p.edit().putString("gpu", "bad").commit()
-    if (st != "bad" && st != "trying") {
-      p.edit().putString("gpu", "trying").commit()
-      try { engine = build(true); gpuActive = true; return } catch (e: Throwable) {
-        try { engine?.close() } catch (x: Throwable) { }
-        engine = null
-        p.edit().putString("gpu", "bad").commit()
-      }
-    }
     gpuActive = false
     engine = build(false)
   }
