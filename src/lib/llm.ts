@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react';
+import { getItem, setItem } from './store';
 import { llmAvailable, llmRam, llmReadyNow, llmProgress, llmDownload, llmCancel, llmRemove, llmUnload, llmGenerate } from '../../modules/local-llm';
 
 // "Smart chat": a small AI model that runs on the phone for questions the Assistant has no written answer for.
 // Qwen2.5 0.5B Instruct (Apache 2.0), about 550 MB, downloaded once. Nothing that is asked leaves the phone.
 export const SMART_URL = 'https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv1280.task';
 export const SMART_MB = 550;
+// "Smart chat+": Qwen2.5 1.5B Instruct, about 1.6 GB. Better sentences and Malay, but only offered to phones with plenty of memory.
+export const PLUS_URL = 'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv1280.task';
+export const PLUS_MB = 1600;
 const MIN_RAM = 3500; // phones with less memory cannot run it well, so the feature stays hidden there
+const PLUS_RAM = 5500; // a 6 GB phone reports a little under 6000
 export const smartOk = llmAvailable && llmRam() >= MIN_RAM;
+export const plusOk = llmAvailable && llmRam() >= PLUS_RAM;
 
 let READY = llmReadyNow(); let BUSY = false; let PCT = 0;
+let TIER: 's' | 'p' = 's'; // which model is on the phone
+getItem('ml_smtier', 's').then((v: any) => { TIER = v === 'p' ? 'p' : 's'; });
 const subs = new Set<() => void>();
 const tell = () => subs.forEach((f) => { try { f(); } catch (e) { } });
 
@@ -17,17 +25,21 @@ export function smartReady(): boolean { return READY; }
 export function useSmartChat() {
   const [, n] = useState(0);
   useEffect(() => { const f = () => n((x) => x + 1); subs.add(f); return () => { subs.delete(f); }; }, []);
-  const get = async () => {
+  const get = async (plus?: boolean) => {
     if (BUSY) return false;
+    if (plus && !plusOk) return false;
     BUSY = true; PCT = 0; tell();
+    if (READY) await llmUnload(); // the old model file is replaced, so free it first
     const t = setInterval(() => { const p = llmProgress(); PCT = p[1] > 0 ? Math.min(99, Math.round((p[0] / p[1]) * 100)) : 0; tell(); }, 700);
-    const ok = await llmDownload(SMART_URL);
-    clearInterval(t); BUSY = false; READY = ok ? llmReadyNow() : READY; PCT = 0; tell();
+    const ok = await llmDownload(plus ? PLUS_URL : SMART_URL);
+    clearInterval(t); BUSY = false; READY = ok ? llmReadyNow() : READY; PCT = 0;
+    if (ok) { TIER = plus ? 'p' : 's'; setItem('ml_smtier', TIER); }
+    tell();
     return ok;
   };
   const cancel = () => { llmCancel(); };
-  const del = async () => { await llmRemove(); READY = false; tell(); };
-  return { ok: smartOk, ready: READY, busy: BUSY, pct: PCT, get, cancel, del };
+  const del = async () => { await llmRemove(); READY = false; setItem('ml_smtier', 's'); TIER = 's'; tell(); };
+  return { ok: smartOk, plusOk, tier: TIER, ready: READY, busy: BUSY, pct: PCT, get, cancel, del };
 }
 
 // Topics where a small model must not guess: religious rulings, medicine, law and money advice. Answered with a fixed, careful reply.
@@ -42,6 +54,19 @@ export function sensitiveReply(q: string, lang: string): string {
   return '';
 }
 
+// Questions about "now": news, who holds a post today, prices, scores, weather. The phone has no internet and the small model's knowledge is old,
+// so it is told plainly instead of being allowed to make something up.
+export function currentReply(q: string, lang: string): string {
+  const t = (q || '').toLowerCase();
+  const yr = /\b20(2[5-9]|3\d)\b/.test(t);
+  const now = /\b(sekarang|semasa|terkini|kini|baru-baru ini|minggu ini|bulan ini|tahun ini|berita|harga|skor|keputusan|cuaca|current|currently|latest|right now|this week|this year|news|price of|score|weather|who won)\b/.test(t);
+  const post = /\b(perdana menteri|menteri|presiden|timbalan|ketua|ceo|prime minister|minister|president|governor|mp)\b/.test(t) && (/\b(sekarang|semasa|kini|current|now|who is|siapa)\b/.test(t) || yr);
+  if (!(now || post || (yr && /\b(siapa|who|berapa|how much|apa|what)\b/.test(t)))) return '';
+  return lang === 'ms'
+    ? 'Saya tak ada internet, jadi saya tak tahu maklumat terkini seperti berita, jawatan semasa, harga, skor atau cuaca. Kalau saya cuba jawab, saya mungkin reka dan tersilap. Untuk perkara seperti ini, semak laman rasmi, aplikasi berita atau carian web.'
+    : 'I have no internet, so I do not know current information such as news, who holds a post now, prices, scores or weather. If I tried to answer I might make something up. For this, check an official website, a news app or a web search.';
+}
+
 function clean(t: string): string {
   let r = (t || '').replace(/<\|[^|]*\|>/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trim();
   if (r.length > 700) { r = r.slice(0, 700); const i = Math.max(r.lastIndexOf('.'), r.lastIndexOf('!'), r.lastIndexOf('?')); if (i > 200) r = r.slice(0, i + 1); }
@@ -54,11 +79,15 @@ export async function smartAsk(q: string, lang: string): Promise<string> {
   const ms = lang === 'ms';
   const sys = 'You are My Life Assistant, a friendly helper inside the My Life app, made by Adli Syahmi. '
     + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + ', in at most 4 short sentences. '
-    + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, names or sources. '
+    + 'You have no internet and your knowledge is old, so you do not know recent events. '
+    + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
     + 'Do not give religious rulings, medical, legal or investment advice.';
   const prompt = '<|im_start|>system\n' + sys + '<|im_end|>\n<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n';
   const out = clean(await llmGenerate(prompt));
   if (!out) return '';
-  return out + (ms ? '\n\n(Jawapan AI dalam telefon awak. Ia boleh tersilap.)' : '\n\n(An AI answer made on your phone. It can be wrong.)');
+  const fact = /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
+  return out + (ms
+    ? '\n\n(Jawapan AI dalam telefon awak. Ia boleh tersilap' + (fact ? ', terutama tentang orang, tarikh dan angka' : '') + '. Semak fakta penting dengan sumber rasmi.)'
+    : '\n\n(An AI answer made on your phone. It can be wrong' + (fact ? ', especially about people, dates and numbers' : '') + '. Check important facts with an official source.)');
 }
 export { llmUnload };

@@ -8,7 +8,7 @@ import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
-import { smartOk, smartReady, smartAsk, sensitiveReply } from './llm';
+import { smartOk, smartReady, smartAsk, sensitiveReply, currentReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 export class AssistantBase extends React.Component<any, any> {
@@ -234,7 +234,7 @@ export class AssistantBase extends React.Component<any, any> {
       { id: 'advice', k: ['patut', 'should', 'cadang', 'suggest', 'nasihat', 'advice', 'buat sekarang', 'tips', 'do next', 'what next'] },
       { id: 'greet', k: ['hi', 'hello', 'hai', 'salam', 'assalamualaikum', 'hey', 'helo'] },
       { id: 'thanks', k: ['terima kasih', 'thanks', 'thank', 'tq', 'makasih', 'thx'] },
-      { id: 'who', k: ['siapa', 'who are you', 'who', 'kamu', 'nama awak', 'are you ai', 'adakah awak ai', 'chatgpt'] },
+      { id: 'who', k: ['siapa awak', 'siapa kamu', 'awak siapa', 'who are you', 'kamu', 'nama awak', 'are you ai', 'adakah awak ai', 'chatgpt'] },
       { id: 'family', k: ['keluarga', 'family', 'family planner', 'household', 'chores', 'chore', 'rewards', 'wishes', 'wish list', 'ahli keluarga', 'family code', 'kod keluarga', 'pasangan'] },
       { id: 'help', k: ['boleh tanya', 'help', 'bantuan', 'apa boleh', 'what can', 'tolong', 'can i ask', 'commands', 'awak boleh buat', 'boleh buat apa', 'apa awak boleh', 'what do you do', 'what can you do', 'apa fungsi'] },
       { id: 'puasa', k: ['puasa', 'fasting', 'fast', 'ramadan', 'ramadhan', 'qadha', 'qada', 'sunat', 'sunnah', 'berpuasa'] },
@@ -601,6 +601,8 @@ export class AssistantBase extends React.Component<any, any> {
     try {
       const sv = sensitiveReply(q, lang);
       if (sv) { r.m = Object.assign({}, r.m, { text: sv, fb: 0 }); return r; }
+      const cr = currentReply(q, lang);
+      if (cr) { r.m = Object.assign({}, r.m, { text: cr, fb: 0 }); return r; }
       if (smartOk && smartReady()) {
         const a = await smartAsk(q, lang);
         if (a) { r.m = Object.assign({}, r.m, { text: a, fb: 0 }); return r; }

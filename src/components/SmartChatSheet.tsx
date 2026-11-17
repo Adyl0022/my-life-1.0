@@ -3,7 +3,7 @@ import { View, Pressable, Modal, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { Text } from './Txt';
-import { useSmartChat, SMART_MB } from '../lib/llm';
+import { useSmartChat, SMART_MB, PLUS_MB } from '../lib/llm';
 
 const DIM = 'rgba(255,255,255,.7)';
 const Spark = ({ s = 24, c = '#06281c' }: { s?: number; c?: string }) => (
@@ -19,7 +19,7 @@ const Point = ({ t }: { t: string }) => (
 // Smart chat: a small AI model on the phone for questions the Assistant has no written answer for.
 export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const sc = useSmartChat(); const [err, setErr] = React.useState('');
-  const start = async () => { setErr(''); const ok = await sc.get(); if (!ok) setErr('The download did not finish. Check your internet and storage, then try again.'); };
+  const start = async (plus?: boolean) => { setErr(''); const ok = await sc.get(plus); if (!ok) setErr('The download did not finish. Check your internet and storage, then try again.'); };
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: 'rgba(5,8,28,.74)', justifyContent: 'flex-end' }}>
@@ -44,13 +44,18 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                 <Point t="Answers general questions the Assistant has no written answer for." />
                 <Point t="Runs on this phone. What you ask never leaves it, and it works without internet." />
                 <Point t="A small model, so it can be wrong. For religion, health, law and money it will tell you to ask a qualified person instead." />
+                <Point t="It has no internet, so it does not know today's news or who holds a post now. For those it will say so." />
                 <Point t={'One-time download of about ' + SMART_MB + ' MB. Use Wi-Fi.'} />
+                {sc.plusOk && <Point t={'Your phone is strong enough for Smart chat+ (about ' + PLUS_MB + ' MB): better sentences and Bahasa Malaysia, but slower and it uses more memory.'} />}
                 <View style={{ marginTop: 10 }}>
                   {sc.ready ? (
                     <>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 18, backgroundColor: 'rgba(52,211,153,.14)', borderWidth: 1, borderColor: 'rgba(52,211,153,.45)' }}>
-                        <Text style={{ flex: 1, color: '#8fe9c2', fontSize: 14, fontWeight: '800' }}>Smart chat is ready</Text>
+                        <Text style={{ flex: 1, color: '#8fe9c2', fontSize: 14, fontWeight: '800' }}>{sc.tier === 'p' ? 'Smart chat+ is ready' : 'Smart chat is ready'}</Text>
                       </View>
+                      {sc.plusOk && sc.tier !== 'p' && (
+                        <Pressable onPress={() => start(true)} style={{ marginTop: 12, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Upgrade to Smart chat+ · ' + PLUS_MB + ' MB'}</Text></Pressable>
+                      )}
                       <Pressable onPress={sc.del} style={{ marginTop: 14, alignSelf: 'center', padding: 8 }}><Text style={{ color: '#ff8fab', fontSize: 13, fontWeight: '700' }}>Remove download</Text></Pressable>
                     </>
                   ) : sc.busy ? (
@@ -60,7 +65,10 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                       <Pressable onPress={sc.cancel} style={{ marginTop: 12, alignSelf: 'flex-start' }}><Text style={{ color: DIM, fontSize: 13, fontWeight: '700' }}>Cancel</Text></Pressable>
                     </View>
                   ) : (
-                    <Pressable onPress={start}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat · ' + SMART_MB + ' MB'}</Text></LinearGradient></Pressable>
+                    <>
+                    <Pressable onPress={() => start(false)}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat · ' + SMART_MB + ' MB'}</Text></LinearGradient></Pressable>
+                    {sc.plusOk && <Pressable onPress={() => start(true)} style={{ marginTop: 10, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Download Smart chat+ · ' + PLUS_MB + ' MB'}</Text></Pressable>}
+                    </>
                   )}
                   {!!err && <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{err}</Text>}
                 </View>
