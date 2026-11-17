@@ -167,6 +167,7 @@ export const choreMark = (id: string, period: string) => call('family_chore_mark
 export const choreDecide = (id: string, ok: boolean) => call('family_chore_decide', { p_log: id, p_ok: ok });
 export const rewardSave = (id: string | null, title: string, cost: number) => call<string>('family_reward_save', { p_id: id, p_title: title, p_cost: cost });
 export const rewardDelete = (id: string) => call('family_reward_delete', { p_id: id });
+export const redeemsClear = (person: string) => call('family_redeems_clear', { p_person: person });
 export const rewardAsk = (id: string, person: string) => call('family_reward_ask', { p_reward: id, p_person: person });
 export const redeemDecide = (id: string, ok: boolean) => call('family_redeem_decide', { p_id: id, p_ok: ok });
 

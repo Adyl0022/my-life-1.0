@@ -6,7 +6,7 @@ import { showAlert } from '../lib/dialog';
 import { useStored } from '../lib/store';
 import { Avatar, Btn, Chip, Field, Note, W, DIM } from './FamilyUi';
 import { famError, isParent, useAutoRefresh, FInfo } from '../lib/family';
-import { useFamChores, useFamChoreLog, useFamRedeems, useFamRewards, useBalances, choreSave, choreDelete, choreMark, choreDecide, rewardSave, rewardDelete, rewardAsk, redeemDecide, choreWho, nextWho, periodOf, peopleOf, useReloadOnFocus, FChore, FReward } from '../lib/familyData';
+import { useFamChores, useFamChoreLog, useFamRedeems, useFamRewards, useBalances, choreSave, choreDelete, choreMark, choreDecide, rewardSave, rewardDelete, rewardAsk, redeemDecide, redeemsClear, choreWho, nextWho, periodOf, peopleOf, useReloadOnFocus, FChore, FReward } from '../lib/familyData';
 
 // Chores that take turns, the points they earn, and the rewards the points can buy.
 // A chore ticked by a child waits for a parent to check it. Only parents give points, approve rewards and set rewards.
@@ -161,10 +161,16 @@ export function HouseRewards({ info }: { info: FInfo | null }) {
   const [hid, setHid] = useStored<string[]>('ml_fam_reds_hidden', []);
   const done = reds.rows.filter((x) => x.status !== 'pending' && sel && x.person === sel.id && !(hid || []).includes(x.id));
   const recent = done.slice(0, 4);
-  const clearRecent = () => showAlert('Clear the Recent list?', 'This only hides these lines on this phone. Points and approved rewards do not change.', [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Clear', style: 'destructive', onPress: () => setHid(((hid || []) as string[]).concat(done.map((x) => x.id)).slice(-300)) },
-  ]);
+  // A parent clears the list for everyone (it is removed from the server; points stay). Others only hide it on this phone.
+  const clearRecent = () => parent
+    ? showAlert('Clear the Recent list?', 'This removes these lines for everyone in the family. Points and approved rewards do not change.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => run(async () => { try { await redeemsClear(sel!.id); } catch (e) { setHid(((hid || []) as string[]).concat(done.map((x) => x.id)).slice(-300)); } }, 'Cleared.') },
+    ])
+    : showAlert('Clear the Recent list?', 'This only hides these lines on this phone. Points and approved rewards do not change.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => setHid(((hid || []) as string[]).concat(done.map((x) => x.id)).slice(-300)) },
+    ]);
 
   return (
     <View>
