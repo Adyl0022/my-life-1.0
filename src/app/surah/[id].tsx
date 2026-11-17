@@ -69,6 +69,7 @@ export default function SurahScreen() {
                     <Text style={{ color: W, fontSize: 13.5, fontWeight: '700', textAlign: 'center' }}>Next: the last 10 verses</Text>
                     <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, marginTop: 2, textAlign: 'center' }}>Verses 101–110 · the middle part is not part of this reading</Text>
                   </View>
+                  <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.12)' }} />
                 )}
                 <View onLayout={(e) => { ys.current[v.n] = e.nativeEvent.layout.y; if (v.n === +(jump || 0)) tryJump(); }}>
                 <VerseBlock v={v} size={size} lang={lang} arOnly={mode === 'ar'} marked={marks.includes(v.n)} active={lastN === v.n} last={i === s.verses.length - 1}
