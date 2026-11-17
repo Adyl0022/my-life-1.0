@@ -401,6 +401,22 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "assistant pembantu ai tanya ask chat bantuan help"
  },
  {
+  "t": "AI answers (Smart chat)",
+  "s": "Online AI or AI on your phone for any question",
+  "m": "System",
+  "c": "#5ee7df",
+  "h": "Assistant.dc.html",
+  "k": "ai smart chat online ai offline gemma qwen max model download model ai jawapan soalan kod code summarise rumus ringkas chat bersembang openrouter"
+ },
+ {
+  "t": "Chat in your language",
+  "s": "Talk to the Assistant in 20+ languages",
+  "m": "System",
+  "c": "#5ee7df",
+  "h": "Assistant.dc.html",
+  "k": "language bahasa translate terjemah chinese arabic tamil hindi chat language pack ml kit"
+ },
+ {
   "t": "Insights",
   "s": "Life score, weekly review and smart suggestions",
   "m": "System",
