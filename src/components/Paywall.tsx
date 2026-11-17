@@ -139,10 +139,10 @@ export function Locked({ on, mt = 0, radius = 24, title, children }: { on: boole
   const PRICE = usePrice();
   if (!on) return <View style={{ marginTop: mt }}>{children}</View>;
   return (
-    <View style={{ marginTop: mt, borderRadius: radius, overflow: 'hidden' }}>
-      {/* The real card only sets the size. It is fully hidden, so nothing shows through. */}
+    <View style={{ marginTop: mt, borderRadius: radius, overflow: 'hidden', minHeight: title ? 190 : 0 }}>
+      {/* The real card only sets the size. A short card gets a minimum height so the title, lock and button never overlap. It is fully hidden, so nothing shows through. */}
       <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ opacity: 0 }}>{children}</View>
-      <Pressable onPress={openPaywall} accessibilityRole="button" accessibilityLabel={'Unlock, ' + PRICE + ' ' + PER} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
+      <Pressable onPress={openPaywall} accessibilityRole="button" accessibilityLabel={'Unlock, ' + PRICE + ' ' + PER} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingTop: title ? 34 : 0, borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
         <LinearGradient colors={['#1d1856', '#151a4a', '#0e2650']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
         <LinearGradient colors={['rgba(94,231,223,.16)', 'rgba(94,231,223,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 90 }} />
         {/* Made-up sample shapes. They are not the person's data. */}
