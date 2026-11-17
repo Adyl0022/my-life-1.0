@@ -41,7 +41,7 @@ function Chart({ title, series, pts }: { title: string; series: { c: string; l: 
 }
 
 export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => void; off?: number }) {
-  const [bpm, setBpm] = useState(''); const [sys, setSys] = useState(''); const [dia, setDia] = useState(''); const [err, setErr] = useState('');
+  const [bpm, setBpm] = useState(''); const [sys, setSys] = useState(''); const [dia, setDia] = useState(''); const [err, setErr] = useState(''); const [all, setAll] = useState(false);
   const list = (h.heart || []).slice().sort((a, b) => (a.d + a.at < b.d + b.at ? 1 : -1));
   const asc = list.slice().reverse(); const pu = asc.filter((x) => x.bpm != null).slice(-20); const bp = asc.filter((x) => x.sys != null && x.dia != null).slice(-20);
   const save = () => {
@@ -73,13 +73,18 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
       {list.length ? (
         <View style={{ marginTop: 14 }}>
           <Text style={{ color: DIM, fontSize: 11.5, fontWeight: '700', marginBottom: 2 }}>RECENT READINGS</Text>
-          {list.slice(0, 6).map((x) => (
+          {(all ? list : list.slice(0, 6)).map((x) => (
             <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)' }}>
               <Text style={{ color: DIM, fontSize: 12, width: 86 }}>{dlabel(x.d) + ' ' + x.at}</Text>
               <Text style={{ color: W, fontSize: 13, fontWeight: '800', flex: 1 }}>{[x.bpm != null ? x.bpm + ' bpm' : '', x.sys != null ? x.sys + '/' + x.dia + ' mmHg' : ''].filter(Boolean).join('   ')}</Text>
               <Pressable onPress={() => drop(x.id)} hitSlop={10} accessibilityLabel="Delete this reading"><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 18, paddingHorizontal: 6 }}>×</Text></Pressable>
             </View>
           ))}
+          {list.length > 6 ? (
+            <Pressable onPress={() => setAll(!all)} accessibilityRole="button" style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 7, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', backgroundColor: 'rgba(255,255,255,.06)' }}>
+              <Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{all ? 'Show less' : 'Show all (' + list.length + ')'}</Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
       <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 12 }}>These are your own notes. My Life is not a medical device and does not diagnose, treat or advise. Talk to a doctor or nurse about your readings.</Text>
