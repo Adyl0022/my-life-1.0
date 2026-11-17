@@ -89,7 +89,7 @@ class LocalLlmModule : Module() {
             if (llm == null) {
               val o = LlmInference.LlmInferenceOptions.builder()
                 .setModelPath(file().absolutePath)
-                .setMaxTokens(1024)
+                .setMaxTokens(2048)
                 .build()
               llm = LlmInference.createFromOptions(ctx(), o)
             }

@@ -97,27 +97,36 @@ export function currentReply(q: string, lang: string): string {
     : 'I have no internet, so I do not know current information such as news, who holds a post now, prices, scores or weather. If I tried to answer I might make something up. For this, check an official website, a news app or a web search.';
 }
 
-function clean(t: string): string {
+function clean(t: string, max = 900): string {
   let r = (t || '').replace(/<\|[^|]*\|>/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trim();
-  if (r.length > 900) { r = r.slice(0, 900); const i = Math.max(r.lastIndexOf('.'), r.lastIndexOf('!'), r.lastIndexOf('?')); if (i > 200) r = r.slice(0, i + 1); }
+  if (r.length > max) { r = r.slice(0, max); const i = Math.max(r.lastIndexOf('.'), r.lastIndexOf('!'), r.lastIndexOf('?')); if (i > 200) r = r.slice(0, i + 1); }
   return r;
 }
 
 // Asks the model on the phone. Returns '' when it cannot answer, so the caller can use its own fallback.
-export async function smartAsk(q: string, lang: string): Promise<string> {
+export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = []): Promise<string> {
   if (!(smartOk || gemmaOk) || !READY) return '';
   const ms = lang === 'ms';
-  // A pasted text or a summarise job: short bullet points instead of 4 sentences.
+  const big = TIER === 'g' || TIER === 'q';
+  // A pasted text or a summarise job: short bullet points.
   const task = q.length > 160 || /\b(summari[sz]e|summary|rewrite|paraphrase|proofread|ringkaskan|ringkasan|rumuskan|tulis semula)\b/i.test(q);
-  const sys = 'You are My Life Assistant, a friendly helper inside the My Life app, made by Adli Syahmi. '
-    + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + (task ? ', as short bullet points (at most 5), one idea each. ' : ', in at most 4 short sentences. ')
-    + 'You have no internet and your knowledge is old, so you do not know recent events. '
+  const sys = 'You are My Life Assistant, a warm, clear and helpful AI inside the My Life app, made by Adli Syahmi. '
+    + 'Talk like a thoughtful friend: answer questions, explain things step by step, write and fix code (put code in a code block), give your own opinion with short reasons when asked, brainstorm, and chat naturally. '
+    + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + '. '
+    + (task ? 'The person pasted a text or asked for a summary: reply as short bullet points (at most 6), one idea each. ' : (big ? 'Be thorough but not long-winded: a few short paragraphs or a short list is fine. ' : 'Keep it short and clear: up to 6 sentences. '))
+    + 'You have no internet and your knowledge is old, so say so for news, prices, scores or who holds a post now. '
     + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
-    + 'Do not give religious rulings, medical, legal or investment advice.';
+    + 'For religious rulings, medical, legal or investment decisions, give only general information and suggest asking a qualified person.';
+  const h = (hist || []).slice(-6);
   let raw = '';
-  if (TIER === 'g' || TIER === 'q') raw = await gemGenerate(sys + '\n\nQuestion: ' + q);
-  else raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
-  const out = clean(raw);
+  if (big) {
+    const past = h.length ? 'Conversation so far:\n' + h.map((x) => (x.me ? 'User: ' : 'Assistant: ') + x.text).join('\n') + '\n\n' : '';
+    raw = await gemGenerate(sys + '\n\n' + past + 'User: ' + q);
+  } else {
+    const past = h.map((x) => '<|im_start|>' + (x.me ? 'user' : 'assistant') + '\n' + x.text + '<|im_end|>\n').join('');
+    raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n' + past + '<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
+  }
+  const out = clean(raw, big ? 3500 : 1400);
   if (!out) return '';
   const fact = !task && /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
   return out + (ms

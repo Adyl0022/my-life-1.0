@@ -624,7 +624,8 @@ export class AssistantBase extends React.Component<any, any> {
       const cr = tt ? '' : currentReply(q, lang);
       if (cr) { r.m = Object.assign({}, r.m, { text: cr + (note ? '\n\n' + note : ''), fb: 0 }); return r; }
       if ((smartOk || gemmaOk) && smartReady()) {
-        const a = await smartAsk(q, lang);
+        const hist = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
+        const a = await smartAsk(q, lang, hist);
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0 }); return r; }
       } else if (!this.state.smNo && !onlineOn()) {
         const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI: AI kecil dalam telefon awak (muat turun sekali, lebih kurang 550 MB), atau AI dalam talian (soalan dihantar ke internet, awak pilih sendiri).' : '\n\nI can also answer general questions with AI: a small AI on your phone (one-time download of about 550 MB), or Online AI (your question is sent over the internet, and you choose whether to use it).';
