@@ -43,13 +43,13 @@ export const dayKey = () => { const d = new Date(); return d.getFullYear() + '-'
 
 export type Part = { name: string; kind: string; refs?: string[]; count?: string; custom?: 'tahlil33'; surah?: string };
 export const TAHLIL: Part[] = [
-  { name: 'Opening dedication (Ayat Pembuka)', kind: 'Intro' }, { name: 'Al-Fatihah', kind: 'Quran', surah: 'fatihah' }, { name: 'Al-Ikhlas (3×)', kind: 'Quran', refs: ['ikhlas'] },
+  { name: 'Opening dedication (Ayat Pembuka)', kind: 'Intro' }, { name: 'Al-Fatihah', kind: 'Quran', surah: 'fatihah' }, { name: 'Al-Ikhlas', kind: 'Quran', refs: ['ikhlas'], count: '3×' },
   { name: 'Tahlil and Takbir', kind: 'Dhikr' }, { name: 'Al-Falaq', kind: 'Quran', refs: ['falaq'] }, { name: 'Tahlil and Takbir', kind: 'Dhikr' }, { name: 'An-Nas', kind: 'Quran', refs: ['nas'] },
   { name: 'Tahlil and Takbir', kind: 'Dhikr' }, { name: 'Al-Fatihah', kind: 'Quran', surah: 'fatihah' }, { name: 'Al-Baqarah 1 to 5', kind: 'Quran', refs: ['baq1-5'] },
   { name: 'Al-Baqarah 163', kind: 'Quran', refs: ['baq163'] }, { name: 'Ayat Al-Kursi (Al-Baqarah 255)', kind: 'Quran', refs: ['baq255'] }, { name: 'Al-Baqarah 284 to 286', kind: 'Quran', refs: ['baq284', 'baq285', 'baq286'] },
-  { name: 'Hud 73 (3×)', kind: 'Quran', refs: ['hud73'] }, { name: 'Al-Ahzab 33', kind: 'Quran', refs: ['ahzab33'] }, { name: 'Al-Ahzab 56', kind: 'Quran', refs: ['ahzab56'] },
-  { name: 'Selawat upon the Prophet (11×)', kind: 'Selawat' }, { name: 'Salam upon the Prophet', kind: 'Selawat' }, { name: 'Ali Imran 173 and Al-Anfal 40', kind: 'Quran', refs: ['imran173', 'anfal40'] },
-  { name: 'Hauqalah', kind: 'Dhikr' }, { name: 'Istighfar (3×)', kind: 'Dhikr' }, { name: 'Tahlil (33×)', kind: 'Dhikr', custom: 'tahlil33' },
+  { name: 'Hud 73', kind: 'Quran', refs: ['hud73'], count: '3×' }, { name: 'Al-Ahzab 33', kind: 'Quran', refs: ['ahzab33'] }, { name: 'Al-Ahzab 56', kind: 'Quran', refs: ['ahzab56'] },
+  { name: 'Selawat upon the Prophet', kind: 'Selawat', count: '11×' }, { name: 'Salam upon the Prophet', kind: 'Selawat' }, { name: 'Ali Imran 173 and Al-Anfal 40', kind: 'Quran', refs: ['imran173', 'anfal40'] },
+  { name: 'Hauqalah', kind: 'Dhikr' }, { name: 'Istighfar', kind: 'Dhikr', count: '3×' }, { name: 'Tahlil', kind: 'Dhikr', custom: 'tahlil33', count: '33×' },
   { name: 'Syahadah (La ilaha illallah Muhammadur Rasulullah)', kind: 'Dhikr' }, { name: 'Al-Fatihah (closing)', kind: 'Quran', surah: 'fatihah' }, { name: 'Doa Tahlil', kind: 'Doa' },
 ];
 export const MATHURAT: Part[] = [
