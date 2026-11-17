@@ -6,6 +6,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { Text } from './Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from './Glass';
+import { Shine } from './Shine';
 import { ReadBg, Header, ToolBar, Pending, Credit, ReadPicker } from './IslamicUi';
 import { W } from './Ui';
 import { Part, KIND_COL, partVerses, useIslamic, useLang, useZRead, dayKey, nm } from '../lib/islamic';
@@ -69,11 +70,17 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
       <Text style={{ color: 'rgba(255,255,255,.84)', fontSize: mS, lineHeight: mS * 1.55, marginTop: 6 }}>{lang === 'en' ? v.en : v.ms}</Text>
     </View>
   ) : null;
-  const bigBtn = (label: string, onPress: () => void, o?: { on?: boolean; tint?: boolean; dis?: boolean; flex?: number }) => (
-    <Pressable disabled={o && o.dis} onPress={onPress} style={{ flex: (o && o.flex) || 1, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: o && o.on ? 'rgba(52,211,153,.7)' : o && o.tint ? 'rgba(124,156,255,.65)' : 'rgba(255,255,255,.22)', backgroundColor: o && o.on ? 'rgba(52,211,153,.3)' : o && o.tint ? 'rgba(124,156,255,.3)' : 'rgba(255,255,255,.12)', opacity: o && o.dis ? 0.35 : 1 }}>
-      <Text style={{ color: o && o.on ? '#bff7df' : o && o.tint ? '#dbe4ff' : W, fontSize: 16, fontWeight: '800' }}>{label}</Text>
-    </Pressable>
-  );
+  // Buttons use the same press effect as the search field and play button in Quran Audio: they spring in, a ring of light spreads and a shine runs across.
+  const bigBtn = (label: string, onPress: () => void, o?: { on?: boolean; tint?: 'amber' | 'blue'; dis?: boolean; flex?: number }) => {
+    const t = o && o.on ? ['rgba(52,211,153,.3)', 'rgba(52,211,153,.7)', '#bff7df', '#34d399'] : o && o.tint === 'blue' ? ['rgba(124,156,255,.3)', 'rgba(124,156,255,.65)', '#dbe4ff', '#a9bcff'] : o && o.tint === 'amber' ? ['rgba(255,196,107,.22)', 'rgba(255,196,107,.55)', '#ffe2b0', '#ffc46b'] : ['rgba(255,255,255,.12)', 'rgba(255,255,255,.22)', W, '#ffffff'];
+    return (
+      <View style={{ flex: (o && o.flex) || 1, opacity: o && o.dis ? 0.35 : 1 }}>
+        <Shine disabled={!!(o && o.dis)} onPress={onPress} radius={20} glow={t[3]} label={label} style={{ height: 58, borderWidth: 1, borderColor: t[1], backgroundColor: t[0] }}>
+          <Text style={{ color: t[2], fontSize: 16, fontWeight: '800' }}>{label}</Text>
+        </Shine>
+      </View>
+    );
+  };
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <ReadBg />
@@ -115,22 +122,24 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
               ) : null}
             </ScrollView>
             {tg ? (
-              <Pressable onPress={tapCount} style={{ marginTop: 8 }}>
-                <LinearGradient colors={cnt >= tg ? ['rgba(52,211,153,.55)', 'rgba(52,211,153,.4)'] : ['rgba(255,196,107,.32)', 'rgba(255,143,90,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 62, borderRadius: 20, borderWidth: 1, borderColor: cnt >= tg ? 'rgba(52,211,153,.8)' : 'rgba(255,196,107,.5)', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ marginTop: 8 }}>
+                <Shine onPress={tapCount} radius={20} glow={cnt >= tg ? '#34d399' : '#ffc46b'} label="Count" style={{ height: 62, borderWidth: 1, borderColor: cnt >= tg ? 'rgba(52,211,153,.8)' : 'rgba(255,196,107,.5)' }}>
+                  <LinearGradient colors={cnt >= tg ? ['rgba(52,211,153,.55)', 'rgba(52,211,153,.4)'] : ['rgba(255,196,107,.32)', 'rgba(255,143,90,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
                   <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>{cnt >= tg ? 'Completed ✓ · tap to restart' : 'Tap to count  ·  ' + cnt + ' of ' + tg}</Text>
-                </LinearGradient>
-              </Pressable>
+                </Shine>
+              </View>
             ) : null}
           </View>
         </Glass>
         <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 14 }}>
-          {bigBtn('‹ Back', () => go(sel - 1), { dis: sel === 0 })}
-          {!p.custom ? bigBtn(isRead ? 'Read ✓' : 'Mark read', () => setRead(sel, !isRead), { on: isRead, tint: !isRead, flex: 1.2 }) : null}
-          <Pressable onPress={next} style={{ flex: 1.5 }}>
-            <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
+          {bigBtn('‹ Back', () => go(sel - 1), { dis: sel === 0, tint: 'amber' })}
+          {!p.custom ? bigBtn(isRead ? 'Read ✓' : 'Mark read', () => setRead(sel, !isRead), { on: isRead, tint: isRead ? undefined : 'blue', flex: 1.2 }) : null}
+          <View style={{ flex: 1.5 }}>
+            <Shine onPress={next} radius={20} glow="#bff7df" label="Next" style={{ height: 58 }}>
+              <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
               <Text style={{ color: '#06281c', fontSize: 16, fontWeight: '800' }}>{sel >= parts.length - 1 ? 'Finish ✓' : 'Next ›'}</Text>
-            </LinearGradient>
-          </Pressable>
+            </Shine>
+          </View>
         </View>
         <View style={{ height: 12 }} />
         {toast ? <View pointerEvents="none" style={{ position: 'absolute', bottom: 160, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.75)' }}><Text style={{ color: W, fontSize: 12.5 }}>{toast}</Text></View> : null}
