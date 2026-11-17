@@ -46,7 +46,11 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                 <Point t="A small model, so it can be wrong. For religion, health, law and money it will tell you to ask a qualified person instead." />
                 <Point t="It has no internet, so it does not know today's news or who holds a post now. For those it will say so." />
                 <Point t={'One-time download of about ' + SMART_MB + ' MB. Use Wi-Fi.'} />
-                {sc.plusOk && <Point t={'Your phone is strong enough for Smart chat+ (about ' + PLUS_MB + ' MB): better sentences and Bahasa Malaysia, but slower and it uses more memory.'} />}
+                <Point t={'Smart chat+ (about ' + PLUS_MB + ' MB, better sentences and Bahasa Malaysia) only appears on phones with about 6 GB of memory or more. Other phones use the ' + SMART_MB + ' MB Smart chat.'} />
+                {sc.plusOk && <Point t="Your phone is strong enough for Smart chat+. It is slower and uses more memory." />}
+                <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 14, backgroundColor: 'rgba(255,190,90,.12)', borderWidth: 1, borderColor: 'rgba(255,190,90,.4)', marginBottom: 8 }}>
+                  <Text style={{ flex: 1, color: '#ffd9a0', fontSize: 12.5, lineHeight: 18 }}>Please note: the AI on your phone is small. Sometimes it cannot answer correctly, and it may be wrong or give an answer that sounds sure but is not true. Check important facts, such as people, dates, numbers and news, with an official source.</Text>
+                </View>
                 <View style={{ marginTop: 10 }}>
                   {sc.ready ? (
                     <>
