@@ -16,6 +16,8 @@ import { AssistantBase } from '../lib/assistantBase';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk } from '../lib/xlate';
+import { AssistLangSheet } from '../components/AssistLangCard';
+import { getItem } from '../lib/store';
 
 const STARS: [number, number, number, number][] = Array.from({ length: 34 }, (_, i) => [(i * 37 + 11) % 100, (i * 53 + 7) % 96, 0.6 + ((i * 7) % 6) / 10, 0.25 + ((i * 13) % 6) / 10]);
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -33,6 +35,7 @@ class Chat extends AssistantBase {
   kbOpen = false;
   componentDidMount() {
     (this as any).weekly();
+    getItem('ml_xl_nosug', false).then((v: any) => { if (v) (this as any).setState({ xlNo: true }); });
     if (Platform.OS === 'web') return;
     const set = (n: number) => { this.kb = n; (this as any).setState({ kbLift: n }); };
     // Work out how far the input bar must rise. The bar's own current lift is added back, so a second keyboard event
@@ -83,6 +86,7 @@ class Chat extends AssistantBase {
               <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11 }} numberOfLines={1}>{v.sub}</Text>
             </View>
           </View>
+          <View style={{ alignItems: 'flex-end', gap: 6 }}>
           {(this.props as any).tlang ? (
             <View style={{ padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)' }}>
               <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999 }}><Text style={{ color: '#04201f', fontSize: 11.5, fontWeight: '800' }}>{String((this.props as any).tlang).toUpperCase()}</Text></LinearGradient>
@@ -98,6 +102,15 @@ class Chat extends AssistantBase {
             ))}
           </View>
           )}
+          {xlOk ? (
+            <Pressable onPress={() => (this.props as any).onMore && (this.props as any).onMore()} accessibilityRole="button" accessibilityLabel="More languages">
+              <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999 }}>
+                <Svg width={13} height={13} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} stroke="#04201f" strokeWidth={2.2} fill="none" /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="#04201f" strokeWidth={2.2} fill="none" strokeLinecap="round" /></Svg>
+                <Text style={{ color: '#04201f', fontSize: 11.5, fontWeight: '800' }}>More languages</Text>
+              </LinearGradient>
+            </Pressable>
+          ) : null}
+          </View>
         </LinearGradient>
 
         <ScrollView ref={(r) => { (this as any).scrollRef = r; }} style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 16, paddingTop: 16 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -147,6 +160,12 @@ class Chat extends AssistantBase {
                   </View>
                 )}
                 <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{m.text}</Text>
+                {m.xlD === 'flex' && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 }}>
+                    <Pressable onPress={m.xlYes}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999 }}><Text style={{ color: '#04201f', fontSize: 13, fontWeight: '800' }}>{m.xlL}</Text></LinearGradient></Pressable>
+                    <Pressable onPress={m.xlNo} hitSlop={8}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 13, fontWeight: '600' }}>Not now</Text></Pressable>
+                  </View>
+                )}
                 {m.btnD === 'flex' && (
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                     <Pressable onPress={m.no} style={{ flex: 1, height: 38, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{m.noL}</Text></Pressable>
@@ -228,6 +247,7 @@ export default function Assistant() {
   const [xl] = useAssistLang(); const packs = useLangPacks();
   // The chosen language is used only when its pack is on the phone, otherwise the Assistant keeps to English or Bahasa Malaysia.
   const tlang = xlOk && xl && packs.ready(xl) ? xl : '';
+  const [sheet, setSheet] = React.useState(false); const [auto, setAuto] = React.useState('');
   const go = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }
@@ -248,7 +268,8 @@ export default function Assistant() {
       </Svg>
       <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 12 + TOP }}>
         {last ? <PrayerFeed onTimes={setP} /> : null}
-        {real.ready ? <Chat ref={chat} tlang={tlang} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
+        {real.ready ? <Chat ref={chat} tlang={tlang} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
+        <AssistLangSheet visible={sheet} auto={auto} onClose={() => { setSheet(false); setAuto(''); }} />
         {!!note && <View style={{ position: 'absolute', left: 20, right: 20, bottom: 230, alignItems: 'center' }}><Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 18, backgroundColor: 'rgba(20,26,70,.92)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{note}</Text></Glass></View>}
       </SafeAreaView>
     </View>

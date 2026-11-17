@@ -7,7 +7,7 @@ import { think, fix } from './assistantBrain';
 import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
-import { xlText, xlMsg } from './xlate';
+import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 export class AssistantBase extends React.Component<any, any> {
   render(): any { return null; }
@@ -570,6 +570,9 @@ export class AssistantBase extends React.Component<any, any> {
     // A language chosen in Settings (not English or Bahasa Malaysia): translate on the phone, answer in English, translate back.
     const tl = this.props.tlang;
     if (tl) { this.askX(q, tl); return; }
+    // Typed in a script the built-in Assistant does not know, and no language is set up yet: offer to set it up, instead of a confusing "I did not understand".
+    const sg = xlOk && !this.state.xlNo ? scriptLang(q) : '';
+    if (sg) { this.offerX(q, sg); return; }
     const lang = this.detect(q) || this.state.lang;
     this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
@@ -584,6 +587,12 @@ export class AssistantBase extends React.Component<any, any> {
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
     }, 700);
+  }
+  offerX(q, code) {
+    const lg = xlLang(code); const nm = lg ? lg.native : code;
+    const base = { me: false, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' };
+    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }, Object.assign({}, base, { text: 'Want to chat in ' + nm + '? I can understand and answer in your language. It is translated on your phone, with a one-time download of about 30 MB.', xl: code, xlName: nm })]), draft: '', typing: false });
+    this.scroll();
   }
   // Same as ask(), for a language that is translated on the phone. The person sees their own words and the answer in their language.
   askX(q, tl) {
@@ -662,6 +671,7 @@ export class AssistantBase extends React.Component<any, any> {
         big: m.big, bigLbl: m.bigLbl, pct: m.pct < 0 ? 0 : m.pct, color: m.color || '#8fe9e2',
         text: m.text, time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
         undoD: m.uid && s.lastUndo && s.lastUndo.id === m.uid ? 'flex' : 'none', undo: () => this.undoLast(), undoL: L('Undo', 'Buat asal'),
+        xlD: m.xl ? 'flex' : 'none', xlYes: () => { if (this.props.onXl) this.props.onXl(m.xl); }, xlNo: () => { this.setState({ xlNo: true }); setItem('ml_xl_nosug', true); }, xlL: 'Set up ' + (m.xlName || ''),
         btnD: m.pid && s.pending && s.pending.id === m.pid ? 'flex' : 'none', yes: () => this.confirm(true), no: () => this.confirm(false), yesL: L('Save', 'Simpan'), noL: L('Cancel', 'Batal')
       };
     });
