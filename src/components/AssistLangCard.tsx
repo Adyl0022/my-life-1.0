@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Pressable, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import { View, Pressable, ActivityIndicator, Modal, ScrollView, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Text } from './Txt';
-import { XLANGS, xlOk, useAssistLang, useLangPacks, flagOf } from '../lib/xlate';
+import { XLANGS, xlOk, useAssistLang, useLangPacks, flagOf, xlLang } from '../lib/xlate';
 
 const DIM = 'rgba(255,255,255,.7)';
 const TONES: [string, string][] = [['#7c9cff', '#b794ff'], ['#34d399', '#5ee7df'], ['#ffc46b', '#ff8f5a'], ['#ff8fab', '#c79bff'], ['#5ee7df', '#4a8dff'], ['#b794ff', '#7059e8']];
@@ -15,17 +15,17 @@ const Globe = ({ s = 22, c = '#06281c' }: { s?: number; c?: string }) => (
 
 // The list of languages. Picking one downloads its pack once (if needed) and switches the Assistant to it.
 // `auto` starts the download of that language straight away, used when the Assistant offers to set one up.
-export function AssistLangList({ onDone, auto }: { onDone?: () => void; auto?: string }) {
+export function AssistLangList({ onDone, auto }: { onDone?: (code: string) => void; auto?: string }) {
   const [cur, setCur] = useAssistLang(); const packs = useLangPacks();
   const [msg, setMsg] = React.useState('');
   const pick = async (code: string) => {
     setMsg('');
-    if (!code) { setCur(''); onDone && onDone(); return; }
+    if (!code) { setCur(''); onDone && onDone(''); return; }
     if (!packs.ready(code)) {
       const ok = await packs.get(code);
       if (!ok) { setMsg('Could not download the language pack. Check your internet and try again.'); return; }
     }
-    setCur(code); onDone && onDone();
+    setCur(code); onDone && onDone(code);
   };
   const started = React.useRef(false);
   React.useEffect(() => { if (auto && xlOk && !started.current) { started.current = true; pick(auto); } }, [auto]);
@@ -50,7 +50,7 @@ export function AssistLangList({ onDone, auto }: { onDone?: () => void; auto?: s
 }
 
 // The same list as a sheet inside the Assistant, opened from the "Chat in your language" card or from the Assistant's offer.
-export function AssistLangSheet({ visible, onClose, auto }: { visible: boolean; onClose: () => void; auto?: string }) {
+export function AssistLangSheet({ visible, onClose, auto, onPicked }: { visible: boolean; onClose: () => void; auto?: string; onPicked?: (code: string) => void }) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: 'rgba(5,8,28,.74)', justifyContent: 'flex-end' }}>
@@ -68,7 +68,7 @@ export function AssistLangSheet({ visible, onClose, auto }: { visible: boolean; 
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Close</Text></Pressable>
           </View>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 34, paddingTop: 4 }} showsVerticalScrollIndicator={false}>
-            <AssistLangList auto={auto} onDone={onClose} />
+            <AssistLangList auto={auto} onDone={(c) => { onClose(); onPicked && onPicked(c); }} />
           </ScrollView>
         </View>
       </View>
@@ -100,5 +100,37 @@ function Item({ mono, flag, tone, t, sub, on, have, busy, onPress, onRemove }: {
         )}
       </View>
     </Pressable>
+  );
+}
+
+// A short popup after a language is chosen: "Chinese has been selected".
+export function LangPickedPopup({ code, onHide }: { code: string | null; onHide: () => void }) {
+  const a = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (code === null) return;
+    a.setValue(0);
+    Animated.timing(a, { toValue: 1, duration: 260, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }).start();
+    const t = setTimeout(() => { Animated.timing(a, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => onHide()); }, 2600);
+    return () => clearTimeout(t);
+  }, [code]);
+  if (code === null) return null;
+  const lg = code ? xlLang(code) : null;
+  const name = lg ? lg.name : 'English / Bahasa Malaysia';
+  return (
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
+      <Animated.View style={{ opacity: a, transform: [{ scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.88, 1] }) }], alignSelf: 'stretch' }}>
+        <Pressable onPress={onHide}>
+          <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,223,.55)', backgroundColor: '#151a4a', padding: 22, alignItems: 'center' }}>
+            <LinearGradient colors={['rgba(94,231,223,.28)', 'rgba(94,231,223,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
+            <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 62, height: 62, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}>
+              {lg ? <Text style={{ fontSize: 30 }}>{flagOf(code)}</Text> : <Globe s={30} />}
+            </LinearGradient>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800', marginTop: 14, textAlign: 'center' }}>{name + ' has been selected'}</Text>
+            {lg && lg.native !== lg.name ? <Text style={{ color: '#8fe9e2', fontSize: 16, fontWeight: '700', marginTop: 4 }}>{lg.native}</Text> : null}
+            <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 10, textAlign: 'center' }}>{lg ? 'You can now type in this language. Your words are translated on this phone.' : 'The Assistant answers in English or Bahasa Malaysia again.'}</Text>
+          </View>
+        </Pressable>
+      </Animated.View>
+    </View>
   );
 }

@@ -16,7 +16,7 @@ import { AssistantBase } from '../lib/assistantBase';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
-import { AssistLangSheet } from '../components/AssistLangCard';
+import { AssistLangSheet, LangPickedPopup } from '../components/AssistLangCard';
 import { LangWelcomeCard } from '../components/LangWelcomeCard';
 import { SmartChatSheet } from '../components/SmartChatSheet';
 import { getItem } from '../lib/store';
@@ -249,6 +249,7 @@ export default function Assistant() {
   const name = useName();
   const router = useRouter();
   const [note, setNote] = React.useState('');
+  const [picked, setPicked] = React.useState<string | null>(null);
   const chat = React.useRef<any>(null);
   const [P, setP] = React.useState<[string, number, number][]>([]);
   const [last] = useStored<any>('ml_prayer_last', null);
@@ -279,7 +280,8 @@ export default function Assistant() {
         {last ? <PrayerFeed onTimes={setP} /> : null}
         {real.ready ? <Chat ref={chat} tlang={tlang} onSmart={() => setSmart(true)} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
         <SmartChatSheet visible={smart} onClose={() => setSmart(false)} />
-        <AssistLangSheet visible={sheet} auto={auto} onClose={() => { setSheet(false); setAuto(''); }} />
+        <AssistLangSheet visible={sheet} auto={auto} onClose={() => { setSheet(false); setAuto(''); }} onPicked={(c: string) => setPicked(c)} />
+        <LangPickedPopup code={picked} onHide={() => setPicked(null)} />
         {!!note && <View style={{ position: 'absolute', left: 20, right: 20, bottom: 230, alignItems: 'center' }}><Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 18, backgroundColor: 'rgba(20,26,70,.92)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{note}</Text></Glass></View>}
       </SafeAreaView>
     </View>
