@@ -15,7 +15,7 @@ import { OrbLive } from '../components/OrbLive';
 import { AssistantBase } from '../lib/assistantBase';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
-import { useAssistLang, useLangPacks, xlOk } from '../lib/xlate';
+import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
 import { AssistLangSheet } from '../components/AssistLangCard';
 import { getItem } from '../lib/store';
 
@@ -86,7 +86,6 @@ class Chat extends AssistantBase {
               <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11 }} numberOfLines={1}>{v.sub}</Text>
             </View>
           </View>
-          <View style={{ alignItems: 'flex-end', gap: 6 }}>
           {(this.props as any).tlang ? (
             <View style={{ padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)' }}>
               <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999 }}><Text style={{ color: '#04201f', fontSize: 11.5, fontWeight: '800' }}>{String((this.props as any).tlang).toUpperCase()}</Text></LinearGradient>
@@ -102,36 +101,45 @@ class Chat extends AssistantBase {
             ))}
           </View>
           )}
-          {xlOk ? (
-            <Pressable onPress={() => (this.props as any).onMore && (this.props as any).onMore()} accessibilityRole="button" accessibilityLabel="More languages">
-              <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999 }}>
-                <Svg width={13} height={13} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} stroke="#04201f" strokeWidth={2.2} fill="none" /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="#04201f" strokeWidth={2.2} fill="none" strokeLinecap="round" /></Svg>
-                <Text style={{ color: '#04201f', fontSize: 11.5, fontWeight: '800' }}>More languages</Text>
-              </LinearGradient>
-            </Pressable>
-          ) : null}
-          </View>
         </LinearGradient>
 
-        <ScrollView ref={(r) => { (this as any).scrollRef = r; }} style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 16, paddingTop: 16 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView ref={(r) => { (this as any).scrollRef = r; }} style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 16, paddingTop: 16, flexGrow: empty ? 1 : 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {empty && (
-            <View style={{ alignItems: 'center', paddingTop: 0 }}>
-              <OrbLive size={92} />
-              <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 0 }}>{this.clean((ms ? 'Hai ' : 'Hi ') + this.fn())}</Text>
-              <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 15, marginTop: 6, textAlign: 'center' }}>{ms ? 'Apa awak nak tahu hari ini?' : 'What would you like to know today?'}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 28, alignSelf: 'stretch' }}>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              {/* The orb and greeting sit in the middle of the space that is left, so the orb has room for its animation. */}
+              <View style={{ flex: 1, minHeight: 200, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch' }}>
+                <OrbLive size={92} />
+                <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 0 }}>{this.clean((ms ? 'Hai ' : 'Hi ') + this.fn())}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 15, marginTop: 6, textAlign: 'center' }}>{ms ? 'Apa awak nak tahu hari ini?' : 'What would you like to know today?'}</Text>
+              </View>
+              {/* Small cards and the language card stay near the input, where the thumb reaches. */}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignSelf: 'stretch' }}>
                 {pick.map((q: any) => (
-                  <Pressable key={q.label} onPress={q.go} style={{ width: '47.8%' }}>
-                    <Glass radius={22} style={{ padding: 14, minHeight: 104, justifyContent: 'space-between' }}>
+                  <Pressable key={q.label} onPress={q.go} style={{ width: '48.5%' }}>
+                    <Glass radius={20} style={{ paddingVertical: 10, paddingHorizontal: 10, minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <LinearGradient colors={gradOf(q.bg)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
-                        <Svg width={20} height={20} viewBox="0 0 24 24"><Path d={q.d} {...stroke} /></Svg>
+                        <Svg width={19} height={19} viewBox="0 0 24 24"><Path d={q.d} {...stroke} /></Svg>
                       </LinearGradient>
-                      <Text style={{ color: '#fff', fontSize: 13.5, fontWeight: '700', lineHeight: 18, marginTop: 12 }}>{q.label}</Text>
+                      <Text numberOfLines={3} style={{ flex: 1, color: '#fff', fontSize: 13, fontWeight: '700', lineHeight: 17 }}>{q.label}</Text>
                     </Glass>
                   </Pressable>
                 ))}
               </View>
-              <Pressable onPress={() => (this as any).setState({ more: !more })} style={{ marginTop: 20, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {xlOk ? (
+                <Pressable onPress={() => (this.props as any).onMore && (this.props as any).onMore()} accessibilityRole="button" accessibilityLabel="Chat in your language" style={{ alignSelf: 'stretch', marginTop: 10 }}>
+                  <Glass radius={20} style={{ paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: 'rgba(94,231,223,.55)' }}>
+                    <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
+                      <Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} stroke="#06281c" strokeWidth={2} fill="none" /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="#06281c" strokeWidth={2} fill="none" strokeLinecap="round" /></Svg>
+                    </LinearGradient>
+                    <View style={{ flex: 1 }}>
+                      <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{(this.props as any).tlang ? 'Language: ' + ((xlLang((this.props as any).tlang) || { native: (this.props as any).tlang }).native) : 'Chat in your language'}</Text>
+                      <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{(this.props as any).tlang ? 'Tap to change' : 'Chinese, Arabic, Thai, Hindi and more'}</Text>
+                    </View>
+                    <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 20 }}>›</Text>
+                  </Glass>
+                </Pressable>
+              ) : null}
+              <Pressable onPress={() => (this as any).setState({ more: !more })} style={{ marginTop: 14, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ color: 'rgba(255,255,255,.88)', fontSize: 12.5, fontWeight: '700' }}>{more ? (ms ? 'Tutup' : 'Show less') : (ms ? 'Lagi idea' : 'More ideas')}</Text>
                 <Svg width={14} height={14} viewBox="0 0 24 24"><Path d={more ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} {...stroke} strokeWidth={2.4} /></Svg>
               </Pressable>
