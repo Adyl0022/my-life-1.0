@@ -10,7 +10,7 @@ import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
-import { smartOk, smartReady, smartAsk, sensitiveReply, currentReply } from './llm';
+import { smartOk, gemmaOk, smartReady, smartAsk, sensitiveReply, currentReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 export class AssistantBase extends React.Component<any, any> {
@@ -613,7 +613,7 @@ export class AssistantBase extends React.Component<any, any> {
         if (o.text) { r.m = Object.assign({}, r.m, { text: o.text, fb: 0 }); return r; }
         note = onlineNote(o.why, lang);
       }
-      if (smartOk && smartReady()) {
+      if ((smartOk || gemmaOk) && smartReady()) {
         const a = await smartAsk(q, lang);
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0 }); return r; }
       } else if (!this.state.smNo && !onlineOn()) {

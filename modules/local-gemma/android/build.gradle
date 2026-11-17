@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.localgemma'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.localgemma"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+    consumerProguardFiles 'consumer-rules.pro'
+  }
+}
+
+dependencies {
+  // Google LiteRT-LM: runs Gemma 4 on the phone, with no internet after the one-time model download.
+  implementation 'com.google.ai.edge.litertlm:litertlm-android:latest.release'
+}

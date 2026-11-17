@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getItem, setItem } from './store';
+import { gemAvailable, gemReadyNow, gemPartial, gemProgress, gemDownload, gemCancel, gemRemove, gemUnload, gemGenerate } from '../../modules/local-gemma';
 import { llmAvailable, llmRam, llmReadyNow, llmProgress, llmDownload, llmCancel, llmRemove, llmUnload, llmGenerate } from '../../modules/local-llm';
 
 // "Smart chat": a small AI model that runs on the phone for questions the Assistant has no written answer for.
@@ -9,14 +10,20 @@ export const SMART_MB = 550;
 // "Smart chat+": Qwen2.5 1.5B Instruct, about 1.6 GB. Better sentences and Malay, but only offered to phones with plenty of memory.
 export const PLUS_URL = 'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv1280.task';
 export const PLUS_MB = 1600;
+// "Smart chat Pro": Gemma 4 E2B (Apache 2.0), about 2.6 GB, for phones with 8 GB of memory or more. Much better answers and languages.
+export const GEMMA_URL = 'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm';
+export const GEMMA_MB = 2600;
 const MIN_RAM = 3500; // phones with less memory cannot run it well, so the feature stays hidden there
 const PLUS_RAM = 5500; // a 6 GB phone reports a little under 6000
+const GEMMA_RAM = 7000; // an 8 GB phone reports a little under 8000
 export const smartOk = llmAvailable && llmRam() >= MIN_RAM;
 export const plusOk = llmAvailable && llmRam() >= PLUS_RAM;
+export const gemmaOk = gemAvailable && llmRam() >= GEMMA_RAM;
 
-let READY = llmReadyNow(); let BUSY = false; let PCT = 0;
-let TIER: 's' | 'p' = 's'; // which model is on the phone
-getItem('ml_smtier', 's').then((v: any) => { TIER = v === 'p' ? 'p' : 's'; });
+// Which model is on the phone: 's' Qwen 0.5B, 'p' Qwen 1.5B, 'g' Gemma 4. Only one is kept, to save space.
+let TIER: 's' | 'p' | 'g' = gemReadyNow() ? 'g' : 's';
+let READY = gemReadyNow() || llmReadyNow(); let BUSY = false; let PCT = 0;
+getItem('ml_smtier', '').then((v: any) => { if (v === 'g' && gemReadyNow()) TIER = 'g'; else if ((v === 'p' || v === 's') && llmReadyNow()) TIER = v; });
 const subs = new Set<() => void>();
 const tell = () => subs.forEach((f) => { try { f(); } catch (e) { } });
 
@@ -25,21 +32,29 @@ export function smartReady(): boolean { return READY; }
 export function useSmartChat() {
   const [, n] = useState(0);
   useEffect(() => { const f = () => n((x) => x + 1); subs.add(f); return () => { subs.delete(f); }; }, []);
-  const get = async (plus?: boolean) => {
+  const get = async (which?: 'p' | 'g') => {
     if (BUSY) return false;
-    if (plus && !plusOk) return false;
+    if (which === 'p' && !plusOk) return false;
+    if (which === 'g' && !gemmaOk) return false;
     BUSY = true; PCT = 0; tell();
-    if (READY) await llmUnload(); // the old model file is replaced, so free it first
-    const t = setInterval(() => { const p = llmProgress(); PCT = p[1] > 0 ? Math.min(99, Math.round((p[0] / p[1]) * 100)) : 0; tell(); }, 700);
-    const ok = await llmDownload(plus ? PLUS_URL : SMART_URL);
-    clearInterval(t); BUSY = false; READY = ok ? llmReadyNow() : READY; PCT = 0;
-    if (ok) { TIER = plus ? 'p' : 's'; setItem('ml_smtier', TIER); }
+    await llmUnload(); await gemUnload(); // free the memory of the old model before the new one arrives
+    const prog = () => (which === 'g' ? gemProgress() : llmProgress());
+    const t = setInterval(() => { const p = prog(); PCT = p[1] > 0 ? Math.min(99, Math.round((p[0] / p[1]) * 100)) : 0; tell(); }, 700);
+    const ok = which === 'g' ? await gemDownload(GEMMA_URL) : await llmDownload(which === 'p' ? PLUS_URL : SMART_URL);
+    clearInterval(t); BUSY = false; PCT = 0;
+    if (ok) {
+      TIER = which === 'g' ? 'g' : which === 'p' ? 'p' : 's';
+      setItem('ml_smtier', TIER);
+      // Only one model is kept, so the other kind is removed.
+      if (which === 'g') await llmRemove(); else await gemRemove();
+      READY = true;
+    } else READY = gemReadyNow() || llmReadyNow();
     tell();
     return ok;
   };
-  const cancel = () => { llmCancel(); };
-  const del = async () => { await llmRemove(); READY = false; setItem('ml_smtier', 's'); TIER = 's'; tell(); };
-  return { ok: smartOk, plusOk, tier: TIER, ready: READY, busy: BUSY, pct: PCT, get, cancel, del };
+  const cancel = () => { llmCancel(); gemCancel(); };
+  const del = async () => { await llmRemove(); await gemRemove(); READY = false; setItem('ml_smtier', 's'); TIER = 's'; tell(); };
+  return { ok: smartOk || gemmaOk, plusOk, gemmaOk, tier: TIER, ready: READY, busy: BUSY, pct: PCT, resumeMB: Math.round(gemPartial() / 1048576), get, cancel, del };
 }
 
 // Topics where a small model must not guess: religious rulings, medicine, law and money advice. Answered with a fixed, careful reply.
@@ -75,15 +90,17 @@ function clean(t: string): string {
 
 // Asks the model on the phone. Returns '' when it cannot answer, so the caller can use its own fallback.
 export async function smartAsk(q: string, lang: string): Promise<string> {
-  if (!smartOk || !READY) return '';
+  if (!(smartOk || gemmaOk) || !READY) return '';
   const ms = lang === 'ms';
   const sys = 'You are My Life Assistant, a friendly helper inside the My Life app, made by Adli Syahmi. '
     + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + ', in at most 4 short sentences. '
     + 'You have no internet and your knowledge is old, so you do not know recent events. '
     + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
     + 'Do not give religious rulings, medical, legal or investment advice.';
-  const prompt = '<|im_start|>system\n' + sys + '<|im_end|>\n<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n';
-  const out = clean(await llmGenerate(prompt));
+  let raw = '';
+  if (TIER === 'g') raw = await gemGenerate(sys + '\n\nQuestion: ' + q);
+  else raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
+  const out = clean(raw);
   if (!out) return '';
   const fact = /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
   return out + (ms
