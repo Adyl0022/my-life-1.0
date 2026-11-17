@@ -15,11 +15,9 @@ function ProButton({ onPress, title, sub, top }: { onPress: () => void; title: s
             <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="#4a2f00" stroke="#4a2f00" strokeWidth={1.2} strokeLinejoin="round" /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" fill="#4a2f00" /></Svg>
           </LinearGradient>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <Text style={{ color: '#ffe08a', fontSize: 15, fontWeight: '800' }}>{title}</Text>
-              <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>SMARTEST</Text></View>
-            </View>
+            <Text style={{ color: '#ffe08a', fontSize: 15, fontWeight: '800' }}>{title}</Text>
             <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 3 }}>{sub}</Text>
+            <View style={{ alignSelf: 'flex-start', marginTop: 7, paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>SMARTEST</Text></View>
           </View>
           <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" stroke="#ffe08a" strokeWidth={2.6} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
         </View>
