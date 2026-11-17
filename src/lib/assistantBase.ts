@@ -573,7 +573,9 @@ export class AssistantBase extends React.Component<any, any> {
   }
   scroll() { setTimeout(() => { try { this.props.onScroll && this.props.onScroll(); } catch (e) { } }, 80); }
   ask(q) {
-    q = (q || '').trim();
+    // The box can have several lines (Enter makes a new line). The Assistant reads it as one line, but the bubble keeps the lines.
+    const shown = (q || '').trim();
+    q = shown.replace(/\s*\n+\s*/g, ' ');
     if (!q || this.state.typing) return;
     // A language chosen in Settings (not English or Bahasa Malaysia): translate on the phone, answer in English, translate back.
     const tl = this.props.tlang;
@@ -584,7 +586,7 @@ export class AssistantBase extends React.Component<any, any> {
     const lang = this.detect(q) || this.state.lang;
     const trc = xlOk ? parseTranslate(q) : null;
     if (trc) { this.translateCmd(q, trc, lang); return; }
-    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
+    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: shown, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
     setTimeout(async () => {
       let r;
@@ -752,7 +754,7 @@ export class AssistantBase extends React.Component<any, any> {
       cats: order.map((i) => ({ name: catNames[i][ix], cls: i === cat ? 'cat on' : 'cat', go: () => this.setState({ cat: i }) })),
       chips: Q[cat].filter((x) => qOk(x[0])).map(x => ({ label: x[ix], go: () => this.ask(x[ix]) })),
       draft: s.draft,
-      ph: L('Ask or say "spent ' + cu() + '10 on lunch"...', 'Tanya atau cakap "belanja ' + cu() + '10 makan"...'),
+      ph: L('Ask or say "spent ' + cu() + '10 on lunch"...', 'Tanya / cakap "belanja ' + cu() + '10 makan"...'),
       onDraft: (e) => this.setState({ draft: e.target.value }),
       onKey: (e) => { if (e && e.key === 'Enter') this.ask(e.target.value); },
       send: () => this.ask(this.state.draft)
