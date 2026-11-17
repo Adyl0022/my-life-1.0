@@ -3,6 +3,7 @@ package expo.modules.localllm
 import android.app.ActivityManager
 import android.content.Context
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
+import com.google.mediapipe.tasks.genai.llminference.ProgressListener
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -10,6 +11,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -22,6 +25,7 @@ class LocalLlmModule : Module() {
   private val busy = AtomicBoolean(false)
   private var llm: LlmInference? = null
   private val lock = Any()
+  private val live = StringBuffer()
 
   private fun ctx(): Context = appContext.reactContext ?: throw IllegalStateException("no context")
   private fun dir(): File = File(ctx().filesDir, "llm").also { it.mkdirs() }
@@ -81,25 +85,49 @@ class LocalLlmModule : Module() {
       promise.resolve(true)
     }
 
+    Function("live") { live.toString() }
+
+    // Loads the model in the background, so the first question is not slow.
+    AsyncFunction("warm") { promise: Promise ->
+      Thread {
+        try {
+          if (!(file().exists() && file().length() > 100L * 1024 * 1024)) { promise.resolve(false); return@Thread }
+          synchronized(lock) { ensure() }
+          promise.resolve(true)
+        } catch (e: Throwable) { promise.resolve(false) }
+      }.start()
+    }
+
     // Writes an answer for a prompt. Resolves an empty text if anything goes wrong, so the app can fall back to its own words.
     AsyncFunction("generate") { prompt: String, promise: Promise ->
       Thread {
         try {
           val r = synchronized(lock) {
-            if (llm == null) {
-              val o = LlmInference.LlmInferenceOptions.builder()
-                .setModelPath(file().absolutePath)
-                .setMaxTokens(2048)
-                .build()
-              llm = LlmInference.createFromOptions(ctx(), o)
-            }
-            llm!!.generateResponse(prompt)
+            ensure()
+            live.setLength(0)
+            val latch = CountDownLatch(1)
+            llm!!.generateResponseAsync(prompt, ProgressListener<String> { part, finished ->
+              if (part != null) live.append(part)
+              if (finished) latch.countDown()
+            })
+            latch.await(240, TimeUnit.SECONDS)
+            live.toString()
           }
-          promise.resolve(r ?: "")
+          promise.resolve(r)
         } catch (e: Throwable) {
           promise.resolve("")
         }
       }.start()
+    }
+  }
+
+  private fun ensure() {
+    if (llm == null) {
+      val o = LlmInference.LlmInferenceOptions.builder()
+        .setModelPath(file().absolutePath)
+        .setMaxTokens(2048)
+        .build()
+      llm = LlmInference.createFromOptions(ctx(), o)
     }
   }
 }

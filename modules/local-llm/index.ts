@@ -11,3 +11,6 @@ export function llmCancel() { try { if (M) M.cancel(); } catch (e) { } }
 export async function llmRemove(): Promise<boolean> { try { return M ? !!(await M.remove()) : false; } catch (e) { return false; } }
 export async function llmUnload() { try { if (M) await M.unload(); } catch (e) { } }
 export async function llmGenerate(prompt: string): Promise<string> { try { return M ? (((await M.generate(prompt)) as string) || '') : ''; } catch (e) { return ''; } }
+
+export function llmLive(): string { try { return M ? ((M.live() as string) || '') : ''; } catch (e) { return ''; } }
+export async function llmWarm(): Promise<boolean> { try { return M ? !!(await M.warm()) : false; } catch (e) { return false; } }

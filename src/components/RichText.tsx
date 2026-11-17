@@ -1,0 +1,53 @@
+import React from 'react';
+import { View } from 'react-native';
+import { Text } from './Txt';
+
+// Shows an AI answer with simple formatting: **bold**, `code`, code blocks, bullet points and numbered points.
+// Text with none of these marks is shown exactly as plain text, so written answers look the same as before.
+const MARKS = /```|\*\*|`[^`\n]+`|^\s*([-*•]|\d+[.)])\s+|^#{1,4}\s/m;
+const C = '#fff';
+
+function inline(s: string, key: string) {
+  const parts: React.ReactNode[] = [];
+  const re = /(\*\*[^*]+\*\*|`[^`\n]+`)/g;
+  let last = 0; let m: RegExpExecArray | null; let n = 0;
+  while ((m = re.exec(s))) {
+    if (m.index > last) parts.push(s.slice(last, m.index));
+    const t = m[0];
+    if (t.startsWith('**')) parts.push(<Text key={key + n++} style={{ fontWeight: '800', color: C }}>{t.slice(2, -2)}</Text>);
+    else parts.push(<Text key={key + n++} style={{ fontFamily: 'monospace', color: '#8fe9e2', backgroundColor: 'rgba(0,0,0,.28)' }}>{t.slice(1, -1)}</Text>);
+    last = m.index + t.length;
+  }
+  if (last < s.length) parts.push(s.slice(last));
+  return parts;
+}
+
+export function RichText({ text }: { text: string }) {
+  const base = { color: C, fontSize: 14.5, lineHeight: 22 } as const;
+  if (!MARKS.test(text)) return <Text style={base}>{text}</Text>;
+  const lines = text.split('\n');
+  const out: React.ReactNode[] = [];
+  const st: { code: string[] | null } = { code: null };
+  lines.forEach((ln, i) => {
+    if (/^\s*```/.test(ln)) {
+      if (st.code) { out.push(<View key={'c' + i} style={{ marginVertical: 6, padding: 10, borderRadius: 12, backgroundColor: 'rgba(0,0,0,.35)' }}><Text style={{ color: '#d7f7f1', fontFamily: 'monospace', fontSize: 12.5, lineHeight: 18 }}>{st.code.join('\n')}</Text></View>); st.code = null; }
+      else st.code = [];
+      return;
+    }
+    if (st.code) { st.code.push(ln); return; }
+    if (!ln.trim()) { out.push(<View key={'s' + i} style={{ height: 6 }} />); return; }
+    const b = ln.match(/^\s*([-*•])\s+(.*)$/); const nb = ln.match(/^\s*(\d+)[.)]\s+(.*)$/); const h = ln.match(/^#{1,4}\s+(.*)$/);
+    if (b || nb) {
+      out.push(
+        <View key={'l' + i} style={{ flexDirection: 'row', marginTop: 2 }}>
+          <Text style={{ ...base, width: 22 }}>{b ? '•' : nb![1] + '.'}</Text>
+          <Text style={{ ...base, flex: 1 }}>{inline((b ? b[2] : nb![2]), 'i' + i)}</Text>
+        </View>,
+      );
+    } else if (h) out.push(<Text key={'h' + i} style={{ ...base, fontWeight: '800', marginTop: 4 }}>{inline(h[1], 'h' + i)}</Text>);
+    else out.push(<Text key={'p' + i} style={base}>{inline(ln, 'p' + i)}</Text>);
+  });
+  // A code block that was never closed (the answer is still being written) is shown as it is.
+  if (st.code) out.push(<View key="cx" style={{ marginVertical: 6, padding: 10, borderRadius: 12, backgroundColor: 'rgba(0,0,0,.35)' }}><Text style={{ color: '#d7f7f1', fontFamily: 'monospace', fontSize: 12.5, lineHeight: 18 }}>{st.code.join('\n')}</Text></View>);
+  return <View>{out}</View>;
+}

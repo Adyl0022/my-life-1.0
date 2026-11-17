@@ -23,7 +23,7 @@ export class AssistantBase extends React.Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
-      msgs: [], draft: '', lang: 'en', cat: 0, typing: false, cups: 0,
+      msgs: [], draft: '', lang: 'en', cat: 0, typing: false, live: '', cups: 0,
       steps: 0, sleep: 0, mood: 0, odo: 0, nextSvc: 0, kmMonth: 0, mtcMonth: 0, income: 0, pending: null, pid: 0,
       tasks: []
     };
@@ -603,7 +603,7 @@ export class AssistantBase extends React.Component<any, any> {
       if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r, tt);
       // Anything saved from here can be undone with one tap (or by typing "undo").
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
-      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
+      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false, live: '' }, r.patch));
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
     }, 700);
@@ -625,7 +625,8 @@ export class AssistantBase extends React.Component<any, any> {
       if (cr) { r.m = Object.assign({}, r.m, { text: cr + (note ? '\n\n' + note : ''), fb: 0 }); return r; }
       if ((smartOk || gemmaOk) && smartReady()) {
         const hist = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
-        const a = await smartAsk(q, lang, hist);
+        let lastLive = 0;
+        const a = await smartAsk(q, lang, hist, (t: string) => { this.setState({ live: t }); const n = Date.now(); if (n - lastLive > 700) { lastLive = n; this.scroll(); } });
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0 }); return r; }
       } else if (!this.state.smNo && !onlineOn()) {
         const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI: AI kecil dalam telefon awak (muat turun sekali, lebih kurang 550 MB), atau AI dalam talian (soalan dihantar ke internet, awak pilih sendiri).' : '\n\nI can also answer general questions with AI: a small AI on your phone (one-time download of about 550 MB), or Online AI (your question is sent over the internet, and you choose whether to use it).';
@@ -683,7 +684,7 @@ export class AssistantBase extends React.Component<any, any> {
       if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(qe, 'en', r, tt);
       try { r.m = await xlMsg(r.m, tl); } catch (e) { /* keep the English answer */ }
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
-      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
+      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false, live: '' }, r.patch));
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
     })();
@@ -761,6 +762,7 @@ export class AssistantBase extends React.Component<any, any> {
       starters: S.map((x, n) => [x, n]).filter((xn) => (!catMod[xn[0][0]] || modOn(catMod[xn[0][0]])) && qOk(Q[xn[0][0]][xn[0][1]][0])).map(xn => { const x = xn[0]; const q = Q[x[0]][x[1]][ix]; return { id: xn[1], label: q, d: x[2], bg: x[3], go: () => this.ask(q) }; }),
       msgs: msgs,
       typD: s.typing ? 'flex' : 'none',
+      live: s.live || '',
       cats: order.map((i) => ({ name: catNames[i][ix], cls: i === cat ? 'cat on' : 'cat', go: () => this.setState({ cat: i }) })),
       chips: Q[cat].filter((x) => qOk(x[0])).map(x => ({ label: x[ix], go: () => this.ask(x[ix]) })),
       draft: s.draft,

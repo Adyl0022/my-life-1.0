@@ -18,6 +18,8 @@ import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
 import { AssistLangSheet, LangPickedPopup } from '../components/AssistLangCard';
 import { ThinkingBubble } from '../components/ThinkingBubble';
+import { RichText } from '../components/RichText';
+import { smartWarm } from '../lib/llm';
 import { LangWelcomeCard } from '../components/LangWelcomeCard';
 import { SmartChatSheet } from '../components/SmartChatSheet';
 import { getItem } from '../lib/store';
@@ -38,6 +40,7 @@ class Chat extends AssistantBase {
   kbOpen = false;
   componentDidMount() {
     (this as any).weekly();
+    try { smartWarm(); } catch (e) { /* the AI on the phone is optional */ }
     getItem('ml_sm_no', false).then((v: any) => { if (v) (this as any).setState({ smNo: true }); });
     getItem('ml_xl_nosug', false).then((v: any) => { if (v) (this as any).setState({ xlNo: true }); });
     if (Platform.OS === 'web') return;
@@ -169,7 +172,7 @@ class Chat extends AssistantBase {
                     {m.barD === 'block' && <View style={{ height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden', marginTop: 8 }}><View style={{ height: 7, borderRadius: 4, width: `${Math.min(100, m.pct)}%`, backgroundColor: m.color }} /></View>}
                   </View>
                 )}
-                <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{m.text}</Text>
+                {me ? <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{m.text}</Text> : <RichText text={m.text} />}
                 {m.xlD === 'flex' && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 }}>
                     <Pressable onPress={m.xlYes}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999 }}><Text style={{ color: '#04201f', fontSize: 13, fontWeight: '800' }}>{m.xlL}</Text></LinearGradient></Pressable>
@@ -205,7 +208,9 @@ class Chat extends AssistantBase {
           {v.typD === 'flex' && (
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
               <OrbSvg size={32} uid="ty" />
-              <ThinkingBubble ms={ms} />
+              {v.live ? (
+                <Glass radius={20} style={{ maxWidth: '84%', paddingVertical: 13, paddingHorizontal: 16, borderBottomLeftRadius: 6 }}><RichText text={v.live + ' ▍'} /></Glass>
+              ) : <ThinkingBubble ms={ms} />}
             </View>
           )}
         </ScrollView>

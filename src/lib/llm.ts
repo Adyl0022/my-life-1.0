@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getItem, setItem } from './store';
-import { gemAvailable, gemReadyNow, gemPartial, gemProgress, gemDownload, gemCancel, gemRemove, gemUnload, gemGenerate } from '../../modules/local-gemma';
-import { llmAvailable, llmRam, llmReadyNow, llmProgress, llmDownload, llmCancel, llmRemove, llmUnload, llmGenerate } from '../../modules/local-llm';
+import { gemAvailable, gemReadyNow, gemPartial, gemProgress, gemDownload, gemCancel, gemRemove, gemUnload, gemGenerate, gemLive, gemWarm } from '../../modules/local-gemma';
+import { llmAvailable, llmRam, llmReadyNow, llmProgress, llmDownload, llmCancel, llmRemove, llmUnload, llmGenerate, llmLive, llmWarm } from '../../modules/local-llm';
 
 // "Smart chat": a small AI model that runs on the phone for questions the Assistant has no written answer for.
 // Qwen2.5 0.5B Instruct (Apache 2.0), about 550 MB, downloaded once. Nothing that is asked leaves the phone.
@@ -104,28 +104,67 @@ function clean(t: string, max = 900): string {
 }
 
 // Asks the model on the phone. Returns '' when it cannot answer, so the caller can use its own fallback.
-export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = []): Promise<string> {
+// What kind of request it is, so the AI gets the right instruction.
+function kindOf(q: string): string {
+  if (q.length > 160 || /\b(summari[sz]e|summary|rewrite|paraphrase|proofread|ringkaskan|ringkasan|rumuskan|tulis semula)\b/i.test(q)) return 'text';
+  if (/```|\b(code|coding|function|script|bug|error|exception|python|javascript|typescript|java|kotlin|react|sql|html|css|regex|api|program|compile|kod|aturcara)\b/i.test(q)) return 'code';
+  if (/\b(translate|terjemah|terjemahkan)\b/i.test(q)) return 'translate';
+  if (/\b(what do you think|your opinion|do you think|should i|which is better|better than|pendapat|patut ke|patutkah|mana lebih baik|awak rasa|kau rasa)\b/i.test(q)) return 'opinion';
+  if (/\b(explain|how does|how do|why|terangkan|kenapa|mengapa|macam mana|bagaimana)\b/i.test(q)) return 'explain';
+  if (q.length < 28 && /\b(hi|hello|hey|hai|helo|assalamualaikum|apa khabar|how are you|thanks|terima kasih|bored|boring)\b/i.test(q)) return 'chat';
+  return 'general';
+}
+const KIND_RULE: { [k: string]: string } = {
+  text: 'The person pasted a text or asked for a summary: reply as short bullet points (at most 6), one idea each. ',
+  code: 'For code: give correct, complete code in a code block first, then explain it briefly. If something essential is missing, ask one short question. ',
+  translate: 'For a translation: give the translation first, then add a short note only if it helps. ',
+  opinion: 'When asked for an opinion: give a clear recommendation first, then two or three short reasons, and mention one trade-off. ',
+  explain: 'When explaining: use simple words, go step by step, and add one everyday example. ',
+  chat: 'This is casual talk: reply briefly and warmly like a friend, and end with a short friendly question. ',
+  general: '',
+};
+
+// Text with the model's private "thinking" and special tokens removed, safe to show while it is still being written.
+function livePart(t: string): string {
+  return (t || '').replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<\|[^|]*\|?>?/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trimStart();
+}
+
+// Warms the model up in the background (call when the Assistant opens), so the first question is not slow.
+let WARMED = '';
+export function smartWarm() {
+  if (!(smartOk || gemmaOk) || !READY || WARMED === TIER) return;
+  WARMED = TIER;
+  const big = TIER === 'g' || TIER === 'q';
+  (big ? gemWarm() : llmWarm()).then((ok) => { if (!ok) WARMED = ''; }).catch(() => { WARMED = ''; });
+}
+
+export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = [], onPart?: (t: string) => void): Promise<string> {
   if (!(smartOk || gemmaOk) || !READY) return '';
   const ms = lang === 'ms';
   const big = TIER === 'g' || TIER === 'q';
-  // A pasted text or a summarise job: short bullet points.
-  const task = q.length > 160 || /\b(summari[sz]e|summary|rewrite|paraphrase|proofread|ringkaskan|ringkasan|rumuskan|tulis semula)\b/i.test(q);
+  const kind = kindOf(q); const task = kind === 'text';
   const sys = 'You are My Life Assistant, a warm, clear and helpful AI inside the My Life app, made by Adli Syahmi. '
     + 'Talk like a thoughtful friend: answer questions, explain things step by step, write and fix code (put code in a code block), give your own opinion with short reasons when asked, brainstorm, and chat naturally. '
     + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + '. '
-    + (task ? 'The person pasted a text or asked for a summary: reply as short bullet points (at most 6), one idea each. ' : (big ? 'Be thorough but not long-winded: a few short paragraphs or a short list is fine. ' : 'Keep it short and clear: up to 6 sentences. '))
+    + KIND_RULE[kind]
+    + (task || kind === 'code' || kind === 'chat' ? '' : (big ? 'Be thorough but not long-winded: a few short paragraphs or a short list is fine. ' : 'Keep it short and clear: up to 6 sentences. '))
     + 'You have no internet and your knowledge is old, so say so for news, prices, scores or who holds a post now. '
     + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
     + 'For religious rulings, medical, legal or investment decisions, give only general information and suggest asking a qualified person.';
   const h = (hist || []).slice(-6);
+  // While the model writes, the app reads what it has so far, so the words appear one by one.
+  let timer: any = 0; let last = '';
+  if (onPart) timer = setInterval(() => { try { const t = livePart(big ? gemLive() : llmLive()); if (t && t !== last) { last = t; onPart(t); } } catch (e) { /* ignore */ } }, 250);
   let raw = '';
-  if (big) {
-    const past = h.length ? 'Conversation so far:\n' + h.map((x) => (x.me ? 'User: ' : 'Assistant: ') + x.text).join('\n') + '\n\n' : '';
-    raw = await gemGenerate(sys + '\n\n' + past + 'User: ' + q);
-  } else {
-    const past = h.map((x) => '<|im_start|>' + (x.me ? 'user' : 'assistant') + '\n' + x.text + '<|im_end|>\n').join('');
-    raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n' + past + '<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
-  }
+  try {
+    if (big) {
+      const past = h.length ? 'Conversation so far:\n' + h.map((x) => (x.me ? 'User: ' : 'Assistant: ') + x.text).join('\n') + '\n\n' : '';
+      raw = await gemGenerate(sys + '\n\n' + past + 'User: ' + q);
+    } else {
+      const past = h.map((x) => '<|im_start|>' + (x.me ? 'user' : 'assistant') + '\n' + x.text + '<|im_end|>\n').join('');
+      raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n' + past + '<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
+    }
+  } finally { if (timer) clearInterval(timer); }
   const out = clean(raw, big ? 3500 : 1400);
   if (!out) return '';
   const fact = !task && /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
