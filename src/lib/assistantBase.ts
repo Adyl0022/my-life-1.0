@@ -8,6 +8,7 @@ import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
+import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, smartReady, smartAsk, sensitiveReply, currentReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
@@ -606,13 +607,19 @@ export class AssistantBase extends React.Component<any, any> {
       if (sv) { r.m = Object.assign({}, r.m, { text: sv, fb: 0 }); return r; }
       const cr = currentReply(q, lang);
       if (cr) { r.m = Object.assign({}, r.m, { text: cr, fb: 0 }); return r; }
+      let note = '';
+      if (onlineOn()) {
+        const o: any = await onlineAsk(q, lang);
+        if (o.text) { r.m = Object.assign({}, r.m, { text: o.text, fb: 0 }); return r; }
+        note = onlineNote(o.why, lang);
+      }
       if (smartOk && smartReady()) {
         const a = await smartAsk(q, lang);
-        if (a) { r.m = Object.assign({}, r.m, { text: a, fb: 0 }); return r; }
-      } else if (smartOk && !this.state.smNo) {
-        const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI kecil yang berjalan dalam telefon awak (muat turun sekali, lebih kurang 550 MB).' : '\n\nI can also answer general questions with a small AI that runs on your phone (one-time download of about 550 MB).';
+        if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0 }); return r; }
+      } else if (!this.state.smNo && !onlineOn()) {
+        const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI: AI kecil dalam telefon awak (muat turun sekali, lebih kurang 550 MB), atau AI dalam talian (soalan dihantar ke internet, awak pilih sendiri).' : '\n\nI can also answer general questions with AI: a small AI on your phone (one-time download of about 550 MB), or Online AI (your question is sent over the internet, and you choose whether to use it).';
         r.m = Object.assign({}, r.m, { text: r.m.text + more, sm: 1 });
-      }
+      } else if (note) { r.m = Object.assign({}, r.m, { text: r.m.text + '\n\n' + note }); }
     } catch (e) { /* keep the normal reply */ }
     return r;
   }
@@ -726,7 +733,7 @@ export class AssistantBase extends React.Component<any, any> {
         big: m.big, bigLbl: m.bigLbl, pct: m.pct < 0 ? 0 : m.pct, color: m.color || '#8fe9e2',
         text: m.text, time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
         undoD: m.uid && s.lastUndo && s.lastUndo.id === m.uid ? 'flex' : 'none', undo: () => this.undoLast(), undoL: L('Undo', 'Buat asal'),
-        xlD: (m.xl || m.sm) ? 'flex' : 'none', xlYes: () => { if (m.sm) { if (this.props.onSmart) this.props.onSmart(); } else if (this.props.onXl) this.props.onXl(m.xl); }, xlNo: () => { if (m.sm) { this.setState({ smNo: true }); setItem('ml_sm_no', true); } else { this.setState({ xlNo: true }); setItem('ml_xl_nosug', true); } }, xlL: m.sm ? 'Get Smart chat' : 'Set up ' + (m.xlName || ''),
+        xlD: (m.xl || m.sm) ? 'flex' : 'none', xlYes: () => { if (m.sm) { if (this.props.onSmart) this.props.onSmart(); } else if (this.props.onXl) this.props.onXl(m.xl); }, xlNo: () => { if (m.sm) { this.setState({ smNo: true }); setItem('ml_sm_no', true); } else { this.setState({ xlNo: true }); setItem('ml_xl_nosug', true); } }, xlL: m.sm ? 'Set up AI chat' : 'Set up ' + (m.xlName || ''),
         btnD: m.pid && s.pending && s.pending.id === m.pid ? 'flex' : 'none', yes: () => this.confirm(true), no: () => this.confirm(false), yesL: L('Save', 'Simpan'), noL: L('Cancel', 'Batal')
       };
     });

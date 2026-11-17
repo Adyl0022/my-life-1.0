@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Pressable, Modal, ScrollView, Switch } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { Text } from './Txt';
 import { useSmartChat, SMART_MB, PLUS_MB } from '../lib/llm';
+import { useOnlineAi } from '../lib/onlineAi';
+import { useSession } from '../lib/auth';
 
 const DIM = 'rgba(255,255,255,.7)';
 const Spark = ({ s = 24, c = '#06281c' }: { s?: number; c?: string }) => (
@@ -19,6 +21,7 @@ const Point = ({ t }: { t: string }) => (
 // Smart chat: a small AI model on the phone for questions the Assistant has no written answer for.
 export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const sc = useSmartChat(); const [err, setErr] = React.useState('');
+  const [on, setOn] = useOnlineAi(); const [sess] = useSession();
   const start = async (plus?: boolean) => { setErr(''); const ok = await sc.get(plus); if (!ok) setErr('The download did not finish. Check your internet and storage, then try again.'); };
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
@@ -37,6 +40,20 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Close</Text></Pressable>
           </View>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 34, paddingTop: 4 }} showsVerticalScrollIndicator={false}>
+            <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: on ? 'rgba(94,231,223,.55)' : 'rgba(255,255,255,.16)', marginBottom: 18 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Online AI</Text>
+                  <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>Smarter answers, needs internet</Text>
+                </View>
+                <Switch value={on} onValueChange={setOn} trackColor={{ false: 'rgba(255,255,255,.2)', true: '#34d399' }} thumbColor="#fff" />
+              </View>
+              <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>When this is on, questions the Assistant cannot answer itself are sent over the internet to an AI service (through our server). When it is off, or the daily limit is used up, the AI on your phone answers instead.</Text>
+              <View style={{ marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: 'rgba(255,190,90,.12)', borderWidth: 1, borderColor: 'rgba(255,190,90,.4)' }}>
+                <Text style={{ color: '#ffd9a0', fontSize: 12.5, lineHeight: 18 }}>Please remember: what you ask leaves your phone, so do not type private details such as passwords, ID numbers or bank details. Your own data in My Life is never sent. The answer can be wrong or out of date, so check important facts with an official source. There is a daily limit, and you must be signed in.</Text>
+              </View>
+              {on && !sess ? <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>You are not signed in, so Online AI cannot be used yet.</Text> : null}
+            </View>
             {!sc.ok ? (
               <Text style={{ color: '#ffd9a0', fontSize: 13, lineHeight: 19 }}>Smart chat needs a newer version of the app and a phone with enough memory, so it is not available here.</Text>
             ) : (
