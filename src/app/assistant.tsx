@@ -17,6 +17,7 @@ import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
 import { AssistLangSheet } from '../components/AssistLangCard';
+import { LangWelcomeCard } from '../components/LangWelcomeCard';
 import { SmartChatSheet } from '../components/SmartChatSheet';
 import { getItem } from '../lib/store';
 
@@ -133,18 +134,11 @@ class Chat extends AssistantBase {
                 ) : null)}
               </View>
               {xlOk ? (
-                <Pressable onPress={() => (this.props as any).onMore && (this.props as any).onMore()} accessibilityRole="button" accessibilityLabel="Chat in your language" style={{ alignSelf: 'stretch', marginTop: 10 }}>
-                  <Glass radius={20} style={{ paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: 'rgba(94,231,223,.55)' }}>
-                    <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
-                      <Svg width={20} height={20} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} stroke="#06281c" strokeWidth={2} fill="none" /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="#06281c" strokeWidth={2} fill="none" strokeLinecap="round" /></Svg>
-                    </LinearGradient>
-                    <View style={{ flex: 1 }}>
-                      <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{(this.props as any).tlang ? 'Language: ' + ((xlLang((this.props as any).tlang) || { native: (this.props as any).tlang }).native) : 'Chat in your language'}</Text>
-                      <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 2 }}>{(this.props as any).tlang ? 'Tap to change' : 'Chinese, Arabic, Thai, Hindi and more'}</Text>
-                    </View>
-                    <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 20 }}>›</Text>
-                  </Glass>
-                </Pressable>
+                <LangWelcomeCard
+                  onPress={() => (this.props as any).onMore && (this.props as any).onMore()}
+                  title={(this.props as any).tlang ? 'Language: ' + ((xlLang((this.props as any).tlang) || { native: (this.props as any).tlang }).native) : 'Chat in your language'}
+                  sub={(this.props as any).tlang ? 'Tap to change' : undefined}
+                />
               ) : null}
               <Pressable onPress={() => (this as any).setState({ more: !more })} style={{ marginTop: 14, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ color: 'rgba(255,255,255,.88)', fontSize: 12.5, fontWeight: '700' }}>{more ? (ms ? 'Tutup' : 'Show less') : (ms ? 'Lagi idea' : 'More ideas')}</Text>
