@@ -19,3 +19,8 @@ dependencies {
   // Google LiteRT-LM: runs Gemma 4 on the phone, with no internet after the one-time model download.
   implementation 'com.google.ai.edge.litertlm:litertlm-android:latest.release'
 }
+
+// The LiteRT-LM library is built with a newer Kotlin than this app uses. Its code is still readable, so skip the version check.
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+  compilerOptions.freeCompilerArgs.add('-Xskip-metadata-version-check')
+}
