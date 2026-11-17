@@ -29,6 +29,8 @@ export const XLANGS: XLang[] = [
   { code: 'nl', name: 'Dutch', native: 'Nederlands' },
   { code: 'sw', name: 'Swahili', native: 'Kiswahili' },
 ];
+export const XFLAG: Record<string, string> = { id: 'ID', zh: 'CN', ar: 'SA', th: 'TH', vi: 'VN', tl: 'PH', hi: 'IN', ta: 'IN', bn: 'BD', ur: 'PK', ja: 'JP', ko: 'KR', tr: 'TR', fa: 'IR', es: 'ES', fr: 'FR', de: 'DE', pt: 'PT', ru: 'RU', it: 'IT', nl: 'NL', sw: 'KE' };
+export const flagOf = (code: string) => { const c = XFLAG[code]; return c ? String.fromCodePoint(...Array.from(c).map((ch) => 127397 + ch.charCodeAt(0))) : ''; };
 export const XKEY = 'ml_assist_lang';
 export const xlOk = mlAvailable;
 

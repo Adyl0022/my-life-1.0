@@ -3,7 +3,7 @@ import { View, Pressable, ActivityIndicator, Modal, ScrollView } from 'react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Text } from './Txt';
-import { XLANGS, xlOk, useAssistLang, useLangPacks } from '../lib/xlate';
+import { XLANGS, xlOk, useAssistLang, useLangPacks, flagOf } from '../lib/xlate';
 
 const DIM = 'rgba(255,255,255,.7)';
 const TONES: [string, string][] = [['#7c9cff', '#b794ff'], ['#34d399', '#5ee7df'], ['#ffc46b', '#ff8f5a'], ['#ff8fab', '#c79bff'], ['#5ee7df', '#4a8dff'], ['#b794ff', '#7059e8']];
@@ -37,11 +37,11 @@ export function AssistLangList({ onDone, auto }: { onDone?: () => void; auto?: s
         <Text style={{ flex: 1, color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18 }}>Your words are translated on this phone. Download a language once (about 30 MB) and it works without internet.</Text>
       </View>
       <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginBottom: 8, marginLeft: 4 }}>BUILT IN</Text>
-      <Item mono="A" tone={TONES[0]} t="English / Bahasa Malaysia" sub="Works offline, no download" on={!cur} have onPress={() => pick('')} />
+      <Item mono="EN·BM" tone={TONES[0]} t="English / Bahasa Malaysia" sub="Works offline, no download" on={!cur} have onPress={() => pick('')} />
       <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginTop: 10, marginBottom: 8, marginLeft: 4 }}>MORE LANGUAGES</Text>
       {XLANGS.map((x, i) => {
         const have = packs.ready(x.code); const busy = packs.busy === x.code;
-        return <Item key={x.code} mono={Array.from(x.native)[0]} tone={TONES[(i + 1) % TONES.length]} t={x.native} sub={x.name} on={cur === x.code} have={have} busy={busy} onPress={() => { if (!packs.busy) pick(x.code); }} onRemove={have && cur !== x.code && !busy ? () => packs.del(x.code) : undefined} />;
+        return <Item key={x.code} mono={flagOf(x.code)} flag tone={TONES[(i + 1) % TONES.length]} t={x.native} sub={x.name} on={cur === x.code} have={have} busy={busy} onPress={() => { if (!packs.busy) pick(x.code); }} onRemove={have && cur !== x.code && !busy ? () => packs.del(x.code) : undefined} />;
       })}
       {msg ? <Text style={{ color: '#ffd9a0', fontSize: 12.5, marginTop: 4, marginBottom: 6 }}>{msg}</Text> : null}
       <Text style={{ color: DIM, fontSize: 11.5, lineHeight: 17, marginTop: 6 }}>Menus and buttons stay in English. The phone makes the translation, so check amounts and dates.</Text>
@@ -76,11 +76,11 @@ export function AssistLangSheet({ visible, onClose, auto }: { visible: boolean; 
   );
 }
 
-function Item({ mono, tone, t, sub, on, have, busy, onPress, onRemove }: { mono: string; tone: [string, string]; t: string; sub: string; on: boolean; have?: boolean; busy?: boolean; onPress: () => void; onRemove?: () => void }) {
+function Item({ mono, flag, tone, t, sub, on, have, busy, onPress, onRemove }: { mono: string; flag?: boolean; tone: [string, string]; t: string; sub: string; on: boolean; have?: boolean; busy?: boolean; onPress: () => void; onRemove?: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={{ marginBottom: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: on ? 'rgba(94,231,223,.14)' : 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: on ? 'rgba(94,231,223,.75)' : 'rgba(255,255,255,.14)' }}>
-        <LinearGradient colors={tone} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 19, fontWeight: '800' }}>{mono}</Text></LinearGradient>
+        {flag ? <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ fontSize: 25 }}>{mono}</Text></View> : <LinearGradient colors={tone} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.3 }}>{mono}</Text></LinearGradient>}
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t}</Text>
           <Text numberOfLines={1} style={{ color: DIM, fontSize: 12, marginTop: 2 }}>{busy ? 'Downloading...' : sub}</Text>
