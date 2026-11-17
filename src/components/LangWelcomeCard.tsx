@@ -32,24 +32,31 @@ function Tile({ onPress, label, sub, colors, children, ink, nudge }: any) {
 export function LangWelcomeCard({ onLang, onAI, langName, showLang, ms }: { onLang: () => void; onAI: () => void; langName?: string; showLang: boolean; ms?: boolean }) {
   const glow = useRef(new Animated.Value(0)).current;
   const sweep = useRef(new Animated.Value(0)).current;
-  const nudge = useRef(new Animated.Value(0)).current;
+  const nudgeL = useRef(new Animated.Value(0)).current;
+  const nudgeR = useRef(new Animated.Value(0)).current;
   const [w, setW] = useState(320);
   useEffect(() => {
-    const loop = Animated.loop(Animated.sequence([
-      Animated.delay(1400),
-      Animated.timing(nudge, { toValue: 1, duration: 450, easing: Easing.inOut(Easing.quad), useNativeDriver: ND }),
-      Animated.timing(nudge, { toValue: 0, duration: 450, easing: Easing.inOut(Easing.quad), useNativeDriver: ND }),
+    // The two arrows move one after the other (left, then right), over and over.
+    const step = (v: Animated.Value, before: number, after: number) => Animated.loop(Animated.sequence([
+      Animated.delay(before),
+      Animated.timing(v, { toValue: 1, duration: 450, easing: Easing.inOut(Easing.quad), useNativeDriver: ND }),
+      Animated.timing(v, { toValue: 0, duration: 450, easing: Easing.inOut(Easing.quad), useNativeDriver: ND }),
+      Animated.delay(after),
     ]));
-    loop.start();
-    const t = setTimeout(() => {
-      glow.setValue(0); sweep.setValue(0);
+    const l1 = step(nudgeL, 1000, 2100); const l2 = step(nudgeR, 1900, 1200);
+    l1.start(); l2.start();
+    // The soft glow (halo, bright border, shine) comes back every few seconds.
+    const g = Animated.loop(Animated.sequence([
+      Animated.delay(500),
       Animated.parallel([
         Animated.timing(glow, { toValue: 1, duration: 1400, easing: Easing.out(Easing.quad), useNativeDriver: false }),
         Animated.timing(sweep, { toValue: 1, duration: 1100, easing: Easing.out(Easing.quad), useNativeDriver: ND }),
-      ]).start();
-    }, 500);
-    return () => { clearTimeout(t); loop.stop(); };
-  }, [glow, sweep, nudge]);
+      ]),
+      Animated.delay(5000),
+    ]));
+    g.start();
+    return () => { l1.stop(); l2.stop(); g.stop(); };
+  }, [glow, sweep, nudgeL, nudgeR]);
   // 0 -> 1 -> 0 envelope so the glow rises fast and fades out.
   const env = glow.interpolate({ inputRange: [0, 0.25, 0.6, 1], outputRange: [0, 1, 1, 0] });
   const flags = FLAGS.slice(0, 4).join(' ');
@@ -60,11 +67,11 @@ export function LangWelcomeCard({ onLang, onAI, langName, showLang, ms }: { onLa
         <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 12.5, fontWeight: '800', letterSpacing: 0.3, marginLeft: 4, marginBottom: 8 }}>{showLang ? (ms ? 'Bahasa dan Online AI' : 'Language and Online AI') : 'Online AI'}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {showLang ? (
-            <Tile onPress={onLang} label={langName ? langName : (ms ? 'Bahasa' : 'Language')} sub={langName ? (ms ? 'Ketik untuk tukar' : 'Tap to change') : (<View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>{FLAGS.slice(0, 2).map((f) => <Text key={f} style={{ fontSize: 13 }}>{f}</Text>)}<Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>+20</Text></View>)} colors={['#34d399', '#5ee7df']} nudge={nudge}>
+            <Tile onPress={onLang} label={langName ? langName : (ms ? 'Bahasa' : 'Language')} sub={langName ? (ms ? 'Ketik untuk tukar' : 'Tap to change') : (<View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>{FLAGS.slice(0, 2).map((f) => <Text key={f} style={{ fontSize: 13 }}>{f}</Text>)}<Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '800' }}>+20</Text></View>)} colors={['#34d399', '#5ee7df']} nudge={nudgeL}>
               <Svg width={19} height={19} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9} stroke="#06281c" strokeWidth={2} fill="none" /><Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="#06281c" strokeWidth={2} fill="none" strokeLinecap="round" /></Svg>
             </Tile>
           ) : null}
-          <Tile onPress={onAI} label="Online AI" sub={ms ? 'Apa saja' : 'Any topic'} colors={['#7c9cff', '#b794ff']} nudge={nudge}>
+          <Tile onPress={onAI} label="Online AI" sub={ms ? 'Apa saja' : 'Any topic'} colors={['#7c9cff', '#b794ff']} nudge={nudgeR}>
             <Svg width={19} height={19} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" stroke="#fff" strokeWidth={1.8} fill="none" strokeLinejoin="round" /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" stroke="#fff" strokeWidth={1.4} fill="none" strokeLinejoin="round" /></Svg>
           </Tile>
         </View>
