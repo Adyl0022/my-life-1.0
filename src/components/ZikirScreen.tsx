@@ -69,9 +69,9 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
       <Text style={{ color: 'rgba(255,255,255,.84)', fontSize: mS, lineHeight: mS * 1.55, marginTop: 6 }}>{lang === 'en' ? v.en : v.ms}</Text>
     </View>
   ) : null;
-  const bigBtn = (label: string, onPress: () => void, o?: { on?: boolean; dis?: boolean; flex?: number }) => (
-    <Pressable disabled={o && o.dis} onPress={onPress} style={{ flex: (o && o.flex) || 1, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: o && o.on ? 'rgba(52,211,153,.7)' : 'rgba(255,255,255,.22)', backgroundColor: o && o.on ? 'rgba(52,211,153,.3)' : 'rgba(255,255,255,.12)', opacity: o && o.dis ? 0.35 : 1 }}>
-      <Text style={{ color: o && o.on ? '#bff7df' : W, fontSize: 16, fontWeight: '800' }}>{label}</Text>
+  const bigBtn = (label: string, onPress: () => void, o?: { on?: boolean; tint?: boolean; dis?: boolean; flex?: number }) => (
+    <Pressable disabled={o && o.dis} onPress={onPress} style={{ flex: (o && o.flex) || 1, height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: o && o.on ? 'rgba(52,211,153,.7)' : o && o.tint ? 'rgba(124,156,255,.65)' : 'rgba(255,255,255,.22)', backgroundColor: o && o.on ? 'rgba(52,211,153,.3)' : o && o.tint ? 'rgba(124,156,255,.3)' : 'rgba(255,255,255,.12)', opacity: o && o.dis ? 0.35 : 1 }}>
+      <Text style={{ color: o && o.on ? '#bff7df' : o && o.tint ? '#dbe4ff' : W, fontSize: 16, fontWeight: '800' }}>{label}</Text>
     </Pressable>
   );
   return (
@@ -125,7 +125,7 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
         </Glass>
         <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 14 }}>
           {bigBtn('‹ Back', () => go(sel - 1), { dis: sel === 0 })}
-          {!p.custom ? bigBtn(isRead ? 'Read ✓' : 'Mark read', () => setRead(sel, !isRead), { on: isRead, flex: 1.2 }) : null}
+          {!p.custom ? bigBtn(isRead ? 'Read ✓' : 'Mark read', () => setRead(sel, !isRead), { on: isRead, tint: !isRead, flex: 1.2 }) : null}
           <Pressable onPress={next} style={{ flex: 1.5 }}>
             <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 58, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: '#06281c', fontSize: 16, fontWeight: '800' }}>{sel >= parts.length - 1 ? 'Finish ✓' : 'Next ›'}</Text>
