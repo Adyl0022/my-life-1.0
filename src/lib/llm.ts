@@ -10,20 +10,23 @@ export const SMART_MB = 550;
 // "Smart chat+": Qwen2.5 1.5B Instruct, about 1.6 GB. Better sentences and Malay, but only offered to phones with plenty of memory.
 export const PLUS_URL = 'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv1280.task';
 export const PLUS_MB = 1600;
-// "Smart chat Pro": Gemma 4 E2B (Apache 2.0), about 2.6 GB, for phones with 8 GB of memory or more. Much better answers and languages.
-export const GEMMA_URL = 'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm';
-export const GEMMA_MB = 2600;
+// "Smart chat Max", for phones with about 12 GB of memory or more. Two models to compare (both Apache 2.0, both run with Google LiteRT-LM):
+// Gemma 4 E4B (about 3.7 GB) and Qwen 3.5 4B int8 (about 4.4 GB).
+export const GEMMA_URL = 'https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm';
+export const GEMMA_MB = 3650;
+export const QWEN_URL = 'https://huggingface.co/litert-community/Qwen3.5-4B/resolve/main/Qwen3.5-4B_int8.litertlm';
+export const QWEN_MB = 4420;
 const MIN_RAM = 3500; // phones with less memory cannot run it well, so the feature stays hidden there
 const PLUS_RAM = 5500; // a 6 GB phone reports a little under 6000
-const GEMMA_RAM = 7000; // an 8 GB phone reports a little under 8000
+const GEMMA_RAM = 10500; // a 12 GB phone reports a little under 12000
 export const smartOk = llmAvailable && llmRam() >= MIN_RAM;
 export const plusOk = llmAvailable && llmRam() >= PLUS_RAM;
 export const gemmaOk = gemAvailable && llmRam() >= GEMMA_RAM;
 
-// Which model is on the phone: 's' Qwen 0.5B, 'p' Qwen 1.5B, 'g' Gemma 4. Only one is kept, to save space.
-let TIER: 's' | 'p' | 'g' = gemReadyNow() ? 'g' : 's';
+// Which model is on the phone: 's' Qwen 0.5B, 'p' Qwen 1.5B, 'g' Gemma 4, 'q' Qwen 3.5 4B. Only one is kept, to save space.
+let TIER: 's' | 'p' | 'g' | 'q' = gemReadyNow() ? 'g' : 's';
 let READY = gemReadyNow() || llmReadyNow(); let BUSY = false; let PCT = 0;
-getItem('ml_smtier', '').then((v: any) => { if (v === 'g' && gemReadyNow()) TIER = 'g'; else if ((v === 'p' || v === 's') && llmReadyNow()) TIER = v; });
+getItem('ml_smtier', '').then((v: any) => { if ((v === 'g' || v === 'q') && gemReadyNow()) TIER = v; else if ((v === 'p' || v === 's') && llmReadyNow()) TIER = v; });
 const subs = new Set<() => void>();
 const tell = () => subs.forEach((f) => { try { f(); } catch (e) { } });
 
@@ -33,13 +36,14 @@ export function smartReady(): boolean { return READY; }
 export function useSmartChat() {
   const [, n] = useState(0);
   useEffect(() => { const f = () => n((x) => x + 1); subs.add(f); return () => { subs.delete(f); }; }, []);
-  const get = async (which?: 'p' | 'g') => {
+  const get = async (which?: 'p' | 'g' | 'q') => {
     if (BUSY) return false;
     if (which === 'p' && !plusOk) return false;
-    if (which === 'g' && !gemmaOk) return false;
+    if ((which === 'g' || which === 'q') && !gemmaOk) return false;
     BUSY = true; PCT = 0; tell();
     await llmUnload(); await gemUnload(); // free the memory of the old model before the new one arrives
-    const prog = () => (which === 'g' ? gemProgress() : llmProgress());
+    const big = which === 'g' || which === 'q';
+    const prog = () => (big ? gemProgress() : llmProgress());
     let lastB = prog()[0], lastT = Date.now(), sp = 0;
     SPEED = 0; ETA = 0; DONE_MB = 0; TOTAL_MB = 0;
     const t = setInterval(() => {
@@ -51,13 +55,13 @@ export function useSmartChat() {
       ETA = sp > 0 && p[1] > p[0] ? Math.round((p[1] - p[0]) / sp) : 0;
       tell();
     }, 700);
-    const ok = which === 'g' ? await gemDownload(GEMMA_URL) : await llmDownload(which === 'p' ? PLUS_URL : SMART_URL);
+    const ok = big ? await gemDownload(which === 'q' ? QWEN_URL : GEMMA_URL) : await llmDownload(which === 'p' ? PLUS_URL : SMART_URL);
     clearInterval(t); BUSY = false; PCT = 0; SPEED = 0; ETA = 0;
     if (ok) {
-      TIER = which === 'g' ? 'g' : which === 'p' ? 'p' : 's';
+      TIER = which === 'g' ? 'g' : which === 'q' ? 'q' : which === 'p' ? 'p' : 's';
       setItem('ml_smtier', TIER);
       // Only one model is kept, so the other kind is removed.
-      if (which === 'g') await llmRemove(); else await gemRemove();
+      if (big) await llmRemove(); else await gemRemove();
       READY = true;
     } else READY = gemReadyNow() || llmReadyNow();
     tell();
@@ -109,7 +113,7 @@ export async function smartAsk(q: string, lang: string): Promise<string> {
     + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
     + 'Do not give religious rulings, medical, legal or investment advice.';
   let raw = '';
-  if (TIER === 'g') raw = await gemGenerate(sys + '\n\nQuestion: ' + q);
+  if (TIER === 'g' || TIER === 'q') raw = await gemGenerate(sys + '\n\nQuestion: ' + q);
   else raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
   const out = clean(raw);
   if (!out) return '';
