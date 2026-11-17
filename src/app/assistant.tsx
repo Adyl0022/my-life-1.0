@@ -15,6 +15,7 @@ import { OrbLive } from '../components/OrbLive';
 import { AssistantBase } from '../lib/assistantBase';
 import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
+import { useAssistLang, useLangPacks, xlOk } from '../lib/xlate';
 
 const STARS: [number, number, number, number][] = Array.from({ length: 34 }, (_, i) => [(i * 37 + 11) % 100, (i * 53 + 7) % 96, 0.6 + ((i * 7) % 6) / 10, 0.25 + ((i * 13) % 6) / 10]);
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -82,6 +83,11 @@ class Chat extends AssistantBase {
               <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11 }} numberOfLines={1}>{v.sub}</Text>
             </View>
           </View>
+          {(this.props as any).tlang ? (
+            <View style={{ padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)' }}>
+              <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999 }}><Text style={{ color: '#04201f', fontSize: 11.5, fontWeight: '800' }}>{String((this.props as any).tlang).toUpperCase()}</Text></LinearGradient>
+            </View>
+          ) : (
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)' }}>
             {[['EN', v.goEn, v.l1], ['BM', v.goMs, v.l2]].map(([t, f, on]: any) => (
               <Pressable key={t} onPress={f}>
@@ -91,6 +97,7 @@ class Chat extends AssistantBase {
               </Pressable>
             ))}
           </View>
+          )}
         </LinearGradient>
 
         <ScrollView ref={(r) => { (this as any).scrollRef = r; }} style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 16, paddingTop: 16 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -218,6 +225,9 @@ export default function Assistant() {
   const [P, setP] = React.useState<[string, number, number][]>([]);
   const [last] = useStored<any>('ml_prayer_last', null);
   const real = useReal(P);
+  const [xl] = useAssistLang(); const packs = useLangPacks();
+  // The chosen language is used only when its pack is on the phone, otherwise the Assistant keeps to English or Bahasa Malaysia.
+  const tlang = xlOk && xl && packs.ready(xl) ? xl : '';
   const go = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }
@@ -238,7 +248,7 @@ export default function Assistant() {
       </Svg>
       <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 12 + TOP }}>
         {last ? <PrayerFeed onTimes={setP} /> : null}
-        {real.ready ? <Chat ref={chat} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
+        {real.ready ? <Chat ref={chat} tlang={tlang} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
         {!!note && <View style={{ position: 'absolute', left: 20, right: 20, bottom: 230, alignItems: 'center' }}><Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 18, backgroundColor: 'rgba(20,26,70,.92)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{note}</Text></Glass></View>}
       </SafeAreaView>
     </View>

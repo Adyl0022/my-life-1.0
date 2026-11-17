@@ -7,6 +7,7 @@ import { think, fix } from './assistantBrain';
 import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
+import { xlText, xlMsg } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 export class AssistantBase extends React.Component<any, any> {
   render(): any { return null; }
@@ -566,6 +567,9 @@ export class AssistantBase extends React.Component<any, any> {
   ask(q) {
     q = (q || '').trim();
     if (!q || this.state.typing) return;
+    // A language chosen in Settings (not English or Bahasa Malaysia): translate on the phone, answer in English, translate back.
+    const tl = this.props.tlang;
+    if (tl) { this.askX(q, tl); return; }
     const lang = this.detect(q) || this.state.lang;
     this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
@@ -580,6 +584,24 @@ export class AssistantBase extends React.Component<any, any> {
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
     }, 700);
+  }
+  // Same as ask(), for a language that is translated on the phone. The person sees their own words and the answer in their language.
+  askX(q, tl) {
+    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: 'en' });
+    this.scroll();
+    (async () => {
+      let qe = q;
+      try { qe = await xlText(q, tl, 'en'); } catch (e) { qe = q; }
+      let r;
+      try { r = this.reply(qe, 'en'); } catch (e) {
+        r = { m: { me: false, text: 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
+      }
+      try { r.m = await xlMsg(r.m, tl); } catch (e) { /* keep the English answer */ }
+      if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
+      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
+      if (r.act && this.props.persist) this.props.persist(r.act);
+      this.scroll();
+    })();
   }
   renderVals() {
     const s = this.state; const ms = s.lang === 'ms';

@@ -20,6 +20,7 @@ import { supabase } from '../../lib/supabase';
 import { Announcement } from '../../components/Announcement';
 import { RegionCard } from '../../components/RegionCard';
 import { ModulesCard } from '../../components/ModulesCard';
+import { AssistLangCard } from '../../components/AssistLangCard';
 import { useHidden } from '../../lib/hidden';
 import { markSeen, useAnnouncement } from '../../lib/announcement';
 import { useSession, signOut, checkPassword, setNewPassword, deleteAccount } from '../../lib/auth';
@@ -267,6 +268,7 @@ export default function Settings() {
               <Announcement />
               <RegionCard />
               <ModulesCard />
+              <AssistLangCard />
               {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
                 <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>
