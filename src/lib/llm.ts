@@ -27,6 +27,7 @@ getItem('ml_smtier', '').then((v: any) => { if (v === 'g' && gemReadyNow()) TIER
 const subs = new Set<() => void>();
 const tell = () => subs.forEach((f) => { try { f(); } catch (e) { } });
 
+let SPEED = 0, ETA = 0, DONE_MB = 0, TOTAL_MB = 0;
 export function smartReady(): boolean { return READY; }
 
 export function useSmartChat() {
@@ -39,9 +40,19 @@ export function useSmartChat() {
     BUSY = true; PCT = 0; tell();
     await llmUnload(); await gemUnload(); // free the memory of the old model before the new one arrives
     const prog = () => (which === 'g' ? gemProgress() : llmProgress());
-    const t = setInterval(() => { const p = prog(); PCT = p[1] > 0 ? Math.min(99, Math.round((p[0] / p[1]) * 100)) : 0; tell(); }, 700);
+    let lastB = prog()[0], lastT = Date.now(), sp = 0;
+    SPEED = 0; ETA = 0; DONE_MB = 0; TOTAL_MB = 0;
+    const t = setInterval(() => {
+      const p = prog(); PCT = p[1] > 0 ? Math.min(99, Math.round((p[0] / p[1]) * 100)) : 0;
+      const now = Date.now(), dt = (now - lastT) / 1000;
+      if (dt > 0) { const inst = Math.max(0, p[0] - lastB) / dt; sp = sp ? sp * 0.7 + inst * 0.3 : inst; }
+      lastB = p[0]; lastT = now;
+      SPEED = sp / 1048576; DONE_MB = Math.round(p[0] / 1048576); TOTAL_MB = Math.round(p[1] / 1048576);
+      ETA = sp > 0 && p[1] > p[0] ? Math.round((p[1] - p[0]) / sp) : 0;
+      tell();
+    }, 700);
     const ok = which === 'g' ? await gemDownload(GEMMA_URL) : await llmDownload(which === 'p' ? PLUS_URL : SMART_URL);
-    clearInterval(t); BUSY = false; PCT = 0;
+    clearInterval(t); BUSY = false; PCT = 0; SPEED = 0; ETA = 0;
     if (ok) {
       TIER = which === 'g' ? 'g' : which === 'p' ? 'p' : 's';
       setItem('ml_smtier', TIER);
@@ -54,7 +65,7 @@ export function useSmartChat() {
   };
   const cancel = () => { llmCancel(); gemCancel(); };
   const del = async () => { await llmRemove(); await gemRemove(); READY = false; setItem('ml_smtier', 's'); TIER = 's'; tell(); };
-  return { ok: smartOk || gemmaOk, plusOk, gemmaOk, tier: TIER, ready: READY, busy: BUSY, pct: PCT, resumeMB: Math.round(gemPartial() / 1048576), get, cancel, del };
+  return { ok: smartOk || gemmaOk, plusOk, gemmaOk, tier: TIER, ready: READY, busy: BUSY, pct: PCT, speed: SPEED, eta: ETA, doneMB: DONE_MB, totalMB: TOTAL_MB, resumeMB: Math.round(gemPartial() / 1048576), get, cancel, del };
 }
 
 // Topics where a small model must not guess: religious rulings, medicine, law and money advice. Answered with a fixed, careful reply.

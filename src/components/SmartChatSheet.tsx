@@ -85,8 +85,9 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                     </>
                   ) : sc.busy ? (
                     <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
-                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{'Downloading... ' + sc.pct + '%'}</Text>
+                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{'Downloading... ' + sc.pct + '%' + (sc.totalMB > 0 ? '  (' + sc.doneMB + ' of ' + sc.totalMB + ' MB)' : '')}</Text>
                       <View style={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden', marginTop: 10 }}><View style={{ height: 8, borderRadius: 4, width: sc.pct + '%', backgroundColor: '#5ee7df' }} /></View>
+                      {sc.speed > 0 && <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 8 }}>{sc.speed.toFixed(1) + ' MB/s' + (sc.eta > 0 ? '  ·  about ' + (sc.eta >= 60 ? Math.ceil(sc.eta / 60) + ' min' : sc.eta + ' sec') + ' left' : '')}</Text>}
                       <Pressable onPress={sc.cancel} style={{ marginTop: 12, alignSelf: 'flex-start' }}><Text style={{ color: DIM, fontSize: 13, fontWeight: '700' }}>Cancel</Text></Pressable>
                     </View>
                   ) : (

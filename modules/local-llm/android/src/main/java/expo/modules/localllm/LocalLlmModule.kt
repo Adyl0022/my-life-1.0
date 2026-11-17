@@ -45,6 +45,8 @@ class LocalLlmModule : Module() {
     }
 
     // [bytes done, total bytes] of the download in progress.
+    Function("partial") { try { ParallelDownload.saved(File(dir(), "model.task.part")).toDouble() } catch (e: Throwable) { 0.0 } }
+
     Function("progress") { listOf(done.get().toDouble(), total.get().toDouble()) }
 
     AsyncFunction("download") { url: String, promise: Promise ->
@@ -54,38 +56,10 @@ class LocalLlmModule : Module() {
         var ok = false
         val part = File(dir(), "model.task.part")
         try {
-          var u = url
-          var c: HttpURLConnection? = null
-          var hops = 0
-          while (hops < 6) {
-            c = URL(u).openConnection() as HttpURLConnection
-            c.instanceFollowRedirects = false
-            c.connectTimeout = 20000
-            c.readTimeout = 30000
-            val code = c.responseCode
-            if (code in 300..399) { u = c.getHeaderField("Location") ?: break; c.disconnect(); hops++ } else break
-          }
-          if (c != null && c.responseCode == 200) {
-            total.set(c.contentLengthLong)
-            c.inputStream.use { inp ->
-              FileOutputStream(part).use { out ->
-                val buf = ByteArray(64 * 1024)
-                while (true) {
-                  if (stop.get()) throw InterruptedException()
-                  val n = inp.read(buf)
-                  if (n < 0) break
-                  out.write(buf, 0, n)
-                  done.addAndGet(n.toLong())
-                }
-              }
-            }
-            val t = total.get()
-            if (t <= 0 || part.length() == t) { file().delete(); ok = part.renameTo(file()) }
-          }
+          if (ParallelDownload.run(url, part, stop, done, total, dir())) { file().delete(); ok = part.renameTo(file()); if (ok) try { File(part.path + ".meta").delete() } catch (e: Throwable) { } }
         } catch (e: Throwable) {
           ok = false
         }
-        if (!ok) { try { part.delete() } catch (e: Throwable) { } }
         busy.set(false)
         promise.resolve(ok)
       }.start()
@@ -96,7 +70,7 @@ class LocalLlmModule : Module() {
     AsyncFunction("remove") { promise: Promise ->
       try {
         synchronized(lock) { try { llm?.close() } catch (e: Throwable) { }; llm = null }
-        file().delete()
+        file().delete(); ParallelDownload.clear(File(dir(), "model.task.part"))
         promise.resolve(true)
       } catch (e: Throwable) { promise.resolve(false) }
     }

@@ -39,7 +39,7 @@ class LocalGemmaModule : Module() {
     }
 
     // Bytes already on the phone from an unfinished download, so the app can say "resume".
-    Function("partial") { try { part().length().toDouble() } catch (e: Throwable) { 0.0 } }
+    Function("partial") { try { ParallelDownload.saved(part()).toDouble() } catch (e: Throwable) { 0.0 } }
 
     // [bytes done, total bytes] of the download in progress.
     Function("progress") { listOf(done.get().toDouble(), total.get().toDouble()) }
@@ -51,42 +51,7 @@ class LocalGemmaModule : Module() {
         var ok = false
         val p = part()
         try {
-          val have = if (p.exists()) p.length() else 0L
-          var u = url
-          var c: HttpURLConnection? = null
-          var hops = 0
-          while (hops < 6) {
-            c = URL(u).openConnection() as HttpURLConnection
-            c.instanceFollowRedirects = false
-            c.connectTimeout = 20000
-            c.readTimeout = 30000
-            if (have > 0) c.setRequestProperty("Range", "bytes=$have-")
-            val code = c.responseCode
-            if (code in 300..399) { u = c.getHeaderField("Location") ?: break; c.disconnect(); hops++ } else break
-          }
-          val code = c?.responseCode ?: 0
-          if (c != null && (code == 200 || code == 206)) {
-            val resumed = code == 206 && have > 0
-            val len = c.contentLengthLong
-            val all = if (len > 0) (if (resumed) have + len else len) else 0L
-            total.set(all)
-            done.set(if (resumed) have else 0L)
-            val need = if (all > 0) all - (if (resumed) have else 0L) else 0L
-            if (need > 0 && dir().usableSpace < need + 200L * 1024 * 1024) throw IllegalStateException("no space")
-            c.inputStream.use { inp ->
-              FileOutputStream(p, resumed).use { out ->
-                val buf = ByteArray(128 * 1024)
-                while (true) {
-                  if (stop.get()) throw InterruptedException()
-                  val n = inp.read(buf)
-                  if (n < 0) break
-                  out.write(buf, 0, n)
-                  done.addAndGet(n.toLong())
-                }
-              }
-            }
-            if (all <= 0 || p.length() == all) { closeEngine(); file().delete(); ok = p.renameTo(file()) }
-          }
+          if (ParallelDownload.run(url, p, stop, done, total, dir())) { closeEngine(); file().delete(); ok = p.renameTo(file()); if (ok) try { File(p.path + ".meta").delete() } catch (e: Throwable) { } }
         } catch (e: InterruptedException) {
           ok = false // cancelled: the part file is kept so the download can be resumed
         } catch (e: Throwable) {
@@ -102,7 +67,7 @@ class LocalGemmaModule : Module() {
     AsyncFunction("remove") { promise: Promise ->
       try {
         synchronized(lock) { closeEngine() }
-        file().delete(); part().delete()
+        file().delete(); ParallelDownload.clear(part())
         promise.resolve(true)
       } catch (e: Throwable) { promise.resolve(false) }
     }
