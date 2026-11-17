@@ -61,7 +61,7 @@ export function HouseWishes({ info }: { info: FInfo | null }) {
           );
         })}
       </View>
-      {msg ? <Note warm t={msg} /> : null}
+      {msg ? <View style={{ marginBottom: 14 }}><Note warm t={msg} /></View> : null}
       {canEdit ? (panel ? (
         <Glass solid radius={22} style={{ padding: 14, marginBottom: 12 }}>
           <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{eid ? 'Edit wish' : 'New wish'}</Text>

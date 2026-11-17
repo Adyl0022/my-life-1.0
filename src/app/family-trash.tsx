@@ -42,7 +42,7 @@ export default function FamilyTrash() {
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Recently deleted" sub="Kept for 7 days, then removed" right={list && list.length ? <Pressable onPress={empty} hitSlop={8}><Text style={{ color: '#ffb3bf', fontSize: 13, fontWeight: '800' }}>Empty</Text></Pressable> : undefined} />
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
-          {msg ? <Note warm t={msg} /> : null}
+          {msg ? <View style={{ marginBottom: 14 }}><Note warm t={msg} /></View> : null}
           <Rise>
             {(list || []).map((x) => {
               const k = KIND[x.kind] || KIND.task;

@@ -59,7 +59,7 @@ export function HouseChores({ info }: { info: FInfo | null }) {
           </View>
         ))}
       </Glass>
-      {msg ? <Note warm t={msg} /> : null}
+      {msg ? <View style={{ marginBottom: 14 }}><Note warm t={msg} /></View> : null}
       {parent && pending.length ? (
         <View>
           <Text style={{ color: '#ffc46b', fontSize: 11, letterSpacing: 1.5, fontWeight: '800', marginTop: 14, marginBottom: 8, marginLeft: 4 }}>WAITING FOR YOU TO CHECK</Text>
@@ -171,7 +171,7 @@ export function HouseRewards({ info }: { info: FInfo | null }) {
         <Text style={{ color: '#ffc46b', fontSize: 44, fontWeight: '900', marginTop: 2 }}>⭐ {sel ? b.bal[sel.id] || 0 : 0}</Text>
         {sel && held(sel.id) ? <Text style={{ color: DIM, fontSize: 11.5 }}>{held(sel.id)} ⭐ waiting for a parent to approve</Text> : null}
       </Glass>
-      {msg ? <Note warm t={msg} /> : null}{ok ? <Note t={ok} /> : null}
+      {msg || ok ? <View style={{ marginBottom: 14 }}>{msg ? <Note warm t={msg} /> : null}{msg && ok ? <View style={{ height: 8 }} /> : null}{ok ? <Note t={ok} /> : null}</View> : null}
       {parent && pending.length ? (
         <View>
           <Text style={{ color: '#ffc46b', fontSize: 11, letterSpacing: 1.5, fontWeight: '800', marginBottom: 8, marginLeft: 4 }}>WAITING FOR A PARENT</Text>
