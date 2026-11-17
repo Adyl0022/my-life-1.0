@@ -5,19 +5,19 @@ import Svg, { Path } from 'react-native-svg';
 import { Text } from './Txt';
 import { useSmartChat, SMART_MB, PLUS_MB, GEMMA_MB } from '../lib/llm';
 
-// The "Smart chat Pro" (Gemma 4) button: gold, with a crown and a small PREMIUM tag, so it reads as the top choice.
+// The "Smart chat Pro" (Gemma 4) button: gold, with a crown and a small SMARTEST tag, so it reads as the top choice.
 function ProButton({ onPress, title, sub, top }: { onPress: () => void; title: string; sub: string; top: number }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={title} style={{ marginTop: top }}>
       <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, padding: 1.5 }}>
         <View style={{ borderRadius: 16.5, backgroundColor: '#241d3a', paddingVertical: 11, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
-            <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M4 8l4 4 4-7 4 7 4-4-2 10H6z" fill="#4a2f00" stroke="#4a2f00" strokeWidth={1.4} strokeLinejoin="round" /></Svg>
+            <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="#4a2f00" stroke="#4a2f00" strokeWidth={1.2} strokeLinejoin="round" /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" fill="#4a2f00" /></Svg>
           </LinearGradient>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <Text style={{ color: '#ffe08a', fontSize: 15, fontWeight: '800' }}>{title}</Text>
-              <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>PREMIUM</Text></View>
+              <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>SMARTEST</Text></View>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 3 }}>{sub}</Text>
           </View>
@@ -105,7 +105,7 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                       {sc.plusOk && sc.tier === 's' && !sc.gemmaOk && (
                         <Pressable onPress={() => start('p')} style={{ marginTop: 12, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Upgrade to Smart chat+ · ' + sz(PLUS_MB)}</Text></Pressable>
                       )}
-                      {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title={'Upgrade to Smart chat Pro'} sub={'Gemma 4 · ' + sz(GEMMA_MB)} top={12} />}
+                      {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title="Smart chat Pro" sub={'Upgrade · Free · Gemma 4 · ' + sz(GEMMA_MB)} top={12} />}
                       <Pressable onPress={sc.del} style={{ marginTop: 14, alignSelf: 'center', padding: 8 }}><Text style={{ color: '#ff8fab', fontSize: 13, fontWeight: '700' }}>Remove download</Text></Pressable>
                     </>
                   ) : sc.busy ? (
@@ -119,7 +119,7 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                     <>
                     <Pressable onPress={() => start()}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat · ' + sz(SMART_MB)}</Text></LinearGradient></Pressable>
                     {sc.plusOk && <Pressable onPress={() => start('p')} style={{ marginTop: 10, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Download Smart chat+ · ' + sz(PLUS_MB)}</Text></Pressable>}
-                    {sc.gemmaOk && <ProButton onPress={() => start('g')} title={(sc.resumeMB > 0 ? 'Resume Smart chat Pro' : 'Download Smart chat Pro')} sub={'Gemma 4 · ' + (sc.resumeMB > 0 ? sz(sc.resumeMB) + ' of ' : '') + sz(GEMMA_MB)} top={10} />}
+                    {sc.gemmaOk && <ProButton onPress={() => start('g')} title="Smart chat Pro" sub={(sc.resumeMB > 0 ? 'Resume · ' + sz(sc.resumeMB) + ' of ' : 'Download · Free · Gemma 4 · ') + sz(GEMMA_MB)} top={10} />}
                     </>
                   )}
                   {!!err && <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{err}</Text>}
