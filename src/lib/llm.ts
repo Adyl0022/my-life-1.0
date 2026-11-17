@@ -98,7 +98,7 @@ export function currentReply(q: string, lang: string): string {
 }
 
 function clean(t: string, max = 900): string {
-  let r = (t || '').replace(/<\|[^|]*\|>/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trim();
+  let r = (t || '').replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<\|[^|]*\|>/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trim();
   if (r.length > max) { r = r.slice(0, max); const i = Math.max(r.lastIndexOf('.'), r.lastIndexOf('!'), r.lastIndexOf('?')); if (i > 200) r = r.slice(0, i + 1); }
   return r;
 }
