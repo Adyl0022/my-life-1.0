@@ -82,7 +82,7 @@ class LocalGemmaModule : Module() {
     AsyncFunction("generate") { prompt: String, promise: Promise ->
       Thread {
         try {
-          val r = synchronized(lock) {
+          val r: String = synchronized(lock) {
             if (engine == null) {
               val cfg = EngineConfig(
                 modelPath = file().absolutePath,
@@ -94,9 +94,9 @@ class LocalGemmaModule : Module() {
               engine = e
             }
             val conv = engine!!.createConversation()
-            try { conv.sendMessage(prompt).text } finally { try { conv.close() } catch (x: Throwable) { } }
+            try { conv.sendMessage(prompt).toString() } finally { try { conv.close() } catch (x: Throwable) { } }
           }
-          promise.resolve(r ?: "")
+          promise.resolve(r)
         } catch (e: Throwable) {
           synchronized(lock) { closeEngine() }
           promise.resolve("")
