@@ -80,10 +80,9 @@ function Item({ mono, flag, tone, t, sub, on, have, busy, onPress, onRemove }: {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={{ marginBottom: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: on ? 'rgba(94,231,223,.14)' : 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: on ? 'rgba(94,231,223,.75)' : 'rgba(255,255,255,.14)' }}>
-        {flag ? <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ fontSize: 25 }}>{mono}</Text></View> : <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', overflow: 'hidden' }}>
-          <Text style={{ position: 'absolute', left: 4, top: 3, fontSize: 19 }}>{'\uD83C\uDDEC\uD83C\uDDE7'}</Text>
-          <Text style={{ position: 'absolute', right: 3, bottom: 2, fontSize: 19 }}>{'\uD83C\uDDF2\uD83C\uDDFE'}</Text>
-        </View>}
+        {flag ? <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ fontSize: 25 }}>{mono}</Text></View> : <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }}>
+          <Svg width={27} height={27} viewBox="0 0 24 24" fill="none" stroke="#06281c" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><Path d="M4 5h9a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3 3v-3H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" /><Path d="M11 17h2l3 3v-3h2a2 2 0 0 0 2-2v-4" /></Svg>
+        </LinearGradient>}
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t}</Text>
           <Text numberOfLines={1} style={{ color: DIM, fontSize: 12, marginTop: 2 }}>{busy ? 'Downloading...' : sub}</Text>
