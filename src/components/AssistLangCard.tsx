@@ -80,7 +80,11 @@ function Item({ mono, flag, tone, t, sub, on, have, busy, onPress, onRemove }: {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={{ marginBottom: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: on ? 'rgba(94,231,223,.14)' : 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: on ? 'rgba(94,231,223,.75)' : 'rgba(255,255,255,.14)' }}>
-        {flag ? <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ fontSize: 25 }}>{mono}</Text></View> : <LinearGradient colors={tone} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{mono}</Text></LinearGradient>}
+        {flag ? <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ fontSize: 25 }}>{mono}</Text></View> : <LinearGradient colors={tone} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 15, overflow: 'hidden' }}>
+          <Svg width={44} height={44} viewBox="0 0 44 44" style={{ position: 'absolute' }}><Path d="M44 0 L44 44 L0 44 Z" fill="rgba(255,255,255,.14)" /><Path d="M6 38 L38 6" stroke="rgba(255,255,255,.55)" strokeWidth={1.5} strokeLinecap="round" /></Svg>
+          <Text style={{ position: 'absolute', left: 7, top: 5, color: '#fff', fontSize: 14, fontWeight: '900' }}>EN</Text>
+          <Text style={{ position: 'absolute', right: 6, bottom: 5, color: '#fff', fontSize: 14, fontWeight: '900' }}>BM</Text>
+        </LinearGradient>}
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t}</Text>
           <Text numberOfLines={1} style={{ color: DIM, fontSize: 12, marginTop: 2 }}>{busy ? 'Downloading...' : sub}</Text>
