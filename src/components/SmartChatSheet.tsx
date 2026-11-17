@@ -10,13 +10,13 @@ function ProButton({ onPress, title, sub, top, tag }: { onPress: () => void; tit
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={title} style={{ marginTop: top }}>
       <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, padding: 1.5 }}>
-        <View style={{ borderRadius: 16.5, backgroundColor: '#241d3a', paddingVertical: 11, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
-            <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="#4a2f00" stroke="#4a2f00" strokeWidth={1.2} strokeLinejoin="round" /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" fill="#4a2f00" /></Svg>
+        <View style={{ borderRadius: 16.5, backgroundColor: '#241d3a', paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <LinearGradient colors={['#ffe08a', '#ffb547']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 36, height: 36, borderRadius: 13, alignItems: 'center', justifyContent: 'center' }}>
+            <Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="#4a2f00" stroke="#4a2f00" strokeWidth={1.2} strokeLinejoin="round" /><Path d="M18.5 16l.8 2.1 2.2.8-2.2.8-.8 2.1-.8-2.1-2.2-.8 2.2-.8z" fill="#4a2f00" /></Svg>
           </LinearGradient>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#ffe08a', fontSize: 15, fontWeight: '800' }}>{title}</Text>
-            <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 3 }}>{sub}</Text>
+            <Text numberOfLines={1} style={{ color: '#ffe08a', fontSize: 14.5, fontWeight: '800' }}>{title}</Text>
+            <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 3 }}>{sub}</Text>
             <View style={{ alignSelf: 'flex-start', marginTop: 7, paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(255,224,138,.18)', borderWidth: 1, borderColor: 'rgba(255,224,138,.5)' }}><Text style={{ color: '#ffe08a', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>{tag}</Text></View>
           </View>
           <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" stroke="#ffe08a" strokeWidth={2.6} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
@@ -82,18 +82,17 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
               </View>
               {on && !sess ? <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>You are not signed in, so Online AI cannot be used yet.</Text> : null}
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-              <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={20} height={20} viewBox="0 0 24 24"><Path d="M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" stroke="#06281c" strokeWidth={2} fill="none" /><Path d="M11 18h2" stroke="#06281c" strokeWidth={2} strokeLinecap="round" /></Svg>
+            <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(52,211,153,.5)' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" stroke="#06281c" strokeWidth={2} fill="none" /><Path d="M11 18h2" stroke="#06281c" strokeWidth={2} strokeLinecap="round" /></Svg>
               </LinearGradient>
               <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Offline AI on your phone</Text>
-                  <View style={{ paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(52,211,153,.18)', borderWidth: 1, borderColor: 'rgba(52,211,153,.55)' }}><Text style={{ color: '#8fe9c2', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>NO INTERNET NEEDED</Text></View>
-                </View>
-                <Text style={{ color: DIM, fontSize: 12, marginTop: 3, lineHeight: 17 }}>Download once, then it works without internet. What you ask never leaves your phone.</Text>
+                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Offline AI on your phone</Text>
+                <View style={{ alignSelf: 'flex-start', marginTop: 5, paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, backgroundColor: 'rgba(52,211,153,.18)', borderWidth: 1, borderColor: 'rgba(52,211,153,.55)' }}><Text style={{ color: '#8fe9c2', fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8 }}>NO INTERNET NEEDED</Text></View>
               </View>
             </View>
+            <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18, marginTop: 12, marginBottom: 12 }}>Download once, then it works without internet. What you ask never leaves your phone.</Text>
             {!sc.ok ? (
               <Text style={{ color: '#ffd9a0', fontSize: 13, lineHeight: 19 }}>Offline AI needs a newer version of the app and a phone with enough memory, so it is not available here.</Text>
             ) : (
@@ -116,8 +115,8 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                       {sc.plusOk && sc.tier === 's' && !sc.gemmaOk && (
                         <Pressable onPress={() => start('p')} style={{ marginTop: 12, minHeight: 54, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Upgrade to Smart chat+'}</Text><Text style={{ color: 'rgba(143,233,226,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 1.5B · ' + sz(PLUS_MB)}</Text></Pressable>
                       )}
-                      {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title="Smart chat Max · Gemma 4" tag="MIN. 12 GB RAM" sub={'Switch · Free · E4B · ' + sz(GEMMA_MB)} top={12} />}
-                      {sc.gemmaOk && sc.tier !== 'q' && <ProButton onPress={() => start('q')} title="Smart chat Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Switch · Free · 4B int8 · ' + sz(QWEN_MB)} top={10} />}
+                      {sc.gemmaOk && sc.tier !== 'g' && <ProButton onPress={() => start('g')} title="Max · Gemma 4" tag="MIN. 12 GB RAM" sub={'Switch · Free · ' + sz(GEMMA_MB)} top={12} />}
+                      {sc.gemmaOk && sc.tier !== 'q' && <ProButton onPress={() => start('q')} title="Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Switch · Free · ' + sz(QWEN_MB)} top={10} />}
                       <Pressable onPress={sc.del} style={{ marginTop: 14, alignSelf: 'center', padding: 8 }}><Text style={{ color: '#ff8fab', fontSize: 13, fontWeight: '700' }}>Remove download</Text></Pressable>
                     </>
                   ) : sc.busy ? (
@@ -131,14 +130,15 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                     <>
                     <Pressable onPress={() => start()}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ minHeight: 56, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#04201f', fontSize: 15, fontWeight: '800' }}>{'Download Smart chat'}</Text><Text style={{ color: 'rgba(4,32,31,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 0.5B · ' + sz(SMART_MB)}</Text></LinearGradient></Pressable>
                     {sc.plusOk && <Pressable onPress={() => start('p')} style={{ marginTop: 10, minHeight: 54, paddingVertical: 8, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(94,231,223,.6)', backgroundColor: 'rgba(94,231,223,.1)' }}><Text style={{ color: '#8fe9e2', fontSize: 14, fontWeight: '800' }}>{'Download Smart chat+'}</Text><Text style={{ color: 'rgba(143,233,226,.78)', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{'Qwen 2.5 · 1.5B · ' + sz(PLUS_MB)}</Text></Pressable>}
-                    {sc.gemmaOk && <ProButton onPress={() => start('g')} title="Smart chat Max · Gemma 4" tag="MIN. 12 GB RAM" sub={(sc.resumeMB > 0 ? 'Resume · ' + sz(sc.resumeMB) + ' of ' : 'Download · Free · E4B · ') + sz(GEMMA_MB)} top={10} />}
-                    {sc.gemmaOk && <ProButton onPress={() => start('q')} title="Smart chat Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Download · Free · 4B int8 · ' + sz(QWEN_MB)} top={10} />}
+                    {sc.gemmaOk && <ProButton onPress={() => start('g')} title="Max · Gemma 4" tag="MIN. 12 GB RAM" sub={(sc.resumeMB > 0 ? 'Resume · ' + sz(sc.resumeMB) + ' of ' : 'Download · Free · ') + sz(GEMMA_MB)} top={10} />}
+                    {sc.gemmaOk && <ProButton onPress={() => start('q')} title="Max · Qwen 3.5" tag="MIN. 12 GB RAM" sub={'Download · Free · ' + sz(QWEN_MB)} top={10} />}
                     </>
                   )}
                   {!!err && <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{err}</Text>}
                 </View>
               </>
             )}
+            </View>
           </ScrollView>
         </View>
       </View>
