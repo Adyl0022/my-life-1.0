@@ -6,7 +6,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { Text } from './Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from './Glass';
-import { IslamicBg, Header, ToolBar, Pending, Credit, ReadPicker } from './IslamicUi';
+import { ReadBg, Header, ToolBar, Pending, Credit, ReadPicker } from './IslamicUi';
 import { W } from './Ui';
 import { Part, KIND_COL, partVerses, useIslamic, useLang, useZRead, dayKey, nm } from '../lib/islamic';
 import { useStored } from '../lib/store';
@@ -76,20 +76,20 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
   );
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
-      <IslamicBg />
+      <ReadBg />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title={title} sub={sub} />
         {headExtra}
-        <View style={{ marginHorizontal: 20, marginTop: 12 }}>
+        <View style={{ marginHorizontal: 20, marginTop: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 13, fontWeight: '700' }}>{'Part ' + (sel + 1) + ' of ' + parts.length + ' · ' + nRead + ' read today'}</Text>
             <Pressable onPress={() => setList(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="All parts" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(125,240,198,.45)', backgroundColor: 'rgba(125,240,198,.12)' }}>
               <Text style={{ color: '#7df0c6', fontSize: 13, fontWeight: '800' }}>☰  Parts</Text>
             </Pressable>
           </View>
-          <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 10, overflow: 'hidden' }}><View style={{ height: 6, borderRadius: 3, width: ((sel + 1) / parts.length) * 100 + '%', backgroundColor: '#7df0c6' }} /></View>
+          <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 14, overflow: 'hidden' }}><View style={{ height: 6, borderRadius: 3, width: ((sel + 1) / parts.length) * 100 + '%', backgroundColor: '#7df0c6' }} /></View>
         </View>
-        <Glass radius={26} style={{ flex: 1, marginHorizontal: 20, marginTop: 12, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 12 }}>
+        <Glass solid radius={26} style={{ flex: 1, marginHorizontal: 20, marginTop: 20, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 14, backgroundColor: 'rgba(46,84,116,.96)' }}>
           <View {...pan.panHandlers} style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: isRead ? 'rgba(52,211,153,.55)' : pc[0], alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontWeight: '800', fontSize: 15 }}>{isRead ? '✓' : sel + 1}</Text></View>
@@ -123,7 +123,7 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
             ) : null}
           </View>
         </Glass>
-        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 14 }}>
           {bigBtn('‹ Back', () => go(sel - 1), { dis: sel === 0 })}
           {!p.custom ? bigBtn(isRead ? 'Read ✓' : 'Mark read', () => setRead(sel, !isRead), { on: isRead, flex: 1.2 }) : null}
           <Pressable onPress={next} style={{ flex: 1.5 }}>
