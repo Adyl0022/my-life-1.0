@@ -99,7 +99,7 @@ export function currentReply(q: string, lang: string): string {
 
 function clean(t: string): string {
   let r = (t || '').replace(/<\|[^|]*\|>/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trim();
-  if (r.length > 700) { r = r.slice(0, 700); const i = Math.max(r.lastIndexOf('.'), r.lastIndexOf('!'), r.lastIndexOf('?')); if (i > 200) r = r.slice(0, i + 1); }
+  if (r.length > 900) { r = r.slice(0, 900); const i = Math.max(r.lastIndexOf('.'), r.lastIndexOf('!'), r.lastIndexOf('?')); if (i > 200) r = r.slice(0, i + 1); }
   return r;
 }
 
@@ -107,8 +107,10 @@ function clean(t: string): string {
 export async function smartAsk(q: string, lang: string): Promise<string> {
   if (!(smartOk || gemmaOk) || !READY) return '';
   const ms = lang === 'ms';
+  // A pasted text or a summarise job: short bullet points instead of 4 sentences.
+  const task = q.length > 160 || /\b(summari[sz]e|summary|rewrite|paraphrase|proofread|ringkaskan|ringkasan|rumuskan|tulis semula)\b/i.test(q);
   const sys = 'You are My Life Assistant, a friendly helper inside the My Life app, made by Adli Syahmi. '
-    + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + ', in at most 4 short sentences. '
+    + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + (task ? ', as short bullet points (at most 5), one idea each. ' : ', in at most 4 short sentences. ')
     + 'You have no internet and your knowledge is old, so you do not know recent events. '
     + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
     + 'Do not give religious rulings, medical, legal or investment advice.';
@@ -117,7 +119,7 @@ export async function smartAsk(q: string, lang: string): Promise<string> {
   else raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
   const out = clean(raw);
   if (!out) return '';
-  const fact = /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
+  const fact = !task && /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
   return out + (ms
     ? '\n\n(Jawapan AI dalam telefon awak. Ia boleh tersilap' + (fact ? ', terutama tentang orang, tarikh dan angka' : '') + '. Semak fakta penting dengan sumber rasmi.)'
     : '\n\n(An AI answer made on your phone. It can be wrong' + (fact ? ', especially about people, dates and numbers' : '') + '. Check important facts with an official source.)');
