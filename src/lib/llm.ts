@@ -131,7 +131,12 @@ function dedupe(t: string): string {
   const paras = t.split(/\n{2,}/).map((para) => {
     if (/```/.test(para)) return para;
     const sents = para.match(/[^.!?]+[.!?]*\s*/g) || [para];
-    const keep = sents.filter((x) => { const k = norm(x); if (k.length < 12) return true; if (seen.has(k)) return false; seen.add(k); return true; });
+    const keep = sents.filter((x) => {
+      const k = norm(x); if (k.length < 12) return true;
+      if (k.length >= 30) { for (const o of seen) { if (o.length >= 30 && (o.includes(k) || k.includes(o) || (k.length >= 50 && o.includes(k.slice(0, 50))))) return false; } }
+      if (seen.has(k)) return false;
+      seen.add(k); return true;
+    });
     return keep.join('').trim();
   }).filter((x) => x.trim());
   return paras.join('\n\n');
@@ -161,13 +166,13 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
     + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + '. '
     + KIND_RULE[kind]
     + (task || kind === 'code' || kind === 'chat' ? '' : (big ? 'Be thorough but not long-winded: a few short paragraphs or a short list is fine. ' : 'Keep it short and clear: up to 6 sentences. '))
-    + 'You have no internet and your knowledge is old, so say so for news, prices, scores or who holds a post now. '
+    + (/\b(today|now|current|currently|latest|news|price|score|weather|president|prime minister|minister|sekarang|terkini|hari ini|harga|presiden|perdana menteri)\b/i.test(q) ? 'You have no internet and your facts may be out of date. Answer with what you know, and add one short note about that, only once. ' : '')
     + 'Be honest. If you are not sure, say so once in a short sentence, then give what you do know. Never repeat yourself. Never invent facts, numbers, dates, names or sources. '
     + 'For religious rulings, medical, legal or investment decisions, give only general information and suggest asking a qualified person.';
   const h = (hist || []).slice(-6);
   // While the model writes, the app reads what it has so far, so the words appear one by one.
   let timer: any = 0; let last = '';
-  if (onPart) timer = setInterval(() => { try { const t = livePart(big ? gemLive() : llmLive()); if (t && t !== last) { last = t; onPart(t); } } catch (e) { /* ignore */ } }, 250);
+  if (onPart) timer = setInterval(() => { try { const t = livePart(big ? gemLive() : llmLive()); if (t && t !== last) { last = t; onPart(t); } } catch (e) { /* ignore */ } }, 400);
   let raw = '';
   try {
     if (big) {

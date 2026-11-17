@@ -69,27 +69,40 @@ class LocalGemmaModule : Module() {
     live.setLength(0)
     val latch = CountDownLatch(1)
     var err: Throwable? = null
+    var looping = false
     conv.sendMessageAsync(prompt, object : MessageCallback {
       override fun onMessage(message: Message) {
+        if (looping) return
         val t = message.toString()
         val cur = live.toString()
         // Some versions send the whole text so far, others only the new piece.
         if (cur.isNotEmpty() && t.length > cur.length && t.startsWith(cur)) live.setLength(0)
         live.append(t)
+        // A small model can get stuck repeating itself. If the last 60 characters already appeared earlier, cut the repeat and stop.
+        if (live.length > 160) {
+          val tail = live.substring(live.length - 60)
+          val at = live.indexOf(tail)
+          if (at >= 0 && at < live.length - 60) {
+            looping = true
+            live.setLength(live.length - 60)
+            try { conv.javaClass.getMethod("cancelProcess").invoke(conv) } catch (x: Throwable) { }
+            latch.countDown()
+          }
+        }
       }
       override fun onDone() { latch.countDown() }
       override fun onError(throwable: Throwable) { err = throwable; latch.countDown() }
     })
     latch.await(240, TimeUnit.SECONDS)
     val e = err
-    if (e != null) throw e
+    if (e != null && !looping) throw e
     return live.toString()
   }
 
   private fun runOnce(prompt: String): String = synchronized(lock) {
     ensure()
     // Some randomness and a limit on the length stop the model from repeating the same sentence over and over.
-    val conv = engine!!.createConversation(ConversationConfig(samplerConfig = SamplerConfig(topK = 40, topP = 0.9, temperature = 0.7), maxOutputToken = 900))
+    val conv = engine!!.createConversation(ConversationConfig(samplerConfig = SamplerConfig(topK = 20, topP = 0.8, temperature = 0.8), maxOutputToken = 900))
     try { stream(conv, prompt) } finally { try { conv.close() } catch (x: Throwable) { } }
   }
 
