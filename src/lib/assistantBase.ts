@@ -605,14 +605,15 @@ export class AssistantBase extends React.Component<any, any> {
     try {
       const sv = sensitiveReply(q, lang);
       if (sv) { r.m = Object.assign({}, r.m, { text: sv, fb: 0 }); return r; }
-      const cr = currentReply(q, lang);
-      if (cr) { r.m = Object.assign({}, r.m, { text: cr, fb: 0 }); return r; }
       let note = '';
       if (onlineOn()) {
         const o: any = await onlineAsk(q, lang);
         if (o.text) { r.m = Object.assign({}, r.m, { text: o.text, fb: 0 }); return r; }
         note = onlineNote(o.why, lang);
+        if (!note) note = lang === 'ms' ? 'AI dalam talian tak dapat dihubungi sekarang. Cuba lagi sebentar.' : 'Online AI could not be reached right now. Try again in a moment.';
       }
+      const cr = currentReply(q, lang);
+      if (cr) { r.m = Object.assign({}, r.m, { text: cr + (note ? '\n\n' + note : ''), fb: 0 }); return r; }
       if ((smartOk || gemmaOk) && smartReady()) {
         const a = await smartAsk(q, lang);
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0 }); return r; }
