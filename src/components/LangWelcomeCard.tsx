@@ -45,17 +45,19 @@ export function LangWelcomeCard({ onLang, onAI, langName, showLang, ms }: { onLa
     ]));
     const l1 = step(nudgeL, 1000, 2100); const l2 = step(nudgeR, 1900, 1200);
     l1.start(); l2.start();
-    // The soft glow (halo, bright border, shine) comes back every few seconds.
-    const g = Animated.loop(Animated.sequence([
-      Animated.delay(500),
+    // The soft glow (halo, bright border, shine) comes back every few seconds. Each round starts from zero by hand (more reliable than a loop).
+    let alive = true;
+    const play = () => {
+      if (!alive) return;
+      glow.setValue(0); sweep.setValue(0);
       Animated.parallel([
         Animated.timing(glow, { toValue: 1, duration: 1400, easing: Easing.out(Easing.quad), useNativeDriver: false }),
         Animated.timing(sweep, { toValue: 1, duration: 1100, easing: Easing.out(Easing.quad), useNativeDriver: ND }),
-      ]),
-      Animated.delay(5000),
-    ]));
-    g.start();
-    return () => { l1.stop(); l2.stop(); g.stop(); };
+      ]).start();
+    };
+    const first = setTimeout(play, 500);
+    const every = setInterval(play, 6500);
+    return () => { alive = false; clearTimeout(first); clearInterval(every); l1.stop(); l2.stop(); };
   }, [glow, sweep, nudgeL, nudgeR]);
   // 0 -> 1 -> 0 envelope so the glow rises fast and fades out.
   const env = glow.interpolate({ inputRange: [0, 0.25, 0.6, 1], outputRange: [0, 1, 1, 0] });
