@@ -576,6 +576,36 @@ export class AssistantBase extends React.Component<any, any> {
     if (!patch.ctx) { const mkm = { steps: 'steps', dist: 'steps', sleep: 'sleep', water: 'water', mood: 'mood' }; const idd = this.pick(this.norm(fix(q))); patch.ctx = mkm[idd] ? { intent: 'metric', mkey: mkm[idd] } : (idd === 'spend' || idd === 'spendM') ? { intent: 'spend' } : {}; }
     return { m: m, patch: patch, act: doAct };
   }
+  // Smooth writing: the AI's words are shown a few characters at a time, so the answer flows instead of jumping in chunks.
+  liveTarget = ''; liveShown = 0; liveTimer: any = 0; liveConst = 0; liveScrolled = 0;
+  setLive(t: string) {
+    this.liveTarget = t;
+    if (this.liveTimer) return;
+    this.liveTimer = setInterval(() => {
+      const n = this.liveTarget.length;
+      if (this.liveShown > n) this.liveShown = n;
+      if (this.liveShown >= n) return;
+      const gap = n - this.liveShown;
+      this.liveShown += this.liveConst ? this.liveConst : Math.min(10, Math.max(1, Math.ceil(gap / 10)));
+      this.setState({ live: this.liveTarget.slice(0, this.liveShown) });
+      const now = Date.now();
+      if (now - this.liveScrolled > 600) { this.liveScrolled = now; this.scroll(); }
+    }, 40);
+  }
+  // Waits until what is on the screen has caught up with the answer (at most a few seconds), then resets.
+  async finishLive() {
+    const end = Date.now() + 3500;
+    while (this.liveShown < this.liveTarget.length && Date.now() < end) await new Promise((r) => setTimeout(r, 40));
+    if (this.liveTimer) { clearInterval(this.liveTimer); this.liveTimer = 0; }
+    this.liveTarget = ''; this.liveShown = 0; this.liveConst = 0;
+  }
+  // An answer that arrives all at once (Online AI) is written out smoothly too.
+  async typeOut(text: string) {
+    this.liveShown = 0; this.liveTarget = '';
+    this.liveConst = Math.max(2, Math.ceil(text.length / 70));
+    this.setLive(text);
+    await this.finishLive();
+  }
   scroll() { setTimeout(() => { try { this.props.onScroll && this.props.onScroll(); } catch (e) { } }, 80); }
   ask(q) {
     // The box can have several lines (Enter makes a new line). The Assistant reads it as one line, but the bubble keeps the lines.
@@ -617,7 +647,7 @@ export class AssistantBase extends React.Component<any, any> {
       let note = '';
       if (onlineOn()) {
         const o: any = await onlineAsk(q, lang);
-        if (o.text) { r.m = Object.assign({}, r.m, { text: o.text, fb: 0 }); return r; }
+        if (o.text) { await this.typeOut(o.text); r.m = Object.assign({}, r.m, { text: o.text, fb: 0 }); return r; }
         note = onlineNote(o.why, lang);
         if (!note) note = lang === 'ms' ? 'AI dalam talian tak dapat dihubungi sekarang. Cuba lagi sebentar.' : 'Online AI could not be reached right now. Try again in a moment.';
       }
@@ -625,8 +655,9 @@ export class AssistantBase extends React.Component<any, any> {
       if (cr) { r.m = Object.assign({}, r.m, { text: cr + (note ? '\n\n' + note : ''), fb: 0 }); return r; }
       if ((smartOk || gemmaOk) && smartReady()) {
         const hist = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
-        let lastLive = 0;
-        const a = await smartAsk(q, lang, hist, (t: string) => { this.setState({ live: t }); const n = Date.now(); if (n - lastLive > 700) { lastLive = n; this.scroll(); } });
+        this.liveShown = 0; this.liveTarget = '';
+        const a = await smartAsk(q, lang, hist, (t: string) => this.setLive(t));
+        await this.finishLive();
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0 }); return r; }
       } else if (!this.state.smNo && !onlineOn()) {
         const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI: AI kecil dalam telefon awak (muat turun sekali, lebih kurang 550 MB), atau AI dalam talian (soalan dihantar ke internet, awak pilih sendiri).' : '\n\nI can also answer general questions with AI: a small AI on your phone (one-time download of about 550 MB), or Online AI (your question is sent over the internet, and you choose whether to use it).';
