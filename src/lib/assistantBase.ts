@@ -8,6 +8,7 @@ import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
+import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, smartReady, smartAsk, sensitiveReply, currentReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
@@ -580,6 +581,8 @@ export class AssistantBase extends React.Component<any, any> {
     const sg = xlOk && !this.state.xlNo ? scriptLang(q) : '';
     if (sg) { this.offerX(q, sg); return; }
     const lang = this.detect(q) || this.state.lang;
+    const trc = xlOk ? parseTranslate(q) : null;
+    if (trc) { this.translateCmd(q, trc, lang); return; }
     this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
     setTimeout(async () => {
@@ -612,6 +615,32 @@ export class AssistantBase extends React.Component<any, any> {
       }
     } catch (e) { /* keep the normal reply */ }
     return r;
+  }
+  // "Translate to Chinese: ..." Done on the phone with ML Kit. Works from Bahasa Malaysia or English into the language asked for.
+  translateCmd(q, tc, lang) {
+    const ms = lang === 'ms';
+    const base = { me: false, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' };
+    const user = { me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' };
+    this.setState({ msgs: this.state.msgs.concat([user]), draft: '', typing: true, lang: lang });
+    this.scroll();
+    (async () => {
+      let text = '';
+      if (tc.to === '?india') text = ms ? 'Bahasa India yang mana? Hindi atau Tamil? Tulis semula, contohnya "terjemah ke Tamil: ..."' : 'Which Indian language? Hindi or Tamil? Write it again, for example "translate to Tamil: ..."';
+      else {
+        const dl = this.detect(tc.text);
+        const from = dl === 'ms' || dl === 'en' ? dl : (lang === 'ms' ? 'ms' : 'en');
+        const lg = tc.to === 'en' ? { name: 'English', native: 'English' } : tc.to === 'ms' ? { name: 'Bahasa Malaysia', native: 'Bahasa Malaysia' } : xlLang(tc.to);
+        if (!lg) text = ms ? 'Maaf, saya belum boleh terjemah ke bahasa itu.' : 'Sorry, I cannot translate into that language yet.';
+        else {
+          const r = await runTranslate(tc.text, from, tc.to);
+          if (r.ok) text = lg.name + (lg.native !== lg.name ? ' (' + lg.native + ')' : '') + ':\n' + r.text + (ms ? '\n\n(Terjemahan dibuat dalam telefon awak. Ia boleh kurang tepat untuk ayat penting.)' : '\n\n(Translated on your phone. It can be less accurate for important sentences.)');
+          else if (r.why === 'download') text = ms ? 'Pek bahasa perlu dimuat turun sekali (sekitar 30 MB setiap satu). Muat turun tak berjaya. Semak internet dan storan, kemudian cuba lagi.' : 'The language pack must be downloaded once (about 30 MB each). The download did not finish. Check your internet and storage, then try again.';
+          else text = ms ? 'Maaf, saya tak dapat terjemah itu sekarang. Cuba lagi.' : 'Sorry, I could not translate that right now. Try again.';
+        }
+      }
+      this.setState({ msgs: this.state.msgs.concat([Object.assign({}, base, { text })]), typing: false });
+      this.scroll();
+    })();
   }
   offerX(q, code) {
     const lg = xlLang(code); const nm = lg ? lg.native : code;
