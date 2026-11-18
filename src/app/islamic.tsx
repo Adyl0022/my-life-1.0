@@ -64,7 +64,7 @@ export default function IslamicHub() {
     if (ow > 0) return { h: ow + ' missed ' + (ow === 1 ? 'fast' : 'fasts') + ' to make up', b: rs.phase === 'before' ? 'Ramadan is ' + rs.daysTo + ' days away.' : 'Try to finish before next Ramadan.' };
     return { h: 'Fasting log', b: rs.phase === 'before' ? 'Ramadan in ' + rs.daysTo + ' days. Track make-up fasts and sunnah fasts.' : 'Track Ramadan, make-up fasts and sunnah fasts.' };
   })();
-  const hoff = useHijriSync(pz.off || 0);
+  const hoff = useHijriSync();
   const evs = upcoming(now, hoff, 4);
   const hasRead = !!(isl.lastKey && SURAH[isl.lastKey]);
   const kinds = hasRead ? ['read', 'ev', 'ins'] : ['ev', 'ins'];
