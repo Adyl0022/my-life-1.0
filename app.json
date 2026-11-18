@@ -23,7 +23,8 @@
       "permissions": [
         "android.permission.health.READ_STEPS",
         "android.permission.ACTIVITY_RECOGNITION",
-        "android.permission.SCHEDULE_EXACT_ALARM"
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.RECORD_AUDIO"
       ],
       "allowBackup": false
     },
