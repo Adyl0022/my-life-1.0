@@ -6,7 +6,7 @@ import { Glass } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Header, VerseBlock, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
-import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
+import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize, QURAN_FONT } from '../lib/islamic';
 import { useStored } from '../lib/store';
 import { dlSupported, useDl, surahDone, juzDone, downloadSurah, downloadJuz, downloadAll, cancelDownload, deleteSurah, deleteAll, usage, fmtBytes, clearDlError, NET_KEY, NetPref } from '../lib/quranDl';
 import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio, getResume, resumeLast, Resume } from '../lib/quranAudio';
@@ -83,7 +83,7 @@ export default function QuranAudio() {
                   );
                 })}
               </View>
-              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
+              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, fontFamily: QURAN_FONT, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
               {info.verses.map((v, i) => (
                 <View key={v.n} onLayout={(e) => { ys.current[info.num + ':' + v.n] = e.nativeEvent.layout.y + 90; }}>
                   <VerseBlock v={v} size={size} lang={lang} arOnly={arOnly} bleed={16} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />

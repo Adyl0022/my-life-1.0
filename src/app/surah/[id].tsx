@@ -6,7 +6,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Glass } from '../../components/Glass';
 import { ReadBg, Header, ToolBar, VerseBlock, Credit, ReadPicker } from '../../components/IslamicUi';
 import { W } from '../../components/Ui';
-import { SURAH, BISMILLAH, partVerses, useIslamic, useLang, useSize, useRead, AR_SIZE } from '../../lib/islamic';
+import { SURAH, BISMILLAH, partVerses, useIslamic, useLang, useSize, useRead, AR_SIZE, QURAN_FONT } from '../../lib/islamic';
 
 export default function SurahScreen() {
   const { id, v: jump } = useLocalSearchParams<{ id: string; v?: string }>();
@@ -43,7 +43,7 @@ export default function SurahScreen() {
             {s.bismillah && <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: AR_SIZE[size] + 3, textAlign: 'center', lineHeight: (AR_SIZE[size] + 3) * 1.8 }}>{BISMILLAH.ar}</Text></View>}
             {mode === 'flow' ? (
               <View onLayout={(e) => { flowH.current = e.nativeEvent.layout.height; tryJump(); }} style={{ paddingVertical: 14 }}>
-                <Text style={{ color: W, fontSize: AR_SIZE[size] + 4, lineHeight: (AR_SIZE[size] + 4) * 2.1, textAlign: 'justify', writingDirection: 'rtl' }}>
+                <Text style={{ color: W, fontSize: AR_SIZE[size] + 4, fontFamily: QURAN_FONT, lineHeight: (AR_SIZE[size] + 4) * 2.1, textAlign: 'justify', writingDirection: 'rtl' }}>
                   {s.verses.map((v) => (
                     <Text key={v.n} style={lastN === v.n ? { backgroundColor: 'rgba(125,240,198,.18)' } : undefined} onPress={() => { tapVerse(v.n); }}
                       onLongPress={() => { const nx = marks.includes(v.n) ? marks.filter((x) => x !== v.n) : [...marks, v.n].sort((a, b) => a - b); setIsl({ ...isl, vb: { ...(isl.vb || {}), [key]: nx } }); say(marks.includes(v.n) ? 'Verse bookmark removed' : 'Verse ' + v.n + ' bookmarked'); }}

@@ -74,3 +74,9 @@ export function partVerses(p: Part, evening = false): Verse[] | null {
   return null;
 }
 export const nm = (n: string, evening: boolean) => n.replace('Asbahna / Amsaina wa amsal-mulku lillah', evening ? 'Amsaina wa amsal-mulku lillah' : 'Asbahna wa asbahal-mulku lillah').replace('Asbahna / Amsaina, firm', evening ? 'Amsaina, firm' : 'Asbahna, firm').replace('asbahtu / amsaytu', evening ? 'amsaytu' : 'asbahtu').replace('ma asbaha / ma amsa', evening ? 'ma amsa' : 'ma asbaha').replace('bika asbahna / amsayna', evening ? 'bika amsayna' : 'bika asbahna');
+
+// Quran font (Amiri Quran, SIL OFL): draws every small mark (dagger alif, madd, waqf signs) like the printed mushaf.
+export const QURAN_FONT = 'AmiriQuran';
+if (typeof document !== 'undefined') {
+  try { require('expo-font').loadAsync({ [QURAN_FONT]: require('../../assets/fonts/AmiriQuran.ttf') }); } catch (e) {}
+}

@@ -106,6 +106,14 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": true
         }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/AmiriQuran.ttf"
+          ]
+        }
       ]
     ],
     "backgroundColor": "#0a0f2c"
