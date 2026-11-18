@@ -192,6 +192,11 @@ class Chat extends AssistantBase {
                 {m.undoD === 'flex' && (
                   <Pressable onPress={m.undo} style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{m.undoL}</Text></Pressable>
                 )}
+                {m.srcD === 'flex' && (
+                  <View style={{ alignSelf: 'flex-start', marginTop: 8, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: m.srcOn ? 'rgba(183,148,255,.18)' : 'rgba(143,233,226,.14)', borderWidth: 1, borderColor: m.srcOn ? 'rgba(183,148,255,.45)' : 'rgba(143,233,226,.4)' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: m.srcOn ? '#d9c8ff' : '#8fe9e2' }}>{(m.srcOn ? '☁ ' : '▣ ') + m.srcT}</Text>
+                  </View>
+                )}
                 <Text style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', marginTop: 6, textAlign: 'right' }}>{m.time}</Text>
               </>
             );

@@ -10,7 +10,7 @@ import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
-import { smartOk, gemmaOk, smartReady, smartAsk, sensitiveReply, currentReply } from './llm';
+import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 // A pasted text or a "summarise / rewrite" job is not a question about the person's own data. It goes straight to the AI,
@@ -651,7 +651,7 @@ export class AssistantBase extends React.Component<any, any> {
       let note = '';
       if (onlineOn()) {
         const o: any = await onlineAsk(q, lang);
-        if (o.text) { await this.typeOut(o.text); r.m = Object.assign({}, r.m, { text: o.text, fb: 0 }); return r; }
+        if (o.text) { await this.typeOut(o.text); r.m = Object.assign({}, r.m, { text: o.text, fb: 0, src: 'online' }); return r; }
         note = onlineNote(o.why, lang);
         if (!note) note = lang === 'ms' ? 'AI dalam talian tak dapat dihubungi sekarang. Cuba lagi sebentar.' : 'Online AI could not be reached right now. Try again in a moment.';
       }
@@ -662,7 +662,7 @@ export class AssistantBase extends React.Component<any, any> {
         this.liveShown = 0; this.liveTarget = '';
         const a = await smartAsk(q, lang, hist, (t: string) => this.setLive(t));
         await this.finishLive();
-        if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0 }); return r; }
+        if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0, src: 'device', mdl: smartModelName() }); return r; }
       } else if (!this.state.smNo && !onlineOn()) {
         const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI: AI kecil dalam telefon awak (muat turun sekali, lebih kurang 550 MB), atau AI dalam talian (soalan dihantar ke internet, awak pilih sendiri).' : '\n\nI can also answer general questions with AI: a small AI on your phone (one-time download of about 550 MB), or Online AI (your question is sent over the internet, and you choose whether to use it).';
         r.m = Object.assign({}, r.m, { text: r.m.text + more, sm: 1 });
@@ -781,14 +781,14 @@ export class AssistantBase extends React.Component<any, any> {
         rad: me ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
         bigD: m.big ? 'block' : 'none', barD: m.pct >= 0 ? 'block' : 'none',
         big: m.big, bigLbl: m.bigLbl, pct: m.pct < 0 ? 0 : m.pct, color: m.color || '#8fe9e2',
-        text: m.text, time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
+        text: m.text, srcD: m.src ? 'flex' : 'none', srcOn: m.src === 'online', srcT: m.src === 'online' ? L('Online AI', 'AI dalam talian') : (m.mdl ? L('On this phone · ', 'Dalam telefon · ') + m.mdl : L('On this phone', 'Dalam telefon')), time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
         undoD: m.uid && s.lastUndo && s.lastUndo.id === m.uid ? 'flex' : 'none', undo: () => this.undoLast(), undoL: L('Undo', 'Buat asal'),
         xlD: (m.xl || m.sm) ? 'flex' : 'none', xlYes: () => { if (m.sm) { if (this.props.onSmart) this.props.onSmart(); } else if (this.props.onXl) this.props.onXl(m.xl); }, xlNo: () => { if (m.sm) { this.setState({ smNo: true }); setItem('ml_sm_no', true); } else { this.setState({ xlNo: true }); setItem('ml_xl_nosug', true); } }, xlL: m.sm ? 'Set up AI chat' : 'Set up ' + (m.xlName || ''),
         btnD: m.pid && s.pending && s.pending.id === m.pid ? 'flex' : 'none', yes: () => this.confirm(true), no: () => this.confirm(false), yesL: L('Save', 'Simpan'), noL: L('Cancel', 'Batal')
       };
     });
     return {
-      sub: L('Private · offline', 'Peribadi · luar talian'),
+      sub: (() => { const la = [...(s.msgs || [])].reverse().find((x: any) => !x.me); return la && la.src === 'online' ? L('Online AI · question sent over the internet', 'AI dalam talian · soalan dihantar ke internet') : L('Private · offline', 'Peribadi · luar talian'); })(),
       l1: ms ? '' : 'on', l2: ms ? 'on' : '',
       goEn: () => this.setState({ lang: 'en' }), goMs: () => this.setState({ lang: 'ms' }),
       clear: () => this.setState({ msgs: [], typing: false }),

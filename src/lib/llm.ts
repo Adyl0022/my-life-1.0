@@ -32,6 +32,7 @@ const tell = () => subs.forEach((f) => { try { f(); } catch (e) { } });
 
 let SPEED = 0, ETA = 0, DONE_MB = 0, TOTAL_MB = 0;
 export function smartReady(): boolean { return READY; }
+export function smartModelName(): string { return ({ s: 'Qwen 2.5 0.5B', p: 'Qwen 2.5 1.5B', g: 'Gemma 4', q: 'Qwen 3.5' } as any)[TIER] || ''; }
 
 export function useSmartChat() {
   const [, n] = useState(0);
