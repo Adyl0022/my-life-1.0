@@ -56,7 +56,7 @@ export function GlowBubble({ children, glow = true }: { children: React.ReactNod
   );
 }
 
-// The little orb breathes (a soft halo grows and fades) while the answer is written.
+// The little orb breathes (it swells and brightens a little, no halo around it) while the answer is written.
 export function OrbBreath({ on = true }: { on?: boolean }) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -70,8 +70,7 @@ export function OrbBreath({ on = true }: { on?: boolean }) {
   }, [on]);
   return (
     <View style={{ width: 32, height: 32 }}>
-      {on ? <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -6, top: -6, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(160,140,255,.5)', opacity: t.interpolate({ inputRange: [0, 1], outputRange: [0.05, 0.55] }), transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }] }} /> : null}
-      <Animated.View style={{ transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [1, 1.07] }) }] }}><OrbSvg size={32} uid="ty" /></Animated.View>
+      <Animated.View style={{ opacity: t.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }), transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.06] }) }] }}><OrbSvg size={32} uid="ty" /></Animated.View>
     </View>
   );
 }
