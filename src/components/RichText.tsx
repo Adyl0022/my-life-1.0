@@ -4,17 +4,19 @@ import { Text } from './Txt';
 
 // Shows an AI answer with simple formatting: **bold**, `code`, code blocks, bullet points and numbered points.
 // Text with none of these marks is shown exactly as plain text, so written answers look the same as before.
-const MARKS = /```|\*\*|`[^`\n]+`|^\s*([-*•]|\d+[.)])\s+|^#{1,4}\s/m;
+const MARKS = /```|\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`|^\s*([-*•]|\d+[.)])\s+|^#{1,4}\s/m;
 const C = '#fff';
 
 function inline(s: string, key: string) {
   const parts: React.ReactNode[] = [];
-  const re = /(\*\*[^*]+\*\*|`[^`\n]+`)/g;
+  s = s.replace(/^\*\*(?![^*]*\*\*)/, '');
+  const re = /(\*\*[^*]+\*\*|`[^`\n]+`|\*[^*\s][^*\n]*\*)/g;
   let last = 0; let m: RegExpExecArray | null; let n = 0;
   while ((m = re.exec(s))) {
     if (m.index > last) parts.push(s.slice(last, m.index));
     const t = m[0];
     if (t.startsWith('**')) parts.push(<Text key={key + n++} style={{ fontWeight: '800', color: C }}>{t.slice(2, -2)}</Text>);
+    else if (t.startsWith('*')) parts.push(<Text key={key + n++} style={{ fontStyle: 'italic', color: C }}>{t.slice(1, -1)}</Text>);
     else parts.push(<Text key={key + n++} style={{ fontFamily: 'monospace', color: '#8fe9e2', backgroundColor: 'rgba(0,0,0,.28)' }}>{t.slice(1, -1)}</Text>);
     last = m.index + t.length;
   }

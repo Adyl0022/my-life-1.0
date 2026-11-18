@@ -17,7 +17,7 @@ import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
 import { AssistLangSheet, LangPickedPopup } from '../components/AssistLangCard';
-import { ThinkingBubble } from '../components/ThinkingBubble';
+import { ThinkingBubble, LiveTail } from '../components/ThinkingBubble';
 import { RichText } from '../components/RichText';
 import { smartWarm } from '../lib/llm';
 import { LangWelcomeCard } from '../components/LangWelcomeCard';
@@ -209,7 +209,7 @@ class Chat extends AssistantBase {
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
               <OrbSvg size={32} uid="ty" />
               {v.live ? (
-                <Glass radius={20} style={{ maxWidth: '84%', flexShrink: 1, paddingVertical: 13, paddingHorizontal: 16, borderBottomLeftRadius: 6 }}><RichText text={v.live + ' ▍'} /></Glass>
+                <Glass radius={20} style={{ maxWidth: '84%', flexShrink: 1, paddingVertical: 13, paddingHorizontal: 16, borderBottomLeftRadius: 6 }}><RichText text={v.live} /><LiveTail /></Glass>
               ) : <ThinkingBubble ms={ms} />}
             </View>
           )}

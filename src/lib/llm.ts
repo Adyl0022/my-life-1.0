@@ -169,14 +169,18 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
     + (/\b(today|now|current|currently|latest|news|price|score|weather|president|prime minister|minister|sekarang|terkini|hari ini|harga|presiden|perdana menteri)\b/i.test(q) ? 'You have no internet and your facts may be out of date. Answer with what you know, and add one short note about that, only once. ' : '')
     + 'Be honest. If you are not sure, say so once in a short sentence, then give what you do know. Never repeat yourself. Never invent facts, numbers, dates, names or sources. '
     + 'For religious rulings, medical, legal or investment decisions, give only general information and suggest asking a qualified person.';
-  const h = (hist || []).slice(-6);
+  // Earlier messages are only given when this one looks like a follow-up. A new, self-contained question (or a pasted text) is answered on its own,
+  // otherwise a small model mixes the old answer into the new one.
+  const follow = q.length < 30 || /\b(it|that|this|those|them|again|more|else|also|itu|tu|ni|nie|tadi|lagi|dia|pasal|bukan|betul|salah|not what|i meant|maksud)\b/i.test(q);
+  const h = follow && !task ? (hist || []).slice(-2).map((x) => ({ me: x.me, text: x.text.slice(0, 220) })) : [];
+  const wrong = /\b(bukan|salah|not what|wrong|i meant|maksud saya|bukan tu)\b/i.test(q);
   // While the model writes, the app reads what it has so far, so the words appear one by one.
   let timer: any = 0; let last = '';
   if (onPart) timer = setInterval(() => { try { const t = livePart(big ? gemLive() : llmLive()); if (t && t !== last) { last = t; onPart(t); } } catch (e) { /* ignore */ } }, 400);
   let raw = '';
   try {
     if (big) {
-      const past = h.length ? 'Conversation so far:\n' + h.map((x) => (x.me ? 'User: ' : 'Assistant: ') + x.text).join('\n') + '\n\n' : '';
+      const past = h.length ? 'Earlier in this chat (context only, never repeat it):\n' + h.map((x) => (x.me ? 'User: ' : 'Assistant: ') + x.text).join('\n') + '\n\nNow reply ONLY to the new message below.\n' + (wrong ? 'The person says your last answer was not what they wanted: say sorry in a few words and answer their new message, or ask what they meant. Do not repeat the earlier answer.\n' : '') + '\n' : '';
       raw = await gemGenerate(sys + '\n\n' + past + 'User: ' + q);
     } else {
       const past = h.map((x) => '<|im_start|>' + (x.me ? 'user' : 'assistant') + '\n' + x.text + '<|im_end|>\n').join('');
