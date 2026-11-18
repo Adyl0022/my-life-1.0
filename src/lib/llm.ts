@@ -198,7 +198,7 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
     }
   } finally { if (timer) clearInterval(timer); }
   if (echoed(raw)) return '';
-  const out = clean(raw, big ? 3500 : 1400);
+  const out = clean(raw, big ? 6000 : 1400);
   if (!out) return '';
   const fact = !task && /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
   return out + (ms

@@ -103,7 +103,7 @@ class LocalGemmaModule : Module() {
   private fun runOnce(prompt: String, system: String = ""): String = synchronized(lock) {
     ensure()
     // Some randomness and a limit on the length stop the model from repeating the same sentence over and over.
-    val conv = engine!!.createConversation(ConversationConfig(systemInstruction = if (system.isNotBlank()) Contents.of(system) else null, samplerConfig = SamplerConfig(topK = 20, topP = 0.8, temperature = 0.8), maxOutputToken = 900))
+    val conv = engine!!.createConversation(ConversationConfig(systemInstruction = if (system.isNotBlank()) Contents.of(system) else null, samplerConfig = SamplerConfig(topK = 20, topP = 0.8, temperature = 0.8), maxOutputToken = 1500))
     try { stream(conv, prompt) } finally { try { conv.close() } catch (x: Throwable) { } }
   }
 
