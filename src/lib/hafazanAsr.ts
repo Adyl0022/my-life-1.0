@@ -104,7 +104,7 @@ export async function startRecording(): Promise<void> {
   if (got === 0) { try { await rec.stop(); } catch (e) { /* ignore */ } throw new Error('No sound is coming from the microphone. Check that the microphone is allowed for My Life in the phone settings, then try again.'); }
 }
 
-export type Heard = { text: string; seconds: number; pcm: Float32Array };
+export type Heard = { text: string; seconds: number; pcm: Float32Array; peak: number; bad?: boolean };
 
 // Stops recording and turns the speech into text. The loaded model stays in memory for the next try.
 export async function stopAndTranscribe(): Promise<Heard> {
@@ -116,14 +116,22 @@ export async function stopAndTranscribe(): Promise<Heard> {
   for (let i = 0; i < samples.length; i++) samples[i] = (((bytes[2 * i + 1] << 8) | bytes[2 * i]) << 16 >> 16) / 32768;
   chunks = [];
   const seconds = samples.length / 16000;
-  if (seconds < 0.8) return { text: '', seconds, pcm: samples };
+  let peak = 0; for (let i = 0; i < samples.length; i++) { const v = Math.abs(samples[i]); if (v > peak) peak = v; }
+  if (seconds < 0.8) return { text: '', seconds, pcm: samples, peak };
+  if (peak < 0.008) return { text: '', seconds, pcm: samples, peak, bad: true };
+  // Quiet phones record very softly: bring the voice up to a normal level so the model can hear it.
+  if (peak < 0.5) { const g = Math.min(40, 0.8 / peak); for (let i = 0; i < samples.length; i++) samples[i] = Math.max(-1, Math.min(1, samples[i] * g)); }
   set({ phase: 'loading' });
   try {
     const c = await load();
-    const { promise } = c.transcribeData(samples.buffer, { language: 'ar', maxLen: 0, temperature: 0, beamSize: 5 });
+    const { promise } = c.transcribeData(samples.buffer, { language: 'ar', maxLen: 0, temperature: 0, temperatureInc: 0.2, maxContext: 0, beamSize: 5 });
     const r = await promise;
     set({ phase: 'ready' });
-    return { text: String((r && r.result) || '').trim(), seconds, pcm: samples };
+    const text = String((r && r.result) || '').trim();
+    // A speech model that could not hear anything sometimes fills the page with one repeated sound: do not treat that as a recitation.
+    const letters = text.replace(/[^\u0621-\u064A]/g, '');
+    const loop = /(.{1,3})\1{7,}/.test(letters) || (letters.length > 40 && new Set(letters).size < 8);
+    return { text: loop ? '' : text, seconds, pcm: samples, peak, bad: loop };
   } catch (e: any) { set({ phase: 'ready' }); throw e; }
 }
 

@@ -76,7 +76,7 @@ export default function Hafazan() {
     setRec(false); setBusy(true);
     try {
       const h = await stopAndTranscribe();
-      if (!h.text) { setMsg(h.seconds < 0.8 ? 'That was too short. Tap the microphone and recite.' : 'Nothing was heard clearly. Move closer to the microphone and try again in a quiet place.'); setBusy(false); return; }
+      if (!h.text) { setMsg(h.seconds < 0.8 ? 'That was too short. Tap the microphone and recite.' : (h.bad ? 'The model could not make out the recitation (recorded ' + Math.round(h.seconds) + ' s, voice level ' + Math.round(Math.min(1, h.peak) * 100) + '%). Hold the phone closer, recite one or two verses at a time, in a quiet place, and try again.' : 'Nothing was heard clearly. Move closer to the microphone and try again in a quiet place.')); setBusy(false); return; }
       setHeard(h.text);
       if (mode === 'auto') {
         const f = locate(h.text, SURAH_LIST.map((x) => ({ key: x.key, num: x.num, title: x.title, verses: SURAH[x.key].verses })));
