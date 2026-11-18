@@ -147,6 +147,8 @@ export default function Hafazan() {
   const [showPick, setShowPick] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [hearV, setHearV] = useState(false);
+  const [helpOff, setHelpOff] = useStored<Record<string, boolean>>('ml_hz_help', {});
+  const [legendOff, setLegendOff] = useStored<boolean>('ml_hz_legend_off', false);
   const [tr, setTr] = useStored<'off' | 'ms' | 'en'>('ml_hz_tr', 'ms');
   const [pick, setPick] = useState('');
   const [pf, setPf] = useState(false);
@@ -337,6 +339,34 @@ export default function Hafazan() {
               ))}
             </View>
 
+            {/* how to use this mode */}
+            {(() => {
+              const H: Record<string, { t: string; sub: string; steps: string[] }> = {
+                learn: { t: 'Learn: listen first, then recite', sub: 'Best for a verse you are still memorising. You go one verse at a time.', steps: ['Choose the surah and verses at the top.', 'Read the verse and tap Listen to hear it.', 'Tap the microphone and recite it. Tap Next verse to continue.'] },
+                test: { t: 'Test: recite from memory', sub: 'The text is hidden, so you must recite what you remember.', steps: ['Choose the surah and verses at the top.', 'Tap the microphone and recite without looking.', 'Stuck? Tap Show the text, read it, then try again.'] },
+                auto: { t: 'Find: not sure which surah?', sub: 'Recite any verses you know. You do not need to choose a surah.', steps: ['Tap the microphone and recite a few verses.', 'The app finds the surah and verse by itself.', 'Then it checks your words from there.'] },
+              };
+              const h = H[mode];
+              if (res) return null;
+              if (helpOff[mode]) return (
+                <Pressable onPress={() => setHelpOff({ ...helpOff, [mode]: false })} style={{ alignSelf: 'center', paddingVertical: 4, paddingHorizontal: 12 }}><Text style={{ color: '#bff7e1', fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' }}>{'How to use ' + (mode === 'auto' ? 'Find' : mode === 'learn' ? 'Learn' : 'Test')}</Text></Pressable>
+              );
+              return (
+                <View style={{ padding: 14, borderRadius: 20, backgroundColor: 'rgba(125,240,198,.10)', borderWidth: 1, borderColor: 'rgba(125,240,198,.35)' }}>
+                  <Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>{h.t}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>{h.sub}</Text>
+                  {h.steps.map((x, i) => (
+                    <View key={i} style={{ flexDirection: 'row', gap: 10, marginTop: 8, alignItems: 'flex-start' }}>
+                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(125,240,198,.25)', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{i + 1}</Text></View>
+                      <Text style={{ flex: 1, color: 'rgba(255,255,255,.88)', fontSize: 13, lineHeight: 19 }}>{x}</Text>
+                    </View>
+                  ))}
+                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>Tip: pause for about a second between verses. The recording stops by itself when you stay quiet.</Text>
+                  <Pressable onPress={() => setHelpOff({ ...helpOff, [mode]: true })} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Got it</Text></Pressable>
+                </View>
+              );
+            })()}
+
             {/* what to recite */}
             {mode !== 'auto' ? (
               <View>
@@ -498,6 +528,22 @@ export default function Hafazan() {
                     </View>
                   ))}
                 </View>
+                {legendOff ? (
+                  <Pressable onPress={() => setLegendOff(false)} style={{ alignSelf: 'flex-start', marginTop: 10 }}><Text style={{ color: '#bff7e1', fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' }}>How to read this result</Text></Pressable>
+                ) : (
+                  <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
+                    <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>How to read this result</Text>
+                    {[['ok', 'Green', 'The word was heard and matches the text.'], ['close', 'Yellow', 'Heard almost right, for example one letter is different. Worth a second look.'], ['wrong', 'Pink', 'A different word was heard, or the word was not heard. A line through it means not heard.'], ['pending', 'Grey', 'You stopped before this word, so it is not counted.']].map(([k, c, d]) => (
+                      <View key={k} style={{ flexDirection: 'row', gap: 8, marginTop: 7, alignItems: 'flex-start' }}>
+                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COL[k], marginTop: 5 }} />
+                        <Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}><Text style={{ color: COL[k], fontWeight: '800' }}>{c + ': '}</Text>{d}</Text>
+                      </View>
+                    ))}
+                    <Text style={{ color: W, fontSize: 12.5, lineHeight: 18, fontWeight: '700', marginTop: 10 }}>Tap any coloured word below to see what went wrong, hear the verse and try it again.</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>This checks the words you said, not tajwid or the length of madd.</Text>
+                    <Pressable onPress={() => setLegendOff(true)} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>Got it</Text></Pressable>
+                  </View>
+                )}
                 {mode === 'auto' && found && found.cands[ci] ? (
                   <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(125,240,198,.14)', borderWidth: 1, borderColor: 'rgba(125,240,198,.4)' }}>
                     <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{'Found: ' + found.cands[ci].title + ', verse ' + found.cands[ci].ayah + (found.cands[ci].endAyah !== found.cands[ci].ayah || found.cands[ci].endSurah !== found.cands[ci].surah ? ' to ' + found.cands[ci].endAyah : '')}</Text>
@@ -509,7 +555,8 @@ export default function Hafazan() {
                     </>) : null}
                   </View>
                 ) : null}
-                <View style={{ marginTop: 14, padding: 12, borderRadius: 22, backgroundColor: 'rgba(0,0,0,.2)', flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 4, rowGap: 10 }}>
+                <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 12, textAlign: 'center' }}>Tap a coloured word to see what went wrong</Text>
+                <View style={{ marginTop: 6, padding: 12, borderRadius: 22, backgroundColor: 'rgba(0,0,0,.2)', flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 4, rowGap: 10 }}>
                   {res.words.map((w: WResult, i: number) => (
                     <Pressable key={i} onPress={() => setOpen(open === i ? -1 : i)}>
                       <Text style={{ color: COL[w.status], fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, paddingHorizontal: 3, borderBottomWidth: w.status === 'ok' || w.status === 'pending' ? 0 : 2, borderBottomColor: COL[w.status], textDecorationLine: w.status === 'missing' ? 'line-through' : 'none', backgroundColor: open === i ? 'rgba(255,255,255,.12)' : 'transparent' }}>{w.word}</Text>
