@@ -402,7 +402,12 @@ export default function Settings() {
                   <View key={t} style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}><Text style={{ color: '#5ee7df', fontSize: 13 }}>✓</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}>{t}</Text></View>
                 ))}
               </Glass>
-              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center' }}>Copyright © 2026 Adli Syahmi. All rights reserved.</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5 }}>Copyright </Text>
+                {/* The copyright sign is drawn here because some phones show the text character as a dark emoji. */}
+                <Svg width={12} height={12} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9.5} stroke="rgba(255,255,255,.55)" strokeWidth={1.8} fill="none" /><Path d="M15.2 9.4A4.2 4.2 0 1 0 15.2 14.6" stroke="rgba(255,255,255,.55)" strokeWidth={1.8} fill="none" strokeLinecap="round" /></Svg>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5 }}> 2026 Adli Syahmi. All rights reserved.</Text>
+              </View>
             </View>
           )}
         </ScrollView>
