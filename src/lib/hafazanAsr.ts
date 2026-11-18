@@ -63,6 +63,7 @@ async function release() { try { if (ctx) await ctx.release(); } catch (e) { /* 
 let chunks: Uint8Array[] = [];
 let rec: any = null;
 let level = 0;
+let got = 0;
 export const micLevel = () => level;
 
 const b64 = (s: string): Uint8Array => {
@@ -73,8 +74,12 @@ const b64 = (s: string): Uint8Array => {
 
 export async function micPermission(): Promise<boolean> {
   if (Platform.OS !== 'android') return false;
-  const r = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
-  return r === PermissionsAndroid.RESULTS.GRANTED;
+  const P = PermissionsAndroid.PERMISSIONS.RECORD_AUDIO;
+  try { if (await PermissionsAndroid.check(P)) return true; } catch (e) { /* ask below */ }
+  // The answer can come back late (or not at all) on some phones, so ask the system again instead of waiting forever.
+  const ask = PermissionsAndroid.request(P).then((r) => r === PermissionsAndroid.RESULTS.GRANTED);
+  const late = new Promise<boolean>((res) => setTimeout(async () => { try { res(await PermissionsAndroid.check(P)); } catch (e) { res(false); } }, 15000));
+  return Promise.race([ask, late]);
 }
 
 export async function startRecording(): Promise<void> {
@@ -82,13 +87,21 @@ export async function startRecording(): Promise<void> {
   const mod: any = await import('@fugood/react-native-audio-pcm-stream');
   rec = mod.default || mod;
   chunks = []; level = 0;
-  rec.init({ sampleRate: 16000, channels: 1, bitsPerSample: 16, audioSource: 6, bufferSize: 8192, wavFile: '' });
+  if (!rec || typeof rec.init !== 'function') throw new Error('The microphone module is not available in this build.');
+  chunks = []; got = 0;
+  try { await rec.init({ sampleRate: 16000, channels: 1, bitsPerSample: 16, audioSource: 6, bufferSize: 8192, wavFile: '' }); }
+  catch (e: any) { throw new Error('The microphone could not be opened (' + String((e && (e.message || e.code)) || e) + '). Close other apps that use the microphone and try again.'); }
   rec.on('data', (d: string) => {
+    got++;
     const u = b64(d); chunks.push(u);
     let peak = 0; for (let i = 0; i + 1 < u.length; i += 8) { const v = Math.abs(((u[i + 1] << 8) | u[i]) << 16 >> 16); if (v > peak) peak = v; }
     level = Math.min(1, peak / 12000);
   });
   rec.start();
+  // Make sure sound is really arriving, otherwise tell the person instead of silently waiting.
+  const t0 = Date.now();
+  while (got === 0 && Date.now() - t0 < 4000) await new Promise((r) => setTimeout(r, 100));
+  if (got === 0) { try { await rec.stop(); } catch (e) { /* ignore */ } throw new Error('No sound is coming from the microphone. Check that the microphone is allowed for My Life in the phone settings, then try again.'); }
 }
 
 export type Heard = { text: string; seconds: number; pcm: Float32Array };

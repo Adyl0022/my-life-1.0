@@ -32,6 +32,7 @@ export default function Hafazan() {
   const [ci, setCi] = useState(0);
   const [cur, setCur] = useState(1);
   const [playing, setPlaying] = useState(false);
+  const [step, setStep] = useState('');
   const [rec, setRec] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -63,9 +64,13 @@ export default function Hafazan() {
   };
   const start = async () => {
     stopVerse(); setPlaying(false);
-    setMsg(''); setRes(null); setOpen(-1);
-    if (!(await micPermission())) { setMsg('Microphone permission is needed to listen to your recitation. You can allow it in the phone settings.'); return; }
-    try { await startRecording(); setRec(true); } catch (e: any) { setMsg('Could not start the microphone. ' + String((e && e.message) || '')); }
+    setMsg(''); setRes(null); setOpen(-1); setBusy(true); setStep('Asking for microphone permission…');
+    try {
+      if (!(await micPermission())) { setMsg('Microphone permission is needed to listen to your recitation. Allow it in the phone settings (App info, Permissions, Microphone), then try again.'); return; }
+      setStep('Starting the microphone…');
+      await startRecording(); setRec(true);
+    } catch (e: any) { setMsg(String((e && e.message) || 'Could not start the microphone.')); }
+    finally { setBusy(false); setStep(''); }
   };
   const stop = async () => {
     setRec(false); setBusy(true);
@@ -157,9 +162,11 @@ export default function Hafazan() {
                 <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>{(s.verses.find((v) => v.n === cur) || { ms: '' }).ms}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                   <Pressable onPress={listen} style={{ flex: 1, height: 52, borderRadius: 26, backgroundColor: playing ? 'rgba(125,240,198,.3)' : 'rgba(125,240,198,.18)', borderWidth: 1, borderColor: 'rgba(125,240,198,.55)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{playing ? 'Listening…' : '1. Listen'}</Text></Pressable>
-                  <Pressable onPress={rec ? stop : busy ? undefined : start} style={{ flex: 1, height: 52, borderRadius: 26, backgroundColor: rec ? '#ff8fab' : TEAL, alignItems: 'center', justifyContent: 'center', transform: [{ scale: rec ? 1 + lvl * 0.08 : 1 }] }}><Text style={{ color: rec ? '#3a0716' : '#06241d', fontSize: 14, fontWeight: '800' }}>{busy ? 'Checking…' : rec ? 'Stop and check' : '2. Your turn'}</Text></Pressable>
+                  <Pressable onPress={rec ? stop : busy ? undefined : start} style={{ flex: 1, height: 52, borderRadius: 26, backgroundColor: rec ? '#ff8fab' : TEAL, alignItems: 'center', justifyContent: 'center', transform: [{ scale: rec ? 1 + lvl * 0.08 : 1 }] }}><Text style={{ color: rec ? '#3a0716' : '#06241d', fontSize: 14, fontWeight: '800' }}>{step ? 'Please wait…' : busy ? 'Checking…' : rec ? 'Stop and check' : '2. Your turn'}</Text></Pressable>
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, lineHeight: 18, marginTop: 10 }}>Listen to the verse first, as many times as you like. Then tap Your turn, recite it, and tap Stop. The app will point out words to fix.</Text>
+                {step ? <Text style={{ color: TEAL, fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{step}</Text> : null}
+                {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19, marginTop: 8 }}>{msg}</Text> : null}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
                   <Pressable onPress={() => { if (cur > a) { stopVerse(); setPlaying(false); setCur(cur - 1); setMsg(''); } }}><Text style={{ color: cur > a ? TEAL : 'rgba(255,255,255,.3)', fontSize: 13, fontWeight: '800' }}>‹ Previous verse</Text></Pressable>
                   <Pressable onPress={() => { if (cur < b) { stopVerse(); setPlaying(false); setCur(cur + 1); setMsg(''); } }}><Text style={{ color: cur < b ? TEAL : 'rgba(255,255,255,.3)', fontSize: 13, fontWeight: '800' }}>Next verse ›</Text></Pressable>
@@ -179,7 +186,8 @@ export default function Hafazan() {
                 <Pressable onPress={rec ? stop : busy ? undefined : start} accessibilityLabel={rec ? 'Stop and check' : 'Start reciting'} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: rec ? '#ff8fab' : TEAL, alignItems: 'center', justifyContent: 'center', transform: [{ scale: rec ? 1 + lvl * 0.18 : 1 }] }}>
                   {rec ? <View style={{ width: 26, height: 26, borderRadius: 6, backgroundColor: '#3a0716' }} /> : <Text style={{ fontSize: 34 }}>🎙</Text>}
                 </Pressable>
-                <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700', marginTop: 12 }}>{busy ? (asr.phase === 'loading' ? 'Loading the model, then checking…' : 'Checking…') : rec ? 'Listening… tap to stop and check' : 'Tap to recite'}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700', marginTop: 12 }}>{step ? step : busy ? (asr.phase === 'loading' ? 'Loading the model, then checking…' : 'Checking…') : rec ? 'Listening… tap to stop and check' : 'Tap to recite'}</Text>
+                {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19, marginTop: 10, textAlign: 'center' }}>{msg}</Text> : null}
               </Glass>
             ) : res ? (
               <Glass radius={24} style={{ padding: 16 }}>
@@ -238,7 +246,7 @@ export default function Hafazan() {
               </Glass>
             ) : null}
 
-            {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19 }}>{msg}</Text> : null}
+            {msg && res ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19 }}>{msg}</Text> : null}
 
             <Glass radius={20} style={{ padding: 14 }}>
               <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Please note</Text>
