@@ -16,6 +16,10 @@ import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
 // A pasted text or a "summarise / rewrite" job is not a question about the person's own data. It goes straight to the AI,
 // so a word like "maintenance" or "medical" inside the text cannot trigger a written answer or a fixed reply.
 const textTask = (q: string) => q.length > 160 || /\b(summari[sz]e|summary|rewrite|paraphrase|proofread|ringkaskan|ringkasan|rumuskan|tulis semula)\b/i.test(q);
+// Asking for an opinion or for tips is a general question for the AI, even when it mentions a word the app also uses (sleep, work, income...).
+// Questions about the person's own numbers ("my sleep", "this month", "how much") stay with the app.
+const generalQ = (q: string) => /\b(what do you think|your opinion|do you think|your view|apa pendapat|pendapat awak|pendapat kau|awak rasa|kau rasa|tips?|advice|suggestions?|petua|nasihat|cadangan)\b/i.test(q)
+  && !/\b(my|saya punya|hari ini|today|bulan ini|this month|minggu ini|this week|berapa|how much|how many|bajet|budget|spent|belanja)\b/i.test(q);
 const noAnswer = (hm: string, lang: string) => ({ me: false, time: hm, big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '', text: lang === 'ms' ? 'Maaf, saya tak dapat bantu itu sekarang.' : 'Sorry, I could not help with that right now.', fb: 1 });
 
 export class AssistantBase extends React.Component<any, any> {
@@ -629,7 +633,7 @@ export class AssistantBase extends React.Component<any, any> {
         r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
       const tt = textTask(q);
-      if (tt) r = { m: noAnswer(this.hm(), lang), patch: {} };
+      if (tt || generalQ(q)) r = { m: noAnswer(this.hm(), lang), patch: {} };
       if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r, tt);
       // Anything saved from here can be undone with one tap (or by typing "undo").
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
@@ -711,7 +715,7 @@ export class AssistantBase extends React.Component<any, any> {
         r = { m: { me: false, text: 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
       const tt = textTask(qe);
-      if (tt) r = { m: noAnswer(this.hm(), 'en'), patch: {} };
+      if (tt || generalQ(qe)) r = { m: noAnswer(this.hm(), 'en'), patch: {} };
       if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(qe, 'en', r, tt);
       try { r.m = await xlMsg(r.m, tl); } catch (e) { /* keep the English answer */ }
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
