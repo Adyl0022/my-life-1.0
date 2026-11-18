@@ -91,7 +91,7 @@ export const FAQ: Sec[] = [
 ];
 
 export const COPYRIGHT: Sec[] = [
-  { h: 'Copyright', p: '(c) 2026 Adli Syahmi. All rights reserved. My Life 1.0, including its name, logo, design, screens, text, icons, artwork, animations and source code, is the private property of Adli Syahmi and is protected by copyright law.' },
+  { h: 'Copyright', p: 'Copyright © 2026 Adli Syahmi. All rights reserved. My Life 1.0, including its name, logo, design, screens, text, icons, artwork, animations and source code, is the private property of Adli Syahmi and is protected by copyright law.' },
   { h: 'Licence to use', p: 'You are given a personal, non-exclusive, non-transferable and revocable licence to install and use My Life on your own devices for your own non-commercial use. This is a licence to use the app, not a sale of it or of any part of it.' },
   { h: 'What is not allowed', p: 'Without written permission from the developer you may not:\n•  copy, reproduce or redistribute the app or any part of it\n•  modify it, or make new apps or works based on it\n•  decompile, reverse engineer or try to extract its source code, design or data\n•  sell, rent, lend, sublicense or share the app file (APK) with others\n•  remove or change any copyright or ownership notice\n•  use its name, logo or design in a way that suggests it is yours or that it is approved by the developer' },
   { h: 'Third-party software', p: 'My Life uses open-source software that stays under its own licences. Quran recitations and translations are provided by alquran.cloud (Islamic Network) and are not owned by My Life. See Open-source licences in this screen. These licences do not give you rights over the My Life code, design or name.' },
