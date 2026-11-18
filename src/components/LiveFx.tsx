@@ -24,12 +24,12 @@ export function FadeText({ text }: { text: string }) {
 // B: a light travels over the last words, left to right, again and again.
 export function ShimmerText({ text }: { text: string }) {
   const [p, setP] = useState(0);
-  useEffect(() => { const t = setInterval(() => setP((x) => (x + 1) % 36), 60); return () => clearInterval(t); }, []);
-  const N = 6;
-  const c = (p / 36) * (N + 4) - 2;
+  useEffect(() => { const t = setInterval(() => setP((x) => (x + 1) % 18), 150); return () => clearInterval(t); }, []);
+  const N = 4;
+  const c = (p / 18) * (N + 3) - 1.5;
   const levels = Array.from({ length: N }, (_, i) => {
     const bump = Math.exp(-((i - c) * (i - c)) / 1.6);
-    const base = i === N - 1 ? 2 : 6;
+    const base = i === N - 1 ? 6 : 10;
     return Math.min(15, Math.round(base + bump * (15 - base)));
   });
   return <RichText text={mark(text, levels)} />;
