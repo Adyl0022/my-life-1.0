@@ -146,6 +146,7 @@ export default function Hafazan() {
   const [hist, setHist] = useState<number[]>([]);
   const [showPick, setShowPick] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [hearV, setHearV] = useState(false);
   const [tr, setTr] = useStored<'off' | 'ms' | 'en'>('ml_hz_tr', 'ms');
   const [pick, setPick] = useState('');
   const [pf, setPf] = useState(false);
@@ -520,9 +521,28 @@ export default function Hafazan() {
                   return (
                     <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.08)' }}>
                       <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{'Verse ' + w.verse + ' · ' + (w.status === 'ok' ? 'Correct' : w.status === 'close' ? 'Close' : w.status === 'wrong' ? 'Different word heard' : w.status === 'missing' ? 'Not heard' : 'Not reached')}</Text>
+                      {w.status !== 'ok' && w.status !== 'pending' ? (
+                        <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                          <View style={{ flex: 1, padding: 8, borderRadius: 12, backgroundColor: 'rgba(125,240,198,.1)', borderWidth: 1, borderColor: 'rgba(125,240,198,.3)', alignItems: 'center' }}>
+                            <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6 }}>CORRECT WORD</Text>
+                            <Text style={{ color: '#7df0c6', fontSize: 24, lineHeight: 46, fontFamily: QURAN_FONT }}>{w.word}</Text>
+                          </View>
+                          <View style={{ flex: 1, padding: 8, borderRadius: 12, backgroundColor: 'rgba(255,143,171,.1)', borderWidth: 1, borderColor: 'rgba(255,143,171,.3)', alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 10.5, fontWeight: '800', letterSpacing: 0.6 }}>MODEL HEARD</Text>
+                            {w.heard ? <Text style={{ color: '#ffb3c4', fontSize: 24, lineHeight: 46, fontFamily: QURAN_FONT }}>{w.heard}</Text> : <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 13, paddingVertical: 12 }}>Nothing heard</Text>}
+                          </View>
+                        </View>
+                      ) : null}
                       {w.status === 'close' ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{closeNote(w.word, w.heard || '')}</Text> : null}
                       {w.status === 'wrong' ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{'The model heard a different word here.'}</Text> : null}
                       {(w.status === 'wrong' || w.status === 'close' || w.status === 'missing') && tips.length ? <Text style={{ color: '#ffd593', fontSize: 12, lineHeight: 18, marginTop: 6 }}>{'Tajwid reminder (from the text, not heard from your voice):\n' + tips.join('\n')}</Text> : null}
+                      {w.status === 'wrong' || w.status === 'close' || w.status === 'missing' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>Sometimes the model mishears, not you. Tap "Hear my recording" to check what was recorded.</Text> : null}
+                      {mode !== 'auto' && s && w.status !== 'pending' ? (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                          <Pressable onPress={async () => { if (hearV) return; setHearV(true); try { stopQuranAudio(); } catch (e) { /* ignore */ } const ok = await playVerse(s.num, w.verse); setHearV(false); if (!ok) setMsg('Could not play the verse. Check your internet and try again.'); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.18)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{hearV ? '🔊  Playing…' : '🎧  Hear this verse'}</Text></Pressable>
+                          <Pressable onPress={() => { stopVerse(); setHearV(false); setMsg(''); setOpen(-1); if (mode === 'learn') { setCur(w.verse); setRes(null); } else { setFrom(String(w.verse)); setTo(String(w.verse)); setRes(null); } }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{mode === 'learn' ? 'Try this verse again' : 'Test only this verse'}</Text></Pressable>
+                        </View>
+                      ) : null}
                     </View>
                   );
                 })() : null}
