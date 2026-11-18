@@ -90,7 +90,6 @@ function FadeText({ text, style }: { text: string; style?: any }) {
   useEffect(() => { o.setValue(0); Animated.timing(o, { toValue: 1, duration: 320, useNativeDriver: false }).start(); }, [text]);
   return <Animated.Text style={[{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, textAlign: 'center' }, style, { opacity: o }]}>{text}</Animated.Text>;
 }
-const trText = (vs: { n: number; ms: string; en: string }[], tr: string, max = 6) => vs.slice(0, max).map((v) => (vs.length > 1 ? v.n + '. ' : '') + (tr === 'en' ? v.en : v.ms)).join('\n') + (vs.length > max ? '\n…' : '');
 export default function Hafazan() {
   const asr = useAsr();
   const [sKey, setSKey] = useState(SURAH_LIST[0].key);
@@ -377,10 +376,7 @@ export default function Hafazan() {
                     ))}
                   </View>
                 </>) : mode === 'test' && s ? (
-                  !hide ? <View style={{ alignSelf: 'stretch' }}><Text style={{ color: W, fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text>
-                    {tr !== 'off' ? <FadeText text={trText(s.verses.filter((v) => v.n >= a && v.n <= b), tr)} style={{ marginTop: 6 }} /> : null}
-                    <TrBar tr={tr} setTr={setTr} />
-                  </View> : (
+                  !hide ? <Text style={{ color: W, fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text> : (
                     <View style={{ alignItems: 'center', marginTop: 12 }}>
                       <Text style={{ color: W, fontSize: 20, fontWeight: '800', textAlign: 'center' }}>{s.title}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13.5, textAlign: 'center', marginTop: 4 }}>{'Verse ' + a + (b > a ? ' to ' + b : '') + ' · the text is hidden'}</Text>
@@ -455,10 +451,6 @@ export default function Hafazan() {
                 {mode === 'auto' && found && found.cands[ci] ? (
                   <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(125,240,198,.14)', borderWidth: 1, borderColor: 'rgba(125,240,198,.4)' }}>
                     <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{'Found: ' + found.cands[ci].title + ', verse ' + found.cands[ci].ayah + (found.cands[ci].endAyah !== found.cands[ci].ayah || found.cands[ci].endSurah !== found.cands[ci].surah ? ' to ' + found.cands[ci].endAyah : '')}</Text>
-                    {(() => { const c = found.cands[ci]; const sv = SURAH[c.surahKey]; if (!sv) return null; const last = c.endSurah === c.surah ? c.endAyah : sv.verses.length; const vs = sv.verses.filter((v) => v.n >= c.ayah && v.n <= last); return (<>
-                      {tr !== 'off' ? <FadeText text={trText(vs, tr)} style={{ marginTop: 6, textAlign: 'left' }} /> : null}
-                      <TrBar tr={tr} setTr={setTr} style={{ marginTop: 10, alignSelf: 'flex-start' }} />
-                    </>); })()}
                     {found.ambiguous ? (<>
                       <Text style={{ color: '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 4 }}>These verses sound the same in several places. Tap the one you recited:</Text>
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
