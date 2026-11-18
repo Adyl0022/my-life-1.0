@@ -41,7 +41,7 @@ export function RichText({ text }: { text: string }) {
       out.push(
         <View key={'l' + i} style={{ flexDirection: 'row', marginTop: 2 }}>
           <Text style={{ ...base, width: 22 }}>{b ? '•' : nb![1] + '.'}</Text>
-          <Text style={{ ...base, flex: 1 }}>{inline((b ? b[2] : nb![2]), 'i' + i)}</Text>
+          <Text style={{ ...base, flexShrink: 1 }}>{inline((b ? b[2] : nb![2]), 'i' + i)}</Text>
         </View>,
       );
     } else if (h) out.push(<Text key={'h' + i} style={{ ...base, fontWeight: '800', marginTop: 4 }}>{inline(h[1], 'h' + i)}</Text>);

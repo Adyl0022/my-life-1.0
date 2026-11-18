@@ -209,7 +209,7 @@ class Chat extends AssistantBase {
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
               <OrbSvg size={32} uid="ty" />
               {v.live ? (
-                <Glass radius={20} style={{ maxWidth: '84%', paddingVertical: 13, paddingHorizontal: 16, borderBottomLeftRadius: 6 }}><RichText text={v.live + ' ▍'} /></Glass>
+                <Glass radius={20} style={{ maxWidth: '84%', flexShrink: 1, paddingVertical: 13, paddingHorizontal: 16, borderBottomLeftRadius: 6 }}><RichText text={v.live + ' ▍'} /></Glass>
               ) : <ThinkingBubble ms={ms} />}
             </View>
           )}
