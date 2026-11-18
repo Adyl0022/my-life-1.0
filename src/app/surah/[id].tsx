@@ -36,11 +36,11 @@ export default function SurahScreen() {
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <ReadBg />
       <SafeAreaView style={{ flex: 1 }}>
-        <Header title={s.title} sub={s.sub} right={<Text style={{ color: W, fontSize: 22 }}>{s.ar}</Text>} />
+        <Header title={s.title} sub={s.sub} right={<Text style={{ color: W, fontSize: 22, fontFamily: QURAN_FONT }}>{s.ar}</Text>} />
         <ScrollView ref={scrollRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <View onLayout={(e) => { top.current = e.nativeEvent.layout.y; tryJump(); }}>
           <Glass solid radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6, backgroundColor: 'rgba(46,84,116,.96)' }}>
-            {s.bismillah && <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: AR_SIZE[size] + 3, textAlign: 'center', lineHeight: (AR_SIZE[size] + 3) * 1.8 }}>{BISMILLAH.ar}</Text></View>}
+            {s.bismillah && <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: AR_SIZE[size] + 3, fontFamily: QURAN_FONT, textAlign: 'center', lineHeight: (AR_SIZE[size] + 3) * 1.8 }}>{BISMILLAH.ar}</Text></View>}
             {mode === 'flow' ? (
               <View onLayout={(e) => { flowH.current = e.nativeEvent.layout.height; tryJump(); }} style={{ paddingVertical: 14 }}>
                 <Text style={{ color: W, fontSize: AR_SIZE[size] + 4, fontFamily: QURAN_FONT, lineHeight: (AR_SIZE[size] + 4) * 2.1, textAlign: 'justify', writingDirection: 'rtl' }}>
