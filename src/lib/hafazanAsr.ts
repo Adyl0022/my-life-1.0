@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { Platform, PermissionsAndroid } from 'react-native';
 
 // Offline Quran recitation recognition (Whisper tuned for the Quran, running on the phone with whisper.cpp).
-// The recording never leaves the phone. Only the one-time model download (about 43 MB) uses the internet.
-// Model: ggml-quran-tiny-q8_0 (Apache-2.0), a Quran fine-tune of OpenAI Whisper by Tarteel AI, converted for whisper.cpp.
-const MODEL_URL = 'https://github.com/mano270699/watazawwadu-models/releases/download/quran-whisper-tiny-v1/ggml-quran-tiny-q8_0.bin';
-const MODEL_BYTES = 43537433;
+// The recording never leaves the phone. Only the one-time model download (about 57 MB) uses the internet.
+// Model: Tarteel "whisper-base-ar-quran" (Apache-2.0), a Quran fine-tune of OpenAI Whisper base, converted for whisper.cpp
+// (ggml, q5_1, about 60 MB). It is kept in this project's own GitHub repository (branch quran-model); see NOTICE.txt there.
+// On 40 real recitations it made 11% word mistakes, against 35% for the smaller tiny model used before.
+const MODEL_URL = 'https://raw.githubusercontent.com/Adyl0022/my-life-1.0/quran-model/ggml-quran-base-q5_1.bin';
+const MODEL_BYTES = 59707625;
 export const MODEL_MB = Math.round(MODEL_BYTES / 1048576);
 export const asrSupported = Platform.OS === 'android';
 
@@ -19,7 +21,7 @@ export const useAsr = (): AsrState => {
   return st;
 };
 
-const FS = async () => { const m: any = await import('expo-file-system/legacy'); return { m, path: (m.documentDirectory || '') + 'hafazan/quran-tiny-q8.bin' }; };
+const FS = async () => { const m: any = await import('expo-file-system/legacy'); return { m, path: (m.documentDirectory || '') + 'hafazan/quran-base-q5.bin' }; };
 
 async function refresh() {
   if (!asrSupported || st.phase === 'downloading' || st.phase === 'loading') return;
@@ -39,12 +41,14 @@ export async function downloadModel(): Promise<void> {
     const i = await m.getInfoAsync(tmp);
     if (!i.exists || i.size !== MODEL_BYTES) { await m.deleteAsync(tmp, { idempotent: true }); throw new Error('The downloaded file looks incomplete. Please try again.'); }
     await m.moveAsync({ from: tmp, to: path });
+    // the smaller model from the first version is not needed any more
+    try { await m.deleteAsync(path.replace(/[^/]+$/, '') + 'quran-tiny-q8.bin', { idempotent: true }); } catch (e) { /* ignore */ }
     set({ phase: 'ready', pct: 1 });
   } catch (e: any) { set({ phase: 'error', err: String((e && e.message) || e) }); }
 }
 
 export async function deleteModel(): Promise<void> {
-  try { await release(); const { m, path } = await FS(); await m.deleteAsync(path, { idempotent: true }); } catch (e) { /* ignore */ }
+  try { await release(); const { m, path } = await FS(); await m.deleteAsync(path, { idempotent: true }); await m.deleteAsync(path.replace(/[^/]+$/, '') + 'quran-tiny-q8.bin', { idempotent: true }); } catch (e) { /* ignore */ }
   set({ phase: 'none', pct: 0, err: '' });
 }
 

@@ -220,7 +220,7 @@ export default function Hafazan() {
                 <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>What will be downloaded</Text>
                 {[
                   ['1 file only', 'The Quran listening model (' + MODEL_MB + ' MB). It is a speech model for Arabic recitation, based on OpenAI Whisper and tuned for the Quran by Tarteel AI (open licence).'],
-                  ['From where', 'A public GitHub release page. After this it is saved inside the app and works offline.'],
+                  ['From where', 'This app\'s own GitHub page. After this it is saved inside the app and works offline.'],
                   ['Your voice', 'Recorded and checked on this phone only. It is never uploaded.'],
                   ['Still needs internet', 'The Listen button in Learn mode plays the verse recording online (Mishary Alafasy), so it uses a little data each time.'],
                   ['Remove anytime', 'After downloading, the link at the bottom of Hafazan Check deletes the model and frees the space.'],
