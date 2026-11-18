@@ -27,6 +27,7 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
   const [lang, setLang] = useLang(); const [size, setSize] = useStored<number>('ml_zsize', 2);
   const [zr, setZr] = useZRead(); const [pick, setPick] = useState(false);
   const [showTr, setShowTr] = useStored<boolean>('ml_ztr', false);
+  const [gen, setGen] = useStored<string>('ml_zgen', 'm');
   const [list, setList] = useState(false);
   const [sel, setSel] = useState(start);
   const [counts, setCounts] = useState<Record<number, number>>({});
@@ -41,7 +42,10 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
   const p = parts[sel];
   const isRead = !!rd[sel];
   const setRead = (i: number, v: boolean) => setIsl({ ...isl, read: { ...isl.read, [storeKey]: { ...rd, [i]: v } } });
-  const verses = partVerses(p, !!evening);
+  const verses0 = partVerses(p, !!evening);
+  // A line written "al-marhum / al-marhumah" is shown once, for the person to choose: male or female.
+  const twoWay = !!verses0 && verses0.some((v) => /\S+\s\/\s\S+/.test(v.ar));
+  const verses = verses0 ? verses0.map((v) => ({ ...v, ar: v.ar.replace(/(\S+)\s\/\s(\S+)/g, (_m: string, a: string, b: string) => (gen === 'f' ? b : a)) })) : verses0;
   const pc = KIND_COL[p.kind];
   const saved = !!isl.bm[bmKey];
   const tg = target(p);
@@ -107,10 +111,18 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
             <ScrollView ref={sc} style={{ flex: 1, marginTop: 6 }} contentContainerStyle={{ paddingBottom: 10 }} showsVerticalScrollIndicator={false}>
               {p.custom === 'tahlil33' ? (
                 <View style={{ alignItems: 'center', paddingVertical: 14 }}>
-                  <Text style={{ color: W, fontSize: arS + 8, lineHeight: (arS + 8) * 1.8, textAlign: 'center' }}>لَا إِلَٰهَ إِلَّا ٱللَّهُ</Text>
+                  <Text style={{ color: W, fontSize: arS + 8, fontFamily: QURAN_FONT, lineHeight: (arS + 8) * 1.95, textAlign: 'center' }}>لَا إِلَٰهَ إِلَّا ٱللَّهُ</Text>
                   {zr === 'ar' || !showTr ? null : <Text style={{ color: 'rgba(255,255,255,.84)', fontSize: mS + 1, marginTop: 6 }}>{lang === 'en' ? 'There is no god but Allah.' : 'Tiada Tuhan selain Allah.'}</Text>}
                 </View>
-              ) : verses ? verses.map((v, i) => (
+              ) : verses ? (twoWay ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, paddingTop: 6 }}>
+                  <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, fontWeight: '700' }}>Read for:</Text>
+                  {[['m', 'Male (al-marhum)'], ['f', 'Female (al-marhumah)']].map(([k, t]) => (
+                    <Pressable key={k} onPress={() => setGen(k)} style={{ paddingVertical: 6, paddingHorizontal: 13, borderRadius: 999, backgroundColor: gen === k ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: gen === k ? '#7df0c6' : 'rgba(255,255,255,.16)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text></Pressable>
+                  ))}
+                </View>
+              ) : null) : null}
+              {p.custom === 'tahlil33' ? null : verses ? verses.map((v, i) => (
                 <View key={i} style={{ paddingVertical: 14, borderBottomWidth: i === verses.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <Text style={{ color: W, fontSize: arS, fontFamily: QURAN_FONT, lineHeight: arS * 1.95, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{verses.length > 1 ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'  ﴿' + v.n + '﴾'}</Text> : null}</Text>
                   <Meaning v={v} />

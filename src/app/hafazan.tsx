@@ -78,6 +78,7 @@ export default function Hafazan() {
   const [heard, setHeard] = useState('');
   const [take, setTake] = useState<{ pcm: Float32Array; seconds: number; peak: number } | null>(null);
   const [hearing, setHearing] = useState(false);
+  const [micAsk, setMicAsk] = useState(false);
   const [lvl, setLvl] = useState(0);
   const [hist, setHist] = useState<number[]>([]);
   const [showPick, setShowPick] = useState(false);
@@ -106,15 +107,18 @@ export default function Hafazan() {
   };
   // After the person allows the microphone in the phone settings and comes back, clear the warning by itself.
   useEffect(() => {
-    if (!(msg && msg.startsWith('Microphone permission'))) return;
+    if (!micAsk && !(msg && msg.startsWith('Microphone permission'))) return;
     const sub = AppState.addEventListener('change', async (st) => {
       if (st !== 'active') return;
-      try { if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)) setMsg('Microphone is allowed now. Tap the microphone to start.'); } catch (e) { /* ignore */ }
+      try { if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)) { setMicAsk(false); setMsg('Microphone is allowed now. Tap the microphone to start.'); }; } catch (e) { /* ignore */ }
     });
     return () => sub.remove();
-  }, [msg]);
+  }, [msg, micAsk]);
   const start = async () => {
     stopVerse(); setPlaying(false);
+    // First time: say what will happen, and keep the phone settings one tap away in case the phone's own box does not react.
+    if (!micAsk) { try { if (!(await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO))) { setMsg(''); setMicAsk(true); return; } } catch (e) { /* ask below */ } }
+    setMicAsk(false);
     setMsg(''); setRes(null); setOpen(-1); setBusy(true); setStep('Asking for microphone permission…');
     try {
       if (!(await micPermission())) { setMsg('Microphone permission is needed to listen to your recitation. Tap the button below, open Permissions, choose Microphone and select Allow only while using the app. If the permission box does not react to your taps, stop any screen recording or floating bubble first (the phone blocks taps on that box while another app draws over it).'); return; }
@@ -165,6 +169,16 @@ export default function Hafazan() {
   const setBtn = (label: string, onPress: () => void) => (
     <Pressable onPress={onPress} style={{ alignSelf: 'center', marginTop: 10, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{label}</Text></Pressable>
   );
+  const askBlock = micAsk && !msg ? (
+    <View style={{ alignSelf: 'stretch', marginTop: 10, padding: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
+      <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Allow the microphone</Text>
+      <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>The app needs the microphone to hear your recitation. The recording stays on this phone. Choose "While using the app" when the phone asks. If the phone's box does not react to your taps, use the second button.</Text>
+      <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+        <Pressable onPress={start} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06241d', fontSize: 13, fontWeight: '800' }}>Allow now</Text></Pressable>
+        <Pressable onPress={() => { try { Linking.openSettings(); } catch (e) { /* ignore */ } }} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Open phone settings</Text></Pressable>
+      </View>
+    </View>
+  ) : null;
   const msgBlock = msg ? (
     <View style={{ alignSelf: 'stretch', marginTop: 10 }}>
       <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19, textAlign: 'center' }}>{msg}</Text>
@@ -187,8 +201,22 @@ export default function Hafazan() {
               <View style={{ width: 74, height: 74, borderRadius: 37, backgroundColor: 'rgba(125,240,198,.16)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 32 }}>🎧</Text></View>
               <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.3, marginTop: 14 }}>ONE-TIME SETUP</Text>
               <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginTop: 6, textAlign: 'center' }}>Download the Quran listening model</Text>
-              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 20, marginTop: 8, textAlign: 'center' }}>{'Before you download, here is exactly what you get. Use Wi-Fi if you can.'}</Text>
-              <View style={{ alignSelf: 'stretch', marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(0,0,0,.2)', gap: 8 }}>
+              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 20, marginTop: 8, textAlign: 'center' }}>{'Everything below is unlocked after one download. Use Wi-Fi if you can.'}</Text>
+              <View style={{ alignSelf: 'stretch', marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(0,0,0,.2)', gap: 10 }}>
+                <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>What you can do in Hafazan Check</Text>
+                {[
+                  ['📖', 'Learn', 'The app plays a verse, you repeat it, and the app tells you which words to fix. Go verse by verse.'],
+                  ['📝', 'Test', 'Recite a surah or a range of verses from memory, with the text hidden. The app marks the words that were correct, close or wrong.'],
+                  ['🔎', 'Find', 'Recite any verses you know. The app finds the surah and the verse by itself, then checks your words.'],
+                ].map(([ic, h, t]) => (
+                  <View key={h} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                    <Text style={{ fontSize: 20 }}>{ic}</Text>
+                    <Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}><Text style={{ color: W, fontWeight: '800' }}>{h + ': '}</Text>{t}</Text>
+                  </View>
+                ))}
+                <Text style={{ color: '#ffd593', fontSize: 12, lineHeight: 17 }}>It checks the words you say. It cannot judge tajwid or harakat, so keep learning with a teacher.</Text>
+              </View>
+              <View style={{ alignSelf: 'stretch', marginTop: 12, padding: 14, borderRadius: 18, backgroundColor: 'rgba(0,0,0,.2)', gap: 8 }}>
                 <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>What will be downloaded</Text>
                 {[
                   ['1 file only', 'The Quran listening model (' + MODEL_MB + ' MB). It is a speech model for Arabic recitation, based on OpenAI Whisper and tuned for the Quran by Tarteel AI (open licence).'],
@@ -329,6 +357,7 @@ export default function Hafazan() {
                     ))}
                   </View>
                 ) : null}
+                {askBlock}
                 {msgBlock}
                 {msg && !msg.startsWith('Microphone') ? takeRow : null}
               </View>
