@@ -83,7 +83,7 @@ export default function QuranAudio() {
                   );
                 })}
               </View>
-              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, fontFamily: QURAN_FONT, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
+              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, lineHeight: 64, fontFamily: QURAN_FONT, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
               {info.verses.map((v, i) => (
                 <View key={v.n} onLayout={(e) => { ys.current[info.num + ':' + v.n] = e.nativeEvent.layout.y + 90; }}>
                   <VerseBlock v={v} size={size} lang={lang} arOnly={arOnly} bleed={16} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />

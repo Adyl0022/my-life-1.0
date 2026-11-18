@@ -112,7 +112,7 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
                 </View>
               ) : verses ? verses.map((v, i) => (
                 <View key={i} style={{ paddingVertical: 14, borderBottomWidth: i === verses.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
-                  <Text style={{ color: W, fontSize: arS, fontFamily: QURAN_FONT, lineHeight: arS * 1.95, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{verses.length > 1 ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'  ﴿' + v.n + '﴾'}</Text> : null}</Text>
+                  <Text style={{ color: W, fontSize: arS, fontFamily: QURAN_FONT, lineHeight: arS * 2.4, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{verses.length > 1 ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'  ﴿' + v.n + '﴾'}</Text> : null}</Text>
                   <Meaning v={v} />
                 </View>
               )) : <Pending kind={p.kind} />}
