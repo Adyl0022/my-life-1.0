@@ -10,7 +10,9 @@ export type SurahInfo = { title: string; ar: string; sub: string; verses: Verse[
 export const SURAH: Record<string, SurahInfo> = {};
 export const SURAH_LIST: { key: string; num: number; title: string; ar: string; sub: string; place: string }[] = [];
 // The Quran font (KFGQPC Hafs) has no open-tanwin marks and draws two characters as a dotted circle (the comma and U+06DF), so they are swapped for display.
-export const fixAr = (s: string) => (s || '').replace(/\u08F0/g, '\u064B').replace(/\u08F1/g, '\u064C').replace(/\u08F2/g, '\u064D').replace(/\u06DF/g, '\u06E0').replace(/\s*\u060C\s*/g, ' ')
+export const fixAr = (s: string) => (s || '').replace(/\u08F0/g, '\u064B').replace(/\u08F1/g, '\u064C').replace(/\u08F2/g, '\u064D').replace(/\u06DF/g, '\u06E0')
+  // The small madd sign U+06E4 is drawn by this font as one long flat line over the word, which looks like a stray line and runs into the line above. The letters and harakat stay as they are.
+  .replace(/\u06E4/g, '').replace(/\s*\u060C\s*/g, ' ')
   // Tahlil/Mathurat write Allah with a plain alif; the Quran font only draws its marks on the lafz Allah when it starts with alif wasla, like the Quran text
   .replace(/\u0627(?=\u0644\u0644[\u064B-\u0652\u0670]*\u0647)/g, '\u0671')
   // Some zikir lines write Allah without the shaddah and fathah on the two lams. Write every Allah / lillah / Allahumma in the standard way, like the Quran text.

@@ -26,18 +26,50 @@ const Chip = ({ t, on, onPress }: { t: string; on: boolean; onPress: () => void 
   </Pressable>
 );
 
-// The microphone orb: soft rings that swell with the voice while recording.
+// The microphone orb: soft rings that swell with the voice while recording, and a spinning arc while it is thinking.
 const Orb = ({ rec, busy, lvl, onPress }: { rec: boolean; busy: boolean; lvl: number; onPress?: () => void }) => {
   const c = rec ? '#ff8fab' : TEAL;
   const r2 = 132 + (rec ? lvl * 30 : 0), r1 = 112 + (rec ? lvl * 16 : 0);
+  const spin = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!busy || rec) { spin.setValue(0); pulse.setValue(0); return; }
+    const a = Animated.loop(Animated.timing(spin, { toValue: 1, duration: 1100, easing: Easing.linear, useNativeDriver: true }));
+    const b = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true })]));
+    a.start(); b.start();
+    return () => { a.stop(); b.stop(); };
+  }, [busy, rec]);
+  const rot = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const sc = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.1] });
+  const op = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
   return (
     <Pressable onPress={onPress} accessibilityLabel={rec ? 'Stop and check' : 'Start reciting'} style={{ width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ position: 'absolute', width: r2, height: r2, borderRadius: r2 / 2, backgroundColor: rec ? 'rgba(255,143,171,.10)' : 'rgba(125,240,198,.08)' }} />
+      <Animated.View style={{ position: 'absolute', width: r2, height: r2, borderRadius: r2 / 2, backgroundColor: rec ? 'rgba(255,143,171,.10)' : 'rgba(125,240,198,.08)', transform: busy && !rec ? [{ scale: sc }] : [], opacity: busy && !rec ? op : 1 }} />
       <View style={{ position: 'absolute', width: r1, height: r1, borderRadius: r1 / 2, backgroundColor: rec ? 'rgba(255,143,171,.18)' : 'rgba(125,240,198,.16)', borderWidth: 1, borderColor: rec ? 'rgba(255,143,171,.5)' : 'rgba(125,240,198,.45)' }} />
-      <View style={{ width: 92, height: 92, borderRadius: 46, backgroundColor: c, alignItems: 'center', justifyContent: 'center', opacity: busy && !rec ? 0.6 : 1, shadowColor: c, shadowOpacity: 0.6, shadowRadius: 16, elevation: 8 }}>
+      {busy && !rec ? (
+        <Animated.View style={{ position: 'absolute', width: 112, height: 112, transform: [{ rotate: rot }] }}>
+          <Svg width={112} height={112}>
+            <Circle cx={56} cy={56} r={53} stroke="#bff7e1" strokeWidth={4} fill="none" strokeLinecap="round" strokeDasharray="90 244" />
+          </Svg>
+        </Animated.View>
+      ) : null}
+      <View style={{ width: 92, height: 92, borderRadius: 46, backgroundColor: c, alignItems: 'center', justifyContent: 'center', opacity: busy && !rec ? 0.75 : 1, shadowColor: c, shadowOpacity: 0.6, shadowRadius: 16, elevation: 8 }}>
         {rec ? <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: '#3a0716' }} /> : <Text style={{ fontSize: 36 }}>🎙</Text>}
       </View>
     </Pressable>
+  );
+};
+
+// "Checking" with three dots that keep moving, so the screen never looks stuck.
+const BusyDots = ({ text, style }: { text: string; style?: any }) => {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => { const a = Animated.loop(Animated.timing(t, { toValue: 1, duration: 1200, easing: Easing.linear, useNativeDriver: true })); a.start(); return () => a.stop(); }, []);
+  const dot = (i: number) => ({ opacity: t.interpolate({ inputRange: [0, i / 3, (i + 1) / 3, 1], outputRange: [0.25, 0.25, 1, 0.25], extrapolate: 'clamp' }) });
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <Text style={style}>{text}</Text>
+      {[0, 1, 2].map((i) => <Animated.Text key={i} style={[style, dot(i)]}>.</Animated.Text>)}
+    </View>
   );
 };
 
@@ -200,7 +232,7 @@ export default function Hafazan() {
   const cv = s ? s.verses.find((v) => v.n === cur) : undefined;
   const sInfo = SURAH_LIST.find((x) => x.key === sKey);
   const stepIdx = playing ? 0 : rec || busy ? 1 : res ? 2 : 0;
-  const status = step ? step : busy ? (asr.phase === 'loading' ? 'Loading the model, then checking…' : 'Checking…') : rec ? 'Listening… tap to stop and check' : playing ? 'Listen carefully…' : 'Tap the microphone to recite';
+  const status = step ? step : busy ? (asr.phase === 'loading' ? 'Loading the model, then checking' : 'Checking') : rec ? 'Listening… tap to stop and check' : playing ? 'Listen carefully…' : 'Tap the microphone to recite';
   const setBtn = (label: string, onPress: () => void) => (
     <Pressable onPress={onPress} style={{ alignSelf: 'center', marginTop: 10, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{label}</Text></Pressable>
   );
@@ -411,7 +443,7 @@ export default function Hafazan() {
                     </View>
                   ) : <View style={{ width: 76 }} />}
                 </View>
-                <Text style={{ color: step ? TEAL : 'rgba(255,255,255,.88)', fontSize: 13.5, fontWeight: '700', marginTop: 4, textAlign: 'center' }}>{status}</Text>
+                {busy && !step ? <View style={{ marginTop: 4 }}><BusyDots text={status} style={{ color: 'rgba(255,255,255,.88)', fontSize: 13.5, fontWeight: '700' }} /></View> : <Text style={{ color: step ? TEAL : 'rgba(255,255,255,.88)', fontSize: 13.5, fontWeight: '700', marginTop: 4, textAlign: 'center' }}>{status}</Text>}
                 {mode === 'learn' ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
                     {['Listen', 'Recite', 'Review'].map((t, i) => (
