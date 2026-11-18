@@ -108,6 +108,36 @@ export async function startRecording(): Promise<void> {
   if (got === 0) { try { await rec.stop(); } catch (e) { /* ignore */ } throw new Error('No sound is coming from the microphone. Check that the microphone is allowed for My Life in the phone settings, then try again.'); }
 }
 
+
+// The speech model was trained on one verse at a time, so a long recitation is cut at the pauses between verses and each part is heard on its own.
+export function splitAtPauses(x: Float32Array, rate = 16000): [number, number][] {
+  const win = Math.round(rate * 0.02), nf = Math.floor(x.length / win);
+  if (nf < 50 || x.length < rate * 6) return [[0, x.length]];
+  const rms = new Float32Array(nf);
+  for (let f = 0; f < nf; f++) { let a = 0; for (let i = f * win; i < (f + 1) * win; i++) a += x[i] * x[i]; rms[f] = Math.sqrt(a / win); }
+  const sorted = Array.from(rms).sort((a, b) => a - b);
+  const loud = sorted[Math.floor(sorted.length * 0.9)] || 0;
+  const thr = Math.max(0.004, loud * 0.08);
+  const minGap = Math.round(0.55 / 0.02); // a pause of at least 0.55 s
+  const cuts: number[] = [];
+  let run = 0;
+  for (let f = 0; f < nf; f++) {
+    if (rms[f] < thr) run++; else { if (run >= minGap) cuts.push(Math.round((f - run / 2) * win)); run = 0; }
+  }
+  const bounds = [0, ...cuts, x.length];
+  const parts: [number, number][] = [];
+  for (let k = 0; k + 1 < bounds.length; k++) parts.push([bounds[k], bounds[k + 1]]);
+  // a part shorter than 1.2 s is joined to its neighbour, so a short word is never heard alone
+  const out: [number, number][] = [];
+  for (const q of parts) {
+    const last = out[out.length - 1];
+    if (last && (q[1] - q[0] < rate * 1.2 || last[1] - last[0] < rate * 1.2)) last[1] = q[1]; else out.push([q[0], q[1]]);
+  }
+  // a part with almost no voice in it is only silence or noise: the model must not hear it (it would invent words)
+  const voiced = out.filter(([a, b]) => { let c = 0; for (let f = Math.floor(a / win); f < Math.min(nf, Math.floor(b / win)); f++) if (rms[f] >= thr) c++; return c * 0.02 >= 0.5; });
+  return voiced.length ? voiced : [[0, x.length]];
+}
+
 export type Heard = { text: string; seconds: number; pcm: Float32Array; peak: number; bad?: boolean };
 
 // Stops recording and turns the speech into text. The loaded model stays in memory for the next try.
@@ -131,10 +161,19 @@ export async function stopAndTranscribe(): Promise<Heard> {
     // whisper.rn reads the ArrayBuffer as signed 16-bit PCM (its own comment says float32, but the native code decodes int16).
     const pcm16 = new Int16Array(samples.length);
     for (let i = 0; i < samples.length; i++) pcm16[i] = Math.max(-32767, Math.min(32767, Math.round(samples[i] * 32767)));
-    const { promise } = c.transcribeData(pcm16.buffer, { language: 'ar', maxLen: 0, temperature: 0, temperatureInc: 0.2, maxContext: 0, beamSize: 5 });
-    const r = await promise;
+    const parts = splitAtPauses(samples);
+    const texts: string[] = [];
+    for (const [a, b] of parts) {
+      const seg = pcm16.slice(a, b);
+      // one second of silence around each part, like the clips the model learned from
+      const pad = new Int16Array(seg.length + 16000); pad.set(seg, 8000);
+      const { promise } = c.transcribeData(pad.buffer, { language: 'ar', maxLen: 0, temperature: 0, temperatureInc: 0.2, maxContext: 0, beamSize: 5 });
+      const r = await promise;
+      const t = String((r && r.result) || '').trim();
+      if (t) texts.push(t);
+    }
     set({ phase: 'ready' });
-    const text = String((r && r.result) || '').trim();
+    const text = texts.join(' ').trim();
     // A speech model that could not hear anything sometimes fills the page with one repeated sound: do not treat that as a recitation.
     const letters = text.replace(/[^\u0621-\u064A]/g, '');
     const loop = /(.{1,3})\1{7,}/.test(letters) || (letters.length > 40 && new Set(letters).size < 8);

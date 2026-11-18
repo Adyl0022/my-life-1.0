@@ -12,7 +12,7 @@ import { Header, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { SURAH, SURAH_LIST, QURAN_FONT } from '../lib/islamic';
 import { locate, Found } from '../lib/hafazanFind';
-import { expectedWords, checkRecitation, tajwidTips, closeNote, CheckResult, WResult } from '../lib/hafazan';
+import { expectedWords, checkRecitation, dropOptionalBasmala, tajwidTips, closeNote, CheckResult, WResult } from '../lib/hafazan';
 import { playVerse, playUri, stopVerse } from '../lib/hafazanPlay';
 import { stop as stopQuranAudio } from '../lib/quranAudio';
 import { asrSupported, useAsr, downloadModel, deleteModel, micPermission, startRecording, stopAndTranscribe, cancelRecording, micLevel, lastRecordingUri, MODEL_MB } from '../lib/hafazanAsr';
@@ -173,7 +173,7 @@ export default function Hafazan() {
         if (!f.ok) { setMsg(f.reason === 'short' ? 'Please recite a little longer (at least one full verse) so the app can find where it is from.' : 'The app could not find these verses. Try again closer to the microphone, or choose the surah yourself in Test myself.'); setBusy(false); return; }
         setFound(f); setCi(0); setRes(f.cands[0].res); setBusy(false); return;
       }
-      const r = checkRecitation(mode === 'learn' ? words.filter((w) => w.verse === cur) : words, h.text);
+      const r = checkRecitation(mode === 'learn' ? words.filter((w) => w.verse === cur) : dropOptionalBasmala(words, h.text, !!s && s.num === 1), h.text);
       setRes(r);
       if (r.reached > 0 && r.reached < r.total * 0.3) setMsg('Only a small part was recognised. If you did recite the verses, try again closer to the microphone.');
     } catch (e: any) { setMsg('Could not check the recitation. ' + String((e && e.message) || '')); }

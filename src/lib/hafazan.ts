@@ -52,6 +52,15 @@ function wordDist(a: string, b: string): number {
   return 2;
 }
 
+// In Al-Fatihah the Bismillah is verse 1 in the text, but many people start straight from "Alhamdulillah".
+// If the recitation does not begin with the Bismillah, leave verse 1 out so it is not counted as missing.
+export function dropOptionalBasmala<T extends { word: string; verse: number }>(expected: T[], heardText: string, isFatihah: boolean): T[] {
+  if (!isFatihah || !expected.length || expected[0].verse !== 1) return expected;
+  const H = (heardText || '').split(/\s+/).map(norm).filter(Boolean).slice(0, 3);
+  if (H.some((h) => wordDist('بسم', h) < 2)) return expected;
+  return expected.filter((e) => e.verse !== 1);
+}
+
 export type CheckResult = { words: WResult[]; extra: string[]; score: number; reached: number; total: number };
 
 // Needleman-Wunsch alignment of expected words against heard words.
