@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text } from '../../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Glass } from '../../components/Glass';
 import { ReadBg, Header, ToolBar, VerseBlock, Credit, ReadPicker } from '../../components/IslamicUi';
 import { W } from '../../components/Ui';
+import { markHub } from '../../lib/hubInsight';
 import { SURAH, BISMILLAH, partVerses, useIslamic, useLang, useSize, useRead, AR_SIZE, QURAN_FONT } from '../../lib/islamic';
 
 export default function SurahScreen() {
@@ -19,6 +20,7 @@ export default function SurahScreen() {
   const s = SURAH[String(id)] || SURAH.fatihah;
   const key = SURAH[String(id)] ? String(id) : 'fatihah';
   const [isl, setIsl] = useIslamic();
+  useEffect(() => { markHub('q'); }, []);
   const [lang, setLang] = useLang();
   const [size, setSize] = useSize();
   const [mode, setMode] = useRead();

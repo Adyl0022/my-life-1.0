@@ -10,6 +10,7 @@ import { Shine } from './Shine';
 import { CountButton } from './CountButton';
 import { ReadBg, Header, ToolBar, Pending, Credit, ReadPicker } from './IslamicUi';
 import { W } from './Ui';
+import { markHub } from '../lib/hubInsight';
 import { Part, KIND_COL, partVerses, useIslamic, useLang, useZRead, dayKey, nm, QURAN_FONT } from '../lib/islamic';
 import { useStored } from '../lib/store';
 
@@ -28,6 +29,7 @@ export function ZikirScreen({ title, sub, parts, storeKey, bmKey, start, evening
   const [zr, setZr] = useZRead(); const [pick, setPick] = useState(false);
   const [showTr, setShowTr] = useStored<boolean>('ml_ztr', false);
   const [gen, setGen] = useStored<string>('ml_zgen', 'm');
+  useEffect(() => { markHub('z'); }, []);
   const [list, setList] = useState(false);
   const [sel, setSel] = useState(start);
   const [counts, setCounts] = useState<Record<number, number>>({});
