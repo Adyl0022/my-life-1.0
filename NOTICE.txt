@@ -1,0 +1,4 @@
+ggml-quran-base-q5_1.bin
+Speech model used by the Hafazan Check feature of My Life 1.0 (runs on the phone, offline).
+Source model: tarteel-ai/whisper-base-ar-quran (Apache License 2.0), a fine-tune of OpenAI Whisper base (MIT) for Quran recitation.
+Converted to the whisper.cpp ggml format and quantized to q5_1 (no other changes).
