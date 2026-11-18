@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Platform, Linking, AppState, PermissionsAndroid } from 'react-native';
+import { Animated, Easing, View, ScrollView, Pressable, TextInput, Platform, Linking, AppState, PermissionsAndroid } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -62,6 +62,7 @@ const Ring = ({ pct }: { pct: number }) => {
   );
 };
 
+const TR_OPTS: (string | number)[][] = [['off', 'No translation', 112], ['ms', 'BM', 56], ['en', 'English', 76]];
 export default function Hafazan() {
   const asr = useAsr();
   const [sKey, setSKey] = useState(SURAH_LIST[0].key);
@@ -87,6 +88,18 @@ export default function Hafazan() {
   const [showPick, setShowPick] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [tr, setTr] = useStored<'off' | 'ms' | 'en'>('ml_hz_tr', 'ms');
+  const trIdx = Math.max(0, TR_OPTS.findIndex((o) => o[0] === tr));
+  const trX = useRef(new Animated.Value(TR_OPTS.slice(0, trIdx).reduce((a, o) => a + (o[2] as number), 3))).current;
+  const trW = useRef(new Animated.Value(TR_OPTS[trIdx][2] as number)).current;
+  const trFade = useRef(new Animated.Value(1)).current;
+  const trPill = { x: trX, w: trW };
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(trX, { toValue: TR_OPTS.slice(0, trIdx).reduce((a, o) => a + (o[2] as number), 3), duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+      Animated.timing(trW, { toValue: TR_OPTS[trIdx][2] as number, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+    ]).start();
+  }, [trIdx]);
+  useEffect(() => { trFade.setValue(0); Animated.timing(trFade, { toValue: 1, duration: 320, useNativeDriver: false }).start(); }, [tr, cur]);
   const [pick, setPick] = useState('');
   const [pf, setPf] = useState(false);
   const [open, setOpen] = useState<number>(-1);
@@ -340,10 +353,11 @@ export default function Hafazan() {
                 </View>
                 {mode === 'learn' && s ? (<>
                   <Text style={{ color: W, fontSize: 30, fontFamily: QURAN_FONT, lineHeight: 62, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{cv ? cv.ar : ''}</Text>
-                  {tr !== 'off' ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 4, textAlign: 'center' }}>{cv ? (tr === 'en' ? cv.en : cv.ms) : ''}</Text> : null}
+                  {tr !== 'off' ? <Animated.Text style={{ opacity: trFade, color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 4, textAlign: 'center' }}>{cv ? (tr === 'en' ? cv.en : cv.ms) : ''}</Animated.Text> : null}
                   <View style={{ flexDirection: 'row', alignSelf: 'center', marginTop: 12, padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
-                    {[['off', 'No translation'], ['ms', 'BM'], ['en', 'English']].map(([k, t]) => (
-                      <Pressable key={k} onPress={() => setTr(k as any)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: tr === k ? 'rgba(125,240,198,.3)' : 'transparent' }}><Text style={{ color: tr === k ? W : 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700' }}>{t}</Text></Pressable>
+                    <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 3, bottom: 3, left: 0, width: trPill.w, transform: [{ translateX: trPill.x }], borderRadius: 999, backgroundColor: 'rgba(125,240,198,.3)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }} />
+                    {TR_OPTS.map(([k, t, w]) => (
+                      <Pressable key={k} onPress={() => setTr(k as any)} style={{ width: w as number, paddingVertical: 6, alignItems: 'center' }}><Text style={{ color: tr === k ? W : 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700' }}>{t}</Text></Pressable>
                     ))}
                   </View>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 14 }}>
