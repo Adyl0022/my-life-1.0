@@ -10,9 +10,9 @@ import { W } from '../components/Ui';
 import { SURAH, SURAH_LIST, QURAN_FONT } from '../lib/islamic';
 import { locate, Found } from '../lib/hafazanFind';
 import { expectedWords, checkRecitation, tajwidTips, closeNote, CheckResult, WResult } from '../lib/hafazan';
-import { playVerse, stopVerse } from '../lib/hafazanPlay';
+import { playVerse, playUri, stopVerse } from '../lib/hafazanPlay';
 import { stop as stopQuranAudio } from '../lib/quranAudio';
-import { asrSupported, useAsr, downloadModel, deleteModel, micPermission, startRecording, stopAndTranscribe, cancelRecording, micLevel, MODEL_MB } from '../lib/hafazanAsr';
+import { asrSupported, useAsr, downloadModel, deleteModel, micPermission, startRecording, stopAndTranscribe, cancelRecording, micLevel, lastRecordingUri, MODEL_MB } from '../lib/hafazanAsr';
 
 const TEAL = '#7df0c6';
 const COL: Record<string, string> = { ok: '#7df0c6', close: '#ffd593', wrong: '#ff8fab', missing: '#ff8fab', pending: 'rgba(255,255,255,.35)' };
@@ -76,6 +76,8 @@ export default function Hafazan() {
   const [msg, setMsg] = useState('');
   const [res, setRes] = useState<CheckResult | null>(null);
   const [heard, setHeard] = useState('');
+  const [take, setTake] = useState<{ pcm: Float32Array; seconds: number; peak: number } | null>(null);
+  const [hearing, setHearing] = useState(false);
   const [lvl, setLvl] = useState(0);
   const [hist, setHist] = useState<number[]>([]);
   const [showPick, setShowPick] = useState(false);
@@ -125,6 +127,7 @@ export default function Hafazan() {
     setRec(false); setBusy(true);
     try {
       const h = await stopAndTranscribe();
+      setTake({ pcm: h.pcm, seconds: h.seconds, peak: h.peak });
       if (!h.text) { setMsg(h.seconds < 0.8 ? 'That was too short. Tap the microphone and recite.' : (h.bad ? 'The model could not make out the recitation (recorded ' + Math.round(h.seconds) + ' s, voice level ' + Math.round(Math.min(1, h.peak) * 100) + '%). Hold the phone closer, recite one or two verses at a time, in a quiet place, and try again.' : 'Nothing was heard clearly. Move closer to the microphone and try again in a quiet place.')); setBusy(false); return; }
       setHeard(h.text);
       if (mode === 'auto') {
@@ -139,6 +142,18 @@ export default function Hafazan() {
     setBusy(false);
   };
 
+  const hearTake = async () => {
+    if (!take || hearing) return;
+    setHearing(true);
+    try { stopVerse(); const uri = await lastRecordingUri(take.pcm); await playUri(uri); } catch (e) { setMsg('Could not play your recording.'); }
+    setHearing(false);
+  };
+  const takeRow = take && take.seconds >= 0.8 ? (
+    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
+      <Pressable onPress={hearTake} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{hearing ? '▶  Playing…' : '▶  Hear my recording'}</Text></Pressable>
+      <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>{'Recorded ' + Math.round(take.seconds) + ' s · voice level ' + Math.round(Math.min(1, take.peak) * 100) + '%'}</Text>
+    </View>
+  ) : null;
   const mist = res ? res.words.filter((w) => w.status === 'wrong' || w.status === 'missing' || w.status === 'close') : [];
   const list = SURAH_LIST.filter((x) => { const t = pick.trim().toLowerCase(); return !t || x.title.toLowerCase().includes(t) || String(x.num) === t; }).slice(0, 8);
 
@@ -172,7 +187,22 @@ export default function Hafazan() {
               <View style={{ width: 74, height: 74, borderRadius: 37, backgroundColor: 'rgba(125,240,198,.16)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 32 }}>🎧</Text></View>
               <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.3, marginTop: 14 }}>ONE-TIME SETUP</Text>
               <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginTop: 6, textAlign: 'center' }}>Download the Quran listening model</Text>
-              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 20, marginTop: 8, textAlign: 'center' }}>{'About ' + MODEL_MB + ' MB. It works offline after this. Your voice is checked on this phone only and is never uploaded. Use Wi-Fi if you can.'}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 20, marginTop: 8, textAlign: 'center' }}>{'Before you download, here is exactly what you get. Use Wi-Fi if you can.'}</Text>
+              <View style={{ alignSelf: 'stretch', marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(0,0,0,.2)', gap: 8 }}>
+                <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>What will be downloaded</Text>
+                {[
+                  ['1 file only', 'The Quran listening model (' + MODEL_MB + ' MB). It is a speech model for Arabic recitation, based on OpenAI Whisper and tuned for the Quran by Tarteel AI (open licence).'],
+                  ['From where', 'A public GitHub release page. After this it is saved inside the app and works offline.'],
+                  ['Your voice', 'Recorded and checked on this phone only. It is never uploaded.'],
+                  ['Still needs internet', 'The Listen button in Learn mode plays the verse recording online (Mishary Alafasy), so it uses a little data each time.'],
+                  ['Remove anytime', 'After downloading, the link at the bottom of Hafazan Check deletes the model and frees the space.'],
+                ].map(([h, t]) => (
+                  <View key={h} style={{ flexDirection: 'row', gap: 8 }}>
+                    <Text style={{ color: TEAL, fontSize: 13, fontWeight: '800' }}>•</Text>
+                    <Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}><Text style={{ color: W, fontWeight: '800' }}>{h + ': '}</Text>{t}</Text>
+                  </View>
+                ))}
+              </View>
               {asr.phase === 'downloading' ? (
                 <View style={{ marginTop: 16, alignSelf: 'stretch' }}>
                   <View style={{ height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden' }}><View style={{ width: Math.round(asr.pct * 100) + '%', height: 10, backgroundColor: TEAL }} /></View>
@@ -242,7 +272,7 @@ export default function Hafazan() {
                   <View style={{ width: 28, height: 1, backgroundColor: 'rgba(125,240,198,.6)' }} />
                 </View>
                 {mode === 'learn' && s ? (<>
-                  <Text style={{ color: W, fontSize: 30, fontFamily: QURAN_FONT, lineHeight: 62, textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{cv ? cv.ar : ''}</Text>
+                  <Text style={{ color: W, fontSize: 30, fontFamily: QURAN_FONT, lineHeight: 62, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{cv ? cv.ar : ''}</Text>
                   <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 4, textAlign: 'center' }}>{cv ? cv.ms : ''}</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 14 }}>
                     {Array.from({ length: b - a + 1 }, (_, i) => a + i).slice(0, 40).map((n) => (
@@ -250,7 +280,7 @@ export default function Hafazan() {
                     ))}
                   </View>
                 </>) : mode === 'test' && s ? (
-                  !hide ? <Text style={{ color: W, fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text> : (
+                  !hide ? <Text style={{ color: W, fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text> : (
                     <View style={{ alignItems: 'center', marginTop: 12 }}>
                       <Text style={{ color: W, fontSize: 20, fontWeight: '800', textAlign: 'center' }}>{s.title}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13.5, textAlign: 'center', marginTop: 4 }}>{'Verse ' + a + (b > a ? ' to ' + b : '') + ' · the text is hidden'}</Text>
@@ -300,6 +330,7 @@ export default function Hafazan() {
                   </View>
                 ) : null}
                 {msgBlock}
+                {msg && !msg.startsWith('Microphone') ? takeRow : null}
               </View>
             </>) : (
               <Glass radius={28} style={{ padding: 16 }}>
@@ -361,6 +392,7 @@ export default function Hafazan() {
                   </View>
                 ) : null}
                 <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11.5, lineHeight: 17, marginTop: 12 }}>{'What the model heard: ' + heard}</Text>
+                {takeRow}
               </Glass>
             )}
 

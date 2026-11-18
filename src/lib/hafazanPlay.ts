@@ -5,13 +5,15 @@ import { fallbackUrl } from './quranFallback';
 let player: any = null;
 let done: (() => void) | null = null;
 
-export async function playVerse(surah: number, ayah: number): Promise<boolean> {
+export const playVerse = (surah: number, ayah: number) => playUri(fallbackUrl('alafasy', surah, ayah));
+
+export async function playUri(uri: string): Promise<boolean> {
   stopVerse();
   if (Platform.OS === 'web') return false;
   try {
     const A: any = await import('expo-audio');
     try { await A.setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false, interruptionMode: 'doNotMix' }); } catch (e) { /* ignore */ }
-    const p = A.createAudioPlayer({ uri: fallbackUrl('alafasy', surah, ayah) }, { updateInterval: 300 });
+    const p = A.createAudioPlayer({ uri }, { updateInterval: 300 });
     player = p;
     return await new Promise<boolean>((res) => {
       let finished = false;
