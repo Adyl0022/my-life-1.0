@@ -159,7 +159,22 @@ export default function Hafazan() {
   const words: { word: string; verse: number }[] = [];
   if (s) s.verses.filter((v) => v.n >= a && v.n <= b).forEach((v) => expectedWords(v.ar).forEach((w) => words.push({ word: w, verse: v.n })));
 
-  useEffect(() => { if (rec) { timer.current = setInterval(() => { const l = micLevel(); setLvl(l); setHist((h) => [...h.slice(-31), l]); }, 110); } else { setHist([]); } return () => { if (timer.current) clearInterval(timer.current); }; }, [rec]);
+  // Stops by itself: after the person has recited and then stays quiet for a few seconds (or after two minutes)
+  const stopRef = useRef<() => void>(() => {});
+  const [quiet, setQuiet] = useState(false);
+  useEffect(() => {
+    if (!rec) { setHist([]); setQuiet(false); return; }
+    let vmax = 0, voicedMs = 0, silentMs = 0, total = 0, fired = false;
+    timer.current = setInterval(() => {
+      const l = micLevel(); setLvl(l); setHist((h) => [...h.slice(-31), l]);
+      total += 110; if (l > vmax) vmax = l;
+      const voiced = vmax >= 0.06 && l >= Math.max(0.03, vmax * 0.2);
+      if (voiced) { voicedMs += 110; silentMs = 0; } else if (voicedMs >= 1500) silentMs += 110;
+      setQuiet(silentMs >= 2000);
+      if (!fired && (silentMs >= 4500 || total >= 120000)) { fired = true; stopRef.current(); }
+    }, 110);
+    return () => { if (timer.current) clearInterval(timer.current); };
+  }, [rec]);
   useEffect(() => () => { cancelRecording(); stopVerse(); }, []);
   useEffect(() => { setRes(null); setHeard(''); setMsg(''); setOpen(-1); setCur(a); stopVerse(); setPlaying(false); setFound(null); }, [sKey, from, to]);
 
@@ -194,6 +209,7 @@ export default function Hafazan() {
     finally { setBusy(false); setStep(''); }
   };
   const stop = async () => {
+    if (!rec) return;
     setRec(false); setBusy(true);
     try {
       const h = await stopAndTranscribe();
@@ -212,6 +228,7 @@ export default function Hafazan() {
     setBusy(false);
   };
 
+  stopRef.current = stop;
   const hearTake = async () => {
     if (!take || hearing) return;
     setHearing(true);
@@ -232,7 +249,7 @@ export default function Hafazan() {
   const cv = s ? s.verses.find((v) => v.n === cur) : undefined;
   const sInfo = SURAH_LIST.find((x) => x.key === sKey);
   const stepIdx = playing ? 0 : rec || busy ? 1 : res ? 2 : 0;
-  const status = step ? step : busy ? (asr.phase === 'loading' ? 'Loading the model, then checking' : 'Checking') : rec ? 'Listening… tap to stop and check' : playing ? 'Listen carefully…' : 'Tap the microphone to recite';
+  const status = step ? step : busy ? (asr.phase === 'loading' ? 'Loading the model, then checking' : 'Checking') : rec ? (quiet ? 'Quiet… checking in a moment' : 'Listening… pause a few seconds or tap to check') : playing ? 'Listen carefully…' : 'Tap the microphone to recite';
   const setBtn = (label: string, onPress: () => void) => (
     <Pressable onPress={onPress} style={{ alignSelf: 'center', marginTop: 10, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{label}</Text></Pressable>
   );
