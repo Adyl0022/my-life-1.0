@@ -14,7 +14,6 @@ import { TOP } from '../lib/layout';
 import { useStored } from '../lib/store';
 import { useHijriSync, upcoming } from '../lib/hijriSync';
 import { HubLog, weekDays, ayatOfDay } from '../lib/hubInsight';
-import { useLang } from '../lib/islamic';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram, keyD } from '../lib/fasting';
 
 const Ring = ({ v, max, label, c }: { v: number; max: number; label: string; c: string }) => {
@@ -72,7 +71,6 @@ export default function IslamicHub() {
   const [slide, setSlide] = useState(evs[0] && evs[0].days <= 3 ? kinds.indexOf('ev') : 0);
   const cur = kinds[Math.min(slide, kinds.length - 1)];
   const [hl] = useStored<HubLog>('ml_hub_log', {});
-  const [lang] = useLang();
   const rs0 = ramadanState(pz, now), ow0 = qadhaOwed(pz, now);
   const ay = ayatOfDay(now, rs0.phase === 'during');
   const ayv = SURAH[ay.key] ? SURAH[ay.key].verses[ay.n - 1] : null;
@@ -153,7 +151,7 @@ export default function IslamicHub() {
               {ayv ? (<View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
                 <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.1 }}>{ay.why.toUpperCase()} · {SURAH[ay.key].title.replace('Surah ', '')} {SURAH[ay.key].num}:{ay.n}</Text>
                 <Text numberOfLines={2} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 21, lineHeight: 36, textAlign: 'right', marginTop: 4 }}>{ayv.ar}</Text>
-                <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 2 }}>{lang === 'en' ? ayv.en : ayv.ms}</Text>
+                <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 2 }}>{ayv.en}</Text>
               </View>) : null}
             </Glass></Pressable>
             ) : ev0 ? (
