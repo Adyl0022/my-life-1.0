@@ -229,7 +229,7 @@ export function VerseBlock({ v, size, lang, arOnly, showNum = true, active, onPr
   const full = !!active && !!bleed; // playing verse: solid box running edge to edge of its card
   return (
     <Pressable onPress={onPress} onLongPress={onLong} delayLongPress={380} style={{ paddingVertical: 14, paddingHorizontal: full ? 4 + (bleed as number) : 4, marginHorizontal: full ? -(bleed as number) : 0, borderBottomWidth: last || full ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)', backgroundColor: full ? 'rgba(125,240,198,.16)' : active ? 'rgba(125,240,198,.12)' : 'transparent', borderRadius: active && !full ? 14 : 0 }}>
-      <Text style={{ color: W, fontSize: AR_SIZE[size] + 3, fontFamily: QURAN_FONT, lineHeight: (AR_SIZE[size] + 3) * 2.4, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{showNum ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'  ﴿' + v.n + '﴾'}</Text> : null}{marked ? <Text style={{ color: '#ffd593', fontSize: 15 }}>{'  ★'}</Text> : null}</Text>
+      <Text style={{ color: W, fontSize: AR_SIZE[size] + 6, fontFamily: QURAN_FONT, lineHeight: (AR_SIZE[size] + 6) * 1.95, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{showNum ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'  ﴿' + v.n + '﴾'}</Text> : null}{marked ? <Text style={{ color: '#ffd593', fontSize: 15 }}>{'  ★'}</Text> : null}</Text>
       {v.rumi && !arOnly ? <Text style={{ color: '#8fe9e2', fontSize: M_SIZE[size] + 1, fontStyle: 'italic', lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{v.rumi}</Text> : null}
       {arOnly ? null : <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: M_SIZE[size] + 1, lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{lang === 'en' ? v.en : v.ms}</Text>}
     </Pressable>
@@ -237,7 +237,7 @@ export function VerseBlock({ v, size, lang, arOnly, showNum = true, active, onPr
 }
 export const Credit = ({ lang }: { lang: string }) => (
   <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, lineHeight: 15, marginTop: 14, marginHorizontal: 4 }}>
-    Arabic: Quran Uthmani (Hafs), King Fahd Quran Complex text. {lang === 'en' ? 'English: Marmaduke Pickthall (public domain).' : 'Malay: Abdullah Muhammad Basmeih (Tanzil edition).'} Dataset: github.com/fawazahmed0/quran-api. Texts checked by an ustaz.
+    Arabic: Quran Uthmani (Hafs), King Fahd Quran Complex text and font (KFGQPC Uthmanic Script Hafs). {lang === 'en' ? 'English: Marmaduke Pickthall (public domain).' : 'Malay: Abdullah Muhammad Basmeih (Tanzil edition).'} Dataset: github.com/fawazahmed0/quran-api. Texts checked by an ustaz.
   </Text>
 );
 export const Pending = ({ kind }: { kind: string }) => (

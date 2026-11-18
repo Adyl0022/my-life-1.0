@@ -112,7 +112,7 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/ScheherazadeNew.ttf"
+            "./assets/fonts/UthmanicHafs.otf"
           ]
         }
       ]

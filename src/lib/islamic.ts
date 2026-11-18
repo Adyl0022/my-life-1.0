@@ -9,13 +9,15 @@ const LEGACY: Record<number, [string, string, string, string]> = { 1: ['fatihah'
 export type SurahInfo = { title: string; ar: string; sub: string; verses: Verse[]; bismillah: boolean; num: number };
 export const SURAH: Record<string, SurahInfo> = {};
 export const SURAH_LIST: { key: string; num: number; title: string; ar: string; sub: string; place: string }[] = [];
+// The Quran font (KFGQPC Hafs) writes the 'open' tanwin marks as the usual ones, so they are swapped for display.
+const uth = (s: string) => s.replace(/\u08F0/g, '\u064B').replace(/\u08F1/g, '\u064C').replace(/\u08F2/g, '\u064D');
 FULL.forEach((f: any) => {
   const L = LEGACY[f.n];
   const key = L ? L[0] : String(f.n);
   const title = L ? L[1] : 'Surah ' + f.t;
   const sub = L ? L[3] : f.tr + ' · ' + f.v.length + ' verses';
   const info: any = { title, ar: L ? L[2] : f.a, sub, bismillah: f.n !== 1 && f.n !== 9, num: f.n };
-  Object.defineProperty(info, 'verses', { enumerable: true, get: () => f.v.map((x: string[], i: number) => ({ n: i + 1, ar: x[0], ms: x[1], en: x[2] })) });
+  Object.defineProperty(info, 'verses', { enumerable: true, get: () => f.v.map((x: string[], i: number) => ({ n: i + 1, ar: uth(x[0]), ms: x[1], en: x[2] })) });
   SURAH[key] = info;
   SURAH_LIST.push({ key, num: f.n, title, ar: info.ar, sub: f.tr + ' · ' + f.v.length + ' verses', place: f.ty === 'meccan' ? 'Makkiyyah' : 'Madaniyyah' });
 });
@@ -75,8 +77,8 @@ export function partVerses(p: Part, evening = false): Verse[] | null {
 }
 export const nm = (n: string, evening: boolean) => n.replace('Asbahna / Amsaina wa amsal-mulku lillah', evening ? 'Amsaina wa amsal-mulku lillah' : 'Asbahna wa asbahal-mulku lillah').replace('Asbahna / Amsaina, firm', evening ? 'Amsaina, firm' : 'Asbahna, firm').replace('asbahtu / amsaytu', evening ? 'amsaytu' : 'asbahtu').replace('ma asbaha / ma amsa', evening ? 'ma amsa' : 'ma asbaha').replace('bika asbahna / amsayna', evening ? 'bika amsayna' : 'bika asbahna');
 
-// Quran font (Scheherazade New, SIL OFL): draws every small mark (dagger alif, madd, waqf signs) like the printed mushaf.
-export const QURAN_FONT = 'ScheherazadeNew';
+// Quran font (KFGQPC Uthmanic Script Hafs, King Fahd Glorious Quran Printing Complex (used unmodified, per its licence)): draws every small mark (dagger alif, madd, waqf signs) like the printed mushaf.
+export const QURAN_FONT = 'UthmanicHafs';
 if (typeof document !== 'undefined') {
-  try { require('expo-font').loadAsync({ [QURAN_FONT]: require('../../assets/fonts/ScheherazadeNew.ttf') }); } catch (e) {}
+  try { require('expo-font').loadAsync({ [QURAN_FONT]: require('../../assets/fonts/UthmanicHafs.otf') }); } catch (e) {}
 }

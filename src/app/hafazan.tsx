@@ -153,7 +153,7 @@ export default function Hafazan() {
             {!res && mode === 'learn' && s ? (
               <Glass radius={24} style={{ padding: 18 }}>
                 <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.3 }}>{'LEARN · VERSE ' + cur + ' OF ' + b}</Text>
-                <Text style={{ color: W, fontSize: 28, fontFamily: QURAN_FONT, lineHeight: 68, textAlign: 'right', writingDirection: 'rtl' as any, marginTop: 8 }}>{(s.verses.find((v) => v.n === cur) || { ar: '' }).ar}</Text>
+                <Text style={{ color: W, fontSize: 28, fontFamily: QURAN_FONT, lineHeight: 56, textAlign: 'right', writingDirection: 'rtl' as any, marginTop: 8 }}>{(s.verses.find((v) => v.n === cur) || { ar: '' }).ar}</Text>
                 <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>{(s.verses.find((v) => v.n === cur) || { ms: '' }).ms}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
                   <Pressable onPress={listen} style={{ flex: 1, height: 52, borderRadius: 26, backgroundColor: playing ? 'rgba(125,240,198,.3)' : 'rgba(125,240,198,.18)', borderWidth: 1, borderColor: 'rgba(125,240,198,.55)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{playing ? 'Listening…' : '1. Listen'}</Text></Pressable>
@@ -171,7 +171,7 @@ export default function Hafazan() {
               <Glass radius={24} style={{ padding: 18, alignItems: 'center' }}>
                 {mode === 'test' && !hide && s ? (
                   <View style={{ alignSelf: 'stretch', marginBottom: 14 }}>
-                    <Text style={{ color: W, fontSize: 24, fontFamily: QURAN_FONT, lineHeight: 60, textAlign: 'right', writingDirection: 'rtl' as any }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text>
+                    <Text style={{ color: W, fontSize: 24, fontFamily: QURAN_FONT, lineHeight: 50, textAlign: 'right', writingDirection: 'rtl' as any }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text>
                   </View>
                 ) : (
                   <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13.5, lineHeight: 20, textAlign: 'center', marginBottom: 14 }}>{mode === 'auto' ? 'Tap the microphone and recite from memory. Say a full verse or more, from any surah.' : (s ? s.title : '') + ', verse ' + a + (b > a ? ' to ' + b : '') + '. The text is hidden. Tap the microphone and recite from memory.'}</Text>
@@ -208,7 +208,7 @@ export default function Hafazan() {
                 <View style={{ marginTop: 14, flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 4, rowGap: 10 }}>
                   {res.words.map((w: WResult, i: number) => (
                     <Pressable key={i} onPress={() => setOpen(open === i ? -1 : i)}>
-                      <Text style={{ color: COL[w.status], fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 60, paddingHorizontal: 3, borderBottomWidth: w.status === 'ok' || w.status === 'pending' ? 0 : 2, borderBottomColor: COL[w.status], textDecorationLine: w.status === 'missing' ? 'line-through' : 'none' }}>{w.word}</Text>
+                      <Text style={{ color: COL[w.status], fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, paddingHorizontal: 3, borderBottomWidth: w.status === 'ok' || w.status === 'pending' ? 0 : 2, borderBottomColor: COL[w.status], textDecorationLine: w.status === 'missing' ? 'line-through' : 'none' }}>{w.word}</Text>
                     </Pressable>
                   ))}
                 </View>

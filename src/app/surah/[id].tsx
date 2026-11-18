@@ -40,10 +40,10 @@ export default function SurahScreen() {
         <ScrollView ref={scrollRef} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12 }}>
           <View onLayout={(e) => { top.current = e.nativeEvent.layout.y; tryJump(); }}>
           <Glass solid radius={26} style={{ paddingHorizontal: 16, paddingVertical: 6, backgroundColor: 'rgba(46,84,116,.96)' }}>
-            {s.bismillah && <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: AR_SIZE[size] + 3, fontFamily: QURAN_FONT, textAlign: 'center', lineHeight: (AR_SIZE[size] + 3) * 2.4 }}>{BISMILLAH.ar}</Text></View>}
+            {s.bismillah && <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: AR_SIZE[size] + 6, fontFamily: QURAN_FONT, textAlign: 'center', lineHeight: (AR_SIZE[size] + 6) * 1.95 }}>{BISMILLAH.ar}</Text></View>}
             {mode === 'flow' ? (
               <View onLayout={(e) => { flowH.current = e.nativeEvent.layout.height; tryJump(); }} style={{ paddingVertical: 14 }}>
-                <Text style={{ color: W, fontSize: AR_SIZE[size] + 4, fontFamily: QURAN_FONT, lineHeight: (AR_SIZE[size] + 4) * 2.4, textAlign: 'justify', writingDirection: 'rtl' }}>
+                <Text style={{ color: W, fontSize: AR_SIZE[size] + 7, fontFamily: QURAN_FONT, lineHeight: (AR_SIZE[size] + 7) * 1.95, textAlign: 'justify', writingDirection: 'rtl' }}>
                   {s.verses.map((v) => (
                     <Text key={v.n} style={lastN === v.n ? { backgroundColor: 'rgba(125,240,198,.18)' } : undefined} onPress={() => { tapVerse(v.n); }}
                       onLongPress={() => { const nx = marks.includes(v.n) ? marks.filter((x) => x !== v.n) : [...marks, v.n].sort((a, b) => a - b); setIsl({ ...isl, vb: { ...(isl.vb || {}), [key]: nx } }); say(marks.includes(v.n) ? 'Verse bookmark removed' : 'Verse ' + v.n + ' bookmarked'); }}
