@@ -6,6 +6,7 @@ import { Glass } from '../components/Glass';
 import { Header, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { SURAH, SURAH_LIST, QURAN_FONT } from '../lib/islamic';
+import { locate, Found } from '../lib/hafazanFind';
 import { expectedWords, checkRecitation, tajwidTips, closeNote, CheckResult, WResult } from '../lib/hafazan';
 import { playVerse, stopVerse } from '../lib/hafazanPlay';
 import { stop as stopQuranAudio } from '../lib/quranAudio';
@@ -26,7 +27,9 @@ export default function Hafazan() {
   const [from, setFrom] = useState('1');
   const [to, setTo] = useState('7');
   const [hide, setHide] = useState(true);
-  const [mode, setMode] = useState<'test' | 'learn'>('test');
+  const [mode, setMode] = useState<'test' | 'learn' | 'auto'>('test');
+  const [found, setFound] = useState<Found | null>(null);
+  const [ci, setCi] = useState(0);
   const [cur, setCur] = useState(1);
   const [playing, setPlaying] = useState(false);
   const [rec, setRec] = useState(false);
@@ -48,7 +51,7 @@ export default function Hafazan() {
 
   useEffect(() => { if (rec) { timer.current = setInterval(() => setLvl(micLevel()), 120); } return () => { if (timer.current) clearInterval(timer.current); }; }, [rec]);
   useEffect(() => () => { cancelRecording(); stopVerse(); }, []);
-  useEffect(() => { setRes(null); setHeard(''); setMsg(''); setOpen(-1); setCur(a); stopVerse(); setPlaying(false); }, [sKey, from, to]);
+  useEffect(() => { setRes(null); setHeard(''); setMsg(''); setOpen(-1); setCur(a); stopVerse(); setPlaying(false); setFound(null); }, [sKey, from, to]);
 
   const listen = async () => {
     if (!s || playing || rec) return;
@@ -70,6 +73,11 @@ export default function Hafazan() {
       const h = await stopAndTranscribe();
       if (!h.text) { setMsg(h.seconds < 0.8 ? 'That was too short. Tap the microphone and recite.' : 'Nothing was heard clearly. Move closer to the microphone and try again in a quiet place.'); setBusy(false); return; }
       setHeard(h.text);
+      if (mode === 'auto') {
+        const f = locate(h.text, SURAH_LIST.map((x) => ({ key: x.key, num: x.num, title: x.title, verses: SURAH[x.key].verses })));
+        if (!f.ok) { setMsg(f.reason === 'short' ? 'Please recite a little longer (at least one full verse) so the app can find where it is from.' : 'The app could not find these verses. Try again closer to the microphone, or choose the surah yourself in Test myself.'); setBusy(false); return; }
+        setFound(f); setCi(0); setRes(f.cands[0].res); setBusy(false); return;
+      }
       const r = checkRecitation(mode === 'learn' ? words.filter((w) => w.verse === cur) : words, h.text);
       setRes(r);
       if (r.reached > 0 && r.reached < r.total * 0.3) setMsg('Only a small part was recognised. If you did recite the verses, try again closer to the microphone.');
@@ -105,10 +113,12 @@ export default function Hafazan() {
             </Glass>
           ) : (<>
             <Glass radius={24} style={{ padding: 16 }}>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-                <Chip t="Learn to recite" on={mode === 'learn'} onPress={() => { setMode('learn'); setRes(null); setCur(a); }} />
-                <Chip t="Test myself" on={mode === 'test'} onPress={() => { setMode('test'); setRes(null); stopVerse(); setPlaying(false); }} />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                <Chip t="Learn to recite" on={mode === 'learn'} onPress={() => { setMode('learn'); setRes(null); setFound(null); setCur(a); }} />
+                <Chip t="Test myself" on={mode === 'test'} onPress={() => { setMode('test'); setRes(null); setFound(null); stopVerse(); setPlaying(false); }} />
+                <Chip t="Find my verse" on={mode === 'auto'} onPress={() => { setMode('auto'); setRes(null); setFound(null); stopVerse(); setPlaying(false); }} />
               </View>
+              {mode === 'auto' ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19 }}>Recite any verses you know. The app listens, finds the surah and the verse by itself, and checks the words from there.</Text> : (<>
               <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.3 }}>CHOOSE WHAT TO RECITE</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingHorizontal: 12, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.08)' }}>
                 <Text style={{ color: 'rgba(255,255,255,.6)' }}>⌕</Text>
@@ -131,6 +141,7 @@ export default function Hafazan() {
                 <TextInput value={to} onChangeText={(t) => setTo(t.replace(/\D/g, ''))} keyboardType="number-pad" style={{ width: 56, textAlign: 'center', color: W, fontSize: 15, fontWeight: '700', paddingVertical: 8, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} />
                 <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12 }}>{'of ' + total}</Text>
               </View>
+              </>)}
               {mode === 'test' ? (
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
                   <Chip t="Hide text (test myself)" on={hide} onPress={() => setHide(true)} />
@@ -156,14 +167,14 @@ export default function Hafazan() {
               </Glass>
             ) : null}
 
-            {!res && mode === 'test' ? (
+            {!res && (mode === 'test' || mode === 'auto') ? (
               <Glass radius={24} style={{ padding: 18, alignItems: 'center' }}>
-                {!hide && s ? (
+                {mode === 'test' && !hide && s ? (
                   <View style={{ alignSelf: 'stretch', marginBottom: 14 }}>
                     <Text style={{ color: W, fontSize: 24, fontFamily: QURAN_FONT, lineHeight: 50, textAlign: 'right', writingDirection: 'rtl' as any }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text>
                   </View>
                 ) : (
-                  <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13.5, lineHeight: 20, textAlign: 'center', marginBottom: 14 }}>{(s ? s.title : '') + ', verse ' + a + (b > a ? ' to ' + b : '') + '. The text is hidden. Tap the microphone and recite from memory.'}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13.5, lineHeight: 20, textAlign: 'center', marginBottom: 14 }}>{mode === 'auto' ? 'Tap the microphone and recite from memory. Say a full verse or more, from any surah.' : (s ? s.title : '') + ', verse ' + a + (b > a ? ' to ' + b : '') + '. The text is hidden. Tap the microphone and recite from memory.'}</Text>
                 )}
                 <Pressable onPress={rec ? stop : busy ? undefined : start} accessibilityLabel={rec ? 'Stop and check' : 'Start reciting'} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: rec ? '#ff8fab' : TEAL, alignItems: 'center', justifyContent: 'center', transform: [{ scale: rec ? 1 + lvl * 0.18 : 1 }] }}>
                   {rec ? <View style={{ width: 26, height: 26, borderRadius: 6, backgroundColor: '#3a0716' }} /> : <Text style={{ fontSize: 34 }}>🎙</Text>}
@@ -176,13 +187,24 @@ export default function Hafazan() {
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.3 }}>RESULT</Text>
                     <Text style={{ color: W, fontSize: 28, fontWeight: '800' }}>{res.score + '%'}</Text>
-                    <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5 }}>{mist.length ? mist.length + (mist.length === 1 ? ' word to check' : ' words to check') : 'No mistakes found'}{res.reached < res.total ? ' · recited ' + res.reached + ' of ' + res.total + ' words' : ''}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5 }}>{mist.length ? mist.length + (mist.length === 1 ? ' word to check' : ' words to check') : 'No mistakes found'}{mode === 'auto' ? ' · ' + res.reached + ' words heard' : res.reached < res.total ? ' · recited ' + res.reached + ' of ' + res.total + ' words' : ''}</Text>
                   </View>
-                  <Pressable onPress={() => { setRes(null); setMsg(''); setOpen(-1); }} style={{ flexShrink: 0, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Try again</Text></Pressable>
+                  <Pressable onPress={() => { setRes(null); setFound(null); setMsg(''); setOpen(-1); }} style={{ flexShrink: 0, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Try again</Text></Pressable>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
                   {[['ok', 'Correct'], ['close', 'Close'], ['wrong', 'Wrong / missing'], ['pending', 'Not reached']].map(([k, t]) => <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: COL[k] }} /><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5 }}>{t}</Text></View>)}
                 </View>
+                {mode === 'auto' && found && found.cands[ci] ? (
+                  <View style={{ marginTop: 12, padding: 10, borderRadius: 14, backgroundColor: 'rgba(125,240,198,.14)' }}>
+                    <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{'Found: ' + found.cands[ci].title + ', verse ' + found.cands[ci].ayah + (found.cands[ci].endAyah !== found.cands[ci].ayah || found.cands[ci].endSurah !== found.cands[ci].surah ? ' to ' + found.cands[ci].endAyah : '')}</Text>
+                    {found.ambiguous ? (<>
+                      <Text style={{ color: '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 4 }}>These verses sound the same in several places. Tap the one you recited:</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                        {found.cands.map((c, k) => <Chip key={k} t={c.title + ':' + c.ayah} on={k === ci} onPress={() => { setCi(k); setRes(c.res); setOpen(-1); }} />)}
+                      </View>
+                    </>) : null}
+                  </View>
+                ) : null}
                 <View style={{ marginTop: 14, flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 4, rowGap: 10 }}>
                   {res.words.map((w: WResult, i: number) => (
                     <Pressable key={i} onPress={() => setOpen(open === i ? -1 : i)}>
