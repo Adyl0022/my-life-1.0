@@ -185,7 +185,8 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
   try {
     if (big) {
       const past = h.length ? 'Earlier in this chat (context only, never repeat it):\n' + h.map((x) => (x.me ? 'User: ' : 'Assistant: ') + x.text).join('\n') + '\n\nNow reply ONLY to the new message below.\n' + (wrong ? 'The person says your last answer was not what they wanted: say sorry in a few words and answer their new message, or ask what they meant. Do not repeat the earlier answer.\n' : '') + '\n' : '';
-      raw = await gemGenerate(sys + '\n\n' + past + 'User: ' + q);
+      // The instructions go in as the real system message, so the model does not mistake them for part of the question.
+      raw = await gemGenerate(past ? past + 'New message: ' + q : q, sys);
     } else {
       const past = h.map((x) => '<|im_start|>' + (x.me ? 'user' : 'assistant') + '\n' + x.text + '<|im_end|>\n').join('');
       raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n' + past + '<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');

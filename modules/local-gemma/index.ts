@@ -10,7 +10,7 @@ export async function gemDownload(url: string): Promise<boolean> { try { return 
 export function gemCancel() { try { if (M) M.cancel(); } catch (e) { } }
 export async function gemRemove(): Promise<boolean> { try { return M ? !!(await M.remove()) : false; } catch (e) { return false; } }
 export async function gemUnload() { try { if (M) await M.unload(); } catch (e) { } }
-export async function gemGenerate(prompt: string): Promise<string> { try { return M ? (((await M.generate(prompt)) as string) || '') : ''; } catch (e) { return ''; } }
+export async function gemGenerate(prompt: string, system = ''): Promise<string> { try { return M ? (((await M.generate(prompt, system)) as string) || '') : ''; } catch (e) { return ''; } }
 
 export function gemLive(): string { try { return M ? ((M.live() as string) || '') : ''; } catch (e) { return ''; } }
 export async function gemWarm(): Promise<boolean> { try { return M ? !!(await M.warm()) : false; } catch (e) { return false; } }

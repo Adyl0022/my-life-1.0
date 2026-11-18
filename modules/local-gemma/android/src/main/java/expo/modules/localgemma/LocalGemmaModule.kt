@@ -2,6 +2,7 @@ package expo.modules.localgemma
 
 import android.content.Context
 import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.SamplerConfig
@@ -99,10 +100,10 @@ class LocalGemmaModule : Module() {
     return live.toString()
   }
 
-  private fun runOnce(prompt: String): String = synchronized(lock) {
+  private fun runOnce(prompt: String, system: String = ""): String = synchronized(lock) {
     ensure()
     // Some randomness and a limit on the length stop the model from repeating the same sentence over and over.
-    val conv = engine!!.createConversation(ConversationConfig(samplerConfig = SamplerConfig(topK = 20, topP = 0.8, temperature = 0.8), maxOutputToken = 900))
+    val conv = engine!!.createConversation(ConversationConfig(systemInstruction = if (system.isNotBlank()) Contents.of(system) else null, samplerConfig = SamplerConfig(topK = 20, topP = 0.8, temperature = 0.8), maxOutputToken = 900))
     try { stream(conv, prompt) } finally { try { conv.close() } catch (x: Throwable) { } }
   }
 
@@ -172,11 +173,11 @@ class LocalGemmaModule : Module() {
     }
 
     // Writes an answer for a prompt. Resolves an empty text if anything goes wrong, so the app can fall back to its own words.
-    AsyncFunction("generate") { prompt: String, promise: Promise ->
+    AsyncFunction("generate") { prompt: String, system: String, promise: Promise ->
       Thread {
         var r = ""
         try {
-          r = runOnce(prompt)
+          r = runOnce(prompt, system)
           gpuWorked()
         } catch (e: Throwable) {
           val wasGpu = gpuActive
@@ -184,7 +185,7 @@ class LocalGemmaModule : Module() {
           if (wasGpu) {
             // The graphics chip failed: use the normal processor and try once more.
             gpuFailed()
-            try { r = runOnce(prompt) } catch (x: Throwable) { synchronized(lock) { closeEngine() }; r = "" }
+            try { r = runOnce(prompt, system) } catch (x: Throwable) { synchronized(lock) { closeEngine() }; r = "" }
           }
         }
         promise.resolve(r)
