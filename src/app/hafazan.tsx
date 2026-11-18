@@ -63,6 +63,34 @@ const Ring = ({ pct }: { pct: number }) => {
 };
 
 const TR_OPTS: (string | number)[][] = [['off', 'No translation', 112], ['ms', 'BM', 56], ['en', 'English', 76]];
+const trLeft = (i: number) => TR_OPTS.slice(0, i).reduce((a, o) => a + (o[2] as number), 3);
+// Translation switch: the green pill slides between the choices
+function TrBar({ tr, setTr, style }: { tr: string; setTr: (k: any) => void; style?: any }) {
+  const idx = Math.max(0, TR_OPTS.findIndex((o) => o[0] === tr));
+  const x = useRef(new Animated.Value(trLeft(idx))).current;
+  const w = useRef(new Animated.Value(TR_OPTS[idx][2] as number)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(x, { toValue: trLeft(idx), duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+      Animated.timing(w, { toValue: TR_OPTS[idx][2] as number, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+    ]).start();
+  }, [idx]);
+  return (
+    <View style={[{ flexDirection: 'row', alignSelf: 'center', marginTop: 12, padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }, style]}>
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 3, bottom: 3, left: 0, width: w, transform: [{ translateX: x }], borderRadius: 999, backgroundColor: 'rgba(125,240,198,.3)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }} />
+      {TR_OPTS.map(([k, t, wd]) => (
+        <Pressable key={k as string} onPress={() => setTr(k)} style={{ width: wd as number, paddingVertical: 6, alignItems: 'center' }}><Text style={{ color: tr === k ? W : 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700' }}>{t}</Text></Pressable>
+      ))}
+    </View>
+  );
+}
+// Translation text that fades in whenever it changes
+function FadeText({ text, style }: { text: string; style?: any }) {
+  const o = useRef(new Animated.Value(1)).current;
+  useEffect(() => { o.setValue(0); Animated.timing(o, { toValue: 1, duration: 320, useNativeDriver: false }).start(); }, [text]);
+  return <Animated.Text style={[{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, textAlign: 'center' }, style, { opacity: o }]}>{text}</Animated.Text>;
+}
+const trText = (vs: { n: number; ms: string; en: string }[], tr: string, max = 6) => vs.slice(0, max).map((v) => (vs.length > 1 ? v.n + '. ' : '') + (tr === 'en' ? v.en : v.ms)).join('\n') + (vs.length > max ? '\n…' : '');
 export default function Hafazan() {
   const asr = useAsr();
   const [sKey, setSKey] = useState(SURAH_LIST[0].key);
@@ -88,18 +116,6 @@ export default function Hafazan() {
   const [showPick, setShowPick] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [tr, setTr] = useStored<'off' | 'ms' | 'en'>('ml_hz_tr', 'ms');
-  const trIdx = Math.max(0, TR_OPTS.findIndex((o) => o[0] === tr));
-  const trX = useRef(new Animated.Value(TR_OPTS.slice(0, trIdx).reduce((a, o) => a + (o[2] as number), 3))).current;
-  const trW = useRef(new Animated.Value(TR_OPTS[trIdx][2] as number)).current;
-  const trFade = useRef(new Animated.Value(1)).current;
-  const trPill = { x: trX, w: trW };
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(trX, { toValue: TR_OPTS.slice(0, trIdx).reduce((a, o) => a + (o[2] as number), 3), duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
-      Animated.timing(trW, { toValue: TR_OPTS[trIdx][2] as number, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
-    ]).start();
-  }, [trIdx]);
-  useEffect(() => { trFade.setValue(0); Animated.timing(trFade, { toValue: 1, duration: 320, useNativeDriver: false }).start(); }, [tr, cur]);
   const [pick, setPick] = useState('');
   const [pf, setPf] = useState(false);
   const [open, setOpen] = useState<number>(-1);
@@ -353,20 +369,18 @@ export default function Hafazan() {
                 </View>
                 {mode === 'learn' && s ? (<>
                   <Text style={{ color: W, fontSize: 30, fontFamily: QURAN_FONT, lineHeight: 62, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{cv ? cv.ar : ''}</Text>
-                  {tr !== 'off' ? <Animated.Text style={{ opacity: trFade, color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 4, textAlign: 'center' }}>{cv ? (tr === 'en' ? cv.en : cv.ms) : ''}</Animated.Text> : null}
-                  <View style={{ flexDirection: 'row', alignSelf: 'center', marginTop: 12, padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
-                    <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 3, bottom: 3, left: 0, width: trPill.w, transform: [{ translateX: trPill.x }], borderRadius: 999, backgroundColor: 'rgba(125,240,198,.3)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }} />
-                    {TR_OPTS.map(([k, t, w]) => (
-                      <Pressable key={k} onPress={() => setTr(k as any)} style={{ width: w as number, paddingVertical: 6, alignItems: 'center' }}><Text style={{ color: tr === k ? W : 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700' }}>{t}</Text></Pressable>
-                    ))}
-                  </View>
+                  {tr !== 'off' ? <FadeText text={cv ? (tr === 'en' ? cv.en : cv.ms) : ''} style={{ marginTop: 4 }} /> : null}
+                  <TrBar tr={tr} setTr={setTr} />
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 14 }}>
                     {Array.from({ length: b - a + 1 }, (_, i) => a + i).slice(0, 40).map((n) => (
                       <Pressable key={n} hitSlop={6} onPress={() => { if (!rec && !busy) { stopVerse(); setPlaying(false); setCur(n); setMsg(''); } }} style={{ width: n === cur ? 22 : 9, height: 9, borderRadius: 5, backgroundColor: n === cur ? TEAL : n < cur ? 'rgba(125,240,198,.55)' : 'rgba(255,255,255,.22)' }} />
                     ))}
                   </View>
                 </>) : mode === 'test' && s ? (
-                  !hide ? <Text style={{ color: W, fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text> : (
+                  !hide ? <View style={{ alignSelf: 'stretch' }}><Text style={{ color: W, fontSize: 25, fontFamily: QURAN_FONT, lineHeight: 52, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{s.verses.filter((v) => v.n >= a && v.n <= b).map((v) => v.ar + ' ﴿' + v.n + '﴾').join('  ')}</Text>
+                    {tr !== 'off' ? <FadeText text={trText(s.verses.filter((v) => v.n >= a && v.n <= b), tr)} style={{ marginTop: 6 }} /> : null}
+                    <TrBar tr={tr} setTr={setTr} />
+                  </View> : (
                     <View style={{ alignItems: 'center', marginTop: 12 }}>
                       <Text style={{ color: W, fontSize: 20, fontWeight: '800', textAlign: 'center' }}>{s.title}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13.5, textAlign: 'center', marginTop: 4 }}>{'Verse ' + a + (b > a ? ' to ' + b : '') + ' · the text is hidden'}</Text>
@@ -441,6 +455,10 @@ export default function Hafazan() {
                 {mode === 'auto' && found && found.cands[ci] ? (
                   <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(125,240,198,.14)', borderWidth: 1, borderColor: 'rgba(125,240,198,.4)' }}>
                     <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{'Found: ' + found.cands[ci].title + ', verse ' + found.cands[ci].ayah + (found.cands[ci].endAyah !== found.cands[ci].ayah || found.cands[ci].endSurah !== found.cands[ci].surah ? ' to ' + found.cands[ci].endAyah : '')}</Text>
+                    {(() => { const c = found.cands[ci]; const sv = SURAH[c.surahKey]; if (!sv) return null; const last = c.endSurah === c.surah ? c.endAyah : sv.verses.length; const vs = sv.verses.filter((v) => v.n >= c.ayah && v.n <= last); return (<>
+                      {tr !== 'off' ? <FadeText text={trText(vs, tr)} style={{ marginTop: 6, textAlign: 'left' }} /> : null}
+                      <TrBar tr={tr} setTr={setTr} style={{ marginTop: 10, alignSelf: 'flex-start' }} />
+                    </>); })()}
                     {found.ambiguous ? (<>
                       <Text style={{ color: '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 4 }}>These verses sound the same in several places. Tap the one you recited:</Text>
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
