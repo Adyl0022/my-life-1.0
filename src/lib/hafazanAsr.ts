@@ -128,7 +128,10 @@ export async function stopAndTranscribe(): Promise<Heard> {
   set({ phase: 'loading' });
   try {
     const c = await load();
-    const { promise } = c.transcribeData(samples.buffer, { language: 'ar', maxLen: 0, temperature: 0, temperatureInc: 0.2, maxContext: 0, beamSize: 5 });
+    // whisper.rn reads the ArrayBuffer as signed 16-bit PCM (its own comment says float32, but the native code decodes int16).
+    const pcm16 = new Int16Array(samples.length);
+    for (let i = 0; i < samples.length; i++) pcm16[i] = Math.max(-32767, Math.min(32767, Math.round(samples[i] * 32767)));
+    const { promise } = c.transcribeData(pcm16.buffer, { language: 'ar', maxLen: 0, temperature: 0, temperatureInc: 0.2, maxContext: 0, beamSize: 5 });
     const r = await promise;
     set({ phase: 'ready' });
     const text = String((r && r.result) || '').trim();
