@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Glass } from '../components/Glass';
+import { GlowField } from '../components/Shine';
+import { SearchIcon, CloseIcon } from '../components/AudioIcons';
 import { Header, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { SURAH, SURAH_LIST, QURAN_FONT } from '../lib/islamic';
@@ -84,6 +86,7 @@ export default function Hafazan() {
   const [showPick, setShowPick] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [pick, setPick] = useState('');
+  const [pf, setPf] = useState(false);
   const [open, setOpen] = useState<number>(-1);
   const timer = useRef<any>(null);
 
@@ -160,6 +163,7 @@ export default function Hafazan() {
     </View>
   ) : null;
   const mist = res ? res.words.filter((w) => w.status === 'wrong' || w.status === 'missing' || w.status === 'close') : [];
+  const chooseSurah = (k: string) => { setSKey(k); setFrom('1'); setTo(String(SURAH[k].verses.length)); setPick(''); setShowPick(false); };
   const list = SURAH_LIST.filter((x) => { const t = pick.trim().toLowerCase(); return !t || x.title.toLowerCase().includes(t) || String(x.num) === t; }).slice(0, 8);
 
   const cnt = (k: string) => (res ? res.words.filter((w) => w.status === k).length : 0);
@@ -256,36 +260,68 @@ export default function Hafazan() {
             {/* what to recite */}
             {mode !== 'auto' ? (
               <View>
-                <Pressable onPress={() => setShowPick(!showPick)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
-                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{s ? s.num : ''}</Text></View>
+                <Pressable onPress={() => setShowPick(!showPick)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 22, backgroundColor: showPick ? 'rgba(125,240,198,.14)' : 'rgba(255,255,255,.08)', borderWidth: 1.2, borderColor: showPick ? 'rgba(125,240,198,.65)' : 'rgba(125,240,198,.35)' }}>
+                  <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{s ? s.num : ''}</Text></View>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={{ color: W, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>{s ? s.title : ''}</Text>
-                    <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{'Verses ' + a + (b > a ? ' – ' + b : '') + ' of ' + total + ' · tap to change'}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{'Verses ' + a + (b > a ? ' – ' + b : '') + ' of ' + total}</Text>
                   </View>
-                  <Text style={{ color: W, fontSize: 22, lineHeight: 44, fontFamily: QURAN_FONT }}>{sInfo ? sInfo.ar : ''}</Text>
+                  <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                    <Text style={{ color: W, fontSize: 20, lineHeight: 36, fontFamily: QURAN_FONT }}>{sInfo ? sInfo.ar : ''}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.22)', borderWidth: 1, borderColor: 'rgba(125,240,198,.55)' }}>
+                      <Text style={{ color: '#bff7e1', fontSize: 11.5, fontWeight: '800' }}>{showPick ? 'Close' : 'Change surah'}</Text>
+                      <SearchIcon size={12} color="#bff7e1" />
+                    </View>
+                  </View>
                 </Pressable>
                 {showPick ? (
-                  <Glass radius={20} style={{ padding: 12, marginTop: 8 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.08)' }}>
-                      <Text style={{ color: 'rgba(255,255,255,.6)' }}>⌕</Text>
-                      <TextInput value={pick} onChangeText={setPick} placeholder="Search surah name or number" placeholderTextColor="rgba(255,255,255,.5)" style={{ flex: 1, color: W, fontSize: 14, paddingVertical: 10 }} />
-                    </View>
+                  <Glass radius={22} style={{ padding: 14, marginTop: 10 }}>
+                    <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1, marginBottom: 8 }}>CHOOSE A SURAH</Text>
+                    <GlowField focused={pf}>
+                      <SearchIcon size={18} color={pf ? '#7df0c6' : 'rgba(255,255,255,.6)'} />
+                      <TextInput value={pick} onChangeText={setPick} onFocus={() => setPf(true)} onBlur={() => setPf(false)} placeholder="Search surah name or number" placeholderTextColor="rgba(255,255,255,.45)" style={{ flex: 1, color: W, fontSize: 14, paddingVertical: 11, outlineStyle: 'none' } as any} />
+                      {pick ? <Pressable onPress={() => setPick('')} hitSlop={8} accessibilityLabel="Clear search"><CloseIcon size={16} color="rgba(255,255,255,.7)" /></Pressable> : null}
+                    </GlowField>
                     {pick.trim() ? (
-                      <View style={{ marginTop: 8, gap: 6 }}>
+                      <View style={{ marginTop: 10, gap: 6 }}>
+                        {list.length === 0 ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12.5, paddingVertical: 6 }}>No surah found. Try another name or a number from 1 to 114.</Text> : null}
                         {list.map((x) => (
-                          <Pressable key={x.key} onPress={() => { setSKey(x.key); setFrom('1'); setTo(String(SURAH[x.key].verses.length)); setPick(''); setShowPick(false); }} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 10, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.07)' }}>
-                            <Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{x.num + '. ' + x.title}</Text>
+                          <Pressable key={x.key} onPress={() => chooseSurah(x.key)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.1)' }}>
+                            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(125,240,198,.18)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{x.num}</Text></View>
+                            <Text style={{ flex: 1, color: W, fontSize: 13.5, fontWeight: '700' }} numberOfLines={1}>{x.title}</Text>
                             <Text style={{ color: W, fontSize: 17, lineHeight: 34, fontFamily: QURAN_FONT }}>{x.ar}</Text>
                           </Pressable>
                         ))}
                       </View>
-                    ) : null}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
-                      <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13 }}>Verses</Text>
-                      <TextInput value={from} onChangeText={(t) => setFrom(t.replace(/\D/g, ''))} keyboardType="number-pad" style={{ width: 56, textAlign: 'center', color: W, fontSize: 15, fontWeight: '700', paddingVertical: 8, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} />
-                      <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13 }}>to</Text>
-                      <TextInput value={to} onChangeText={(t) => setTo(t.replace(/\D/g, ''))} keyboardType="number-pad" style={{ width: 56, textAlign: 'center', color: W, fontSize: 15, fontWeight: '700', paddingVertical: 8, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} />
-                      <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12 }}>{'of ' + total}</Text>
+                    ) : (
+                      <View style={{ marginTop: 12 }}>
+                        <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginBottom: 8 }}>Popular surahs</Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                          {[[1, 'Al-Fatihah'], [36, 'Yasin'], [55, 'Ar-Rahman'], [56, "Al-Waqi'ah"], [67, 'Al-Mulk'], [112, 'Al-Ikhlas'], [113, 'Al-Falaq'], [114, 'An-Nas']].map(([n, t]) => {
+                            const it = SURAH_LIST.find((x) => x.num === n);
+                            return it ? <Pressable key={n as number} onPress={() => chooseSurah(it.key)} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.12)', borderWidth: 1, borderColor: 'rgba(125,240,198,.35)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t as string}</Text></Pressable> : null;
+                          })}
+                        </View>
+                      </View>
+                    )}
+
+                    <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.1)', marginVertical: 14 }} />
+                    <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1, marginBottom: 10 }}>WHICH VERSES</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      {[['From', from, setFrom, a], ['To', to, setTo, b]].map(([lab, val, set, cur]: any) => (
+                        <View key={lab} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 6, borderRadius: 18, backgroundColor: 'rgba(125,240,198,.08)', borderWidth: 1, borderColor: 'rgba(125,240,198,.28)' }}>
+                          <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11, fontWeight: '700' }}>{lab}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                            <Pressable onPress={() => set(String(Math.max(1, cur - 1)))} hitSlop={6} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>−</Text></Pressable>
+                            <TextInput value={val} onChangeText={(t) => set(t.replace(/\D/g, ''))} keyboardType="number-pad" style={{ width: 46, textAlign: 'center', color: W, fontSize: 18, fontWeight: '800', paddingVertical: 2 }} />
+                            <Pressable onPress={() => set(String(Math.min(total, cur + 1)))} hitSlop={6} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>+</Text></Pressable>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+                      <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12 }}>{'This surah has ' + total + ' verses'}</Text>
+                      <Pressable onPress={() => { setFrom('1'); setTo(String(total)); }} style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>Whole surah</Text></Pressable>
                     </View>
                   </Glass>
                 ) : null}
