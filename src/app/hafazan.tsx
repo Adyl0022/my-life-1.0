@@ -128,7 +128,7 @@ export default function Hafazan() {
   const [from, setFrom] = useState('1');
   const [to, setTo] = useState('7');
   const [hide, setHide] = useState(true);
-  const [mode, setMode] = useState<'test' | 'learn' | 'auto'>('test');
+  const [mode, setMode] = useState<'test' | 'learn' | 'auto'>('learn');
   const [found, setFound] = useState<Found | null>(null);
   const [ci, setCi] = useState(0);
   const [cur, setCur] = useState(1);
@@ -341,10 +341,10 @@ export default function Hafazan() {
 
             {/* how to use this mode */}
             {(() => {
-              const H: Record<string, { t: string; sub: string; steps: string[] }> = {
-                learn: { t: 'Learn: listen first, then recite', sub: 'Best for a verse you are still memorising. You go one verse at a time.', steps: ['Choose the surah and verses at the top.', 'Read the verse and tap Listen to hear it.', 'Tap the microphone and recite it. Tap Next verse to continue.'] },
-                test: { t: 'Test: recite from memory', sub: 'The text is hidden, so you must recite what you remember.', steps: ['Choose the surah and verses at the top.', 'Tap the microphone and recite without looking.', 'Stuck? Tap Show the text, read it, then try again.'] },
-                auto: { t: 'Find: not sure which surah?', sub: 'Recite any verses you know. You do not need to choose a surah.', steps: ['Tap the microphone and recite a few verses.', 'The app finds the surah and verse by itself.', 'Then it checks your words from there.'] },
+              const H: Record<string, { ic: string; t: string; sub: string; steps: string[]; tip: string }> = {
+                learn: { ic: '📖', t: 'Learn: hear it, then say it', sub: 'Take one verse at a time. Listen first, then recite it back and see which words need work.', steps: ['Pick a **surah** and the verses you want to practise.', 'Tap **Listen** and follow the verse on screen.', 'Tap the **microphone** and recite. Tap **Next verse** when you are happy.'], tip: 'Pause for about a second between verses. The recording stops by itself when you go quiet.' },
+                test: { ic: '📝', t: 'Test: recite from memory', sub: 'No peeking. The verse is hidden, so what you say is what you truly remember.', steps: ['Choose the **surah** and verses you want to be tested on.', 'Tap the **microphone** and recite from memory.', 'Stuck? Tap **Show the text**, read it, then try again.'], tip: 'Recite slowly and clearly, and pause for a second between verses.' },
+                auto: { ic: '🔎', t: 'Find: just start reciting', sub: 'Not sure which surah or verse you are on? Recite and the app works it out for you.', steps: ['Tap the **microphone** and recite two or three verses you know.', 'The app finds the **surah and verse** by listening.', 'Then it checks every word from there.'], tip: 'Recite at least one full verse so the app can tell where it is from.' },
               };
               const h = H[mode];
               if (res) return null;
@@ -353,15 +353,21 @@ export default function Hafazan() {
               );
               return (
                 <View style={{ padding: 14, borderRadius: 20, backgroundColor: 'rgba(125,240,198,.10)', borderWidth: 1, borderColor: 'rgba(125,240,198,.35)' }}>
-                  <Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>{h.t}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>{h.sub}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 18 }}>{h.ic}</Text></View>
+                    <Text style={{ flex: 1, color: W, fontSize: 16, fontWeight: '800' }}>{h.t}</Text>
+                  </View>
+                  <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 13, lineHeight: 19, marginTop: 8 }}>{h.sub}</Text>
+                  <View style={{ height: 1, backgroundColor: 'rgba(125,240,198,.2)', marginTop: 10 }} />
                   {h.steps.map((x, i) => (
-                    <View key={i} style={{ flexDirection: 'row', gap: 10, marginTop: 8, alignItems: 'flex-start' }}>
-                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(125,240,198,.25)', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{i + 1}</Text></View>
-                      <Text style={{ flex: 1, color: 'rgba(255,255,255,.88)', fontSize: 13, lineHeight: 19 }}>{x}</Text>
+                    <View key={i} style={{ flexDirection: 'row', gap: 10, marginTop: 10, alignItems: 'flex-start' }}>
+                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(125,240,198,.28)', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{i + 1}</Text></View>
+                      <Text style={{ flex: 1, color: 'rgba(255,255,255,.88)', fontSize: 13.5, lineHeight: 20 }}>{x.split('**').map((seg, k) => (k % 2 ? <Text key={k} style={{ color: '#bff7e1', fontWeight: '800' }}>{seg}</Text> : seg))}</Text>
                     </View>
                   ))}
-                  <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>Tip: pause for about a second between verses. The recording stops by itself when you stay quiet.</Text>
+                  <View style={{ marginTop: 12, padding: 10, borderRadius: 12, backgroundColor: 'rgba(255,213,147,.10)', borderWidth: 1, borderColor: 'rgba(255,213,147,.28)' }}>
+                    <Text style={{ color: '#ffe2b0', fontSize: 12.5, lineHeight: 18 }}><Text style={{ fontWeight: '800' }}>Tip  </Text>{h.tip}</Text>
+                  </View>
                   <Pressable onPress={() => setHelpOff({ ...helpOff, [mode]: true })} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Got it</Text></Pressable>
                 </View>
               );
