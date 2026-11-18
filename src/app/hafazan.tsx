@@ -7,6 +7,8 @@ import { Header, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { SURAH, SURAH_LIST, QURAN_FONT } from '../lib/islamic';
 import { expectedWords, checkRecitation, tajwidTips, closeNote, CheckResult, WResult } from '../lib/hafazan';
+import { playVerse, stopVerse } from '../lib/hafazanPlay';
+import { stop as stopQuranAudio } from '../lib/quranAudio';
 import { asrSupported, useAsr, downloadModel, deleteModel, micPermission, startRecording, stopAndTranscribe, cancelRecording, micLevel, MODEL_MB } from '../lib/hafazanAsr';
 
 const TEAL = '#7df0c6';
@@ -24,6 +26,9 @@ export default function Hafazan() {
   const [from, setFrom] = useState('1');
   const [to, setTo] = useState('7');
   const [hide, setHide] = useState(true);
+  const [mode, setMode] = useState<'test' | 'learn'>('test');
+  const [cur, setCur] = useState(1);
+  const [playing, setPlaying] = useState(false);
   const [rec, setRec] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -42,10 +47,19 @@ export default function Hafazan() {
   if (s) s.verses.filter((v) => v.n >= a && v.n <= b).forEach((v) => expectedWords(v.ar).forEach((w) => words.push({ word: w, verse: v.n })));
 
   useEffect(() => { if (rec) { timer.current = setInterval(() => setLvl(micLevel()), 120); } return () => { if (timer.current) clearInterval(timer.current); }; }, [rec]);
-  useEffect(() => () => { cancelRecording(); }, []);
-  useEffect(() => { setRes(null); setHeard(''); setMsg(''); setOpen(-1); }, [sKey, from, to]);
+  useEffect(() => () => { cancelRecording(); stopVerse(); }, []);
+  useEffect(() => { setRes(null); setHeard(''); setMsg(''); setOpen(-1); setCur(a); stopVerse(); setPlaying(false); }, [sKey, from, to]);
 
+  const listen = async () => {
+    if (!s || playing || rec) return;
+    setMsg(''); setPlaying(true);
+    try { stopQuranAudio(); } catch (e) { /* ignore */ }
+    const ok = await playVerse(s.num, cur);
+    setPlaying(false);
+    if (!ok) setMsg('Could not play the verse. Check your internet and try again.');
+  };
   const start = async () => {
+    stopVerse(); setPlaying(false);
     setMsg(''); setRes(null); setOpen(-1);
     if (!(await micPermission())) { setMsg('Microphone permission is needed to listen to your recitation. You can allow it in the phone settings.'); return; }
     try { await startRecording(); setRec(true); } catch (e: any) { setMsg('Could not start the microphone. ' + String((e && e.message) || '')); }
@@ -56,7 +70,7 @@ export default function Hafazan() {
       const h = await stopAndTranscribe();
       if (!h.text) { setMsg(h.seconds < 0.8 ? 'That was too short. Tap the microphone and recite.' : 'Nothing was heard clearly. Move closer to the microphone and try again in a quiet place.'); setBusy(false); return; }
       setHeard(h.text);
-      const r = checkRecitation(words, h.text);
+      const r = checkRecitation(mode === 'learn' ? words.filter((w) => w.verse === cur) : words, h.text);
       setRes(r);
       if (r.reached > 0 && r.reached < r.total * 0.3) setMsg('Only a small part was recognised. If you did recite the verses, try again closer to the microphone.');
     } catch (e: any) { setMsg('Could not check the recitation. ' + String((e && e.message) || '')); }
@@ -91,6 +105,10 @@ export default function Hafazan() {
             </Glass>
           ) : (<>
             <Glass radius={24} style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                <Chip t="Learn to recite" on={mode === 'learn'} onPress={() => { setMode('learn'); setRes(null); setCur(a); }} />
+                <Chip t="Test myself" on={mode === 'test'} onPress={() => { setMode('test'); setRes(null); stopVerse(); setPlaying(false); }} />
+              </View>
               <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.3 }}>CHOOSE WHAT TO RECITE</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingHorizontal: 12, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.08)' }}>
                 <Text style={{ color: 'rgba(255,255,255,.6)' }}>⌕</Text>
@@ -113,13 +131,32 @@ export default function Hafazan() {
                 <TextInput value={to} onChangeText={(t) => setTo(t.replace(/\D/g, ''))} keyboardType="number-pad" style={{ width: 56, textAlign: 'center', color: W, fontSize: 15, fontWeight: '700', paddingVertical: 8, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} />
                 <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12 }}>{'of ' + total}</Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                <Chip t="Hide text (test myself)" on={hide} onPress={() => setHide(true)} />
-                <Chip t="Show text" on={!hide} onPress={() => setHide(false)} />
-              </View>
+              {mode === 'test' ? (
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                  <Chip t="Hide text (test myself)" on={hide} onPress={() => setHide(true)} />
+                  <Chip t="Show text" on={!hide} onPress={() => setHide(false)} />
+                </View>
+              ) : null}
             </Glass>
 
-            {!res ? (
+            {!res && mode === 'learn' && s ? (
+              <Glass radius={24} style={{ padding: 18 }}>
+                <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.3 }}>{'LEARN · VERSE ' + cur + ' OF ' + b}</Text>
+                <Text style={{ color: W, fontSize: 28, fontFamily: QURAN_FONT, lineHeight: 58, textAlign: 'right', writingDirection: 'rtl' as any, marginTop: 8 }}>{(s.verses.find((v) => v.n === cur) || { ar: '' }).ar}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>{(s.verses.find((v) => v.n === cur) || { ms: '' }).ms}</Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+                  <Pressable onPress={listen} style={{ flex: 1, height: 52, borderRadius: 26, backgroundColor: playing ? 'rgba(125,240,198,.3)' : 'rgba(125,240,198,.18)', borderWidth: 1, borderColor: 'rgba(125,240,198,.55)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{playing ? 'Listening…' : '1. Listen'}</Text></Pressable>
+                  <Pressable onPress={rec ? stop : busy ? undefined : start} style={{ flex: 1, height: 52, borderRadius: 26, backgroundColor: rec ? '#ff8fab' : TEAL, alignItems: 'center', justifyContent: 'center', transform: [{ scale: rec ? 1 + lvl * 0.08 : 1 }] }}><Text style={{ color: rec ? '#3a0716' : '#06241d', fontSize: 14, fontWeight: '800' }}>{busy ? 'Checking…' : rec ? 'Stop and check' : '2. Your turn'}</Text></Pressable>
+                </View>
+                <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, lineHeight: 18, marginTop: 10 }}>Listen to the verse first, as many times as you like. Then tap Your turn, recite it, and tap Stop. The app will point out words to fix.</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
+                  <Pressable onPress={() => { if (cur > a) { stopVerse(); setPlaying(false); setCur(cur - 1); setMsg(''); } }}><Text style={{ color: cur > a ? TEAL : 'rgba(255,255,255,.3)', fontSize: 13, fontWeight: '800' }}>‹ Previous verse</Text></Pressable>
+                  <Pressable onPress={() => { if (cur < b) { stopVerse(); setPlaying(false); setCur(cur + 1); setMsg(''); } }}><Text style={{ color: cur < b ? TEAL : 'rgba(255,255,255,.3)', fontSize: 13, fontWeight: '800' }}>Next verse ›</Text></Pressable>
+                </View>
+              </Glass>
+            ) : null}
+
+            {!res && mode === 'test' ? (
               <Glass radius={24} style={{ padding: 18, alignItems: 'center' }}>
                 {!hide && s ? (
                   <View style={{ alignSelf: 'stretch', marginBottom: 14 }}>
@@ -133,7 +170,7 @@ export default function Hafazan() {
                 </Pressable>
                 <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700', marginTop: 12 }}>{busy ? (asr.phase === 'loading' ? 'Loading the model, then checking…' : 'Checking…') : rec ? 'Listening… tap to stop and check' : 'Tap to recite'}</Text>
               </Glass>
-            ) : (
+            ) : res ? (
               <Glass radius={24} style={{ padding: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -165,9 +202,19 @@ export default function Hafazan() {
                   );
                 })() : null}
                 {res.extra.length ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18, marginTop: 12 }}>{'Extra words heard that are not in these verses: ' + res.extra.join(' · ')}</Text> : null}
+                {mode === 'learn' ? (
+                  <View style={{ marginTop: 14, padding: 12, borderRadius: 16, backgroundColor: res.score >= 85 && res.reached >= res.total ? 'rgba(125,240,198,.16)' : 'rgba(255,213,147,.14)' }}>
+                    <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{res.score >= 85 && res.reached >= res.total ? 'Well done! That sounded right.' : 'Almost. Listen again and repeat.'}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{res.score >= 85 && res.reached >= res.total ? (cur < b ? 'You can go to the next verse.' : 'You have finished the verses you chose.') : 'Tap the coloured words to see what to fix, then listen to the verse again.'}</Text>
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                      <Pressable onPress={() => { setRes(null); setOpen(-1); setTimeout(listen, 50); }} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Listen again</Text></Pressable>
+                      {cur < b ? <Pressable onPress={() => { setRes(null); setOpen(-1); setCur(cur + 1); }} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06241d', fontSize: 13, fontWeight: '800' }}>Next verse</Text></Pressable> : null}
+                    </View>
+                  </View>
+                ) : null}
                 <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11.5, lineHeight: 17, marginTop: 12 }}>{'What the model heard: ' + heard}</Text>
               </Glass>
-            )}
+            ) : null}
 
             {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19 }}>{msg}</Text> : null}
 
