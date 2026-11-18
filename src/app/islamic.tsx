@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, ScrollView, Pressable, TextInput, Animated } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,6 +12,7 @@ import { useIslamic, SURAH, SURAH_LIST, FEATURED, QURAN_FONT } from '../lib/isla
 import { usePrayer } from '../lib/prayer';
 import { TOP } from '../lib/layout';
 import { useStored } from '../lib/store';
+import { useHijriSync, upcoming } from '../lib/hijriSync';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram, keyD } from '../lib/fasting';
 
 const Item = ({ t, s, c, ic = 'book', onPress }: { t: string; s: string; c: string; ic?: string; onPress: () => void }) => (
@@ -46,6 +47,23 @@ export default function IslamicHub() {
     if (ow > 0) return { h: ow + ' missed ' + (ow === 1 ? 'fast' : 'fasts') + ' to make up', b: rs.phase === 'before' ? 'Ramadan is ' + rs.daysTo + ' days away.' : 'Try to finish before next Ramadan.' };
     return { h: 'Fasting log', b: rs.phase === 'before' ? 'Ramadan in ' + rs.daysTo + ' days. Track make-up fasts and sunnah fasts.' : 'Track Ramadan, make-up fasts and sunnah fasts.' };
   })();
+  const hoff = useHijriSync(pz.off || 0);
+  const evs = upcoming(now, hoff, 4);
+  const hasRead = !!(isl.lastKey && SURAH[isl.lastKey]);
+  const [slide, setSlide] = useState(evs[0] && evs[0].days <= 3 ? 1 : 0);
+  const [openEv, setOpenEv] = useState(false);
+  const fade = useRef(new Animated.Value(1)).current;
+  const hold = useRef(false);
+  const showEv = !hasRead || slide === 1;
+  useEffect(() => {
+    if (!hasRead) return;
+    const t = setInterval(() => {
+      if (hold.current || openEv) return;
+      Animated.timing(fade, { toValue: 0, duration: 260, useNativeDriver: true }).start(() => { setSlide((v) => (v ? 0 : 1)); Animated.timing(fade, { toValue: 1, duration: 320, useNativeDriver: true }).start(); });
+    }, 10000);
+    return () => clearInterval(t);
+  }, [hasRead, openEv]);
+  const ev0 = evs[0];
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
       <IslamicBg deco />
@@ -77,11 +95,29 @@ export default function IslamicHub() {
               <View style={{ flex: 1 }}><Text style={{ color: '#ffd593', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{z[0]}</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{z[1]}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{z[2]}</Text></View>
               <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
             </Glass></Pressable>
-            <Pressable onPress={() => go('/surah/' + lk + (lv ? '?v=' + lv : ''))}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Animated.View style={{ opacity: fade }}>
+            {!showEv ? (
+            <Pressable onPressIn={() => { hold.current = true; }} onPressOut={() => { hold.current = false; }} onPress={() => go('/surah/' + lk + (lv ? '?v=' + lv : ''))}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(94,231,181,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="book" size={24} /></View>
               <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>CONTINUE READING</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{SURAH[lk].title}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{lv ? 'Last read: verse ' + lv : 'Start reading'}</Text></View>
               <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
             </Glass></Pressable>
+            ) : ev0 ? (
+            <Pressable onPressIn={() => { hold.current = true; }} onPressOut={() => { hold.current = false; }} onPress={() => setOpenEv((v) => !v)}><Glass radius={22} style={{ padding: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(52,211,153,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="moon" size={24} /></View>
+                <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>UPCOMING · ISLAMIC CALENDAR</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{ev0.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{ev0.days === 0 ? 'Today' : ev0.days === 1 ? 'Tomorrow' : 'In ' + ev0.days + ' days'} · {ev0.hText}</Text></View>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>{openEv ? '⌃' : '⌄'}</Text>
+              </View>
+              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>{ev0.tip}</Text>
+              {openEv ? (<View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
+                {evs.slice(1).map((e) => (<View key={e.n + e.hText} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{e.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12 }}>{e.days === 1 ? 'Tomorrow' : 'In ' + e.days + ' days'}</Text></View>))}
+                <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 6 }}>Dates are estimates and follow JAKIM when you are online. The final date depends on the moon sighting.</Text>
+              </View>) : null}
+            </Glass></Pressable>
+            ) : null}
+            </Animated.View>
+            {hasRead ? (<View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: -4 }}>{[0, 1].map((i) => (<View key={i} style={{ width: slide === i ? 16 : 6, height: 6, borderRadius: 3, backgroundColor: slide === i ? '#5ee7df' : 'rgba(255,255,255,.3)' }} />))}</View>) : null}
             <Pressable onPress={() => go('/puasa')}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(52,211,153,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="moon" size={24} /></View>
               <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>RAMADAN · SUNNAH</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{pst.h}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 2 }}>{pst.b}</Text></View>
