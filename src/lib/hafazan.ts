@@ -72,24 +72,40 @@ export function checkRecitation(expected: { word: string; verse: number }[], hea
   const H = (heardText || '').split(/\s+/).map(norm).filter(Boolean);
   const m = E.length, n = H.length;
   const GAP = -1, SUB = (d: number) => { return d === 0 ? 2 : d === 1 ? 0.8 : d === 1.5 ? 0.3 : -1; };
+  // The model sometimes breaks one word into two (e.g. "iyyaka" heard as "idh yaka") or runs two words together.
+  // One expected word may match two heard words glued together (and the other way round), when they sound the same.
+  const NEG = -1e9, MS = (d: number) => (d === 0 ? 1.6 : d === 1 ? 0.5 : NEG);
+  const joinD = (e: string, e2: string, h: string) => (h.length >= 4 ? Math.min(wordDist(e, h), wordDist(e2, h)) : 2);
   const S: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   const T: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (let i = 1; i <= m; i++) { S[i][0] = i * GAP; T[i][0] = 1; }
   for (let j = 1; j <= n; j++) { S[0][j] = j * GAP; T[0][j] = 2; }
   for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
     const dg = S[i - 1][j - 1] + SUB(wd(i - 1, H[j - 1])), up = S[i - 1][j] + GAP, lf = S[i][j - 1] + GAP;
-    const best = Math.max(dg, up, lf);
-    S[i][j] = best; T[i][j] = best === dg ? 0 : best === up ? 1 : 2;
+    const mg = j >= 2 ? S[i - 1][j - 2] + MS(joinD(E[i - 1], E2[i - 1], H[j - 2] + H[j - 1])) : NEG;
+    const sp = i >= 2 ? S[i - 2][j - 1] + MS(joinD(E[i - 2] + E[i - 1], E2[i - 2] + E2[i - 1], H[j - 1])) : NEG;
+    const best = Math.max(dg, mg, sp, up, lf);
+    S[i][j] = best; T[i][j] = best === dg ? 0 : best === mg ? 3 : best === sp ? 4 : best === up ? 1 : 2;
   }
   const res: WResult[] = new Array(m);
   const extra: string[] = [];
   let i = m, j = n;
+  const st = (d: number): WStatus => (d === 0 ? 'ok' : d === 1 ? 'close' : 'wrong');
   while (i > 0 || j > 0) {
     const t = i > 0 && j > 0 ? T[i][j] : i > 0 ? 1 : 2;
     if (t === 0) {
       const d = wd(i - 1, H[j - 1]);
-      res[i - 1] = { word: expected[i - 1].word, verse: expected[i - 1].verse, heard: H[j - 1], status: d === 0 ? 'ok' : d === 1 ? 'close' : 'wrong' };
+      res[i - 1] = { word: expected[i - 1].word, verse: expected[i - 1].verse, heard: H[j - 1], status: st(d) };
       i--; j--;
+    } else if (t === 3) {
+      const h = H[j - 2] + H[j - 1], d = joinD(E[i - 1], E2[i - 1], h);
+      res[i - 1] = { word: expected[i - 1].word, verse: expected[i - 1].verse, heard: h, status: st(d) };
+      i--; j -= 2;
+    } else if (t === 4) {
+      const d = joinD(E[i - 2] + E[i - 1], E2[i - 2] + E2[i - 1], H[j - 1]);
+      res[i - 1] = { word: expected[i - 1].word, verse: expected[i - 1].verse, heard: H[j - 1], status: st(d) };
+      res[i - 2] = { word: expected[i - 2].word, verse: expected[i - 2].verse, heard: H[j - 1], status: st(d) };
+      i -= 2; j--;
     } else if (t === 1) { res[i - 1] = { word: expected[i - 1].word, verse: expected[i - 1].verse, status: 'missing' }; i--; }
     else { extra.unshift(H[j - 1]); j--; }
   }
