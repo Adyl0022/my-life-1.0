@@ -34,22 +34,3 @@ export function ThinkingBubble({ ms }: { ms: boolean }) {
     </Glass>
   );
 }
-
-// Shown under an answer that is still being written: a small soft glowing dot that breathes, instead of a blinking text cursor.
-export function LiveTail() {
-  const t = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const l = Animated.loop(Animated.sequence([
-      Animated.timing(t, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      Animated.timing(t, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-    ]));
-    l.start();
-    return () => l.stop();
-  }, []);
-  return (
-    <View style={{ height: 16, marginTop: 6, justifyContent: 'center' }}>
-      <Animated.View style={{ position: 'absolute', left: -3, width: 16, height: 16, borderRadius: 8, backgroundColor: 'rgba(183,148,255,.30)', opacity: t.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.9] }), transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.25] }) }] }} />
-      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#c9b3ff' }} />
-    </View>
-  );
-}

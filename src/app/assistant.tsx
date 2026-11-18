@@ -17,8 +17,9 @@ import { ROUTES } from '../lib/routes';
 import { TOP } from '../lib/layout';
 import { useAssistLang, useLangPacks, xlOk, xlLang } from '../lib/xlate';
 import { AssistLangSheet, LangPickedPopup } from '../components/AssistLangCard';
-import { ThinkingBubble, LiveTail } from '../components/ThinkingBubble';
+import { ThinkingBubble } from '../components/ThinkingBubble';
 import { RichText } from '../components/RichText';
+import { ShimmerText, OrbBreath } from '../components/LiveFx';
 import { smartWarm } from '../lib/llm';
 import { LangWelcomeCard } from '../components/LangWelcomeCard';
 import { SmartChatSheet } from '../components/SmartChatSheet';
@@ -207,9 +208,9 @@ class Chat extends AssistantBase {
           })}
           {v.typD === 'flex' && (
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
-              <OrbSvg size={32} uid="ty" />
+              <OrbBreath />
               {v.live ? (
-                <Glass radius={20} style={{ maxWidth: '84%', flexShrink: 1, paddingVertical: 13, paddingHorizontal: 16, borderBottomLeftRadius: 6 }}><RichText text={v.live} /><LiveTail /></Glass>
+                <Glass radius={20} style={{ maxWidth: '84%', flexShrink: 1, paddingVertical: 13, paddingHorizontal: 16, borderBottomLeftRadius: 6 }}><ShimmerText text={v.live} /></Glass>
               ) : <ThinkingBubble ms={ms} />}
             </View>
           )}

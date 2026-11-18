@@ -7,26 +7,32 @@ import { Text } from './Txt';
 const MARKS = /```|\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`|^\s*([-*•]|\d+[.)])\s+|^#{1,4}\s/m;
 const C = '#fff';
 
+// Markers that make the last words of a still-growing answer appear softly (see LiveText): \uE001 = faintest, \uE002 = medium, \uE003 = almost full.
+export const FADE = Array.from({ length: 16 }, (_, i) => String.fromCharCode(0xe001 + i));
+const FADE_C: { [k: string]: string } = {};
+FADE.forEach((c, i) => { FADE_C[c] = 'rgba(255,255,255,' + (0.25 + 0.75 * (i / 15)).toFixed(2) + ')'; });
 function inline(s: string, key: string) {
   const parts: React.ReactNode[] = [];
   s = s.replace(/^\*\*(?![^*]*\*\*)/, '');
-  const re = /(\*\*[^*]+\*\*|`[^`\n]+`|\*[^*\s][^*\n]*\*)/g;
-  let last = 0; let m: RegExpExecArray | null; let n = 0;
+  const re = /(\*\*[^*]+\*\*|`[^`\n]+`|\*[^*\s][^*\n]*\*|[\uE001-\uE010])/g;
+  let fade: string | undefined; let last = 0; let m: RegExpExecArray | null; let n = 0;
+  const plain = (x: string) => { if (!x) return; parts.push(fade ? <Text key={key + n++} style={{ color: fade }}>{x}</Text> : x); };
   while ((m = re.exec(s))) {
-    if (m.index > last) parts.push(s.slice(last, m.index));
+    if (m.index > last) plain(s.slice(last, m.index));
     const t = m[0];
-    if (t.startsWith('**')) parts.push(<Text key={key + n++} style={{ fontWeight: '800', color: C }}>{t.slice(2, -2)}</Text>);
-    else if (t.startsWith('*')) parts.push(<Text key={key + n++} style={{ fontStyle: 'italic', color: C }}>{t.slice(1, -1)}</Text>);
-    else parts.push(<Text key={key + n++} style={{ fontFamily: 'monospace', color: '#8fe9e2', backgroundColor: 'rgba(0,0,0,.28)' }}>{t.slice(1, -1)}</Text>);
+    if (FADE_C[t]) fade = FADE_C[t];
+    else if (t.startsWith('**')) parts.push(<Text key={key + n++} style={{ fontWeight: '800', color: fade || C }}>{t.slice(2, -2).replace(/[\uE001-\uE010]/g, '')}</Text>);
+    else if (t.startsWith('*')) parts.push(<Text key={key + n++} style={{ fontStyle: 'italic', color: fade || C }}>{t.slice(1, -1).replace(/[\uE001-\uE010]/g, '')}</Text>);
+    else parts.push(<Text key={key + n++} style={{ fontFamily: 'monospace', color: '#8fe9e2', backgroundColor: 'rgba(0,0,0,.28)' }}>{t.slice(1, -1).replace(/[\uE001-\uE010]/g, '')}</Text>);
     last = m.index + t.length;
   }
-  if (last < s.length) parts.push(s.slice(last));
+  if (last < s.length) plain(s.slice(last));
   return parts;
 }
 
 export function RichText({ text }: { text: string }) {
   const base = { color: C, fontSize: 14.5, lineHeight: 22 } as const;
-  if (!MARKS.test(text)) return <Text style={base}>{text}</Text>;
+  if (!MARKS.test(text) && !/[\uE001-\uE010]/.test(text)) return <Text style={base}>{text}</Text>;
   const lines = text.split('\n');
   const out: React.ReactNode[] = [];
   const st: { code: string[] | null } = { code: null };
