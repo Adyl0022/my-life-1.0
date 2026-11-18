@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Platform, Linking } from 'react-native';
+import { View, ScrollView, Pressable, TextInput, Platform, Linking, AppState, PermissionsAndroid } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
@@ -62,6 +62,15 @@ export default function Hafazan() {
     setPlaying(false);
     if (!ok) setMsg('Could not play the verse. Check your internet and try again.');
   };
+  // After the person allows the microphone in the phone settings and comes back, clear the warning by itself.
+  useEffect(() => {
+    if (!(msg && msg.startsWith('Microphone permission'))) return;
+    const sub = AppState.addEventListener('change', async (st) => {
+      if (st !== 'active') return;
+      try { if (await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)) setMsg('Microphone is allowed now. Tap the microphone to start.'); } catch (e) { /* ignore */ }
+    });
+    return () => sub.remove();
+  }, [msg]);
   const start = async () => {
     stopVerse(); setPlaying(false);
     setMsg(''); setRes(null); setOpen(-1); setBusy(true); setStep('Asking for microphone permission…');
