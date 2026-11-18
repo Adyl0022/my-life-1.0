@@ -202,7 +202,7 @@ class Chat extends AssistantBase {
             );
             return (
               <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end', justifyContent: me ? 'flex-end' : 'flex-start' }}>
-                {!me && <OrbSvg size={32} uid={'m' + i} />}
+                {!me && <OrbSvg size={32} uid={'m' + i} spin={i === v.msgs.map((x: any) => !x.me).lastIndexOf(true) ? 10 : undefined} />}
                 {me ? (
                   <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ maxWidth: '84%', paddingVertical: 13, paddingHorizontal: 16, borderRadius: 20, borderBottomRightRadius: 6 }}>{body}</LinearGradient>
                 ) : (

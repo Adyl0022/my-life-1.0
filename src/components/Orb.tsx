@@ -46,7 +46,26 @@ export function OrbPart({ size, uid, part }: { size: number; uid: string; part: 
   );
 }
 
-export function OrbSvg({ size, uid }: { size: number; uid: string }) {
+// `spin` = seconds for one turn of the colours (omit it for a still orb). Only the orb of the answer being written, and the newest answer, should spin.
+function OrbSpinning({ size, uid, secs }: { size: number; uid: string; secs: number }) {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    t.setValue(0);
+    const a = Animated.loop(Animated.timing(t, { toValue: 1, duration: secs * 1000, easing: Easing.linear, useNativeDriver: true }));
+    a.start();
+    return () => a.stop();
+  }, [secs]);
+  const rot = t.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  return (
+    <View style={{ width: size, height: size }}>
+      <Animated.View style={{ transform: [{ rotate: rot }] }}><OrbPart size={size} uid={uid + 'a'} part="base" /></Animated.View>
+      <View style={{ position: 'absolute', left: 0, top: 0 }}><OrbPart size={size} uid={uid + 'z'} part="top" /></View>
+    </View>
+  );
+}
+
+export function OrbSvg({ size, uid, spin }: { size: number; uid: string; spin?: number }) {
+  if (spin && spin > 0) return <OrbSpinning size={size} uid={uid} secs={spin} />;
   return (
     <View style={{ width: size, height: size }}>
       <OrbPart size={size} uid={uid + 'a'} part="base" />
