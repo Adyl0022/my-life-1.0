@@ -1,6 +1,7 @@
 // Islamic calendar events. Dates come from a built-in Umm al-Qura table (works offline). When online, today's Hijri date from JAKIM is compared with the table and a 1-day difference is applied to events in the next 45 days only.
 import { useEffect } from 'react';
 import { useStored } from './store';
+import { OFFICIAL_LIST } from './myEvents';
 import { HMON, diffDays, keyD, addDays, parseK } from './fasting';
 
 type Sync = { k: string; off: number };
@@ -28,12 +29,18 @@ const MS: Record<number, string[]> = {
   1452: ["2030-05-04", "2030-06-03", "2030-07-02", "2030-08-01", "2030-08-31", "2030-09-29", "2030-10-28", "2030-11-27", "2030-12-26", "2031-01-24", "2031-02-23", "2031-03-24"]
 };
 
+// Same events in the Daily Planner's Malaysia calendar. Where it has a date within 2 days of ours, its date is used so both screens agree.
+const PLAN: Record<string, string> = { 'Awal Ramadan': 'Start of Ramadan', 'Nuzul Quran': 'Nuzul Al-Quran', 'Aidilfitri': 'Hari Raya Aidilfitri', 'Aidiladha': 'Hari Raya Haji (Aidiladha)', 'Awal Muharram': 'Awal Muharram', 'Maulidur Rasul': 'Maulidur Rasul' };
+
 export type Upcoming = { n: string; tip: string; date: Date; days: number; hText: string };
 export function upcoming(today: Date, delta: number, count = 4): Upcoming[] {
   const out: Upcoming[] = [];
   for (const y of Object.keys(MS).map(Number)) for (const e of EVENTS) {
     const base = addDays(parseK(MS[y][e.m - 1]), e.d - 1), days0 = diffDays(base, today);
-    const date = days0 <= 45 ? addDays(base, delta) : base, days = diffDays(date, today);
+    let date = days0 <= 45 ? addDays(base, delta) : base;
+    const pe = PLAN[e.n] && OFFICIAL_LIST.find((o) => o.name === PLAN[e.n] && Math.abs(diffDays(parseK(o.date), date)) <= 2);
+    if (pe) date = parseK(pe.date);
+    const days = diffDays(date, today);
     if (days >= 0) out.push({ n: e.n, tip: e.tip, date, days, hText: e.d + ' ' + HMON[e.m - 1] + ' ' + y });
   }
   return out.sort((a, b) => a.days - b.days).slice(0, count);
