@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Platform } from 'react-native';
+import { View, ScrollView, Pressable, TextInput, Platform, Linking } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
@@ -66,7 +66,7 @@ export default function Hafazan() {
     stopVerse(); setPlaying(false);
     setMsg(''); setRes(null); setOpen(-1); setBusy(true); setStep('Asking for microphone permission…');
     try {
-      if (!(await micPermission())) { setMsg('Microphone permission is needed to listen to your recitation. Allow it in the phone settings (App info, Permissions, Microphone), then try again.'); return; }
+      if (!(await micPermission())) { setMsg('Microphone permission is needed to listen to your recitation. Tap the button below, open Permissions, choose Microphone and select Allow only while using the app. If the permission box does not react to your taps, stop any screen recording or floating bubble first (the phone blocks taps on that box while another app draws over it).'); return; }
       setStep('Starting the microphone…');
       await startRecording(); setRec(true);
     } catch (e: any) { setMsg(String((e && e.message) || 'Could not start the microphone.')); }
@@ -167,6 +167,7 @@ export default function Hafazan() {
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, lineHeight: 18, marginTop: 10 }}>Listen to the verse first, as many times as you like. Then tap Your turn, recite it, and tap Stop. The app will point out words to fix.</Text>
                 {step ? <Text style={{ color: TEAL, fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{step}</Text> : null}
                 {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19, marginTop: 8 }}>{msg}</Text> : null}
+                {msg && msg.startsWith('Microphone permission') ? <Pressable onPress={() => { try { Linking.openSettings(); } catch (e) { /* ignore */ } }} style={{ alignSelf: 'center', marginTop: 10, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Open phone settings</Text></Pressable> : null}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
                   <Pressable onPress={() => { if (cur > a) { stopVerse(); setPlaying(false); setCur(cur - 1); setMsg(''); } }}><Text style={{ color: cur > a ? TEAL : 'rgba(255,255,255,.3)', fontSize: 13, fontWeight: '800' }}>‹ Previous verse</Text></Pressable>
                   <Pressable onPress={() => { if (cur < b) { stopVerse(); setPlaying(false); setCur(cur + 1); setMsg(''); } }}><Text style={{ color: cur < b ? TEAL : 'rgba(255,255,255,.3)', fontSize: 13, fontWeight: '800' }}>Next verse ›</Text></Pressable>
@@ -188,6 +189,7 @@ export default function Hafazan() {
                 </Pressable>
                 <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700', marginTop: 12 }}>{step ? step : busy ? (asr.phase === 'loading' ? 'Loading the model, then checking…' : 'Checking…') : rec ? 'Listening… tap to stop and check' : 'Tap to recite'}</Text>
                 {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, lineHeight: 19, marginTop: 10, textAlign: 'center' }}>{msg}</Text> : null}
+                {msg && msg.startsWith('Microphone permission') ? <Pressable onPress={() => { try { Linking.openSettings(); } catch (e) { /* ignore */ } }} style={{ alignSelf: 'center', marginTop: 10, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Open phone settings</Text></Pressable> : null}
               </Glass>
             ) : res ? (
               <Glass radius={24} style={{ padding: 16 }}>
