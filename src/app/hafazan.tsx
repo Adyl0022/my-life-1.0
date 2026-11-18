@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Glass } from '../components/Glass';
+import { useStored } from '../lib/store';
 import { GlowField } from '../components/Shine';
 import { SearchIcon, CloseIcon } from '../components/AudioIcons';
 import { Header, ReadBg } from '../components/IslamicUi';
@@ -85,6 +86,7 @@ export default function Hafazan() {
   const [hist, setHist] = useState<number[]>([]);
   const [showPick, setShowPick] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [tr, setTr] = useStored<'off' | 'ms' | 'en'>('ml_hz_tr', 'ms');
   const [pick, setPick] = useState('');
   const [pf, setPf] = useState(false);
   const [open, setOpen] = useState<number>(-1);
@@ -338,7 +340,12 @@ export default function Hafazan() {
                 </View>
                 {mode === 'learn' && s ? (<>
                   <Text style={{ color: W, fontSize: 30, fontFamily: QURAN_FONT, lineHeight: 62, alignSelf: 'stretch', textAlign: 'center', writingDirection: 'rtl' as any, marginTop: 10 }}>{cv ? cv.ar : ''}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 4, textAlign: 'center' }}>{cv ? cv.ms : ''}</Text>
+                  {tr !== 'off' ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 4, textAlign: 'center' }}>{cv ? (tr === 'en' ? cv.en : cv.ms) : ''}</Text> : null}
+                  <View style={{ flexDirection: 'row', alignSelf: 'center', marginTop: 12, padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
+                    {[['off', 'No translation'], ['ms', 'BM'], ['en', 'English']].map(([k, t]) => (
+                      <Pressable key={k} onPress={() => setTr(k as any)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: tr === k ? 'rgba(125,240,198,.3)' : 'transparent' }}><Text style={{ color: tr === k ? W : 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700' }}>{t}</Text></Pressable>
+                    ))}
+                  </View>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 14 }}>
                     {Array.from({ length: b - a + 1 }, (_, i) => a + i).slice(0, 40).map((n) => (
                       <Pressable key={n} hitSlop={6} onPress={() => { if (!rec && !busy) { stopVerse(); setPlaying(false); setCur(n); setMsg(''); } }} style={{ width: n === cur ? 22 : 9, height: 9, borderRadius: 5, backgroundColor: n === cur ? TEAL : n < cur ? 'rgba(125,240,198,.55)' : 'rgba(255,255,255,.22)' }} />
