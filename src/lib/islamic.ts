@@ -9,8 +9,9 @@ const LEGACY: Record<number, [string, string, string, string]> = { 1: ['fatihah'
 export type SurahInfo = { title: string; ar: string; sub: string; verses: Verse[]; bismillah: boolean; num: number };
 export const SURAH: Record<string, SurahInfo> = {};
 export const SURAH_LIST: { key: string; num: number; title: string; ar: string; sub: string; place: string }[] = [];
-// The Quran font (KFGQPC Hafs) writes the 'open' tanwin marks as the usual ones, so they are swapped for display.
-const uth = (s: string) => s.replace(/\u08F0/g, '\u064B').replace(/\u08F1/g, '\u064C').replace(/\u08F2/g, '\u064D');
+// The Quran font (KFGQPC Hafs) has no open-tanwin marks and draws two characters as a dotted circle (the comma and U+06DF), so they are swapped for display.
+export const fixAr = (s: string) => (s || '').replace(/\u08F0/g, '\u064B').replace(/\u08F1/g, '\u064C').replace(/\u08F2/g, '\u064D').replace(/\u06DF/g, '\u06E0').replace(/\s*\u060C\s*/g, ' ');
+const uth = fixAr;
 FULL.forEach((f: any) => {
   const L = LEGACY[f.n];
   const key = L ? L[0] : String(f.n);
@@ -70,9 +71,9 @@ export const MATHURAT: Part[] = [
 export const KIND_COL: Record<string, [string, string]> = { Quran: ['rgba(94,231,181,.25)', '#7df0c6'], Dhikr: ['rgba(255,196,107,.25)', '#ffd593'], Selawat: ['rgba(124,156,255,.28)', '#a9bcff'], Doa: ['rgba(255,143,171,.25)', '#ffb3c6'], Intro: ['rgba(255,255,255,.14)', '#ffffff'] };
 export function partVerses(p: Part, evening = false): Verse[] | null {
   const z = ZTEXT[p.name];
-  if (z) { const t = evening && z.e ? z.e : z.m; return [t, ...(z.more || [])].map((x, i) => ({ n: i + 1, ar: x.ar, ms: x.ms, en: x.en, rumi: x.rumi })); }
+  if (z) { const t = evening && z.e ? z.e : z.m; return [t, ...(z.more || [])].map((x, i) => ({ n: i + 1, ar: fixAr(x.ar), ms: x.ms, en: x.en, rumi: x.rumi })); }
   if (p.surah) return SURAH[p.surah].verses;
-  if (p.refs) return p.refs.flatMap((r) => REFS[r]);
+  if (p.refs) return p.refs.flatMap((r) => REFS[r]).map((v) => ({ ...v, ar: fixAr(v.ar) }));
   return null;
 }
 export const nm = (n: string, evening: boolean) => n.replace('Asbahna / Amsaina wa amsal-mulku lillah', evening ? 'Amsaina wa amsal-mulku lillah' : 'Asbahna wa asbahal-mulku lillah').replace('Asbahna / Amsaina, firm', evening ? 'Amsaina, firm' : 'Asbahna, firm').replace('asbahtu / amsaytu', evening ? 'amsaytu' : 'asbahtu').replace('ma asbaha / ma amsa', evening ? 'ma amsa' : 'ma asbaha').replace('bika asbahna / amsayna', evening ? 'bika amsayna' : 'bika asbahna');

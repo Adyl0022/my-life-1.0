@@ -13,7 +13,7 @@ import { Rise, FillBar, GrowBar } from '../components/Anim';
 import { useStored } from '../lib/store';
 import { HEMPTY, HData, cupsGoal } from '../lib/habit';
 import { PUASA_EMPTY, PuasaData, FKind, ramadanState, ramadanOf, qadhaOwed, hijriText, hijriOf, hijriStart, HMON, DAYN, isHaram, sunatToday, sunatYear, sunatLabel, keyD, addDays, diffDays, parseK } from '../lib/fasting';
-import { QURAN_FONT } from '../lib/islamic';
+import { QURAN_FONT, fixAr } from '../lib/islamic';
 
 const dim = 'rgba(255,255,255,.68)';
 const G = '#34d399';
@@ -347,7 +347,7 @@ export default function Puasa() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><H t="Why fasting is good" s="From the Quran" /><Bob><Crescent size={54} /></Bob></View>
               {VERSES.map((v) => (
                 <View key={v.ref} style={{ marginTop: 14 }}>
-                  <Text style={{ color: W, fontSize: 22, fontFamily: QURAN_FONT, lineHeight: 44, textAlign: 'right', writingDirection: 'rtl' as any }}>{v.ar}</Text>
+                  <Text style={{ color: W, fontSize: 22, fontFamily: QURAN_FONT, lineHeight: 44, textAlign: 'right', writingDirection: 'rtl' as any }}>{fixAr(v.ar)}</Text>
                   <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 13, lineHeight: 20, marginTop: 8 }}>{v.ms}</Text>
                   <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, lineHeight: 19, marginTop: 6, fontStyle: 'italic' }}>{v.en}</Text>
                   <Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '700', marginTop: 4 }}>{v.ref}</Text>
