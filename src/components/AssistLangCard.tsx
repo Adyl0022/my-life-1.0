@@ -140,11 +140,7 @@ export function LangPickedPopup({ code, onHide }: { code: string | null; onHide:
                   {pills.map((x) => <View key={x[0]} style={{ paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999, backgroundColor: x[1], borderWidth: 1, borderColor: x[2] }}><Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{x[0]}</Text></View>)}
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 14, lineHeight: 21, marginTop: 12, textAlign: 'center' }}>{lg ? 'You can now type in this language. Your words are translated on this phone.' : 'The Assistant answers in English or Bahasa Malaysia again. No download needed.'}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 }}>
-                  <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Works offline</Text>
-                  <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.35)' }} />
-                  <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>Private</Text>
-                </View>
+                <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 12, marginTop: 16 }}>Tap to close</Text>
               </View>
               <View style={{ height: 2, alignSelf: 'stretch', backgroundColor: 'rgba(255,255,255,.08)' }}>
                 <Animated.View style={{ height: 2, width: bar.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }), backgroundColor: 'rgba(143,233,226,.7)' }} />
