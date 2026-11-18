@@ -82,6 +82,7 @@ export default function Hafazan() {
   const [lvl, setLvl] = useState(0);
   const [hist, setHist] = useState<number[]>([]);
   const [showPick, setShowPick] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
   const [pick, setPick] = useState('');
   const [open, setOpen] = useState<number>(-1);
   const timer = useRef<any>(null);
@@ -293,7 +294,7 @@ export default function Hafazan() {
 
             {!res ? (<>
               {/* the mihrab: an arched frame that holds the verse */}
-              <LinearGradient colors={['rgba(125,240,198,.26)', 'rgba(125,240,198,.06)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ borderTopLeftRadius: 150, borderTopRightRadius: 150, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, borderWidth: 1.5, borderColor: 'rgba(125,240,198,.5)', paddingTop: 34, paddingBottom: 20, paddingHorizontal: 20, alignItems: 'center' }}>
+              <LinearGradient colors={['rgba(125,240,198,.26)', 'rgba(125,240,198,.06)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ borderTopLeftRadius: 110, borderTopRightRadius: 110, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, borderWidth: 1.5, borderColor: 'rgba(125,240,198,.5)', paddingTop: 58, paddingBottom: 24, paddingHorizontal: 26, alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View style={{ width: 28, height: 1, backgroundColor: 'rgba(125,240,198,.6)' }} />
                   <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1.6 }}>{mode === 'learn' ? 'VERSE ' + cur + ' OF ' + b : mode === 'test' ? 'FROM MEMORY' : 'ANY VERSE'}</Text>
@@ -321,7 +322,7 @@ export default function Hafazan() {
                   </View>
                 )}
                 {mode === 'test' ? (
-                  <Pressable onPress={() => setHide(!hide)} style={{ marginTop: 14, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{hide ? '👁  Peek at the text' : '🙈  Hide the text'}</Text></Pressable>
+                  <Pressable onPress={() => setHide(!hide)} style={{ marginTop: 14, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{hide ? 'Show the text' : 'Hide the text'}</Text></Pressable>
                 ) : null}
               </LinearGradient>
 
@@ -430,7 +431,18 @@ export default function Hafazan() {
             <Glass radius={20} style={{ padding: 14 }}>
               <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Please note</Text>
               <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18, marginTop: 4 }}>This is a practice helper, not a teacher. It checks which words you recited, and it can make mistakes, especially with fast recitation, a noisy room or a weak microphone. It cannot judge tajwid, the length of madd or the harakat from your voice. Please learn and confirm your hafazan with a qualified teacher.</Text>
-              <Pressable onPress={deleteModel} style={{ marginTop: 10 }}><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 12, textDecorationLine: 'underline' }}>Remove the downloaded model from this phone</Text></Pressable>
+              {confirmDel ? (
+                <View style={{ marginTop: 12, padding: 14, borderRadius: 16, backgroundColor: 'rgba(255,107,129,.12)', borderWidth: 1, borderColor: 'rgba(255,107,129,.4)' }}>
+                  <Text style={{ color: '#ffb3bf', fontSize: 14, fontWeight: '800' }}>Remove the model?</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{'This frees about ' + MODEL_MB + ' MB on your phone. You can download it again anytime.'}</Text>
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                    <Pressable onPress={() => setConfirmDel(false)} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Cancel</Text></Pressable>
+                    <Pressable onPress={() => { setConfirmDel(false); deleteModel(); }} style={{ flex: 1, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,107,129,.35)', borderWidth: 1, borderColor: 'rgba(255,107,129,.6)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 13.5, fontWeight: '800' }}>Yes, remove</Text></Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable onPress={() => setConfirmDel(true)} style={{ marginTop: 12, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.45)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 13.5, fontWeight: '800' }}>Remove the downloaded model</Text></Pressable>
+              )}
             </Glass>
           </>)}
         </ScrollView>
