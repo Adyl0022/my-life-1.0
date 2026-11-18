@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Animated } from 'react-native';
+import { View, ScrollView, Pressable, TextInput, Animated, Easing, PanResponder } from 'react-native';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -53,16 +53,30 @@ export default function IslamicHub() {
   const [slide, setSlide] = useState(evs[0] && evs[0].days <= 3 ? 1 : 0);
   const [openEv, setOpenEv] = useState(false);
   const fade = useRef(new Animated.Value(1)).current;
-  const hold = useRef(false);
+  const tx = useRef(new Animated.Value(0)).current;
+  const prog = useRef(new Animated.Value(0)).current;
+  const [held, setHeld] = useState(false);
+  const busy = useRef(false);
   const showEv = !hasRead || slide === 1;
+  const swap = (dir: number) => {
+    if (busy.current || !hasRead) return; busy.current = true;
+    Animated.parallel([Animated.timing(tx, { toValue: -dir * 24, duration: 200, useNativeDriver: true }), Animated.timing(fade, { toValue: 0, duration: 200, useNativeDriver: true })]).start(() => {
+      setSlide((v) => (v ? 0 : 1)); tx.setValue(dir * 24);
+      Animated.parallel([Animated.timing(tx, { toValue: 0, duration: 300, useNativeDriver: true }), Animated.timing(fade, { toValue: 1, duration: 300, useNativeDriver: true })]).start(() => { busy.current = false; });
+    });
+  };
+  const swapRef = useRef(swap); swapRef.current = swap;
   useEffect(() => {
-    if (!hasRead) return;
-    const t = setInterval(() => {
-      if (hold.current || openEv) return;
-      Animated.timing(fade, { toValue: 0, duration: 260, useNativeDriver: true }).start(() => { setSlide((v) => (v ? 0 : 1)); Animated.timing(fade, { toValue: 1, duration: 320, useNativeDriver: true }).start(); });
-    }, 10000);
-    return () => clearInterval(t);
-  }, [hasRead, openEv]);
+    prog.setValue(0);
+    if (!hasRead || held || openEv) return;
+    const a = Animated.timing(prog, { toValue: 1, duration: 10000, easing: Easing.linear, useNativeDriver: false });
+    a.start(({ finished }) => { if (finished) swapRef.current(1); });
+    return () => a.stop();
+  }, [hasRead, held, openEv, slide]);
+  const pan = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
+    onPanResponderRelease: (_e, g) => { if (g.dx < -40) swapRef.current(1); else if (g.dx > 40) swapRef.current(-1); },
+  })).current;
   const ev0 = evs[0];
   return (
     <View style={{ flex: 1, backgroundColor: '#0a0f2c' }}>
@@ -95,15 +109,15 @@ export default function IslamicHub() {
               <View style={{ flex: 1 }}><Text style={{ color: '#ffd593', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{z[0]}</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{z[1]}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{z[2]}</Text></View>
               <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
             </Glass></Pressable>
-            <Animated.View style={{ opacity: fade }}>
+            <Animated.View {...pan.panHandlers} style={{ opacity: fade, transform: [{ translateX: tx }] }}>
             {!showEv ? (
-            <Pressable onPressIn={() => { hold.current = true; }} onPressOut={() => { hold.current = false; }} onPress={() => go('/surah/' + lk + (lv ? '?v=' + lv : ''))}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + lk + (lv ? '?v=' + lv : ''))}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(94,231,181,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="book" size={24} /></View>
               <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>CONTINUE READING</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{SURAH[lk].title}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{lv ? 'Last read: verse ' + lv : 'Start reading'}</Text></View>
               <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
             </Glass></Pressable>
             ) : ev0 ? (
-            <Pressable onPressIn={() => { hold.current = true; }} onPressOut={() => { hold.current = false; }} onPress={() => setOpenEv((v) => !v)}><Glass radius={22} style={{ padding: 14 }}>
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => setOpenEv((v) => !v)}><Glass radius={22} style={{ padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(52,211,153,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="moon" size={24} /></View>
                 <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>UPCOMING · ISLAMIC CALENDAR</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{ev0.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{ev0.days === 0 ? 'Today' : ev0.days === 1 ? 'Tomorrow' : 'In ' + ev0.days + ' days'} · {ev0.hText}</Text></View>
@@ -117,7 +131,7 @@ export default function IslamicHub() {
             </Glass></Pressable>
             ) : null}
             </Animated.View>
-            {hasRead ? (<View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: -4 }}>{[0, 1].map((i) => (<View key={i} style={{ width: slide === i ? 16 : 6, height: 6, borderRadius: 3, backgroundColor: slide === i ? '#5ee7df' : 'rgba(255,255,255,.3)' }} />))}</View>) : null}
+            {hasRead ? (<View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: -4 }}>{[0, 1].map((i) => (<View key={i} style={{ width: 34, height: 4, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.22)' }}>{slide === i ? <Animated.View style={{ height: 4, borderRadius: 2, backgroundColor: '#5ee7df', width: prog.interpolate({ inputRange: [0, 1], outputRange: [6, 34] }) }} /> : null}</View>))}</View>) : null}
             <Pressable onPress={() => go('/puasa')}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(52,211,153,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="moon" size={24} /></View>
               <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>RAMADAN · SUNNAH</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{pst.h}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 2 }}>{pst.b}</Text></View>
