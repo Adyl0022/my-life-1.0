@@ -111,7 +111,7 @@ class Chat extends AssistantBase {
           )}
         </LinearGradient>
 
-        <ScrollView ref={(r) => { (this as any).scrollRef = r; }} style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 16, paddingTop: 16, flexGrow: empty ? 1 : 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView ref={(r) => { (this as any).scrollRef = r; }} style={{ flex: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 16, paddingTop: 16, flexGrow: empty ? 1 : 0 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} onContentSizeChange={() => { if (v.typD === 'flex') this.scroll(); }}>
           {empty && (
             <View style={{ flex: 1, alignItems: 'center' }}>
               {/* The orb and greeting sit in the middle of the space that is left, so the orb has room for its animation. */}
