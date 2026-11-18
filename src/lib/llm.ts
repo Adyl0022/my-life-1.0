@@ -142,8 +142,12 @@ function dedupe(t: string): string {
   return paras.join('\n\n');
 }
 
+// A small model sometimes just repeats the instructions it was given. That is never an answer.
+function echoed(t: string): boolean { return /You are My Life Assistant|Talk like a thoughtful friend|Earlier in this chat|Now reply ONLY|^\s*User:/im.test((t || '').slice(0, 600)); }
+
 // Text with the model's private "thinking" and special tokens removed, safe to show while it is still being written.
 function livePart(t: string): string {
+  if (echoed(t)) return '';
   return dedupe((t || '').replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<\|[^|]*\|?>?/g, '').replace(/^\s*(assistant|user)\s*:?\s*/i, '').trimStart());
 }
 
@@ -186,7 +190,13 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
       const past = h.map((x) => '<|im_start|>' + (x.me ? 'user' : 'assistant') + '\n' + x.text + '<|im_end|>\n').join('');
       raw = await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n' + past + '<|im_start|>user\n' + q + '<|im_end|>\n<|im_start|>assistant\n');
     }
+    // The model repeated its instructions instead of answering: ask again with only the question.
+    if (echoed(raw)) {
+      const plain = (ms ? 'Jawab dalam Bahasa Malaysia, ringkas dan jelas. Soalan: ' : 'Answer clearly and briefly. Question: ') + q;
+      raw = big ? await gemGenerate(plain) : await llmGenerate('<|im_start|>user\n' + plain + '<|im_end|>\n<|im_start|>assistant\n');
+    }
   } finally { if (timer) clearInterval(timer); }
+  if (echoed(raw)) return '';
   const out = clean(raw, big ? 3500 : 1400);
   if (!out) return '';
   const fact = !task && /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
