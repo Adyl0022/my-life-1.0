@@ -156,7 +156,7 @@ export default function Hafazan() {
       {msg.startsWith('Microphone permission') ? setBtn('Open phone settings', () => { try { Linking.openSettings(); } catch (e) { /* ignore */ } }) : null}
     </View>
   ) : null;
-  const tabs: [typeof mode, string, string][] = [['learn', '📖', 'Learn'], ['test', '🎯', 'Test'], ['auto', '🔎', 'Find']];
+  const tabs: [typeof mode, string, string][] = [['learn', '📖', 'Learn'], ['test', '📝', 'Test'], ['auto', '🔎', 'Find']];
   const pickMode = (m: typeof mode) => { setMode(m); setRes(null); setFound(null); setMsg(''); if (m === 'learn') setCur(a); else { stopVerse(); setPlaying(false); } };
 
   return (
