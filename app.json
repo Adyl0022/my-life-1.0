@@ -112,7 +112,7 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/AmiriQuran.ttf"
+            "./assets/fonts/ScheherazadeNew.ttf"
           ]
         }
       ]
