@@ -48,7 +48,7 @@ function Premium({ k, label, title, sub, tone, ring, val }: { k: string; label: 
     <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: g.c + '30', borderWidth: 1, borderColor: g.c + '55' }}><Text style={{ fontSize: 25 }}>{g.e}</Text></View>
     <View style={{ flex: 1, minWidth: 0 }}>
       <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{label}</Text>
-      <Text numberOfLines={1} style={{ color: '#fff', fontSize: 17, fontWeight: '800', marginTop: 2 }}>{title}</Text>
+      <Text numberOfLines={2} style={{ color: '#fff', fontSize: 17, lineHeight: 21, fontWeight: '800', marginTop: 2 }}>{title}</Text>
       <Text numberOfLines={3} style={{ color: col, fontSize: 12.5, lineHeight: 16, fontWeight: '700', marginTop: 2 }}>{sub}</Text>
     </View>
     {ring != null && val ? <Ring pct={ring} val={val} col={col} /> : null}
