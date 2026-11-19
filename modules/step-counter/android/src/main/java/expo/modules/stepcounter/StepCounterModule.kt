@@ -23,6 +23,15 @@ class StepCounterModule : Module() {
       try { appContext.reactContext?.let { SleepTile.set(it, start.toLong()) } } catch (e: Throwable) {}
     }
 
+    // The sleep timer, run by Android itself (see SleepNative). sleepState gives "start;s:e,s:e": when the current sleep began (0 = not sleeping) and finished sleeps not yet saved.
+    Function("sleepStart") { try { appContext.reactContext?.let { SleepNative.start(it) } } catch (e: Throwable) {} }
+    Function("sleepEnd") { try { appContext.reactContext?.let { SleepNative.end(it) } } catch (e: Throwable) {} }
+    Function("sleepState") {
+      val c = appContext.reactContext
+      if (c == null) "0;" else SleepTile.start(c).toString() + ";" + SleepNative.pending(c)
+    }
+    Function("sleepClearPending") { try { appContext.reactContext?.let { SleepNative.clearPending(it) } } catch (e: Throwable) {} }
+
     // Android 13+: shows the system "Add tile?" prompt. Gives 2 added, 1 already there, 0 not added, -1 not available.
     AsyncFunction("addSleepTile") { promise: Promise ->
       try {
