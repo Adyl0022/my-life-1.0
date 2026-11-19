@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Defs, G, Line, Path, Pattern, Rect } from 'react-native-svg';
+import Svg, { Circle, Defs, G, Line, LinearGradient as SvgGrad, Path, Pattern, Rect, Stop } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { Text } from './Txt';
 import { Glass } from './Glass';
@@ -57,7 +57,7 @@ export function ModCard({ e, title, sub, chip, colors, pat, onPress }: { e: stri
         <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, minHeight: 124, justifyContent: 'center' }}>
           <Pat kind={pat} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' }}><Text style={{ fontSize: 27 }}>{e}</Text></View>
+            <GlassTile><Text style={{ fontSize: 27 }}>{e}</Text></GlassTile>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={{ color: W, fontSize: 19, fontWeight: '800', letterSpacing: -0.2 }}>{title}</Text>
               <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, marginTop: 3, lineHeight: 17 }}>{sub}</Text>
@@ -91,12 +91,25 @@ export function Hero({ e, label, title }: { e: string; label: string; title: str
   return (
     <View style={{ marginTop: 14, borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)' }}>
       <LinearGradient colors={['rgba(255,143,171,.42)', 'rgba(183,148,255,.26)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{ width: 50, height: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' }}><Text style={{ fontSize: 24 }}>{e}</Text></View>
+        <GlassTile size={50} radius={17}><Text style={{ fontSize: 24 }}>{e}</Text></GlassTile>
         <View style={{ flex: 1 }}>
           <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1 }}>{label}</Text>
           <Text numberOfLines={1} style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{title}</Text>
         </View>
       </LinearGradient>
+    </View>
+  );
+}
+
+// A raised glass tile for the icon: lighter on top, a bright rim and a soft shadow under it.
+export function GlassTile({ size = 56, radius = 19, tint = 'rgba(255,255,255,.14)', rim = 'rgba(255,255,255,.4)', children }: { size?: number; radius?: number; tint?: string; rim?: string; children: React.ReactNode }) {
+  return (
+    <View style={{ width: size, height: size, borderRadius: radius, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 9, elevation: 7 }}>
+      <View style={{ flex: 1, borderRadius: radius, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: tint, borderWidth: 1, borderColor: rim, borderTopColor: 'rgba(255,255,255,.7)' }}>
+        <LinearGradient colors={['rgba(255,255,255,.36)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: 4, right: 4, top: 2, height: size * 0.38, borderRadius: radius, backgroundColor: 'rgba(255,255,255,.12)' }} />
+        {children}
+      </View>
     </View>
   );
 }
@@ -114,7 +127,7 @@ export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; ti
           <Pat kind={pat} />
           <Text style={{ position: 'absolute', right: -4, bottom: -10, fontSize: 80, opacity: 0.2, transform: [{ rotate: '-10deg' }] }}>{e}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' }}><Text style={{ fontSize: 27 }}>{e}</Text></View>
+            <GlassTile><Text style={{ fontSize: 27 }}>{e}</Text></GlassTile>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={{ color: W, fontSize: 18, fontWeight: '800', letterSpacing: -0.2 }}>{title}</Text>
               <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.82)', fontSize: 12, marginTop: 3 }}>{sub}</Text>
@@ -134,19 +147,20 @@ export function VehicleCard({ onPress }: { onPress: () => void }) {
     <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
         <LinearGradient colors={['#a8667c', '#74385f', '#3f2050']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
-          <Svg width="48%" height="100%" viewBox="0 0 120 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
-            <G stroke={gold} strokeOpacity={0.5} strokeWidth={1.5} fill="none">
-              <Path d="M120 56 L46 56" /><Path d="M120 56 L46 30" /><Path d="M120 56 L46 82" /><Path d="M120 56 L64 0" /><Path d="M120 56 L64 112" />
+          <Svg width="58%" height="100%" viewBox="0 0 120 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
+            <Defs>
+              <SvgGrad id="rd" x1="0" y1="0" x2="120" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0" stopColor={gold} stopOpacity={0} /><Stop offset="0.55" stopColor={gold} stopOpacity={0.5} /><Stop offset="1" stopColor={gold} stopOpacity={0.55} /></SvgGrad>
+            </Defs>
+            <G stroke="url(#rd)" strokeWidth={1.5} fill="none">
+              <Path d="M120 56 L0 56" /><Path d="M120 56 L0 20" /><Path d="M120 56 L0 92" /><Path d="M120 56 L40 0" /><Path d="M120 56 L40 112" /><Path d="M70 0V112" /><Path d="M40 0V112" />
             </G>
-            <G stroke={gold} strokeOpacity={0.32} strokeWidth={1.5}><Path d="M84 0V112M62 0V112" /></G>
           </Svg>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 19, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,227,194,.5)' }}>
-              <LinearGradient colors={['rgba(255,255,255,.26)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+            <GlassTile rim="rgba(255,227,194,.55)">
               <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke="#fff1dc" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                 <Path d="M3.8 17.5a9 9 0 1 1 16.4 0" /><Path d="M12 16L15.8 9.6" /><Circle cx={12} cy={16.3} r={1.4} /><Path d="M6.2 12.4l1 .6M9 8.4l.6 1M15 8.4l-.6 1M17.8 12.4l-1 .6M12 6.4v1.2" />
               </Svg>
-            </View>
+            </GlassTile>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={{ color: W, fontSize: 18, fontWeight: '800', letterSpacing: -0.2 }}>My Vehicle</Text>
               <Text numberOfLines={1} style={{ color: 'rgba(255,236,214,.85)', fontSize: 12, marginTop: 3 }}>Mileage, service and road tax</Text>
