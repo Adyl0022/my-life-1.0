@@ -132,6 +132,10 @@ export async function buildReport(sel: string[], per: number): Promise<Report> {
       (v.readings || []).filter((x: any) => inP(x.date)).forEach((x: any) => rows.push([veh, 'Mileage', x.date || '', '', '', num(x.odo)]));
       (v.exps || []).filter((x: any) => inP(x.date)).forEach((x: any) => rows.push([veh, 'Expense', x.date || '', x.name || '', num(x.amt), '']));
       (v.fuel || []).filter((x: any) => inP(x.date)).forEach((x: any) => rows.push([veh, 'Fuel', x.date || '', num(x.liters) + ' L', num(x.amt), num(x.odo) || '']));
+      (v.yreadings || []).filter((x: any) => inP(x.date)).forEach((x: any) => rows.push([veh, 'Mileage', x.date || '', 'Yearly reading', '', num(x.odo)]));
+      (v.tasks || []).forEach((t: any) => { const ev = [t.days ? t.days + ' days' : '', t.km ? num(t.km) + ' km' : ''].filter(Boolean).join(' / '); rows.push([veh, t.kind === 'part' ? 'Part changed' : 'Maintenance task', t.last || '', (t.name || '') + (ev ? (t.kind === 'part' ? ' · lasts ' : ' · every ') + ev : ''), '', t.odo != null ? num(t.odo) : '']); });
+      (v.parts || []).forEach((t: any) => rows.push([veh, 'Part changed', t.date || '', (t.name || '') + (t.life ? ' · lasts ' + num(t.life) + ' km' : ''), '', t.odo != null ? num(t.odo) : '']));
+      [['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Licence']].forEach(([key, label]) => { const dt = v.renew && v.renew[key]; if (dt) rows.push([veh, 'Renewal', dt, label + ' expires', '', '']); });
       const odos = (v.readings || []).map((x: any) => num(x.odo)).filter((n: number) => n > 0); if (odos.length) km += Math.max(...odos) - Math.min(...odos);
     });
     const first = Object.keys((r && r.data) || {})[0]; const rd = first ? ((r.data[first].readings || []).filter((x: any) => inP(x.date)).slice().sort((a: any, b: any) => (a.date < b.date ? -1 : 1)).slice(-14)) : [];

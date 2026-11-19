@@ -1,6 +1,7 @@
 import { PDF_CSS, pdfFooter, escHtml as esc, fmtN, chartSvg, stamp, Chart } from './exporter';
 import { cs, cu } from './region';
 import { partsOf } from './partsOf';
+import { taskState } from './maintTasks';
 
 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const n0 = (x: any) => (typeof x === 'number' && isFinite(x) ? x : Number(x) || 0);
@@ -95,6 +96,7 @@ export function buildRecordHtml(vehicle: string, d: any, latest: number, owner =
     + '<div class="sec">Details</div>'
     + tbl('Odometer readings', ['Date', 'Odometer'], rd.slice().reverse().map((r) => [fd(r.date), k(n0(r.odo)) + ' km']))
     + tbl('Maintenance spending', ['Date', 'Item', 'Amount'], exps.map((e: any) => [fd(e.date), e.name || '-', rm(n0(e.amt))]), 'total ' + rm(mTot))
+    + tbl('Maintenance tasks', ['Task', 'Type', 'Last done', 'Every', 'Status'], (d.tasks || []).map((t: any) => { const s = taskState(t, latest); return [t.name || '-', t.kind === 'part' ? 'Replace a part' : 'Repeat job', fd(t.last), [t.days ? t.days + ' days' : '', t.km ? k(n0(t.km)) + ' km' : ''].filter(Boolean).join(' / ') || '-', s.text.split(' · ')[0]]; }))
     + tbl('Parts', ['Part', 'Changed', 'Odometer', 'Lasts'], parts.map((p: any) => [p.name, fd(p.date), k(n0(p.odo)) + ' km', k(n0(p.life)) + ' km']))
     + tbl('Fuel', ['Date', 'Litres', 'Amount', 'Odometer'], fuel.map((e: any) => [fd(e.date), n0(e.liters).toFixed(1) + ' L', rm(n0(e.amt)), n0(e.odo) > 0 ? k(n0(e.odo)) + ' km' : '-']), 'total ' + rm(fTot) + ' · ' + lit.toFixed(1) + ' L')
     + pdfFooter(owner) + '</body></html>';
