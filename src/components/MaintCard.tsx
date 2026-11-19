@@ -152,29 +152,29 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       ) : null}
 
       <Line />
-      <Hd t="Maintenance tasks" sub="Repeat jobs and parts in one list" right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setOdAt(''); setKind('check'); setDt(todayStr()); }} /> : undefined} />
       {oe.odo > 0 || list.some((t) => t.km) ? (
-        <View style={{ marginTop: 14, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
+        <View style={{ marginTop: 10, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, fontWeight: '700', letterSpacing: 0.3 }}>{oe.est ? 'Odometer now (estimate)' : oe.odo > 0 ? 'Odometer now (actual)' : 'Odometer'}</Text>
               <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 8 }}>{oe.odo > 0 ? (oe.est ? '~' : '') + oe.odo.toLocaleString('en-MY') + ' km' : 'No reading yet'}</Text>
               {!oe.est && oe.odo > 0 && oe.lastDate ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'What your meter or fuel log showed on ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
-              {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'From about ' + Math.round(oe.perDay) + ' km a day over the ' + 'last ' + oe.span + ' days' + ' before ' + oe.lastDate.split('-').reverse().join('/') + '. Days you do not ride are counted too. Type a new reading any time to make it exact.'}</Text> : null}
+              {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'From about ' + Math.round(oe.perDay) + ' km a day over the ' + 'last ' + oe.span + ' days' + ' before ' + oe.lastDate.split('-').reverse().join('/') + '. Days you do not ride are counted. Type a new reading to make it exact.'}</Text> : null}
             </View>
             <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)', borderWidth: 1, borderColor: 'rgba(94,231,181,.45)' }}><Text style={{ color: '#b6f7de', fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
           </View>
           {fixOdo ? (
             <View style={{ marginTop: 10, gap: 6 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="What your meter shows now (km)" onSubmitEditing={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /></View>
+              <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="Meter reading now (km)" onSubmitEditing={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /></View>
               <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 2 }}>Also add this reading to:</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}><Chip t="Monthly Mileage" on={toM} onPress={() => setToM(!toM)} /><Chip t="Yearly Mileage" on={toY} onPress={() => setToY(!toY)} /></View>
               {lastQ ? <Pressable onPress={() => confirmDelete('last reading', () => upd((x: any) => ({ ...x, oreadings: (x.oreadings || []).filter((r: any) => r.id !== lastQ.id) })), { title: 'Remove this reading?', message: lastQ.odo.toLocaleString('en-MY') + ' km from the estimate card is removed. Monthly and Yearly Mileage are not changed.', yes: 'Remove' })} accessibilityLabel="Remove last reading from the estimate" style={{ alignSelf: 'flex-start', paddingVertical: 4 }}><Text style={{ color: '#ff9aa9', fontSize: 11.5, fontWeight: '700' }}>{'Remove my last reading (' + lastQ.odo.toLocaleString('en-MY') + ' km)'}</Text></Pressable> : null}
-              {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15 }}>This always updates the estimate. Choose Monthly or Yearly only when you want it to count there too.</Text>}
+              {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15 }}>Updates the estimate. Tap Monthly or Yearly to count it there too.</Text>}
             </View>
           ) : null}
         </View>
       ) : null}
+      <View style={{ marginTop: 14 }}><Hd t="Maintenance tasks" sub="Repeat jobs and parts in one list" right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setOdAt(''); setKind('check'); setDt(todayStr()); }} /> : undefined} /></View>
       {open ? (
         <View style={{ marginTop: 10, gap: 8, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.25)' }}>
