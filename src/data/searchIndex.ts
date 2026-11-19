@@ -657,7 +657,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "event acara days left hari lagi overdue lewat today hari ini upcoming akan datang red yellow green merah kuning hijau tarikh date"
  },
  {
-  "t": "Your Memories with My Life",
+  "t": "Your Memories with My Life 1.0",
   "s": "Journey, numbers, timeline, on this day, badges and year in review",
   "m": "System",
   "c": "#b794ff",

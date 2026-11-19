@@ -182,7 +182,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     body = (<>
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>YOUR MEMORIES</Text>
-        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>{mdays ? 'Day ' + mdays + ' with My Life' : 'Your Memories with My Life'}</Text>
+        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>{mdays ? 'Day ' + mdays + ' with My Life 1.0' : 'Your Memories with My Life 1.0'}</Text>
         <Text numberOfLines={2} style={{ color: dim, fontSize: 10.5, marginTop: 3, lineHeight: 14 }}>Every moment matters. Every journey tells a story</Text>
       </View>
       <Pressable onPress={() => router.push('/memories' as any)} accessibilityLabel="Open Your Memories" style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#8fe9e2' }}><Text style={{ color: '#0d3a3a', fontSize: 13, fontWeight: '800' }}>Open</Text></Pressable>

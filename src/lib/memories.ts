@@ -3,7 +3,7 @@ import { useStored } from './store';
 import { useSession } from './auth';
 import { HData, HEMPTY, bestStreakAll, MON } from './habit';
 
-// "Your Memories with My Life": everything here is worked out on the phone from data the app already saves for the signed-in person.
+// "Your Memories with My Life 1.0": everything here is worked out on the phone from data the app already saves for the signed-in person.
 // Nothing is made up. Only two small things are stored: which memories the person chose to hide, and the day a badge was first seen unlocked.
 export type MemSave = { hide: string[]; badges: Record<string, string>; dash: boolean };
 export const MEM_EMPTY: MemSave = { hide: [], badges: {}, dash: true };
@@ -57,8 +57,8 @@ export function useMemories(): Memories {
     const nums = { notes: notes.length, tasks: done.length, plans: planDone.length, habits: hdays.length, records: recCount };
     const all: Mem[] = [];
     if (start) {
-      all.push({ id: 'start', date: start, kind: 'start', title: 'You joined My Life', sub: 'Day one of your journey' });
-      [[30, '30 days together'], [100, '100 days together'], [365, 'One year with My Life']].forEach(([n, t]) => { const d = addDays(start, (n as number) - 1); if (d <= today) all.push({ id: 'ms' + n, date: d, kind: 'milestone', title: t as string, sub: 'A milestone you reached just by showing up' }); });
+      all.push({ id: 'start', date: start, kind: 'start', title: 'You joined My Life 1.0', sub: 'Day one of your journey' });
+      [[30, '30 days together'], [100, '100 days together'], [365, 'One year with My Life 1.0']].forEach(([n, t]) => { const d = addDays(start, (n as number) - 1); if (d <= today) all.push({ id: 'ms' + n, date: d, kind: 'milestone', title: t as string, sub: 'A milestone you reached just by showing up' }); });
     }
     notes.forEach((n) => { if (n.cr) all.push({ id: 'note' + n.id, date: ymd(new Date(n.cr)), kind: 'note', title: 'Wrote a note', sub: cut(n.t || n.s || 'Untitled note') }); });
     done.forEach((t) => { if (valid(t.doneAt)) all.push({ id: 'task' + t.id, date: t.doneAt.slice(0, 10), kind: 'task', title: 'Finished a task', sub: cut(t.name) }); });
@@ -83,9 +83,9 @@ export function useMemories(): Memories {
       B('habit-30', '30-Day Habit Streak', 'Reach 70% of your daily goal 30 days in a row', '🌟', '#b794ff', streak, 30),
       B('first-record', 'First Record', 'Save something in My Record', '🏍️', '#7df0c6', nums.records, 1, recFirst || undefined),
       B('records-50', '50 Records', 'Save 50 records', '📚', '#5ee7df', nums.records, 50),
-      B('days-30', '30 Days with My Life', 'Use My Life for 30 days', '🌱', '#7df0a0', days, 30, start ? addDays(start, 29) : undefined),
-      B('days-100', '100 Days with My Life', 'Use My Life for 100 days', '🌿', '#34d399', days, 100, start ? addDays(start, 99) : undefined),
-      B('first-year', 'First Year with My Life', 'Use My Life for one year', '🎂', '#ffb3c6', days, 365, start ? addDays(start, 364) : undefined),
+      B('days-30', '30 Days with My Life 1.0', 'Use My Life 1.0 for 30 days', '🌱', '#7df0a0', days, 30, start ? addDays(start, 29) : undefined),
+      B('days-100', '100 Days with My Life 1.0', 'Use My Life 1.0 for 100 days', '🌿', '#34d399', days, 100, start ? addDays(start, 99) : undefined),
+      B('first-year', 'First Year with My Life 1.0', 'Use My Life 1.0 for one year', '🎂', '#ffb3c6', days, 365, start ? addDays(start, 364) : undefined),
     ];
     const years: number[] = []; if (start) for (let y = +start.slice(0, 4); y <= +today.slice(0, 4); y++) years.push(y);
     return { nums, all, undated, badges, days, hdays, years };
