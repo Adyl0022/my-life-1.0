@@ -85,15 +85,14 @@ export function CardArt({ kind }: { kind: 'med' | 'relax' | 'cycle' | 'intel' })
   );
 }
 
-// The brain icon of My Life Intelligence: it breathes slowly, soft rings spread out from it, and one small light circles around it.
+// The brain icon of My Life Intelligence: it breathes slowly, and soft rings spread out from it.
 export function IntelIcon({ children, size = 48 }: { children: React.ReactNode; size?: number }) {
   const ring1 = React.useRef(new Animated.Value(0)).current, ring2 = React.useRef(new Animated.Value(0)).current;
-  const breath = React.useRef(new Animated.Value(0)).current, spin = React.useRef(new Animated.Value(0)).current;
+  const breath = React.useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const L = (v: Animated.Value, ms: number, delay = 0) => Animated.loop(Animated.sequence([Animated.delay(delay), Animated.timing(v, { toValue: 1, duration: ms, easing: Easing.out(Easing.quad), useNativeDriver: true }), Animated.timing(v, { toValue: 0, duration: 0, useNativeDriver: true })]));
     const a = [L(ring1, 3200), L(ring2, 3200, 1600),
-      Animated.loop(Animated.sequence([Animated.timing(breath, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(breath, { toValue: 0, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true })])),
-      Animated.loop(Animated.timing(spin, { toValue: 1, duration: 9000, easing: Easing.linear, useNativeDriver: true }))];
+      Animated.loop(Animated.sequence([Animated.timing(breath, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(breath, { toValue: 0, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]))];
     a.forEach((x) => x.start());
     return () => a.forEach((x) => x.stop());
   }, []);
@@ -103,9 +102,6 @@ export function IntelIcon({ children, size = 48 }: { children: React.ReactNode; 
       <Animated.View pointerEvents="none" style={ring(ring1)} />
       <Animated.View pointerEvents="none" style={ring(ring2)} />
       <Animated.View style={{ transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.07] }) }] }}>{children}</Animated.View>
-      <Animated.View pointerEvents="none" style={{ position: 'absolute', width: size + 18, height: size + 18, alignItems: 'center', transform: [{ rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
-        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#fff', opacity: 0.85, shadowColor: '#fff', shadowOpacity: 1, shadowRadius: 4 }} />
-      </Animated.View>
     </View>
   );
 }
