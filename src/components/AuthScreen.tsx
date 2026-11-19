@@ -91,7 +91,7 @@ function Rock({ size, seed, id }: { size: number; seed: number; id: string }) {
   );
 }
 const FRAG = [[-150, 78, 16, 1.1], [-95, 62, 12, -1.4], [-40, 90, 9, 1.8], [20, 70, 14, -1.0], [75, 96, 8, 2.0], [130, 66, 13, -1.6], [170, 84, 10, 1.3]] as const;
-export function Collision({ left, top, ang, dur, gap, delay, id, on = true }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string; on?: boolean }) {
+export function Collision({ left, top, ang, dur, gap, delay, id, on = true, soft = false }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string; on?: boolean; soft?: boolean }) {
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!on) { p.setValue(0); return; } // keyboard open: the scene is hidden, so stop animating and save battery
@@ -105,12 +105,14 @@ export function Collision({ left, top, ang, dur, gap, delay, id, on = true }: { 
   }, [on]);
   const HIT = 0.4; // moment of impact
   const go = (from: number) => p.interpolate({ inputRange: [0, HIT, 1], outputRange: [from, 0, 0] });
-  const gone = p.interpolate({ inputRange: [0, 0.02, HIT - 0.01, HIT], outputRange: [0, 1, 1, 0] });
+  const gone = soft ? p.interpolate({ inputRange: [0, 0.24, HIT - 0.01, HIT], outputRange: [0, 1, 1, 0] }) : p.interpolate({ inputRange: [0, 0.02, HIT - 0.01, HIT], outputRange: [0, 1, 1, 0] });
+  // soft: the rocks start small and faint, then grow clear while they travel
+  const sc: any = soft ? p.interpolate({ inputRange: [0, 0.24, 1], outputRange: [0.5, 1, 1] }) : 1;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: left as any, top: top as any, width: 0, height: 0 }}>
       <View style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0, transform: [{ rotate: ang + 'deg' }] }}>
-        <Animated.View style={{ position: 'absolute', left: -19, top: -19, opacity: gone, transform: [{ translateX: go(-120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '70deg'], extrapolate: 'clamp' }) }] }}><Rock size={38} seed={3} id={id + 'a'} /></Animated.View>
-        <Animated.View style={{ position: 'absolute', left: -14, top: -14, opacity: gone, transform: [{ translateX: go(120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '-90deg'], extrapolate: 'clamp' }) }] }}><Rock size={28} seed={7} id={id + 'b'} /></Animated.View>
+        <Animated.View style={{ position: 'absolute', left: -19, top: -19, opacity: gone, transform: [{ scale: sc }, { translateX: go(-120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '70deg'], extrapolate: 'clamp' }) }] }}><Rock size={38} seed={3} id={id + 'a'} /></Animated.View>
+        <Animated.View style={{ position: 'absolute', left: -14, top: -14, opacity: gone, transform: [{ scale: sc }, { translateX: go(120) }, { rotate: p.interpolate({ inputRange: [0, HIT], outputRange: ['0deg', '-90deg'], extrapolate: 'clamp' }) }] }}><Rock size={28} seed={7} id={id + 'b'} /></Animated.View>
       </View>
       <Animated.View style={{ position: 'absolute', left: -45, top: -45, opacity: p.interpolate({ inputRange: [0, HIT - 0.005, HIT + 0.01, HIT + 0.18, 1], outputRange: [0, 0, 0.95, 0, 0] }), transform: [{ scale: p.interpolate({ inputRange: [0, HIT, HIT + 0.18, 1], outputRange: [0.3, 0.4, 1.5, 1.5] }) }] }}>
         <Svg width={90} height={90} viewBox="-45 -45 90 90"><Defs><SRG id={id + 'fl'} cx="50%" cy="50%" r="50%"><Stop offset="0" stopColor="#fff6e6" stopOpacity="1" /><Stop offset="0.35" stopColor="#ffd9a8" stopOpacity="0.55" /><Stop offset="1" stopColor="#ffb98a" stopOpacity="0" /></SRG></Defs><Circle cx={0} cy={0} r={45} fill={'url(#' + id + 'fl)'} /></Svg>

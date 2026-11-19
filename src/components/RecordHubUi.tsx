@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { Blob } from './Bg';
-import { Collision } from './AuthScreen';
+import { Collision, Sky } from './AuthScreen';
 import { W } from './Ui';
 import { TOP } from '../lib/layout';
 
@@ -59,8 +59,9 @@ export function RecordPage({ title, sub, children, art }: { title: string; sub: 
       <Drift dx={-28} dy={26} dur={7000}><Blob size={320} color="rgba(255,143,171,.38)" style={{ right: -100, top: -40 }} /></Drift>
       <Drift dx={30} dy={-24} dur={8500} delay={1200}><Blob size={340} color="rgba(124,156,255,.2)" style={{ left: -120, bottom: -150 }} /></Drift>
       {art ? <PageArt /> : null}
-      {art ? <Collision left="84%" top="7%" ang={24} dur={15000} gap={2500} delay={1500} id="rc1" /> : null}
-      {art ? <Collision left="19%" top="92%" ang={-16} dur={17000} gap={3500} delay={8000} id="rc2" /> : null}
+      {art ? <Sky shooting={false} /> : null}
+      {art ? <Collision left="84%" top="7%" ang={24} dur={15000} gap={2500} delay={1500} id="rc1" soft /> : null}
+      {art ? <Collision left="19%" top="92%" ang={-16} dur={17000} gap={3500} delay={8000} id="rc2" soft /> : null}
       {art ? SPARKS.map(([x, y, sz], i) => <Twinkle key={i} x={x} y={y} s={sz} delay={i * 260} />) : null}
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 60 }}>
