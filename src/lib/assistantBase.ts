@@ -508,7 +508,7 @@ export class AssistantBase extends React.Component<any, any> {
           const hb = modOn('habit'), fi = modOn('finance'), pl = modOn('planner'), isl = modOn('islamic');
           const en = [], my = [];
           const hr = new Date().getHours();
-          const gEn = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening'; const gMs = hr < 12 ? 'Selamat pagi' : hr < 18 ? 'Selamat petang' : 'Selamat malam';
+          const gEn = hr >= 5 && hr < 12 ? 'Good morning' : hr >= 12 && hr < 17 ? 'Good afternoon' : hr >= 17 && hr < 20 ? 'Good evening' : 'Good night'; const gMs = hr >= 5 && hr < 12 ? 'Selamat pagi' : hr >= 12 && hr < 17 ? 'Selamat tengah hari' : hr >= 17 && hr < 20 ? 'Selamat petang' : 'Selamat malam';
           if (isl && np) { en.push('Next prayer ' + np.name + ' at ' + np.time); my.push('Solat seterusnya ' + np.name + ' pada ' + np.time); }
           if (pl) { const due = open.filter((t) => { const n = this.daysTo(t.d); return n !== null && n <= 0; }).length; en.push('Open tasks ' + open.length + (due ? ' (' + due + ' due or overdue)' : '')); my.push('Tugasan belum siap ' + open.length + (due ? ' (' + due + ' hampir atau lewat)' : '')); }
           if (hb) { en.push('Steps ' + this.num(D.steps) + ' (' + pc + '%)', 'Water ' + s.cups + '/' + D.cupGoal + ' · Sleep ' + D.sleep + 'h'); my.push('Langkah ' + this.num(D.steps) + ' (' + pc + '%)', 'Air ' + s.cups + '/' + D.cupGoal + ' · Tidur ' + D.sleep + 'j'); }
