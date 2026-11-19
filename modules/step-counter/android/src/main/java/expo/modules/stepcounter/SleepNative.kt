@@ -83,7 +83,7 @@ object SleepNative {
       .setShowWhen(true).setWhen(start).setUsesChronometer(true)
       .setCategory(Notification.CATEGORY_STATUS)
       .setContentIntent(openApp(c))
-      .addAction(Notification.Action.Builder(Icon.createWithResource(c, R.drawable.ic_sleep_tile), "I'm awake", awake).build())
+      .addAction(Notification.Action.Builder(Icon.createWithResource(c, R.drawable.ic_awake_tile), "I'm awake", awake).build())
       .build()
     nm(c).notify(ID_NOW, n)
   }
@@ -106,7 +106,7 @@ object SleepNative {
       else if (hrs > 9) { title = "Long sleep"; msg += " More than 9 hours is a lot. Try to keep your sleep steady." }
     }
     val n = Notification.Builder(c, CH_DONE)
-      .setSmallIcon(R.drawable.ic_sleep_tile)
+      .setSmallIcon(R.drawable.ic_awake_tile)
       .setContentTitle(title)
       .setContentText(msg)
       .setStyle(Notification.BigTextStyle().bigText(msg))

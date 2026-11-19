@@ -35,7 +35,8 @@ class SleepTileService : TileService() {
       t.label = "Going to sleep"
       if (Build.VERSION.SDK_INT >= 29) t.subtitle = "Tap to start"
     }
-    t.icon = Icon.createWithResource(this, R.drawable.ic_sleep_tile)
+    // Moon while you are awake, sun while you are sleeping (tap = I'm awake).
+    t.icon = Icon.createWithResource(this, if (start > 0L) R.drawable.ic_awake_tile else R.drawable.ic_sleep_tile)
     t.updateTile()
   }
 }
