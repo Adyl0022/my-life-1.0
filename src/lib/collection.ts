@@ -11,6 +11,10 @@ export const GRAD: Record<string, [string, string]> = {
   gadget: ['#3df0ff', '#3d7bff'], lifestyle: ['#ff6ad5', '#ffa23d'], property: ['#c6ff5a', '#1fe0a5'], loans: ['#ffe84d', '#ff9a3d'], lessons: ['#b07bff', '#4de1ff'],
 };
 export const INK = '#0b1030';
+export const ACC: Record<string, string> = { gadget: '#7c9cff', lifestyle: '#ff8fab', property: '#8fe9e2', loans: '#ffe3c2', lessons: '#b794ff' };
+export const BTN: [string, string] = ['#8ea8ff', '#b794ff'];
+export type KindIcon = 'gadget' | 'life' | 'prop' | 'laptop' | 'watch' | 'audio';
+export const kindIcon = (cat: ItemCat, kind: string): KindIcon => (cat === 'lifestyle' ? 'life' : cat === 'property' ? 'prop' : kind === 'Laptop' ? 'laptop' : kind === 'Watch' ? 'watch' : kind === 'Audio' ? 'audio' : 'gadget');
 
 export const CATS: Record<ItemCat, { title: string; one: string; e: string; sub: string; text: string; kinds: [string, string][]; warranty: boolean }> = {
   gadget: { title: 'Gadgets', one: 'gadget', e: '📱', sub: 'Phone, laptop, watch', text: 'Your devices, with their price and warranty', warranty: true, kinds: [['Phone', '📱'], ['Laptop', '💻'], ['Watch', '⌚'], ['Audio', '🎧'], ['Camera', '📷'], ['Other', '🔌']] },

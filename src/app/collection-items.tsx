@@ -12,14 +12,15 @@ import { confirmDelete } from '../lib/dialog';
 import { tryForm, numberError } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { statusOf, validDate, ymd } from '../lib/documents';
-import { CATS, GRAD, INK, EMPTY_COL, kindEmoji, num, rm, dmy, type ColStore, type Item, type ItemCat } from '../lib/collection';
+import { ColArt } from '../components/ColArt';
+import { CATS, ACC, BTN, EMPTY_COL, kindIcon, num, rm, dmy, type ColStore, type Item, type ItemCat } from '../lib/collection';
 
 type Form = Omit<Item, 'id'> & { id: number; noBought: boolean; noW: boolean };
 const blank = (cat: ItemCat): Form => ({ id: 0, cat, kind: CATS[cat].kinds[0][0], name: '', price: '', bought: ymd(new Date()), warranty: ymd(new Date(Date.now() + 365 * 86400000)), photo: '', note: '', noBought: true, noW: true });
 const wStatus = (x: Item) => (x.warranty ? statusOf({ id: 0, type: '', title: '', expiry: x.warranty, remind: 'off' }) : null);
 
 function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
-  const C = CATS[f.cat]; const g = GRAD[f.cat]; const [tried, setTried] = useState(false); const [msg, setMsg] = useState('');
+  const C = CATS[f.cat]; const g = BTN; const ac = ACC[f.cat === 'gadget' ? 'gadget' : f.cat]; const [tried, setTried] = useState(false); const [msg, setMsg] = useState('');
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
   const pick = async (cam: boolean) => { setMsg(''); try { const u = await takePhoto(cam); if (u) set({ photo: u }); } catch (e: any) { setMsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings, or choose a photo instead.' : 'Could not open the photo. Please try again.'); } };
   const bad = !f.noBought && !validDate(f.bought), badW = C.warranty && !f.noW && !validDate(f.warranty), badP = !!numberError(f.price);
@@ -35,13 +36,13 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Lab t="KIND" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {C.kinds.map(([k, e]) => (
-          <Pressable key={k} onPress={() => set({ kind: k })} accessibilityLabel={k} style={{ width: '31.5%' }}><View style={{ ...chip(f.kind === k, g[1]), paddingVertical: 12 }}><Text style={{ fontSize: 22 }}>{e}</Text><Text numberOfLines={1} style={{ color: W, fontSize: 11.5, fontWeight: '700', marginTop: 3 }}>{k}</Text></View></Pressable>
+          <Pressable key={k} onPress={() => set({ kind: k })} accessibilityLabel={k} style={{ width: '31.5%' }}><View style={{ ...chip(f.kind === k, ac), paddingVertical: 12 }}><Text style={{ fontSize: 22 }}>{e}</Text><Text numberOfLines={1} style={{ color: W, fontSize: 11.5, fontWeight: '700', marginTop: 3 }}>{k}</Text></View></Pressable>
         ))}
       </View>
       <Lab t="PHOTO (OPTIONAL)" />
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
         {f.photo ? <Image source={{ uri: f.photo }} style={{ width: 84, height: 64, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : null}
-        <Pressable onPress={() => pick(true)} accessibilityLabel="Take photo" style={{ flex: 1 }}><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 14, fontWeight: '800' }}>📷  Take photo</Text></LinearGradient></Pressable>
+        <Pressable onPress={() => pick(true)} accessibilityLabel="Take photo" style={{ flex: 1 }}><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>📷  Take photo</Text></LinearGradient></Pressable>
         <Pressable onPress={() => pick(false)} accessibilityLabel="Choose a photo" style={{ flex: 1, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>🖼️  Choose</Text></Pressable>
       </View>
       {f.photo ? <Pressable onPress={() => confirmDelete('this photo', () => set({ photo: '' }), { title: 'Remove this photo?', message: 'The photo will be removed from this phone.' })} accessibilityLabel="Remove photo" style={{ marginTop: 8 }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '700' }}>Remove photo</Text></Pressable> : null}
@@ -64,7 +65,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       </>) : null}
       <Lab t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder={f.cat === 'property' ? 'e.g. Rent RM 1,200 a month' : 'e.g. Serial number, shop'} maxLength={200} />
-      <BigBtn t="Save" g={g} dark onPress={save} a11y="Save item" />
+      <BigBtn t="Save" onPress={save} a11y="Save item" />
       {onDelete ? <BigBtn t="Delete" outline="#ff8da1" onPress={onDelete} a11y="Delete item" /> : null}
     </SheetFrame>
   );
@@ -73,7 +74,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
 export default function Screen() {
   const { c } = useLocalSearchParams<{ c?: string }>();
   const cat: ItemCat = c === 'lifestyle' || c === 'property' ? c : 'gadget';
-  const C = CATS[cat]; const g = GRAD[cat];
+  const C = CATS[cat]; const g = BTN; const ac = ACC[cat];
   const [st, setSt] = useStored<ColStore>('ml_collection', EMPTY_COL);
   const all = (st && st.items) || [];
   const [q, setQ] = useState(''); const [f, setF] = useState<Form | null>(null); const [det, setDet] = useState(0);
@@ -90,24 +91,24 @@ export default function Screen() {
     setF(null);
   };
   const del = () => { if (!f || !f.id) return; confirmDelete('this ' + C.one, () => { setSt({ ...st, items: all.filter((x) => x.id !== f.id) }); setF(null); setDet(0); }, { title: 'Delete this ' + C.one + '?', message: 'The details and the photo on this phone will be removed. This cannot be undone.' }); };
-  const plus = <Pressable onPress={openNew} accessibilityLabel={'Add ' + C.one}><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
+  const plus = <Pressable onPress={openNew} accessibilityLabel={'Add ' + C.one}><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
   const cur = all.find((x) => x.id === det);
   const ws = cur ? wStatus(cur) : null;
   return (
-    <RecordPage title={C.title} sub={mine.length + (mine.length === 1 ? ' item' : ' items')} right={plus}>
-      <Intro title={C.title} text={C.text} colors={[g[0] + '88', g[1] + '88']} />
+    <RecordPage title={C.title} sub={mine.length + (mine.length === 1 ? ' item' : ' items')} right={plus} bg={<ColArt />}>
+      <Intro title={C.title} text={C.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder={'Search ' + C.title.toLowerCase()} /></View>
       {mine.length ? <Sums a={['VALUE', rm(total)]} b={C.warranty ? ['IN WARRANTY', inW + ' of ' + mine.length] : undefined} /> : null}
       {list.length ? list.map((x) => {
         const s = wStatus(x);
-        return <ItemRow key={x.id} a11y={'Open ' + x.name} tile={<Tile e={kindEmoji(cat, x.kind)} g={g} />} photo={x.photo} label={x.kind.toUpperCase()} title={x.name} sub={[x.bought ? 'Bought ' + dmy(x.bought) : '', x.price ? rm(num(x.price)) : ''].filter(Boolean).join(' · ') || undefined}
+        return <ItemRow key={x.id} a11y={'Open ' + x.name} tile={<Tile icon={kindIcon(cat, x.kind)} c={ac} />} photo={x.photo} label={x.kind.toUpperCase()} title={x.name} sub={[x.bought ? 'Bought ' + dmy(x.bought) : '', x.price ? rm(num(x.price)) : ''].filter(Boolean).join(' · ') || undefined}
           status={C.warranty && s ? (s.n != null && s.n < 0 ? 'Warranty ended' : 'Warranty ' + s.txt) : undefined} statusCol={s ? s.col : undefined} onPress={() => setDet(x.id)} />;
       }) : <Empty e={q.trim() ? '🔍' : C.e} t={q.trim() ? 'Nothing found' : 'Nothing here yet'} s={q.trim() ? 'Try another word.' : 'Tap + to add your first ' + C.one + '.'} />}
       {cur && !f ? (
-        <Detail label={cur.kind.toUpperCase()} title={cur.name} tile={<Tile e={kindEmoji(cat, cur.kind)} g={g} size={84} />} photo={cur.photo}
+        <Detail label={cur.kind.toUpperCase()} title={cur.name} tile={<Tile icon={kindIcon(cat, cur.kind)} c={ac} size={84} />} photo={cur.photo}
           lines={[...(cur.price ? [['Price', rm(num(cur.price))] as [string, string]] : []), ...(cur.bought ? [['Bought', dmy(cur.bought)] as [string, string]] : []), ...(C.warranty ? [['Warranty ends', cur.warranty ? dmy(cur.warranty) : 'No warranty'] as [string, string]] : []), ...(cur.note ? [['Note', cur.note] as [string, string]] : [])]}
           status={C.warranty && ws ? (ws.n != null && ws.n < 0 ? 'Warranty ended' : 'Warranty ' + ws.txt) : undefined} statusCol={ws ? ws.col : undefined} hot={!!(ws && ws.hot)} onClose={() => setDet(0)}>
-          <BigBtn t="Edit" g={g} dark onPress={() => { setDet(0); openEdit(cur); }} a11y="Edit item" />
+          <BigBtn t="Edit" onPress={() => { setDet(0); openEdit(cur); }} a11y="Edit item" />
         </Detail>
       ) : null}
       {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}

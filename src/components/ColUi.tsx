@@ -4,16 +4,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
 import { W } from './Ui';
 import { INK } from '../lib/collection';
+import { ColIcon, type ColIconName } from './ColIcon';
 
 export const dim = 'rgba(255,255,255,.62)';
 export const Lab = ({ t }: { t: string }) => <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginTop: 18, marginBottom: 8 }}>{t}</Text>;
 export const chip = (on: boolean, c = '#8ea8ff') => ({ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, alignItems: 'center' as const, backgroundColor: on ? c + '55' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? c : 'rgba(255,255,255,.14)' });
 
-/** Bright rounded tile with an emoji, used in lists and details. */
-export const Tile = ({ e, g, size = 54 }: { e: string; g: [string, string]; size?: number }) => (
-  <LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: size, height: size, borderRadius: size * 0.33, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.5)' }}>
-    <Text style={{ fontSize: size * 0.48 }}>{e}</Text>
-  </LinearGradient>
+/** Glowing outlined tile with a thin line icon, used in lists. */
+export const Tile = ({ icon, c, size = 54 }: { icon: ColIconName; c: string; size?: number }) => (
+  <View style={{ width: size, height: size, borderRadius: size * 0.31, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c, backgroundColor: 'rgba(255,255,255,.08)', shadowColor: c, shadowOpacity: 0.55, shadowRadius: 9, shadowOffset: { width: 0, height: 0 }, elevation: 3 }}>
+    <LinearGradient colors={[c + '44', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, borderRadius: size * 0.31 }} />
+    <ColIcon name={icon} c={c} size={size * 0.5} />
+  </View>
 );
 
 /** A list row: tile, small label, title, one line, and a coloured status. */

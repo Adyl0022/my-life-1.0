@@ -3,22 +3,23 @@ import { View, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
-import { RecordPage, Intro, Pat } from '../components/RecordHubUi';
-import { useStored } from '../lib/store';
-import { CATS, GRAD, INK, EMPTY_COL, type ColStore, type ItemCat } from '../lib/collection';
+import { RecordPage, Intro } from '../components/RecordHubUi';
+import { ColArt } from '../components/ColArt';
+import { Tile } from '../components/ColUi';
+import { type ColIconName } from '../components/ColIcon';
+import { W } from '../components/Ui';
+import { CATS, ACC } from '../lib/collection';
 
-function Card({ e, title, sub, n, g, wide, onPress }: { e: string; title: string; sub: string; n: number; g: [string, string]; wide?: boolean; onPress: () => void }) {
+function Card({ icon, title, sub, c, wide, onPress }: { icon: ColIconName; title: string; sub: string; c: string; wide?: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ width: wide ? '100%' : '48.2%', transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ height: wide ? 96 : 128, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.55)', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 5 }, elevation: 5 }}>
-        <LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-        <Pat kind="grid" />
-        <LinearGradient colors={['rgba(255,255,255,.4)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, height: '48%' }} />
-        <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: 28 }}>{e}</Text>
-          <View><Text style={{ color: INK, fontSize: 16, fontWeight: '800' }}>{title}</Text><Text numberOfLines={1} style={{ color: INK, opacity: 0.8, fontSize: 11.5 }}>{sub}</Text></View>
+      <View style={{ height: wide ? 92 : 126, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.34)', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 7, shadowOffset: { width: 0, height: 5 }, elevation: 4 }}>
+        <LinearGradient colors={['rgba(255,255,255,.13)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+        <LinearGradient colors={[c + '59', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.7, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+        <View style={wide ? { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 } : { flex: 1, padding: 14, justifyContent: 'space-between' }}>
+          <Tile icon={icon} c={c} size={46} />
+          <View style={wide ? { flex: 1 } : undefined}><Text style={{ color: W, fontSize: 16.5, fontWeight: '800' }}>{title}</Text><Text numberOfLines={wide ? 2 : 1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{sub}</Text></View>
         </View>
-        <View style={{ position: 'absolute', right: 12, top: 12, minWidth: 26, height: 22, borderRadius: 11, paddingHorizontal: 8, backgroundColor: 'rgba(255,255,255,.6)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 12, fontWeight: '800' }}>{n}</Text></View>
       </View>
     </Pressable>
   );
@@ -26,17 +27,16 @@ function Card({ e, title, sub, n, g, wide, onPress }: { e: string; title: string
 
 export default function Screen() {
   const router = useRouter();
-  const [st] = useStored<ColStore>('ml_collection', EMPTY_COL);
-  const items = (st && st.items) || [], loans = (st && st.loans) || [], lessons = (st && st.lessons) || [];
-  const cnt = (c: ItemCat) => items.filter((x) => x.cat === c).length;
   const go = (p: string) => router.push(p as any);
   return (
-    <RecordPage title="Personal Collection" sub="Your things, your lessons">
-      <Intro title="Your things, your lessons" text="Gadgets, belongings, property, what you lent or borrowed, and what you learned" colors={['rgba(61,240,255,.55)', 'rgba(255,106,213,.5)']} />
+    <RecordPage title="Personal Collection" sub="Your things, your lessons" bg={<ColArt />}>
+      <Intro title="Your things, your lessons" text="Gadgets, belongings, property, what you lent or borrowed, and what you learned" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 14 }}>
-        {(['gadget', 'lifestyle', 'property'] as ItemCat[]).map((c) => <Card key={c} e={CATS[c].e} title={CATS[c].title} sub={CATS[c].sub} n={cnt(c)} g={GRAD[c]} onPress={() => go('/collection-items?c=' + c)} />)}
-        <Card e="🤝" title="Lent & Borrowed" sub="Money and things" n={loans.filter((l) => !l.done).length} g={GRAD.loans} onPress={() => go('/loans')} />
-        <Card wide e="💡" title="Life Lessons" sub="Things you learned, so you do not forget" n={lessons.length} g={GRAD.lessons} onPress={() => go('/lessons')} />
+        <Card icon="gadget" title={CATS.gadget.title} sub={CATS.gadget.sub} c={ACC.gadget} onPress={() => go('/collection-items?c=gadget')} />
+        <Card icon="life" title={CATS.lifestyle.title} sub={CATS.lifestyle.sub} c={ACC.lifestyle} onPress={() => go('/collection-items?c=lifestyle')} />
+        <Card icon="prop" title={CATS.property.title} sub={CATS.property.sub} c={ACC.property} onPress={() => go('/collection-items?c=property')} />
+        <Card icon="lent" title="Lent & Borrowed" sub="Money and things" c={ACC.loans} onPress={() => go('/loans')} />
+        <Card wide icon="less" title="Life Lessons" sub="What you learned, so you do not forget" c={ACC.lessons} onPress={() => go('/lessons')} />
       </View>
       <View style={{ height: 10 }} />
     </RecordPage>

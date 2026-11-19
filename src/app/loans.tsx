@@ -11,9 +11,10 @@ import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm, pn, numberError } from '../lib/num';
 import { validDate } from '../lib/documents';
-import { GRAD, INK, EMPTY_COL, dueOf, dmy, num, rm, today, type ColStore, type Loan } from '../lib/collection';
+import { ColArt } from '../components/ColArt';
+import { ACC, BTN, EMPTY_COL, dueOf, dmy, num, rm, today, type ColStore, type Loan } from '../lib/collection';
 
-const g = GRAD.loans;
+const g = BTN;
 const TABS = [['lent', 'I lent'], ['borrowed', 'I borrowed'], ['done', 'Done']] as const;
 type Form = Omit<Loan, 'id'> & { id: number; noDue: boolean };
 const blank = (dir: 'lent' | 'borrowed'): Form => ({ id: 0, dir, what: 'money', who: '', title: '', amount: '', date: today(), due: today(), done: false, doneAt: '', note: '', noDue: true });
@@ -24,7 +25,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
   const badAmt = money && (!!numberError(f.amount) || !(amt > 0)); const badDue = !f.noDue && !validDate(f.due); const badDate = !validDate(f.date);
   const save = () => { setTried(true); tryForm('loan'); if (!f.who.trim() || (!money && !f.title.trim()) || badAmt || badDue || badDate) return; onSave(); };
   const two = (a: [string, string], b: [string, string], cur: string, fn: (v: string) => void) => (
-    <View style={{ flexDirection: 'row', gap: 8 }}>{[a, b].map(([k, t]) => <Pressable key={k} onPress={() => fn(k)} accessibilityLabel={t} style={{ flex: 1 }}><View style={chip(cur === k, g[1])}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{t}</Text></View></Pressable>)}</View>
+    <View style={{ flexDirection: 'row', gap: 8 }}>{[a, b].map(([k, t]) => <Pressable key={k} onPress={() => fn(k)} accessibilityLabel={t} style={{ flex: 1 }}><View style={chip(cur === k, ACC.loans)}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{t}</Text></View></Pressable>)}</View>
   );
   return (
     <SheetFrame title={f.id ? 'Edit' : 'Add'} sub="Lent & Borrowed" onClose={onClose}>
@@ -55,7 +56,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       {!f.noDue ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>You get a reminder at 9 am on the due date.</Text> : null}
       <Lab t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. For his car repair" maxLength={200} />
-      <BigBtn t="Save" g={g} dark onPress={save} a11y="Save loan" />
+      <BigBtn t="Save" onPress={save} a11y="Save loan" />
       {onDelete ? <BigBtn t="Delete" outline="#ff8da1" onPress={onDelete} a11y="Delete loan" /> : null}
     </SheetFrame>
   );
@@ -81,28 +82,28 @@ export default function Screen() {
   };
   const del = () => { if (!f || !f.id) return; confirmDelete('this record', () => { setSt({ ...st, loans: all.filter((x) => x.id !== f.id) }); setF(null); setDet(0); }, { title: 'Delete this record?', message: 'It will be removed from this phone. This cannot be undone.' }); };
   const mark = (l: Loan, done: boolean) => { setSt({ ...st, loans: all.map((x) => (x.id === l.id ? { ...x, done, doneAt: done ? today() : '' } : x)) }); setDet(0); };
-  const plus = <Pressable onPress={openNew} accessibilityLabel="Add record"><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
+  const plus = <Pressable onPress={openNew} accessibilityLabel="Add record"><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
   const cur = all.find((x) => x.id === det);
   const what = (l: Loan) => (l.what === 'money' ? l.who : l.title);
   const sub = (l: Loan) => (l.what === 'money' ? rm(num(l.amount)) + ' · ' + (l.dir === 'lent' ? 'lent ' : 'borrowed ') + dmy(l.date) : (l.dir === 'lent' ? 'Lent to ' : 'Borrowed from ') + l.who + ' · ' + dmy(l.date));
   return (
-    <RecordPage title="Lent & Borrowed" sub={open.length + ' open'} right={plus}>
-      <Intro title="Never forget who has what" text="Money and things you lent or borrowed" colors={[g[0] + '88', g[1] + '88']} />
+    <RecordPage title="Lent & Borrowed" sub={open.length + ' open'} right={plus} bg={<ColArt />}>
+      <Intro title="Never forget who has what" text="Money and things you lent or borrowed" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View onLayout={pill.onLayout} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
         {pill.indicator}
-        {TABS.map(([k, n]) => <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }} accessibilityLabel={n}><View style={{ paddingVertical: 9, alignItems: 'center' }}><Text style={{ color: tab === k ? INK : 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: tab === k ? '800' : '700' }}>{n}</Text></View></Pressable>)}
+        {TABS.map(([k, n]) => <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }} accessibilityLabel={n}><View style={{ paddingVertical: 9, alignItems: 'center' }}><Text style={{ color: tab === k ? W : 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: tab === k ? '800' : '700' }}>{n}</Text></View></Pressable>)}
       </View>
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder="Search names and things" /></View>
       {tab === 'lent' ? <Sums a={['OWED TO YOU', rm(sumMoney('lent'))]} b={['THINGS OUT', String(things('lent'))]} /> : tab === 'borrowed' ? <Sums a={['YOU OWE', rm(sumMoney('borrowed'))]} b={['THINGS YOU HAVE', String(things('borrowed'))]} /> : <Sums a={['RETURNED', String(all.filter((l) => l.done).length)]} />}
       <Animated.View style={slide}>
-        {list.length ? list.map((l) => { const d = dueOf(l); return <ItemRow key={l.id} a11y={'Open ' + what(l)} tile={<Tile e={l.what === 'money' ? '💵' : '🔧'} g={l.what === 'money' ? g : ['#c6ff5a', '#1fe0a5']} />} label={(l.what === 'money' ? 'MONEY' : 'THING') + (tab === 'done' ? (l.dir === 'lent' ? ' · LENT' : ' · BORROWED') : '')} title={what(l)} sub={sub(l)} status={d.txt} statusCol={d.col} hot={d.hot} onPress={() => setDet(l.id)} />; })
+        {list.length ? list.map((l) => { const d = dueOf(l); return <ItemRow key={l.id} a11y={'Open ' + what(l)} tile={<Tile icon={l.what === 'money' ? 'cash' : 'tool'} c={l.what === 'money' ? ACC.loans : ACC.lifestyle} />} label={(l.what === 'money' ? 'MONEY' : 'THING') + (tab === 'done' ? (l.dir === 'lent' ? ' · LENT' : ' · BORROWED') : '')} title={what(l)} sub={sub(l)} status={d.txt} statusCol={d.col} hot={d.hot} onPress={() => setDet(l.id)} />; })
           : <Empty e={q.trim() ? '🔍' : '🤝'} t={q.trim() ? 'Nothing found' : tab === 'done' ? 'Nothing returned yet' : 'Nothing here yet'} s={q.trim() ? 'Try another word.' : tab === 'done' ? 'Things you mark as returned appear here.' : 'Tap + to add money or a thing you ' + (tab === 'lent' ? 'lent.' : 'borrowed.')} />}
       </Animated.View>
       {cur && !f ? (
-        <Detail label={(cur.what === 'money' ? 'MONEY' : 'THING') + (cur.dir === 'lent' ? ' · LENT' : ' · BORROWED')} title={what(cur)} tile={<Tile e={cur.what === 'money' ? '💵' : '🔧'} g={g} size={84} />}
+        <Detail label={(cur.what === 'money' ? 'MONEY' : 'THING') + (cur.dir === 'lent' ? ' · LENT' : ' · BORROWED')} title={what(cur)} tile={<Tile icon={cur.what === 'money' ? 'cash' : 'tool'} c={ACC.loans} size={84} />}
           lines={[[cur.dir === 'lent' ? 'Lent to' : 'Borrowed from', cur.who], ...(cur.what === 'money' ? [['Amount', rm(num(cur.amount))] as [string, string]] : []), [cur.dir === 'lent' ? 'Date lent' : 'Date borrowed', dmy(cur.date)], ['Due', cur.due ? dmy(cur.due) : 'No due date'], ...(cur.done ? [['Returned', dmy(cur.doneAt)] as [string, string]] : []), ...(cur.note ? [['Note', cur.note] as [string, string]] : [])]}
           status={dueOf(cur).txt} statusCol={dueOf(cur).col} hot={dueOf(cur).hot} onClose={() => setDet(0)}>
-          {cur.done ? <BigBtn t="Not returned after all" outline="#ffd593" onPress={() => mark(cur, false)} a11y="Mark not returned" /> : <BigBtn t="Mark as returned" g={g} dark onPress={() => mark(cur, true)} a11y="Mark as returned" />}
+          {cur.done ? <BigBtn t="Not returned after all" outline="#ffd593" onPress={() => mark(cur, false)} a11y="Mark not returned" /> : <BigBtn t="Mark as returned" onPress={() => mark(cur, true)} a11y="Mark as returned" />}
           <BigBtn t="Edit" outline="rgba(255,255,255,.6)" onPress={() => { setDet(0); openEdit(cur); }} a11y="Edit record" />
         </Detail>
       ) : null}
