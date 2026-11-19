@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { withNavBar } from './permNav';
 import { getItem } from './store';
@@ -19,10 +20,16 @@ export function ensureHandler() {
   handled = true;
   try { Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }) }); } catch (e) {}
 }
-// The notification popup is only allowed once you are signed in and the account is active, so it never shows over the login or activation screen.
-let promptsOk = false;
+// The notification popup never shows over the login screen or on Home by itself. It is allowed once you are signed in AND you have opened a module (or pressed something that needs notifications, which passes force).
+let promptsOk = false; let opened = false; const openSubs = new Set<() => void>();
 export const allowPermissionPrompts = (v: boolean) => { promptsOk = v; };
-export async function setup(): Promise<boolean> {
+export const openPrompts = () => { if (!opened) { opened = true; openSubs.forEach((f) => f()); } };
+export function usePromptsOpen(): boolean {
+  const [v, setV] = useState(opened);
+  useEffect(() => { const f = () => setV(true); openSubs.add(f); if (opened) setV(true); return () => { openSubs.delete(f); }; }, []);
+  return v;
+}
+export async function setup(force = false): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   try {
     if (!ready) {
@@ -31,7 +38,7 @@ export async function setup(): Promise<boolean> {
       ready = true;
     }
     let p = await Notifications.getPermissionsAsync();
-    if (p.status !== 'granted' && p.canAskAgain && promptsOk) p = await withNavBar(() => Notifications.requestPermissionsAsync());
+    if (p.status !== 'granted' && p.canAskAgain && (promptsOk || force)) p = await withNavBar(() => Notifications.requestPermissionsAsync());
     return p.status === 'granted';
   } catch (e) { return false; }
 }

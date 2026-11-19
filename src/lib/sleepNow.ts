@@ -59,7 +59,7 @@ export async function syncSleepNative(): Promise<string> {
 
 export async function startSleep(): Promise<void> {
   if (native()) {
-    try { await setup(); } catch (e) {}
+    try { await setup(true); } catch (e) {}
     sleepNativeStart(); await syncSleepNative(); return;
   }
   const cur = await getItem<SleepNow>(SLEEP_KEY, null); if (cur && cur.start) return;

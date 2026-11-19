@@ -25,7 +25,7 @@ import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
 import { cycleInfo } from '../lib/cycle';
 import { syncTaskAlerts } from '../lib/maintTasks';
 import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
-import { TG_DEFAULT, Toggles, allowPermissionPrompts } from '../lib/adhan';
+import { TG_DEFAULT, Toggles, allowPermissionPrompts, openPrompts, usePromptsOpen } from '../lib/adhan';
 import { useFamily } from '../lib/family';
 import { useFamTasks, useFamEvents } from '../lib/familyData';
 import { syncFamilyAlerts } from '../lib/familyAlerts';
@@ -117,12 +117,14 @@ function Checking() {
   );
 }
 export { ErrorBoundary } from 'expo-router';
-function Tracker() { const p = usePathname(); useEffect(() => { trackModule(p); }, [p]); return null; }
+// Opening any screen except Home, Stats, Insights and Settings counts as entering a module, which is when the notification popup may show.
+const NOT_MODULE = ['/', '/index', '/stats', '/insights', '/settings'];
+function Tracker() { const p = usePathname(); useEffect(() => { trackModule(p); if (NOT_MODULE.indexOf(p) < 0) openPrompts(); }, [p]); return null; }
 export default function Root() {
   useRegion(); // keeps the chosen currency ready for every screen and notification
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  const gate = !!sess && lic.status === 'active'; allowPermissionPrompts(gate);
+  const popOpen = usePromptsOpen(); const gate = !!sess && lic.status === 'active' && popOpen; allowPermissionPrompts(gate);
   return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync key={gate ? 'on' : 'off'} /><DebtSync key={gate ? 'on' : 'off'} /><AlertSync key={gate ? 'on' : 'off'} /><FamilySync key={gate ? 'on' : 'off'} /><SleepNowSync key={gate ? 'on' : 'off'} /><DialogHost /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && lic.status === 'unknown' ? <Checking /> : null}{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }

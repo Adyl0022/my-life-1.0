@@ -136,7 +136,7 @@ export function MoneyLeft({ ym, income, spends }: Props) {
               <Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Budget alerts</Text>
               <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16, marginTop: 2 }}>A notification when you use 80% of your income, go over today's limit, or go over budget.</Text>
             </View>
-            <Sw on={bc.on} set={(v) => { setBc({ ...bc, on: v }); if (v) setup().then(() => setTimeout(() => { checkBudget(); }, 600)).catch(() => {}); }} />
+            <Sw on={bc.on} set={(v) => { setBc({ ...bc, on: v }); if (v) setup(true).then(() => setTimeout(() => { checkBudget(); }, 600)).catch(() => {}); }} />
           </View>
         </View>
       ) : null}

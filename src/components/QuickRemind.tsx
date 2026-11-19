@@ -4,6 +4,7 @@ import { Text } from './Txt';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Inp, SBtn, Sheet, W } from './Ui';
 import { useStored } from '../lib/store';
+import { openPrompts } from '../lib/adhan';
 
 type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean; ra?: number[] };
 type Data = { notes: Note[]; seq: number };
@@ -73,6 +74,7 @@ export function QuickRemind({ onClose, onDone }: { onClose: () => void; onDone: 
   const chips: [string, number][] = [['In 1 hour', hourLater()], ...(eve > Date.now() + 600000 ? [['This evening 6 PM', eve] as [string, number]] : []), ...(tonight > Date.now() + 600000 ? [['Tonight 9 PM', tonight] as [string, number]] : []), ['Tomorrow 8 AM', at(1, 8)]];
   const shift = (f: 'd' | 'h' | 'm', by: number) => { const d = new Date(when || chips[0][1]); if (f === 'd') d.setDate(d.getDate() + by); else if (f === 'h') d.setHours(d.getHours() + by); else d.setMinutes(d.getMinutes() + by); d.setSeconds(0, 0); setWhen(d.getTime()); };
   const save = () => {
+    openPrompts();
     const t = txt.trim(); if (!t) return setErr('Write what to remember');
     if (!when) return setErr('Pick a time');
     if (when <= Date.now() + 30000) return setErr('Pick a time in the future');

@@ -190,7 +190,7 @@ export default function Settings() {
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');
     try {
-      if (!(await setup())) return say('Allow notifications for My Life in your phone settings');
+      if (!(await setup(true))) return say('Allow notifications for My Life in your phone settings');
       await Notifications.scheduleNotificationAsync({ identifier: 'test-now', content: { title: 'Test notification', body: 'Your reminders are working.', sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, channelId: 'prayer' } as any });
       say('Sent. It will appear in 3 seconds');
     } catch (e) { say('Could not send a test notification'); }
