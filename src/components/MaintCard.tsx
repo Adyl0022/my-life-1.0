@@ -152,13 +152,15 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       ) : null}
 
       <Line />
-      {oe.odo > 0 || list.some((t) => t.km) ? (
+      {oe.odo > 0 || list.some((t) => t.km) ? (<>
+        <View style={{ marginTop: 14 }}><Hd t="Odometer" sub="Your meter reading for service countdowns" /></View>
         <View style={{ marginTop: 10, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, fontWeight: '700', letterSpacing: 0.3 }}>{oe.est ? 'Odometer now (estimate)' : oe.odo > 0 ? 'Odometer now (actual)' : 'Odometer'}</Text>
               <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 8 }}>{oe.odo > 0 ? (oe.est ? '~' : '') + oe.odo.toLocaleString('en-MY') + ' km' : 'No reading yet'}</Text>
               {!oe.est && oe.odo > 0 && oe.lastDate ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'What your meter or fuel log showed on ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>{list.some((t) => t.km) ? 'Counts down the km left on your jobs and parts.' : 'Add a job or part with a km limit and it counts down from here.'}</Text>
               {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'From about ' + Math.round(oe.perDay) + ' km a day over the ' + 'last ' + oe.span + ' days' + ' before ' + oe.lastDate.split('-').reverse().join('/') + '. Days you do not ride are counted. Type a new reading to make it exact.'}</Text> : null}
             </View>
             <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)', borderWidth: 1, borderColor: 'rgba(94,231,181,.45)' }}><Text style={{ color: '#b6f7de', fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
@@ -173,7 +175,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
             </View>
           ) : null}
         </View>
-      ) : null}
+      </>) : null}
       <View style={{ marginTop: 14 }}><Hd t="Maintenance tasks" sub="Repeat jobs and parts in one list" right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setOdAt(''); setKind('check'); setDt(todayStr()); }} /> : undefined} /></View>
       {open ? (
         <View style={{ marginTop: 10, gap: 8, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
