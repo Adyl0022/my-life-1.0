@@ -11,6 +11,7 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Glass } from '../../components/Glass';
 import { MemoriesCard } from '../../components/MemoriesCard';
+import { DashCardPicks } from '../../components/DashCardPicks';
 import { Blob } from '../../components/Bg';
 import { SettingsBg } from '../../components/SettingsBg';
 import { useStored, clearMine, DEFAULT_NAME } from '../../lib/store';
@@ -268,6 +269,7 @@ export default function Settings() {
               <Announcement />
               <RegionCard />
               <ModulesCard />
+              <DashCardPicks />
               {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
                 <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>

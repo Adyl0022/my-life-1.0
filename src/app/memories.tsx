@@ -78,14 +78,16 @@ export default function Memories() {
                   <Text style={{ color: DIM, fontSize: 12.5, marginTop: 2 }}>{'You started on ' + nice(M.start)}</Text>
                   <View style={{ flexDirection: 'row', marginTop: 16 }}>
                     {ms.map((n, i) => { const ok = M.days >= n; return (
-                      <View key={n} style={{ flex: 1, alignItems: i === 0 ? 'flex-start' : i === 2 ? 'flex-end' : 'center' }}>
+                      <View key={n} style={{ flex: 1, alignItems: 'flex-end' }}>
                         <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: ok ? '#5ee7b5' : 'rgba(255,255,255,.14)', borderWidth: ok ? 0 : 1, borderColor: 'rgba(255,255,255,.25)' }}>
                           <Text style={{ color: ok ? '#0d3a2c' : DIM, fontSize: 13, fontWeight: '800' }}>{ok ? '✓' : '·'}</Text>
                         </View>
                         <Text style={{ color: ok ? W : DIM, fontSize: 12, fontWeight: '700', marginTop: 5 }}>{n === 365 ? '1 year' : n + ' days'}</Text>
                       </View>); })}
                   </View>
-                  <Bar p={M.days / (nextMs || 365)} c="#ffd24a" />
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    {ms.map((n, i) => { const from = i === 0 ? 0 : ms[i - 1]; return <View key={n} style={{ flex: 1 }}><Bar p={Math.max(0, Math.min(1, (M.days - from) / (n - from)))} c="#ffd24a" /></View>; })}
+                  </View>
                   <Text style={{ color: DIM, fontSize: 12, marginTop: 7 }}>{nextMs ? (nextMs - M.days) + (nextMs - M.days === 1 ? ' day' : ' days') + ' to your ' + (nextMs === 365 ? '1 year' : nextMs + '-day') + ' milestone' : 'You have reached every milestone so far.'}</Text>
                 </>) : <Text style={{ color: W, fontSize: 14, marginTop: 8, lineHeight: 20 }}>Sign in to see how long you have been with My Life 1.0.</Text>}
               </LinearGradient>

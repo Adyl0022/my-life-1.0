@@ -657,6 +657,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "event acara days left hari lagi overdue lewat today hari ini upcoming akan datang red yellow green merah kuning hijau tarikh date"
  },
  {
+  "t": "Dashboard card pages",
+  "s": "Choose which pages turn by themselves in the card at the bottom of Home",
+  "m": "System",
+  "c": "#8ea8ff",
+  "h": "Settings.dc.html",
+  "k": "dashboard card kad capsule quick log pages halaman next prayer solat event vehicle job money streak score tip memories hide sembunyi pilih choose settings automatik auto turn"
+ },
+ {
   "t": "Your Memories with My Life 1.0",
   "s": "Journey, numbers, timeline, on this day, badges and year in review",
   "m": "System",
