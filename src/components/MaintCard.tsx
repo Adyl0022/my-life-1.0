@@ -67,7 +67,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
     </View>);
   const Line = () => <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,0)', 'rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 1, marginTop: 20, marginBottom: 12 }} />;
   const Stat = ({ n, l, c }: { n: number; l: string; c: string }) => (
-    <View style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center' }}>
+    <View style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)', alignItems: 'center' }}>
       <Text style={{ color: c, fontSize: 18, fontWeight: '800' }}>{n}</Text>
       <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 10.5, fontWeight: '700', marginTop: 1 }}>{l}</Text>
     </View>);
@@ -102,7 +102,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       <Hd t="Road tax, insurance and licence" sub="Tap one to set or change its date" />
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
         {RK.map(([k, label]) => { const st = renewStatus(rn[k]); const on = ek === k; return (
-          <Pressable key={k} onPress={() => { setEv(rn[k] || todayStr()); setEk(on ? '' : k); }} accessibilityLabel={(rn[k] ? 'Edit ' : 'Set ') + label} style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 10, borderRadius: 20, backgroundColor: on ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.09)' }}>
+          <Pressable key={k} onPress={() => { setEv(rn[k] || todayStr()); setEk(on ? '' : k); }} accessibilityLabel={(rn[k] ? 'Edit ' : 'Set ') + label} style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 10, borderRadius: 20, backgroundColor: on ? 'rgba(255,255,255,.26)' : 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
             <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11, fontWeight: '700' }}>{label}</Text>
             <Text style={{ color: rn[k] ? st.col : W, fontSize: 16, fontWeight: '800', marginTop: 5 }} numberOfLines={1} adjustsFontSizeToFit>{rn[k] ? (st.n < 0 ? 'Expired' : st.n + (st.n === 1 ? ' day' : ' days')) : '+ Set'}</Text>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5, marginTop: 2 }} numberOfLines={1}>{rn[k] ? fd(rn[k] as string) : 'No date yet'}</Text>
@@ -118,14 +118,14 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       <Line />
       <Hd t="Maintenance tasks" sub="Repeat jobs and parts in one list" right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setOdAt(''); setKind('check'); setDt(todayStr()); }} /> : undefined} />
       {oe.odo > 0 || list.some((t) => t.km) ? (
-        <View style={{ marginTop: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)' }}>
+        <View style={{ marginTop: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11, fontWeight: '700' }}>{oe.est ? 'Odometer now (estimate)' : 'Odometer'}</Text>
               <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginTop: 2 }}>{oe.odo > 0 ? (oe.est ? '~' : '') + oe.odo.toLocaleString('en-MY') + ' km' : 'No reading yet'}</Text>
               {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, marginTop: 2 }}>{'From your average of about ' + Math.round(oe.perDay) + ' km a day since ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
             </View>
-            <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
+            <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)', borderWidth: 1, borderColor: 'rgba(94,231,181,.45)' }}><Text style={{ color: '#b6f7de', fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
           </View>
           {fixOdo ? (
             <View style={{ marginTop: 10, gap: 6 }}>
@@ -136,7 +136,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
         </View>
       ) : null}
       {open ? (
-        <View style={{ marginTop: 12, gap: 10, padding: 14, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.08)' }}>
+        <View style={{ marginTop: 12, gap: 10, padding: 14, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
           <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.25)' }}>
             {([['check', 'Repeat job'], ['part', 'Replace a part']] as const).map(([k, l]) => (
               <Pressable key={k} onPress={() => { setKind(k); setNm(''); setDy(''); setKm(''); }} style={{ flex: 1, paddingVertical: 8, borderRadius: 999, alignItems: 'center', backgroundColor: kind === k ? 'rgba(183,148,255,.55)' : 'transparent' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{l}</Text></Pressable>))}
