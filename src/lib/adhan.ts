@@ -19,6 +19,9 @@ export function ensureHandler() {
   handled = true;
   try { Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }) }); } catch (e) {}
 }
+// The notification popup is only allowed once you are signed in and the account is active, so it never shows over the login or activation screen.
+let promptsOk = false;
+export const allowPermissionPrompts = (v: boolean) => { promptsOk = v; };
 export async function setup(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   try {
@@ -28,7 +31,7 @@ export async function setup(): Promise<boolean> {
       ready = true;
     }
     let p = await Notifications.getPermissionsAsync();
-    if (p.status !== 'granted' && p.canAskAgain) p = await withNavBar(() => Notifications.requestPermissionsAsync());
+    if (p.status !== 'granted' && p.canAskAgain && promptsOk) p = await withNavBar(() => Notifications.requestPermissionsAsync());
     return p.status === 'granted';
   } catch (e) { return false; }
 }
