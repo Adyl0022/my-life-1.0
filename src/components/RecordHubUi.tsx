@@ -140,19 +140,22 @@ export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; ti
   );
 }
 
-// My Vehicle: rose gold, a road running to the horizon and a glass speedometer tile.
+// My Vehicle: dark rose gold, circuit-board lines and a glass speedometer tile.
 export function VehicleCard({ onPress }: { onPress: () => void }) {
   const gold = '#ffe3c2';
   return (
     <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
-        <LinearGradient colors={['#bb7189', '#82416a', '#472454']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
-          <Svg width="55%" height="100%" viewBox="0 0 120 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
+        <LinearGradient colors={['#8c5468', '#5b2d4e', '#2d1840']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
+          <Svg width="48%" height="100%" viewBox="0 0 160 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
             <Defs>
-              <SvgGrad id="rd" x1="0" y1="0" x2="120" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0.2" stopColor={gold} stopOpacity={0} /><Stop offset="0.65" stopColor={gold} stopOpacity={0.55} /><Stop offset="1" stopColor={gold} stopOpacity={0.68} /></SvgGrad>
+              <SvgGrad id="rd" x1="0" y1="0" x2="160" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0.15" stopColor={gold} stopOpacity={0} /><Stop offset="0.55" stopColor={gold} stopOpacity={0.62} /><Stop offset="1" stopColor={gold} stopOpacity={0.7} /></SvgGrad>
             </Defs>
-            <G stroke="url(#rd)" strokeWidth={1.5} fill="none">
-              <Path d="M120 56 L0 56" /><Path d="M120 56 L0 20" /><Path d="M120 56 L0 92" /><Path d="M120 56 L40 0" /><Path d="M120 56 L40 112" /><Path d="M70 0V112" /><Path d="M40 0V112" />
+            <G stroke="url(#rd)" strokeWidth={1.2} fill="none">
+              <Path d="M0 20H50L64 34H110L124 20H160" /><Path d="M0 56H40L52 68H96L108 56H160" /><Path d="M0 92H60L72 80H120L132 92H160" /><Path d="M80 0V34M80 112V80M140 34V56M30 56V20" />
+            </G>
+            <G fill="url(#rd)">
+              <Circle cx={50} cy={20} r={2.5} /><Circle cx={110} cy={34} r={2.5} /><Circle cx={96} cy={68} r={2.5} /><Circle cx={72} cy={80} r={2.5} /><Circle cx={140} cy={56} r={2.5} /><Circle cx={80} cy={34} r={2.5} />
             </G>
           </Svg>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
