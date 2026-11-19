@@ -482,11 +482,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Export my data",
-  "s": "Excel, PDF, CSV or a backup. Choose which modules, including turned-off ones",
+  "s": "Excel, PDF, CSV or a backup, with Documents and Personal Collection. Choose which modules",
   "m": "System",
   "c": "#5ee7df",
   "h": "Export.dc.html",
-  "k": "export eksport backup sandaran excel pdf csv xlsx download muat turun data tabung savings goals money left had kategori category limits laporan report simpanan module modul turned off dimatikan pilih choose"
+  "k": "export eksport backup sandaran excel pdf csv xlsx download muat turun data tabung savings goals money left had kategori category limits laporan report simpanan module modul turned off dimatikan pilih choose documents dokumen personal collection gadget pinjam lent borrowed lessons"
  },
  {
   "t": "Reset all data",

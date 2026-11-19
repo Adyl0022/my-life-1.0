@@ -502,6 +502,23 @@ export function think(A, q, lang) {
   let cat = null; CATK.forEach((c) => { if (!cat && c[1].some((w) => (' ' + qn + ' ').indexOf(' ' + w + ' ') >= 0)) cat = c[0]; });
   const intent = A.pick(qn);
   // A module that is turned off in Settings is not answered here.
+  // Documents data: what ends soon
+  if (modOn('record') && has(['expire', 'expiry', 'expires', 'tamat', 'luput', 'renew', 'warranty', 'waranti', 'passport', 'pasport', 'mykad', 'cidb', 'permit', 'insurance', 'insurans']) && has(['when', 'bila', 'soon', 'tak lama', 'which', 'mana', 'expire', 'expires', 'tamat', 'luput', 'status', 'left', 'baki'])) {
+    const dl = (R.docs || []).filter((x) => x.n != null).slice().sort((a, b) => a.n - b.n);
+    if (dl.length) {
+      const say = (x) => x.title + (x.n < 0 ? L(' expired ' + -x.n + ' days ago', ' tamat ' + -x.n + ' hari lalu') : x.n === 0 ? L(' ends today', ' tamat hari ini') : L(' ends in ' + x.n + ' days (' + x.expiry.split('-').reverse().join('/') + ')', ' tamat dalam ' + x.n + ' hari (' + x.expiry.split('-').reverse().join('/') + ')'));
+      return done(mk(L('Soonest in Documents: ', 'Paling dekat dalam Documents: ') + dl.slice(0, 3).map(say).join('; ') + '.', { label: L('Open Documents', 'Buka Documents'), href: 'Record.dc.html' }));
+    }
+  }
+  // Lent and Borrowed data: who owes what
+  if (modOn('record') && has(['owe', 'owes', 'hutang', 'pinjam', 'lent', 'borrowed', 'berhutang']) && has(['who', 'siapa', 'how much', 'berapa', 'total', 'jumlah', 'owe', 'owes'])) {
+    const open = (R.loans || []).filter((x) => !x.done); const lent = open.filter((x) => x.dir === 'lent'), bor = open.filter((x) => x.dir === 'borrowed');
+    const sum = (a) => a.filter((x) => x.what === 'money').reduce((t, x) => t + x.amount, 0);
+    if (open.length) {
+      const nm = (a) => a.slice(0, 4).map((x) => x.who + (x.what === 'money' ? ' ' + rm(x.amount) : ' (' + (x.title || L('thing', 'barang')) + ')')).join(', ');
+      return done(mk((lent.length ? L('Owed to you: ', 'Orang berhutang dengan awak: ') + rm(sum(lent)) + (nm(lent) ? ' · ' + nm(lent) : '') + '. ' : '') + (bor.length ? L('You owe: ', 'Awak berhutang: ') + rm(sum(bor)) + ' · ' + nm(bor) + '.' : ''), { label: L('Open Lent & Borrowed', 'Buka Lent & Borrowed'), href: 'Record.dc.html' }));
+    }
+  }
   // Personal Collection help (how to, not data)
   if (modOn('record') && !/\d/.test(qn) && has(['lent', 'borrow', 'pinjam', 'hutang orang', 'gadget', 'lesson', 'pengajaran', 'personal collection'])) {
     return done(mk(L('Open My Record, then Personal Collection. Gadgets, Lifestyle and Property keep what you own with a photo and price. Lent & Borrowed tracks money and things with a due date and a 9 am reminder. Life Lessons keeps short notes. Tap the plus button inside each part to add.', 'Buka My Record, kemudian Personal Collection. Gadgets, Lifestyle dan Property simpan barang awak dengan gambar dan harga. Lent & Borrowed jejak duit dan barang yang dipinjam dengan tarikh pulang dan peringatan jam 9 pagi. Life Lessons simpan nota pendek. Tekan butang tambah di dalam setiap bahagian.'), { label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' }));

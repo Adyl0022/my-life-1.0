@@ -5,6 +5,8 @@ import { goalLines, goalSaved } from './savings';
 import { cs, cu } from './region';
 import { getItem } from './store';
 import { mergeVeh, VEH_KEY } from './vehicleSpend';
+import { typeOf, statusOf, REMINDS } from './documents';
+import { CATS } from './collection';
 const getRec = () => getItem<any>('ml_record', { data: {} });
 const getMode = () => getItem<any>(VEH_KEY, 'ask');
 
@@ -22,6 +24,8 @@ export const MODS = [
   { k: 'islamic', name: 'Islamic Hub', sub: 'Fasting log, Tasbih counts, bookmarks and reading progress', keys: ['ml_islamic', 'ml_tasbih', 'ml_puasa'] },
   { k: 'finance', name: 'My Finance', sub: 'Income, spending, savings goals and commitments', keys: ['ml_finance', 'ml_debts', 'ml_savings'] },
   { k: 'record', name: 'My Record', sub: 'Vehicle mileage, fuel and services', keys: ['ml_record'] },
+  { k: 'docs', name: 'Documents', sub: 'Passport, cards, warranty and other papers', keys: ['ml_documents'] },
+  { k: 'collection', name: 'Personal Collection', sub: 'Gadgets, lifestyle, property, lent and borrowed, life lessons', keys: ['ml_collection'] },
   { k: 'habit', name: 'Habit and Health', sub: 'Mood, sleep, water and steps', keys: ['ml_habit'] },
   { k: 'usage', name: 'App usage history', sub: 'Time spent and opens from Stats', keys: ['ml_usage_v1'] },
 ];
@@ -142,6 +146,23 @@ export async function buildReport(sel: string[], per: number): Promise<Report> {
     if (rd.length > 1) charts.push({ title: 'Odometer (km), latest readings', kind: 'line', labels: rd.slice(-12).map((x: any) => dm(x.date)), values: rd.slice(-12).map((x: any) => num(x.odo)), color: '#e0518a' });
     if (rows.length) sheets.push({ name: 'Record', head: ['Vehicle', 'Type', 'Date', 'Detail', 'Amount (' + cu() + ')', 'Odometer (km)'], rows });
     totals.push(['Record entries', String(rows.length)]);
+  }
+  if (sel.includes('docs')) {
+    const dd = g('docs', 'ml_documents'); const rows: (string | number)[][] = [];
+    ((dd && dd.docs) || []).forEach((d: any) => { const t = typeOf(d.type); const st = statusOf(d); const rem = REMINDS.find((x) => x.k === d.remind); rows.push([t.label, d.title || '', d.number || '', d.expiry || 'No expiry', st.txt, d.expiry ? (rem ? rem.n : '') : 'No reminder', d.note || '']); });
+    if (rows.length) sheets.push({ name: 'Documents', head: ['Type', 'Name', 'Number', 'Expiry or warranty ends', 'Status', 'Reminder', 'Note'], rows });
+    totals.push(['Documents', String(rows.length)]);
+  }
+  if (sel.includes('collection')) {
+    const cc = g('collection', 'ml_collection') || {};
+    const items = ((cc.items) || []).filter((x: any) => inP(x.bought)); const loans = (cc.loans || []).filter((x: any) => inP(x.date)); const less = (cc.lessons || []).filter((x: any) => inP(x.date));
+    if (items.length) sheets.push({ name: 'Collection items', head: ['Group', 'Kind', 'Name', 'Price (' + cu() + ')', 'Bought', 'Warranty ends', 'Note'], rows: items.map((x: any) => [(CATS as any)[x.cat] ? (CATS as any)[x.cat].title : x.cat, x.kind || '', x.name || '', num(x.price) || '', x.bought || '', x.warranty || '', x.note || '']) });
+    if (loans.length) sheets.push({ name: 'Lent and Borrowed', head: ['Direction', 'Type', 'Who', 'What', 'Amount (' + cu() + ')', 'Date', 'Due', 'Status', 'Note'], rows: loans.map((x: any) => [x.dir === 'lent' ? 'Lent' : 'Borrowed', x.what === 'money' ? 'Money' : 'Thing', x.who || '', x.what === 'thing' ? (x.title || '') : '', x.what === 'money' ? num(x.amount) : '', x.date || '', x.due || '', x.done ? 'Returned ' + (x.doneAt || '') : 'Open', x.note || '']) });
+    if (less.length) sheets.push({ name: 'Life lessons', head: ['Date', 'Tag', 'Title', 'Lesson'], rows: less.map((x: any) => [x.date || '', x.tag || '', x.title || '', x.text || '']) });
+    totals.push(['Collection items', String(items.length)]);
+    const open = (cc.loans || []).filter((x: any) => !x.done && x.what === 'money');
+    const owed = open.filter((x: any) => x.dir === 'lent').reduce((a: number, x: any) => a + num(x.amount), 0);
+    if (owed > 0) totals.push(['Money lent, still open', rm(owed)]);
   }
   if (sel.includes('habit')) {
     const h = g('habit', 'ml_habit'); const days = (h && h.days) || {};

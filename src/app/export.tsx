@@ -46,7 +46,7 @@ const PER = ['This month', '3 months', 'All time'];
 export default function Export() {
   const router = useRouter();
   const hid = useHidden();
-  const isOff = (k: string) => k !== 'usage' && hid.off.indexOf(k) >= 0 && k !== 'family';
+  const isOff = (k: string) => { const h = k === 'docs' || k === 'collection' ? 'record' : k; return k !== 'usage' && hid.off.indexOf(h) >= 0 && k !== 'family'; };
   const seeded = React.useRef(false);
   const [inc, setInc] = useState<Record<string, boolean>>({ planner: true, islamic: true, finance: true, record: true, habit: true, usage: true });
   const [, setBkLast] = useStored<number>('ml_backup_last', 0);
@@ -78,7 +78,7 @@ export default function Export() {
         if (Object.keys(pk.images).length) out.images = pk.images;
         ok = await deliver(file, 'application/json', JSON.stringify(out, null, 2));
         setBkLast(Date.now());
-        if (pk.skipped > 0) bkNote = pk.skipped + (pk.skipped === 1 ? ' receipt photo' : ' receipt photos') + ' did not fit in the backup and stay only on this phone.';
+        if (pk.skipped > 0) bkNote = pk.skipped + (pk.skipped === 1 ? ' photo' : ' photos') + ' did not fit in the backup and stay only on this phone.';
       } else {
         const r = await buildReport(sel, per);
         if (k === 'xlsx') ok = await deliver(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', await toXlsxBase64(r), true);
