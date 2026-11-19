@@ -656,4 +656,12 @@ export const SEARCH_INDEX: SearchItem[] = [
   "h": "Planner.dc.html",
   "k": "event acara days left hari lagi overdue lewat today hari ini upcoming akan datang red yellow green merah kuning hijau tarikh date"
  },
+ {
+  "t": "Your memories with My Life",
+  "s": "Settings, About: the day you started and what you have done so far",
+  "m": "System",
+  "c": "#b794ff",
+  "h": "Settings.dc.html",
+  "k": "memories kenangan since started mula guna day together hari bersama register daftar journey statistics statistik streak about settings"
+ },
 ];
