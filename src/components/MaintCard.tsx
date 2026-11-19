@@ -188,29 +188,20 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
         {shown.map((t, i) => {
           const s = taskState(t, odoNow, oe.est); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3); const pr = s.text.split(' · ');
           return (
-            <View key={t.id} style={{ marginTop: i === 0 ? 10 : 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)', paddingVertical: 12, paddingHorizontal: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: BAR[s.level] }} />
-                <Text style={{ flex: 1, color: W, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>{t.name}</Text>
-                <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, backgroundColor: s.level === 2 ? 'rgba(255,143,171,.26)' : s.level === 1 ? 'rgba(255,196,107,.22)' : 'rgba(94,231,181,.18)' }}><Text style={{ color: COL[s.level], fontSize: 11, fontWeight: '800' }}>{pr[0]}</Text></View>
+            <View key={t.id} style={{ marginTop: i === 0 ? 10 : 6, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)', paddingVertical: 9, paddingHorizontal: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: BAR[s.level] }} />
+                <Text style={{ flex: 1, color: W, fontSize: 14, fontWeight: '800' }} numberOfLines={1}>{t.name}</Text>
+                <View style={{ paddingVertical: 2, paddingHorizontal: 8, borderRadius: 999, backgroundColor: s.level === 2 ? 'rgba(255,143,171,.26)' : s.level === 1 ? 'rgba(255,196,107,.22)' : 'rgba(94,231,181,.18)' }}><Text style={{ color: COL[s.level], fontSize: 10.5, fontWeight: '800' }}>{pr[0]}</Text></View>
               </View>
-              <View style={{ flexDirection: 'row', marginTop: 10 }}>
-                {[
-                  [t.kind === 'part' ? 'Changed' : 'Last done', fd(t.last)],
-                  ['Since', s.since === 0 ? 'Today' : s.since + (s.since === 1 ? ' day' : ' days')],
-                  [t.kind === 'part' ? 'Lasts' : 'Every', [t.days ? t.days + (t.days === 1 ? ' day' : ' days') : '', t.km ? t.km.toLocaleString('en-MY') + ' km' : ''].filter(Boolean).join('\n')],
-                ].map((c, k) => (
-                  <View key={c[0]} style={{ flex: 1, paddingLeft: k === 0 ? 0 : 12, borderLeftWidth: k === 0 ? 0 : 1, borderLeftColor: 'rgba(255,255,255,.12)' }}>
-                    <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 9.5, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' }}>{c[0]}</Text>
-                    <Text style={{ color: W, fontSize: 12.5, fontWeight: '800', marginTop: 2 }} numberOfLines={2}>{c[1]}</Text>
-                  </View>
-                ))}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 8 }}>
+                <Text style={{ flex: 1, color: 'rgba(255,255,255,.72)', fontSize: 11.5 }} numberOfLines={1}>{(t.kind === 'part' ? 'Changed ' : 'Last ') + fd(t.last) + (s.since === 0 ? ' · today' : ' · ' + s.since + (s.since === 1 ? ' day ago' : ' days ago'))}</Text>
+                <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + (t.kind === 'part' ? ' changed today' : ' done today')} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)' }}><Text style={{ color: '#b6f7de', fontSize: 11.5, fontWeight: '800' }}>{t.kind === 'part' ? 'Changed today' : 'Done today'}</Text></Pressable>
               </View>
-              <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: Math.round(s.frac * 100) + '%', height: '100%', borderRadius: 3, backgroundColor: BAR[s.level] }} /></View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 8 }}>
-                <Text style={{ flex: 1, color: 'rgba(255,255,255,.6)', fontSize: 11 }} numberOfLines={1}>{pr[1] ? pr[1] : hist.length ? 'Before: ' + hist.map(fd).join(', ') : ''}</Text>
-                <Pressable onPress={() => confirmDelete(t.name, () => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) })), { title: 'Remove ' + t.name + '?', message: 'Its history is removed too. This cannot be undone.', yes: 'Remove' })} accessibilityLabel={'Delete ' + t.name} style={{ paddingVertical: 7, paddingHorizontal: 4 }}><Text style={{ color: '#ff9aa9', fontSize: 11.5, fontWeight: '700' }}>Remove</Text></Pressable>
-                <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + (t.kind === 'part' ? ' changed today' : ' done today')} style={{ paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)' }}><Text style={{ color: '#b6f7de', fontSize: 12, fontWeight: '800' }}>{t.kind === 'part' ? 'Changed today' : 'Done today'}</Text></Pressable>
+              <View style={{ height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 7, overflow: 'hidden' }}><View style={{ width: Math.round(s.frac * 100) + '%', height: '100%', borderRadius: 2, backgroundColor: BAR[s.level] }} /></View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3, gap: 8 }}>
+                <Text style={{ flex: 1, color: 'rgba(255,255,255,.55)', fontSize: 10.5 }} numberOfLines={1}>{[(t.kind === 'part' ? 'Lasts ' : 'Every ') + [t.days ? t.days + (t.days === 1 ? ' day' : ' days') : '', t.km ? t.km.toLocaleString('en-MY') + ' km' : ''].filter(Boolean).join(' / '), pr[1] || ''].filter(Boolean).join(' · ')}</Text>
+                <Pressable onPress={() => confirmDelete(t.name, () => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) })), { title: 'Remove ' + t.name + '?', message: 'Its history is removed too. This cannot be undone.', yes: 'Remove' })} accessibilityLabel={'Delete ' + t.name} style={{ paddingVertical: 4, paddingHorizontal: 2 }}><Text style={{ color: '#ff9aa9', fontSize: 10.5, fontWeight: '700' }}>Remove</Text></Pressable>
               </View>
                 {doneId === t.id ? (
                   <View style={{ marginTop: 10, gap: 8 }}>
