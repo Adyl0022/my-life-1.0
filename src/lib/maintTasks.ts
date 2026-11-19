@@ -20,7 +20,7 @@ export function odoEstimate(v: any): { odo: number; est: boolean; perDay: number
   const add = (a: any) => { if (a && a.date && a.odo > 0) pts.push({ d: a.date, o: a.odo }); };
   ((v && v.readings) || []).forEach(add); ((v && v.yreadings) || []).forEach(add); ((v && v.oreadings) || []).forEach(add); ((v && v.fuel) || []).forEach(add);
   const real = latestOdo(v);
-  if (pts.length < 2) return { odo: real, est: false, perDay: 0, last: real, lastDate: '', span: 0 };
+  if (pts.length < 2) return { odo: real, est: false, perDay: 0, last: real, lastDate: pts.length ? pts[0].d : '', span: 0 };
   pts.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.o - b.o));
   const l = pts[pts.length - 1]; const ln = dayN(l.d);
   let perDay = 0; let span = 0;
