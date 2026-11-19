@@ -3,7 +3,7 @@ import { View, Pressable, ScrollView, Modal, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
 import { Glass } from './Glass';
-import { useRegion, CURRENCIES, COUNTRIES, curOf, countryOf } from '../lib/region';
+import { useRegion, CURRENCIES, COUNTRIES, curOf, countryOf, autoWeekStart, WS_NAME } from '../lib/region';
 
 const W = '#fff';
 const dim = 'rgba(255,255,255,.6)';
@@ -99,14 +99,22 @@ export function RegionCard() {
       <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Region</Text>
       <Field k="Country" flag={co.flag} title={co.name} sub="Public holidays in Planner" onPress={() => setOpen('country')} />
       <Field k="Currency" flag={cu.flag} title={cu.name} sub={cu.code} pill={cu.sym} onPress={() => setOpen('cur')} />
+      <View style={{ marginTop: 14 }}>
+        <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '600' }}>Week starts on</Text>
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+          {([[-1, 'Auto'], [1, 'Mon'], [0, 'Sun'], [6, 'Sat']] as [number, string][]).map(([v, l]) => { const on = (typeof r.ws === 'number' ? r.ws : -1) === v; return (
+            <Pressable key={v} onPress={() => setR({ ...r, ws: v })} accessibilityLabel={v < 0 ? 'Week starts by country' : 'Week starts on ' + WS_NAME[v]} style={{ flex: 1, paddingVertical: 9, borderRadius: 14, alignItems: 'center', backgroundColor: on ? 'rgba(124,156,255,.4)' : 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: on ? 'rgba(124,156,255,.7)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{l}</Text></Pressable>); })}
+        </View>
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{(typeof r.ws === 'number' && r.ws >= 0 ? 'Weekly charts start on ' + WS_NAME[r.ws] + '.' : 'Auto follows your country: ' + WS_NAME[autoWeekStart(r.cc)] + '.')}</Text>
+      </View>
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 12, lineHeight: 16 }}>This only changes how amounts look. Your numbers are not converted.</Text>
       {open === 'country' ? (
         <Sheet title="Choose country" ph="Search country" items={countries} sel={r.cc} onClose={() => setOpen('')}
-          onPick={(id) => { const c = countryOf(id); setR({ cc: c.cc, cur: r.cur }); setOpen(''); }} />
+          onPick={(id) => { const c = countryOf(id); setR({ ...r, cc: c.cc }); setOpen(''); }} />
       ) : null}
       {open === 'cur' ? (
         <Sheet title="Choose currency" ph="Search currency or country" items={curs} sel={r.cur} onClose={() => setOpen('')}
-          onPick={(id) => { setR({ cc: r.cc, cur: id }); setOpen(''); }} />
+          onPick={(id) => { setR({ ...r, cur: id }); setOpen(''); }} />
       ) : null}
     </Glass>
   );

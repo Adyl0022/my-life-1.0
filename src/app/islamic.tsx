@@ -1,3 +1,4 @@
+import { weekStart } from '../lib/region';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, TextInput, Animated, Easing, PanResponder, LayoutAnimation } from 'react-native';
 import { Text } from '../components/Txt';
@@ -144,7 +145,7 @@ export default function IslamicHub() {
               <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR WEEK · INSIGHT</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
                 <View style={{ width: 62 }} />
-                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (<Text key={i} style={{ flex: 1, textAlign: 'center', color: rowQ[i].today ? '#5ee7df' : 'rgba(255,255,255,.55)', fontSize: 11, fontWeight: '700' }}>{d}</Text>))}
+                {[0, 1, 2, 3, 4, 5, 6].map((k) => 'SMTWTFS'[(weekStart() + k) % 7]).map((d, i) => (<Text key={i} style={{ flex: 1, textAlign: 'center', color: rowQ[i].today ? '#5ee7df' : 'rgba(255,255,255,.55)', fontSize: 11, fontWeight: '700' }}>{d}</Text>))}
               </View>
               {([['Quran', rowQ, '#5ee7b5'], ['Zikir', rowZ, '#ffd593'], ['Fasting', rowF, '#7c9cff']] as [string, ReturnType<typeof weekRow>, string][]).map(([lb, row, c]) => (
                 <View key={lb} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>

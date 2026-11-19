@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from './Txt';
+import { weekBack, weekStart, WS_NAME } from '../lib/region';
 import { HData, HDay, WD, MON, dateOf, getDay, to12 } from '../lib/habit';
 
 // Shows when you slept, not only for how long: one bar per night on a clock that runs from 6 PM to the next 6 PM, so a night shift or a day sleep fits too.
@@ -12,7 +13,7 @@ const hh = (m: number) => { const h = Math.floor(m / 60), r = Math.round(m % 60)
 export function SleepSchedule({ h }: { h: HData }) {
   const [n, setN] = useState(7); const big = n > 7;
   // 7 = this week, Monday to Sunday, so last week never mixes in. 30 = the last 30 days.
-  const back = (dateOf(0).getDay() + 6) % 7;
+  const back = weekBack(dateOf(0));
   const days: { label: string; d: HDay; today: boolean; fut: boolean }[] = Array.from({ length: n }, (_, i) => { const o = big ? i - (n - 1) : i - back; const dt = dateOf(o); return { label: o === 0 ? 'Last night' : big ? dt.getDate() + ' ' + MON[dt.getMonth()] : WD[dt.getDay()], d: getDay(h, o), today: o === 0, fut: o > 0 }; });
   const rows = days.map((x) => { const b = mins(x.d.bed), w = mins(x.d.wake); if (b == null || w == null) return { ...x, b: null as number | null, w: null as number | null, len: 0 }; let len = (w - b + 1440) % 1440; if (len === 0) len = 1440; return { ...x, b, w, len }; });
   const timed = rows.filter((r) => r.b != null);
@@ -58,7 +59,7 @@ export function SleepSchedule({ h }: { h: HData }) {
           <View style={{ width: 52 }} />
         </View>
       </View>
-      <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15, marginTop: 8 }}>Each purple bar runs from when you went to bed to when you woke up. The week starts on Monday. Days with only hours and no times show the hours without a bar.</Text>
+      <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15, marginTop: 8 }}>Each purple bar runs from when you went to bed to when you woke up. The week starts on {WS_NAME[weekStart()]}. Days with only hours and no times show the hours without a bar.</Text>
     </View>
   );
 }

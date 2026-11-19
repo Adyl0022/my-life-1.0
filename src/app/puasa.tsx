@@ -1,3 +1,4 @@
+import { weekStart, weekBack } from '../lib/region';
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '../components/Txt';
@@ -269,7 +270,7 @@ export default function Puasa() {
               </View>
               {(() => {
                 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const dow = (today.getDay() + 6) % 7; const mon = addDays(today, -dow + wkOff * 7); const days = Array.from({ length: 7 }, (_, k) => addDays(mon, k));
+                const dow = weekBack(today); const mon = addDays(today, -dow + wkOff * 7); const days = Array.from({ length: 7 }, (_, k) => addDays(mon, k));
                 const a = days[0], z = days[6]; const label = a.getDate() + (a.getMonth() === z.getMonth() ? '' : ' ' + MN[a.getMonth()]) + ' – ' + z.getDate() + ' ' + MN[z.getMonth()] + (a.getFullYear() !== today.getFullYear() ? ' ' + z.getFullYear() : '');
                 const nav = (t: string, on: boolean, f: () => void) => <Pressable disabled={!on} onPress={f} hitSlop={8} style={{ width: 38, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center', opacity: on ? 1 : 0.35 }}><Text style={{ color: W, fontSize: 18, fontWeight: '800', marginTop: -2 }}>{t}</Text></Pressable>;
                 return (
@@ -280,7 +281,7 @@ export default function Puasa() {
                       {nav('›', wkOff < 0, () => setWkOff(wkOff + 1))}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 12 }}>
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((n) => <Text key={n} style={{ flex: 1, textAlign: 'center', color: dim, fontSize: 10.5, fontWeight: '700' }}>{n}</Text>)}
+                      {[0, 1, 2, 3, 4, 5, 6].map((k) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][(weekStart() + k) % 7]).map((n) => <Text key={n} style={{ flex: 1, textAlign: 'center', color: dim, fontSize: 10.5, fontWeight: '700' }}>{n}</Text>)}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 5 }}>
                       {days.map((d, k) => {

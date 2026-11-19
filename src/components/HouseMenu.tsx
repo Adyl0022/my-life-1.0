@@ -1,3 +1,4 @@
+import { weekBack } from '../lib/region';
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,7 +34,7 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
   // The "Added to the shopping list" note only confirms the tap, so it goes away by itself after a few seconds.
   useEffect(() => { if (!ok) return; const t = setTimeout(() => setOk(''), 3500); return () => clearTimeout(t); }, [ok]);
 
-  const base = parse(day); const monday = new Date(base.getFullYear(), base.getMonth(), base.getDate() - ((base.getDay() + 6) % 7));
+  const base = parse(day); const monday = new Date(base.getFullYear(), base.getMonth(), base.getDate() - weekBack(base));
   const week = Array.from({ length: 7 }, (_, i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
   const today = localDay();
   const planned = week.filter((d) => m.rows.some((x) => x.day === ymd(d))).length;
@@ -71,7 +72,7 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
             const dark = on ? '#2a1740' : null;
             const inner = (
               <>
-                <Text style={{ color: dark || (has ? ac : 'rgba(255,255,255,.75)'), fontSize: 10.5, fontWeight: '800' }}>{'MTWTFSS'[(d.getDay() + 6) % 7]}</Text>
+                <Text style={{ color: dark || (has ? ac : 'rgba(255,255,255,.75)'), fontSize: 10.5, fontWeight: '800' }}>{'SMTWTFS'[d.getDay()]}</Text>
                 <Text style={{ color: dark || W, fontSize: 16, fontWeight: '900', marginTop: 3 }}>{d.getDate()}</Text>
                 <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 5, backgroundColor: has ? (dark || ac) : 'transparent' }} />
               </>

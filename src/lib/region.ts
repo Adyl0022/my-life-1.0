@@ -83,15 +83,19 @@ export const COUNTRIES: Country[] = [
   { cc: 'BH', name: 'Bahrain', flag: '🇧🇭', cur: 'BHD' },
 ];
 
-export type Region = { cc: string; cur: string };
-export const REGION_DEFAULT: Region = { cc: 'MY', cur: 'MYR' };
+// ws = the day the week starts on: 0 Sunday, 1 Monday ... 6 Saturday, or -1 to follow the country.
+export type Region = { cc: string; cur: string; ws?: number };
+export const REGION_DEFAULT: Region = { cc: 'MY', cur: 'MYR', ws: -1 };
+const SUN_START = ['US', 'CA', 'JP', 'KR', 'IN', 'PH', 'TW', 'HK', 'ZA', 'SA', 'KW', 'BH', 'BD', 'IL'];
+const SAT_START = ['EG'];
+export const autoWeekStart = (cc: string) => (SAT_START.indexOf(cc) >= 0 ? 6 : SUN_START.indexOf(cc) >= 0 ? 0 : 1);
 
 export const curOf = (code: string): Cur => CURRENCIES.find((c) => c.code === code) || CURRENCIES[0];
 export const countryOf = (cc: string): Country => COUNTRIES.find((c) => c.cc === cc) || COUNTRIES[0];
 
 // The choice currently in use. Screens set it when they read the saved choice, and plain code (the assistant, exports, PDF) reads it from here.
 let active: Region = REGION_DEFAULT;
-const clean = (r: Region | null | undefined): Region => ({ cc: countryOf((r && r.cc) || '').cc, cur: curOf((r && r.cur) || '').code });
+const clean = (r: Region | null | undefined): Region => ({ cc: countryOf((r && r.cc) || '').cc, cur: curOf((r && r.cur) || '').code, ws: r && typeof r.ws === 'number' && r.ws >= 0 && r.ws <= 6 ? r.ws : -1 });
 
 /** The symbol on its own, for example "RM" or "$". */
 export const cu = () => curOf(active.cur).sym;
@@ -104,6 +108,11 @@ export const curCode = () => curOf(active.cur).code;
 /** Country code of the chosen country, for example "MY". */
 export const regionCC = () => active.cc;
 export const regionCountry = () => countryOf(active.cc);
+/** The day the week starts on (0 Sunday ... 6 Saturday): the saved choice, or the country's usual one. */
+export const weekStart = () => (typeof active.ws === 'number' && active.ws >= 0 ? active.ws : autoWeekStart(active.cc));
+/** How many days ago this week started, for a given day (0 on the first day of the week). */
+export const weekBack = (d: Date = new Date()) => (d.getDay() - weekStart() + 7) % 7;
+export const WS_NAME = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** Reads the saved choice and keeps the screen up to date when it changes. Call it once in any screen that writes money. */
 export function useRegion(): [Region, (r: Region) => void, boolean] {

@@ -1,3 +1,4 @@
+import { weekBack } from './region';
 // Small daily log for the Islamic Hub insight card (which days you read Quran or zikir), plus the verse of the day.
 import { getItem, setItem } from './store';
 import { keyD, addDays } from './fasting';
@@ -19,7 +20,7 @@ export async function markHub(kind: 'q' | 'z') {
 export const weekDays = (l: HubLog, kind: 'q' | 'z', today = new Date()) => { let n = 0; for (let i = 0; i < 7; i++) { const x = l[keyD(addDays(today, -i))]; if (x && x[kind]) n++; } return n; };
 
 // This week, Monday to Sunday: one flag per day.
-export const weekRow = (has: (k: string) => boolean, today = new Date()) => { const mon = addDays(today, -((today.getDay() + 6) % 7)); return [0, 1, 2, 3, 4, 5, 6].map((i) => { const d = addDays(mon, i); return { on: has(keyD(d)), today: keyD(d) === keyD(today), future: d.getTime() > today.getTime() && keyD(d) !== keyD(today) }; }); };
+export const weekRow = (has: (k: string) => boolean, today = new Date()) => { const mon = addDays(today, -weekBack(today)); return [0, 1, 2, 3, 4, 5, 6].map((i) => { const d = addDays(mon, i); return { on: has(keyD(d)), today: keyD(d) === keyD(today), future: d.getTime() > today.getTime() && keyD(d) !== keyD(today) }; }); };
 
 // Current streak (today may still be empty) and best streak in the saved days.
 export function streaks(l: HubLog, kind: 'q' | 'z', today = new Date()) {

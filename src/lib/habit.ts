@@ -1,3 +1,4 @@
+import { weekBack } from './region';
 export type HDay = { mood: number; cups: number; sleep: number; steps: number; note?: string; fast?: boolean; bed?: string; wake?: string; hc?: number; adj?: number; en?: number; med?: string[]; rl?: RSess[]; pd?: boolean; fl?: number; sy?: string[] };
 export type RSess = { k: string; s: number; at: string };
 export type Med = { id: string; name: string; dose: string; time: string; days?: number[]; ic?: string; since?: number };
@@ -15,8 +16,8 @@ export const MOODS: [string, string][] = [['Awful', '#ff8fab'], ['Low', '#ffc46b
 export const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export const dateOf = (off: number) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + off); return d; };
-// Day offsets for this week, Monday to Sunday (days after today are in the future).
-export const weekOffs = () => { const b = (new Date().getDay() + 6) % 7; return Array.from({ length: 7 }, (_, i) => i - b); };
+// Day offsets for this week, from the day the week starts on (Monday by default). Days after today are in the future.
+export const weekOffs = () => { const b = weekBack(); return Array.from({ length: 7 }, (_, i) => i - b); };
 export const keyOfDate = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 export const getDay = (h: HData, off: number): HDay => ({ ...BLANK, ...(h.days[keyOfDate(dateOf(off))] || {}) });
 export const latestKg = (h: HData) => { const l = (h.kg || []).slice().sort((a, b) => (a.d < b.d ? -1 : 1)); return l.length ? l[l.length - 1].v : 0; };
