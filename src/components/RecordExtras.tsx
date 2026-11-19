@@ -16,7 +16,7 @@ export type Pt = { id: number; name: string; date: string; odo: number; life: nu
 export type Dc = { id: number; title: string; date: string; uri: string };
 export type Ren = { roadtax?: string; insurance?: string; licence?: string };
 export type Tk = { id: number; name: string; kind?: 'check' | 'part'; days?: number; km?: number; last: string; odo?: number; hist?: string[] };
-export type Ext = { profile?: { model: string; plate: string }; renew?: Ren; fuel?: Fu[]; parts?: Pt[]; docs?: Dc[]; tasks?: Tk[]; trem?: boolean };
+export type Ext = { profile?: { model: string; plate: string }; renew?: Ren; fuel?: Fu[]; parts?: Pt[]; docs?: Dc[]; tasks?: Tk[]; trem?: boolean; oreadings?: { id: number; date: string; odo: number }[] };
 type P<T> = { d: T; upd: (fn: (x: any) => any) => void };
 
 const PG = ['#ff8fab', '#b794ff'] as [string, string];

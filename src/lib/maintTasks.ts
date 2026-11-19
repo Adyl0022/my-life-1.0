@@ -12,13 +12,13 @@ const ymd = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padSta
 export const todayKey = () => ymd(new Date());
 
 /** The highest odometer reading saved for this vehicle. */
-export const latestOdo = (v: any): number => Math.max(0, ...((v && v.readings) || []).map((r: any) => r.odo || 0), ...((v && v.yreadings) || []).map((r: any) => r.odo || 0), ...((v && v.fuel) || []).map((f: any) => f.odo || 0));
+export const latestOdo = (v: any): number => Math.max(0, ...((v && v.readings) || []).map((r: any) => r.odo || 0), ...((v && v.yreadings) || []).map((r: any) => r.odo || 0), ...((v && v.oreadings) || []).map((r: any) => r.odo || 0), ...((v && v.fuel) || []).map((f: any) => f.odo || 0));
 
 /** Best guess of the odometer today. It uses how far you ride per day in the most recent weeks (the last 45 days before your newest reading, widening only if there is too little data), so an old busy or quiet period does not drag the guess. The average counts every calendar day, so days you do not ride are already in it. est is true when it is a guess. */
 export function odoEstimate(v: any): { odo: number; est: boolean; perDay: number; last: number; lastDate: string; span: number } {
   const pts: { d: string; o: number }[] = [];
   const add = (a: any) => { if (a && a.date && a.odo > 0) pts.push({ d: a.date, o: a.odo }); };
-  ((v && v.readings) || []).forEach(add); ((v && v.yreadings) || []).forEach(add); ((v && v.fuel) || []).forEach(add);
+  ((v && v.readings) || []).forEach(add); ((v && v.yreadings) || []).forEach(add); ((v && v.oreadings) || []).forEach(add); ((v && v.fuel) || []).forEach(add);
   const real = latestOdo(v);
   if (pts.length < 2) return { odo: real, est: false, perDay: 0, last: real, lastDate: '', span: 0 };
   pts.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.o - b.o));

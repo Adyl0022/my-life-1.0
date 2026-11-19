@@ -40,11 +40,15 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
     upd((x) => ({ ...x, parts: [], tasks: [...(x.tasks || []), ...(x.parts || []).map((p: any) => ({ id: p.id, name: p.name, kind: 'part', km: p.life, last: p.date, odo: p.odo, hist: [p.date] }))] })); }, [((d as any).parts || []).length]);
   const [od, setOd] = useState(''); const [odErr, setOdErr] = useState(''); const [fixOdo, setFixOdo] = useState(false);
   // Saves a real odometer reading (today). A reading lower than the last real one is refused, so the monthly mileage stays right.
-  // A reading typed here goes into the same list as Monthly Mileage, and the yearly comparison reads that list too, so it is typed only once. A second reading on the same day replaces the first.
-  const saveOdo = (v: string): number | null => { const n = pi(v, { max: 2000000 }); if (!(n > 0)) { if (v.trim()) setOdErr('Not a valid number'); return null; } const t0 = todayStr();
-    const other = Math.max(0, ...(((d as any).readings || []) as any[]).filter((r) => r.date !== t0).map((r) => r.odo || 0), ...(((d as any).yreadings || []) as any[]).map((r) => r.odo || 0), ...((d.fuel || []) as any[]).map((f) => f.odo || 0));
+  // A reading typed on the estimate card is kept in its own list for the estimate. It goes into Monthly or Yearly Mileage only when you choose, so weekly updates do not fill those lists. A second reading on the same day replaces the first.
+  const [toM, setToM] = useState(false); const [toY, setToY] = useState(false);
+  const saveOdo = (v: string, toMonthly = false, toYearly = false): number | null => { const n = pi(v, { max: 2000000 }); if (!(n > 0)) { if (v.trim()) setOdErr('Not a valid number'); return null; } const t0 = todayStr();
+    const dd: any = d;
+    const other = Math.max(0, ...(dd.readings || []).filter((r: any) => r.date !== t0).map((r: any) => r.odo || 0), ...(dd.yreadings || []).filter((r: any) => !toYearly || r.date !== t0).map((r: any) => r.odo || 0), ...(dd.oreadings || []).filter((r: any) => r.date !== t0).map((r: any) => r.odo || 0), ...(dd.fuel || []).map((f: any) => f.odo || 0));
     if (n < other) { setOdErr('That is lower than your last reading (' + other.toLocaleString('en-MY') + ' km).'); return -1; }
-    upd((x) => ({ ...x, readings: [...(x.readings || []).filter((r: any) => r.date !== t0), { id: Date.now(), date: t0, odo: n }] })); setOdErr(''); return n; };
+    const put = (a: any[] | undefined) => [...(a || []).filter((r: any) => r.date !== t0), { id: Date.now(), date: t0, odo: n }];
+    upd((x: any) => ({ ...x, oreadings: put(x.oreadings), ...(toMonthly ? { readings: put(x.readings) } : {}), ...(toYearly ? { yreadings: put(x.yreadings) } : {}) })); setOdErr(''); return n; };
+  const lastQ: any = (((d as any).oreadings || []) as any[]).slice().sort((a: any, b: any) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.odo - a.odo))[0];
   const done = (t: Tk) => { const c = pn(cost); const today = todayStr();
     let base = odoNow; if (od.trim()) { const n = saveOdo(od); if (n === -1) return; if (n) base = n; }
     upd((x) => { return { ...x, tasks: (x.tasks || []).map((y: Tk) => { if (y.id !== t.id) return y; const h = (y.hist || []).slice(); if (y.last && h[0] !== y.last) h.unshift(y.last); if (h[0] !== today) h.unshift(today); return { ...y, last: today, odo: base > 0 ? base : y.odo, hist: Array.from(new Set(h)).slice(0, 8) }; }), exps: c > 0 ? [{ id: Date.now(), name: t.name, amt: c, date: today }, ...(x.exps || [])] : x.exps }; });
@@ -161,8 +165,11 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
           </View>
           {fixOdo ? (
             <View style={{ marginTop: 10, gap: 6 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="What your meter shows now (km)" onSubmitEditing={() => { const n = saveOdo(od); if (n && n > 0) { setFixOdo(false); setOd(''); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od); if (n && n > 0) { setFixOdo(false); setOd(''); } }} /></View>
-              {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15 }}>Saved for today. It also goes into Monthly Mileage and the yearly comparison, so you only type it once.</Text>}
+              <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="What your meter shows now (km)" onSubmitEditing={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /></View>
+              <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 2 }}>Also add this reading to:</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}><Chip t="Monthly Mileage" on={toM} onPress={() => setToM(!toM)} /><Chip t="Yearly Mileage" on={toY} onPress={() => setToY(!toY)} /></View>
+              {lastQ ? <Pressable onPress={() => confirmDelete('last reading', () => upd((x: any) => ({ ...x, oreadings: (x.oreadings || []).filter((r: any) => r.id !== lastQ.id) })), { title: 'Remove this reading?', message: lastQ.odo.toLocaleString('en-MY') + ' km from the estimate card is removed. Monthly and Yearly Mileage are not changed.', yes: 'Remove' })} accessibilityLabel="Remove last reading from the estimate" style={{ alignSelf: 'flex-start', paddingVertical: 4 }}><Text style={{ color: '#ff9aa9', fontSize: 11.5, fontWeight: '700' }}>{'Remove my last reading (' + lastQ.odo.toLocaleString('en-MY') + ' km)'}</Text></Pressable> : null}
+              {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15 }}>This always updates the estimate. Choose Monthly or Yearly only when you want it to count there too.</Text>}
             </View>
           ) : null}
         </View>

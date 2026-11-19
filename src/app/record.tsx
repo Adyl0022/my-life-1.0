@@ -126,7 +126,7 @@ export default function Record() {
   const upd = (fn: (v: Veh) => Veh, extra?: Partial<Data>) => setSt({ ...st, ...extra, data: { ...st.data, [catName]: fn({ ...d }) } });
   const sorted = d.readings.slice().sort(byDate);
   const latest = sorted.length ? sorted[sorted.length - 1].odo : 0;
-  const allOdo = Math.max(latest, ...(d.yreadings || []).map((r) => r.odo), ...(d.fuel || []).map((f) => f.odo || 0));
+  const allOdo = Math.max(latest, ...(d.yreadings || []).map((r) => r.odo), ...((d.oreadings || []) as any[]).map((r) => r.odo || 0), ...(d.fuel || []).map((f) => f.odo || 0));
   const now = new Date();
   const km = (from: string, to: string) => {
     const inR = sorted.filter((r) => r.date >= from && r.date < to); if (!inR.length) return null;
