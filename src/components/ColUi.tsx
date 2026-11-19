@@ -16,8 +16,8 @@ export const Tile = ({ icon, c, size = 54, breathe }: { icon: ColIconName; c: st
   React.useEffect(() => {
     if (!breathe) return;
     const l = Animated.loop(Animated.sequence([
-      Animated.timing(a, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      Animated.timing(a, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(a, { toValue: 1, duration: 3000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(a, { toValue: 0, duration: 3000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
     ]));
     l.start(); return () => l.stop();
   }, [breathe, a]);
