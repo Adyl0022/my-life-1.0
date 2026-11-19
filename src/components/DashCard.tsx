@@ -1,4 +1,6 @@
 import React from 'react';
+import { lessonOfDay } from '../lib/lessonOfDay';
+import { EMPTY_COL, type ColStore } from '../lib/collection';
 import { View, Pressable, Animated, ScrollView, Platform } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,8 +25,8 @@ import { HeadIcon, Face } from './HabitIcons';
 import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap opens the page, tap a bar segment to jump, long-press for the next one. Quick log keeps its own buttons.
-type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'memories' | 'prayer' | 'event' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
-const ORDER: Kind[] = ['log', 'prayer', 'tasks', 'event', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'memories'];
+type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'lesson' | 'memories' | 'prayer' | 'event' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
+const ORDER: Kind[] = ['log', 'prayer', 'tasks', 'event', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'lesson', 'memories'];
 const EXK = ['prayer', 'event', 'job', 'money', 'tasks', 'renew', 'debt'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -42,13 +44,13 @@ function Ring({ pct, val, col }: { pct: number; val: string; col: string }) {
     </View>
   );
 }
-function Premium({ k, label, title, sub, tone, ring, val }: { k: string; label: string; title: string; sub: string; tone?: string; ring?: number; val?: string }) {
+function Premium({ k, label, title, sub, tone, ring, val, one }: { k: string; label: string; title: string; sub: string; tone?: string; ring?: number; val?: string; one?: boolean }) {
   const g0 = PG[k] || { e: '✨', c: '#8fe9e2' }; const col = tone || g0.c; const g = tone === '#ff6b81' ? { ...g0, c: '#ff6b81' } : g0;
   return (<>
     <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: g.c + '30', borderWidth: 1, borderColor: g.c + '55' }}><Text style={{ fontSize: 25 }}>{g.e}</Text></View>
     <View style={{ flex: 1, minWidth: 0 }}>
       <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{label}</Text>
-      <Text numberOfLines={2} style={{ color: '#fff', fontSize: 17, lineHeight: 21, fontWeight: '800', marginTop: 2 }}>{title}</Text>
+      <Text numberOfLines={one ? 1 : 2} adjustsFontSizeToFit={!!one} minimumFontScale={0.72} style={{ color: '#fff', fontSize: 17, lineHeight: 21, fontWeight: '800', marginTop: 2 }}>{title}</Text>
       <Text numberOfLines={3} style={{ color: col, fontSize: 12.5, lineHeight: 16, fontWeight: '700', marginTop: 2 }}>{sub}</Text>
     </View>
     {ring != null && val ? <Ring pct={ring} val={val} col={col} /> : null}
@@ -60,6 +62,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const hid = useHidden();
   const core = useCore();
   const [sel, setSel] = useStored<string>('ml_dcard2', 'log');
+  const [colS] = useStored<ColStore>('ml_collection', EMPTY_COL);
   const [hd, setHd] = useStored<HData>('ml_habit', HEMPTY);
   const [slp, setSlp] = React.useState(7);
   const [bpm, setBpm] = React.useState('');
@@ -80,7 +83,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
   const ex = useDashExtras(core, { islamic: hid.on('islamic'), planner: hid.on('planner'), record: hid.on('record'), finance: hid.on('finance') });
-  const ok: Record<Kind, boolean> = { prayer: !!ex.prayer, event: !!ex.event, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, memories: !!sess && !(mem && mem.dash === false) };
+  const ok: Record<Kind, boolean> = { prayer: !!ex.prayer, event: !!ex.event, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
   const dp = useDashPages(); ORDER.forEach((k) => { if (k !== 'log' && !dp.isOn(k)) ok[k] = false; });
   const avail = ORDER.filter((k) => ok[k]);
   const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
@@ -94,7 +97,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     });
   };
   const next = () => goTo(avail[(idx + 1) % avail.length]);
-  const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'memories' ? '/memories' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
+  const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'memories' ? '/memories' : kind === 'lesson' ? '/lessons' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   nextRef.current = next;
   // Coming back from another page: the card must keep turning, and must never be left half faded.
@@ -199,6 +202,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   } else if (EXK.indexOf(kind) >= 0) {
     const e = (ex as any)[kind] as any; urgent = e.tone === '#ff6b81';
     body = <Premium k={kind} label={e.label} title={e.title} sub={e.sub} tone={e.tone} ring={e.ring} val={e.val} />;
+  } else if (kind === 'lesson') {
+    const ld = lessonOfDay(colS && colS.lessons);
+    body = <Premium k="lesson" label={(ld.mine ? 'YOUR LESSON' : 'LIFE LESSON') + ' · ' + ld.tag.toUpperCase()} title={ld.title} sub={ld.text} one />;
   } else if (kind === 'memories') {
     body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life' : 'Your Memories'} sub="Every moment matters" />;
   } else if (kind === 'score') {

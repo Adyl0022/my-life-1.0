@@ -18,6 +18,7 @@ export const DASH_PAGES: { k: string; t: string; s: string; e: string; c: string
   { k: 'streak', t: 'Streak', s: 'How many days in a row you logged', e: '🔥', c: '#ff9a8b' },
   { k: 'score', t: 'Life score', s: 'Your score for today', e: '🎯', c: '#b794ff' },
   { k: 'tip', t: 'Tip', s: 'A small tip from your own records', e: '💡', c: '#ffd9a8' },
+  { k: 'lesson', t: 'Life lesson', s: 'A new short lesson every day, with some of your own', e: '🌱', c: '#b794ff' },
   { k: 'memories', t: 'Your Memories', s: 'Days with My Life 1.0', e: '📖', c: '#ffb3c6' },
 ];
 export function useDashPages() {
