@@ -43,7 +43,7 @@ function Ring({ pct, val, col }: { pct: number; val: string; col: string }) {
   );
 }
 function Premium({ k, label, title, sub, tone, ring, val }: { k: string; label: string; title: string; sub: string; tone?: string; ring?: number; val?: string }) {
-  const g = PG[k] || { e: '✨', c: '#8fe9e2' }; const col = tone || g.c;
+  const g0 = PG[k] || { e: '✨', c: '#8fe9e2' }; const col = tone || g0.c; const g = tone === '#ff6b81' ? { ...g0, c: '#ff6b81' } : g0;
   return (<>
     <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: g.c + '30', borderWidth: 1, borderColor: g.c + '55' }}><Text style={{ fontSize: 25 }}>{g.e}</Text></View>
     <View style={{ flex: 1, minWidth: 0 }}>
@@ -215,7 +215,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { prog.setValue(0); const a = Animated.timing(prog, { toValue: 1, duration: 5000, useNativeDriver: false }); a.start(); return () => a.stop(); }, [kind]);
   return (
     <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={logOpen ? (cur0 === 'heart' || (cur0 === undefined && unw) ? undefined : next) : open} onLongPress={logOpen ? open : next} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <Glass style={{ height: 100, justifyContent: 'center', borderRadius: 26, ...(urgent ? { borderWidth: 1.5, borderColor: 'rgba(255,107,129,.55)', shadowColor: '#ff6b81', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
+      <Glass style={{ height: 100, justifyContent: 'center', borderRadius: 26, ...(urgent ? { backgroundColor: 'rgba(255,107,129,.10)', borderWidth: 1.5, borderColor: 'rgba(255,107,129,.55)', shadowColor: '#ff6b81', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
         <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: barOn ? 8 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {barOn ? (
           <View style={{ position: 'absolute', left: 18, right: 18, bottom: 8, flexDirection: 'row', gap: 4 }}>
