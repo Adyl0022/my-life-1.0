@@ -8,7 +8,7 @@ import { Glass } from './Glass';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
 import { Inp } from './Ui';
-import { useDashPages } from './DashCardPicks';
+import { useDashPages, DASH_PAGES } from './DashCardPicks';
 import { useCycleSave } from '../lib/cycleHook';
 import { cycleInfo } from '../lib/cycle';
 import { addSleepTile } from '../../modules/step-counter';
@@ -22,12 +22,38 @@ import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
 import { HeadIcon, Face } from './HabitIcons';
 import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
-// The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
+// The card at the bottom of the Dashboard. Tap opens the page, tap a bar segment to jump, long-press for the next one. Quick log keeps its own buttons.
 type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'memories' | 'prayer' | 'event' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
 const ORDER: Kind[] = ['log', 'prayer', 'tasks', 'event', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'memories'];
 const EXK = ['prayer', 'event', 'job', 'money', 'tasks', 'renew', 'debt'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+const PG: Record<string, { e: string; c: string }> = {}; DASH_PAGES.forEach((p) => { PG[p.k] = { e: p.e, c: p.c }; });
+function Ring({ pct, val, col }: { pct: number; val: string; col: string }) {
+  const R = 24, C = 2 * Math.PI * R; const f = Math.max(0, Math.min(1, pct));
+  return (
+    <View style={{ width: 58, height: 58, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={58} height={58} style={{ position: 'absolute' }}>
+        <Circle cx={29} cy={29} r={R} stroke="rgba(255,255,255,.14)" strokeWidth={5} fill="none" />
+        <Circle cx={29} cy={29} r={R} stroke={col} strokeWidth={5} fill="none" strokeLinecap="round" strokeDasharray={C + ''} strokeDashoffset={C - C * f} transform="rotate(-90 29 29)" />
+      </Svg>
+      <Text numberOfLines={1} style={{ color: '#fff', fontSize: val.length > 4 ? 11 : 12.5, fontWeight: '800' }}>{val}</Text>
+    </View>
+  );
+}
+function Premium({ k, label, title, sub, tone, ring, val }: { k: string; label: string; title: string; sub: string; tone?: string; ring?: number; val?: string }) {
+  const g = PG[k] || { e: '✨', c: '#8fe9e2' }; const col = tone || g.c;
+  return (<>
+    <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: g.c + '30', borderWidth: 1, borderColor: g.c + '55' }}><Text style={{ fontSize: 25 }}>{g.e}</Text></View>
+    <View style={{ flex: 1, minWidth: 0 }}>
+      <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{label}</Text>
+      <Text numberOfLines={1} style={{ color: '#fff', fontSize: 17, fontWeight: '800', marginTop: 2 }}>{title}</Text>
+      <Text numberOfLines={1} style={{ color: col, fontSize: 12.5, fontWeight: '700', marginTop: 2 }}>{sub}</Text>
+    </View>
+    {ring != null && val ? <Ring pct={ring} val={val} col={col} /> : null}
+  </>);
+}
 
 export function DashCard({ mins, opens, series }: { mins: number; opens: number; series: number[] }) {
   const router = useRouter();
@@ -60,14 +86,14 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
   const idx = avail.indexOf(kind);
 
-  const next = () => {
-    if (avail.length < 2) return;
-    const to = avail[(idx + 1) % avail.length];
+  const goTo = (to: Kind) => {
+    if (avail.length < 2 || to === kind) return;
     Animated.parallel([Animated.timing(v, { toValue: 0, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: -8, duration: 160, useNativeDriver: true })]).start(() => {
       setSel(to); ty.setValue(8);
       Animated.parallel([Animated.timing(v, { toValue: 1, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: 0, duration: 160, useNativeDriver: true })]).start();
     });
   };
+  const next = () => goTo(avail[(idx + 1) % avail.length]);
   const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'memories' ? '/memories' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   nextRef.current = next;
@@ -75,7 +101,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { const i = setInterval(() => { if (busy.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 5000); return () => clearInterval(i); }, []);
 
   const maxM = Math.max(...series.filter((x) => Number.isFinite(x)), 1);
-  let body: React.ReactNode = null; let cur0: string | undefined;
+  let body: React.ReactNode = null; let cur0: string | undefined; let urgent = false;
   if (kind === 'log') {
     // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
     const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
@@ -166,76 +192,38 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   } else if (kind === 'streak') {
     const hd = core.hd; const cg = cupsGoal(hd), g = hd.goal || 8000;
     const now = curStreak(hd), best = Math.max(bestStreakAll(hd), now);
-    const days = weekOffs().map((o) => ({ l: LET[dateOf(o).getDay()], on: goalPctOf(getDay(hd, o), g, cg) >= 70, today: o === 0 }));
-    body = (<>
-      <View>
-        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Daily Streak</Text>
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', marginTop: 2 }}>{now} {now === 1 ? 'day' : 'days'}</Text>
-        <Text style={{ color: dim, fontSize: 11 }}>Now · best {best}</Text>
-      </View>
-      <View style={{ flex: 1, alignItems: 'flex-end', gap: 6 }}>
-        <View style={{ flexDirection: 'row', gap: 5 }}>
-          {days.map((d, i) => d.on
-            ? <LinearGradient key={i} colors={['#8fe9e2', '#34d399']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 21, height: 21, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: d.today ? 2 : 0, borderColor: '#fff' }}><Text style={{ color: '#06222a', fontSize: 10, fontWeight: '900' }}>{d.l}</Text></LinearGradient>
-            : <View key={i} style={{ width: 21, height: 21, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center', justifyContent: 'center', borderWidth: d.today ? 2 : 0, borderColor: '#fff' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10, fontWeight: '700' }}>{d.l}</Text></View>)}
-        </View>
-        <Text style={{ color: dim, fontSize: 11 }}>This week · ring = today</Text>
-      </View>
-    </>);
+    const wk = weekOffs().filter((o) => goalPctOf(getDay(hd, o), g, cg) >= 70).length;
+    body = <Premium k="streak" label="DAILY STREAK" title={now + (now === 1 ? ' day' : ' days')} sub={'Best ' + best + ' · ' + wk + ' of 7 this week'} ring={wk / 7} val={wk + '/7'} />;
   } else if (EXK.indexOf(kind) >= 0) {
-    const e = (ex as any)[kind] as any;
-    body = (<>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{e.label}</Text>
-        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '800', marginTop: 3 }}>{e.title}</Text>
-        <Text numberOfLines={2} style={{ color: e.tone || dim, fontSize: 12, fontWeight: '700', marginTop: 3, lineHeight: 16 }}>{e.sub}</Text>
-      </View>
-      <Pressable onPress={() => router.push(e.go as any)} accessibilityLabel={'Open ' + e.label.toLowerCase()} style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#8fe9e2' }}><Text style={{ color: '#0d3a3a', fontSize: 13, fontWeight: '800' }}>Open</Text></Pressable>
-    </>);
+    const e = (ex as any)[kind] as any; urgent = e.tone === '#ff6b81';
+    body = <Premium k={kind} label={e.label} title={e.title} sub={e.sub} tone={e.tone} ring={e.ring} val={e.val} />;
   } else if (kind === 'memories') {
-    body = (<>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>YOUR MEMORIES</Text>
-        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>{mdays ? 'Day ' + mdays + ' with My Life 1.0' : 'Your Memories with My Life 1.0'}</Text>
-        <Text numberOfLines={2} style={{ color: dim, fontSize: 10.5, marginTop: 3, lineHeight: 14 }}>Every moment matters. Every journey tells a story</Text>
-      </View>
-      <Pressable onPress={() => router.push('/memories' as any)} accessibilityLabel="Open Your Memories" style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#8fe9e2' }}><Text style={{ color: '#0d3a3a', fontSize: 13, fontWeight: '800' }}>Open</Text></Pressable>
-    </>);
+    body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life' : 'Your Memories'} sub="Every moment matters" />;
   } else if (kind === 'score') {
-    const sc = lifeScore(parts); const R = 24, C = 2 * Math.PI * R;
-    const sorted = parts.slice().sort((a, b) => b.pct - a.pct); const warn = sorted.find(p => p.k === 'spend' && /(over budget|nearly used)$/.test(p.detail)); const top = warn ? [warn, ...sorted.filter(p => p !== warn).slice(0, 2)] : sorted.slice(0, 3);
-    body = (<>
-      <View style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width={60} height={60} style={{ position: 'absolute' }}>
-          <Circle cx={30} cy={30} r={R} stroke="rgba(255,255,255,.18)" strokeWidth={6} fill="none" />
-          <Circle cx={30} cy={30} r={R} stroke="#34d399" strokeWidth={6} fill="none" strokeLinecap="round" strokeDasharray={C + ''} strokeDashoffset={C - (C * Math.min(sc, 100)) / 100} transform="rotate(-90 30 30)" />
-        </Svg>
-        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{sc}</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Life Score <Text style={{ fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,.65)' }}>· today</Text></Text>
-        <Text numberOfLines={2} style={{ color: dim, fontSize: 11, marginTop: 4, lineHeight: 15 }}>{top.map((p, i) => { const over = p.k === 'spend' && /over budget$/.test(p.detail); const near = p.k === 'spend' && /nearly used$/.test(p.detail); return <Text key={p.k + i}>{i ? ' · ' : ''}{p.label + ' ' + p.pct + '%'}{over || near ? <Text style={{ color: over ? '#ff8a9b' : '#ffc46b', fontWeight: '800' }}>{over ? ' · over' : ' · low'}</Text> : null}</Text>; })}</Text>
-      </View>
-    </>);
+    const sc = lifeScore(parts);
+    const sorted = parts.slice().sort((a, b) => b.pct - a.pct); const warn = sorted.find(p => p.k === 'spend' && /(over budget|nearly used)$/.test(p.detail)); const top = warn ? [warn, ...sorted.filter(p => p !== warn).slice(0, 1)] : sorted.slice(0, 2);
+    body = <Premium k="score" label="LIFE SCORE · TODAY" title={sc + ' out of 100'} sub={top.map((p) => p.label + ' ' + p.pct + '%').join(' · ')} ring={sc / 100} val={String(sc)} />;
   } else {
     const t = tp[0];
-    body = (<>
-      <HeadIcon k={t.k} size={40} />
-      <View style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 13.5, fontWeight: '700' }}>{t.title}</Text>
-        <Text numberOfLines={2} style={{ color: dim, fontSize: 11, marginTop: 3, lineHeight: 15 }}>{t.sub}</Text>
-      </View>
-    </>);
+    body = <Premium k="tip" label="TIP" title={t.title} sub={t.sub} />;
   }
 
   busy.current = sleeping || (kind === 'log' && (cur0 === 'heart' || unw || othOn || !!bpm));
+  const logOpen = kind === 'log';
+  const barOn = avail.length > 1 && !(kind === 'log' && cur0 === undefined && unw);
+  const prog = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => { prog.setValue(0); const a = Animated.timing(prog, { toValue: 1, duration: 5000, useNativeDriver: false }); a.start(); return () => a.stop(); }, [kind]);
   return (
-    <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={kind === 'log' && (cur0 === 'heart' || (cur0 === undefined && unw)) ? undefined : next} onLongPress={open} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <Glass style={{ height: 90, justifyContent: 'center' }}>
-        <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
-        {avail.length > 1 && !(kind === 'log' && cur0 === undefined && unw) ? (
-          <View pointerEvents="none" style={{ position: 'absolute', top: 9, right: 14, flexDirection: 'row', gap: 4 }}>
-            {avail.map((k, i) => <View key={k} style={{ width: i === idx ? 14 : 5, height: 5, borderRadius: 3, backgroundColor: i === idx ? '#8fe9e2' : 'rgba(255,255,255,.3)' }} />)}
+    <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={logOpen ? (cur0 === 'heart' || (cur0 === undefined && unw) ? undefined : next) : open} onLongPress={logOpen ? open : next} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+      <Glass style={{ height: 100, justifyContent: 'center', borderRadius: 26, ...(urgent ? { borderWidth: 1.5, borderColor: 'rgba(255,107,129,.55)', shadowColor: '#ff6b81', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
+        <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: barOn ? 8 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
+        {barOn ? (
+          <View style={{ position: 'absolute', left: 18, right: 18, bottom: 8, flexDirection: 'row', gap: 4 }}>
+            {avail.map((k, i) => (
+              <Pressable key={k} onPress={() => goTo(k)} hitSlop={{ top: 8, bottom: 8 }} accessibilityLabel={'Show page ' + (i + 1)} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.18)', overflow: 'hidden' }}>
+                {i === idx ? <Animated.View style={{ height: 3, backgroundColor: '#8fe9e2', width: prog.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} /> : i < idx ? <View style={{ height: 3, backgroundColor: 'rgba(143,233,226,.45)' }} /> : null}
+              </Pressable>
+            ))}
           </View>
         ) : null}
       </Glass>
