@@ -30,16 +30,17 @@ export function streaks(l: HubLog, kind: 'q' | 'z', today = new Date()) {
 }
 
 // A verse for the day. On the day of an Islamic event it fits the event, then Ramadan, then Friday, otherwise a short verse that changes daily.
-const DAILY: [string, number][] = [['94', 5], ['2', 152], ['3', 139], ['13', 28], ['65', 3], ['93', 3], ['20', 46], ['2', 186]];
+// Every verse here is short enough to show in full on the card (about 110 characters of translation at most).
+const DAILY: [string, number][] = [['94', 5], ['2', 152], ['3', 139], ['93', 3], ['20', 46], ['55', 13], ['2', 153], ['16', 128]];
 const FOR_EVENT: Record<string, [string, number]> = {
-  'Awal Muharram': ['9', 36], 'Hari Asyura': ['20', 80], 'Maulidur Rasul': ['21', 107], "Isra' Mi'raj": ['17', 1],
-  'Nuzul Quran': ['97', 1], 'Aidilfitri': ['2', 185], 'Hari Arafah': ['22', 27], 'Aidiladha': ['108', 2],
+  'Awal Muharram': ['103', 3], 'Hari Asyura': ['26', 65], 'Maulidur Rasul': ['21', 107], "Isra' Mi'raj": ['53', 18],
+  'Nuzul Quran': ['97', 1], 'Aidilfitri': ['87', 14], 'Hari Arafah': ['3', 96], 'Aidiladha': ['108', 2],
 };
 export function ayatOfDay(today: Date, ramadan: boolean, eventToday?: string): { key: string; n: number; why: string } {
   const fe = eventToday && FOR_EVENT[eventToday];
   if (fe) return { key: fe[0], n: fe[1], why: 'For ' + eventToday };
-  if (ramadan) return { key: '2', n: 185, why: 'For Ramadan' };
-  if (today.getDay() === 5) return { key: 'kahfi', n: 10, why: 'For Friday' };
+  if (ramadan) return { key: '97', n: 3, why: 'For Ramadan' };
+  if (today.getDay() === 5) return { key: 'kahfi', n: 1, why: 'For Friday' };
   const doy = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
   const d = DAILY[doy % DAILY.length];
   return { key: d[0], n: d[1], why: 'Verse of the day' };
