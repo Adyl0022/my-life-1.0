@@ -99,6 +99,7 @@ export function RegionCard() {
       <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Region</Text>
       <Field k="Country" flag={co.flag} title={co.name} sub="Public holidays in Planner" onPress={() => setOpen('country')} />
       <Field k="Currency" flag={cu.flag} title={cu.name} sub={cu.code} pill={cu.sym} onPress={() => setOpen('cur')} />
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>This only changes how amounts look. Your numbers are not converted.</Text>
       <View style={{ marginTop: 14 }}>
         <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '600' }}>Week starts on</Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
@@ -107,7 +108,6 @@ export function RegionCard() {
         </View>
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{(typeof r.ws === 'number' && r.ws >= 0 ? 'Weekly charts start on ' + WS_NAME[r.ws] + '.' : 'Auto follows your country: ' + WS_NAME[autoWeekStart(r.cc)] + '.')}</Text>
       </View>
-      <Text style={{ color: dim, fontSize: 11.5, marginTop: 12, lineHeight: 16 }}>Currency only changes how amounts look. Your numbers are not converted.</Text>
       {open === 'country' ? (
         <Sheet title="Choose country" ph="Search country" items={countries} sel={r.cc} onClose={() => setOpen('')}
           onPick={(id) => { const c = countryOf(id); setR({ ...r, cc: c.cc }); setOpen(''); }} />
