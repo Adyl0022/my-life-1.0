@@ -121,9 +121,12 @@ export function Chev() {
 // Documents and Personal Collection: gradient, a pattern, a big faint picture and the icon tile.
 export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; title: string; sub: string; colors: [string, string]; pat: 'dots' | 'lines' | 'rings' | 'grid'; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
+    <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ marginTop: 14, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+      <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.45, shadowRadius: 14, elevation: 10 }}>
+      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.6)', borderBottomColor: 'rgba(0,0,0,.35)' }}>
         <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
+          <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
+          <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,.28)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 30 }} />
           <Pat kind={pat} />
           <Text style={{ position: 'absolute', right: -4, bottom: -10, fontSize: 80, opacity: 0.2, transform: [{ rotate: '-10deg' }] }}>{e}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
@@ -136,6 +139,7 @@ export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; ti
           </View>
         </LinearGradient>
       </View>
+      </View>
     </Pressable>
   );
 }
@@ -144,9 +148,12 @@ export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; ti
 export function VehicleCard({ onPress }: { onPress: () => void }) {
   const gold = '#ffe3c2';
   return (
-    <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
+    <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 14, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+      <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.45, shadowRadius: 14, elevation: 10 }}>
+      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.6)', borderBottomColor: 'rgba(0,0,0,.35)' }}>
         <LinearGradient colors={['#8c5468', '#5b2d4e', '#2d1840']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
+          <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
+          <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,.28)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 30 }} />
           <Svg width="48%" height="100%" viewBox="0 0 160 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
             <Defs>
               <SvgGrad id="rd" x1="0" y1="0" x2="160" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0.15" stopColor={gold} stopOpacity={0} /><Stop offset="0.55" stopColor={gold} stopOpacity={0.62} /><Stop offset="1" stopColor={gold} stopOpacity={0.7} /></SvgGrad>
@@ -171,6 +178,7 @@ export function VehicleCard({ onPress }: { onPress: () => void }) {
             <Chev />
           </View>
         </LinearGradient>
+      </View>
       </View>
     </Pressable>
   );
