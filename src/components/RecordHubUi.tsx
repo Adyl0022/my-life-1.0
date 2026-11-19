@@ -192,6 +192,33 @@ export function PicCard({ e, title, sub, colors, pat, onPress, sheen = 0 }: { sh
   );
 }
 
+// Documents and Personal Collection sit side by side, so each one is a tall half-width card.
+export function HalfCard({ e, title, sub, colors, pat, onPress, sheen = 0 }: { e: string; title: string; sub: string; colors: [string, string]; pat: 'dots' | 'lines' | 'rings' | 'grid'; onPress: () => void; sheen?: number }) {
+  return (
+    <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+      <View style={{ borderRadius: 26, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
+        <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
+          <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 160, padding: 14, justifyContent: 'space-between' }}>
+            <Sheen delay={sheen} />
+            <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
+            <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,.12)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 30 }} />
+            <Pat kind={pat} />
+            <Text style={{ position: 'absolute', right: -6, bottom: -12, fontSize: 70, opacity: 0.18, transform: [{ rotate: '-10deg' }] }}>{e}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 2, elevation: 2 }}>
+              <GlassTile size={46} radius={16}><Text style={{ fontSize: 23 }}>{e}</Text></GlassTile>
+              <Chev />
+            </View>
+            <View style={{ zIndex: 2, elevation: 2 }}>
+              <Text numberOfLines={2} style={{ color: W, fontSize: 16, fontWeight: '800', letterSpacing: -0.2, lineHeight: 20 }}>{title}</Text>
+              <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.82)', fontSize: 12, marginTop: 3 }}>{sub}</Text>
+            </View>
+          </LinearGradient>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 // My Vehicle: dark rose gold, circuit-board lines and a glass speedometer tile.
 export function VehicleCard({ onPress, sheen = 0 }: { onPress: () => void; sheen?: number }) {
   const gold = '#ffe3c2';
