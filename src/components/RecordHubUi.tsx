@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Pressable, ScrollView, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, G, Line, LinearGradient as SvgGrad, Path, Pattern, Rect, Stop } from 'react-native-svg';
@@ -10,15 +10,55 @@ import { Blob } from './Bg';
 import { W } from './Ui';
 import { TOP } from '../lib/layout';
 
+
+// Slow, quiet motion for the My Record screens.
+function useCycle(dur: number, delay = 0, back = true) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const a = back
+      ? Animated.loop(Animated.sequence([Animated.timing(v, { toValue: 1, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(v, { toValue: 0, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]))
+      : Animated.loop(Animated.sequence([Animated.delay(delay), Animated.timing(v, { toValue: 1, duration: dur, easing: Easing.linear, useNativeDriver: true }), Animated.timing(v, { toValue: 0, duration: 0, useNativeDriver: true })]));
+    const t = setTimeout(() => a.start(), back ? delay : 0);
+    return () => { clearTimeout(t); a.stop(); };
+  }, []);
+  return v;
+}
+function Drift({ dx, dy, dur, delay = 0, children }: { dx: number; dy: number; dur: number; delay?: number; children: React.ReactNode }) {
+  const v = useCycle(dur, delay);
+  return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [0, dx] }) }, { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, dy] }) }] }}>{children}</Animated.View>;
+}
+function Twinkle({ x, y, s, delay }: { x: string; y: string; s: number; delay: number }) {
+  const v = useCycle(1700 + s * 500, delay);
+  return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: x as any, top: y as any, width: s, height: s, borderRadius: s, backgroundColor: '#ffe3c2', opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.05, 0.6] }) }} />;
+}
+const SPARKS: [string, string, number][] = [['8%', '12%', 3], ['24%', '30%', 2], ['47%', '9%', 3], ['70%', '22%', 2], ['90%', '36%', 3], ['14%', '52%', 2], ['62%', '58%', 3], ['86%', '70%', 2], ['30%', '78%', 3], ['52%', '90%', 2], ['8%', '92%', 2], ['78%', '94%', 3]];
+// A soft band of light that crosses a card now and then.
+function Sheen({ delay = 0 }: { delay?: number }) {
+  const [w, setW] = useState(0);
+  const v = useCycle(5200, delay, false);
+  return (
+    <View pointerEvents="none" onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 1 }}>
+      {w > 0 ? <Animated.View style={{ position: 'absolute', top: -20, bottom: -20, width: 70, transform: [{ translateX: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [-120, w + 60, w + 60] }) }, { skewX: '-18deg' }] }}>
+        <LinearGradient colors={['rgba(255,255,255,0)', 'rgba(255,255,255,.14)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flex: 1 }} />
+      </Animated.View> : null}
+    </View>
+  );
+}
+function Spin({ dur, children, style }: { dur: number; children: React.ReactNode; style?: any }) {
+  const v = useCycle(dur, 0, false);
+  return <Animated.View pointerEvents="none" style={[style, { transform: [{ rotate: v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}>{children}</Animated.View>;
+}
+
 // The soft dark-pink page used by every My Record screen.
 export function RecordPage({ title, sub, children, art }: { title: string; sub: string; children: React.ReactNode; art?: boolean }) {
   const router = useRouter();
   return (
     <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
       <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      <Blob size={320} color="rgba(255,143,171,.38)" style={{ right: -100, top: -40 }} />
-      <Blob size={340} color="rgba(124,156,255,.2)" style={{ left: -120, bottom: -150 }} />
+      <Drift dx={-28} dy={26} dur={7000}><Blob size={320} color="rgba(255,143,171,.38)" style={{ right: -100, top: -40 }} /></Drift>
+      <Drift dx={30} dy={-24} dur={8500} delay={1200}><Blob size={340} color="rgba(124,156,255,.2)" style={{ left: -120, bottom: -150 }} /></Drift>
       {art ? <PageArt /> : null}
+      {art ? SPARKS.map(([x, y, sz], i) => <Twinkle key={i} x={x} y={y} s={sz} delay={i * 260} />) : null}
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 60 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -93,11 +133,13 @@ export function Intro({ title, text }: { title: string; text: string }) {
     <View style={{ marginTop: 16, borderRadius: 26, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 }}>
       <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
         <LinearGradient colors={['rgba(255,143,171,.5)', 'rgba(150,120,255,.42)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 18, paddingVertical: 20 }}>
-          <Svg width={150} height={150} viewBox="0 0 150 150" pointerEvents="none" style={{ position: 'absolute', right: -34, top: -40 }}>
-            <G fill="none" stroke="#fff" strokeOpacity={0.22} strokeWidth={1.2}>
-              <Circle cx={75} cy={75} r={70} /><Circle cx={75} cy={75} r={52} strokeDasharray="3 5" /><Circle cx={75} cy={75} r={34} />
-            </G>
-          </Svg>
+          <Spin dur={40000} style={{ position: 'absolute', right: -34, top: -40, width: 150, height: 150 }}>
+            <Svg width={150} height={150} viewBox="0 0 150 150">
+              <G fill="none" stroke="#fff" strokeOpacity={0.22} strokeWidth={1.2}>
+                <Circle cx={75} cy={75} r={70} strokeDasharray="2 9" /><Circle cx={75} cy={75} r={52} strokeDasharray="3 5" /><Circle cx={75} cy={75} r={34} />
+              </G>
+            </Svg>
+          </Spin>
           <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>{title}</Text>
           <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 14, marginTop: 4 }}>{text}</Text>
         </LinearGradient>
@@ -124,12 +166,13 @@ export function Chev() {
 }
 
 // Documents and Personal Collection: gradient, a pattern, a big faint picture and the icon tile.
-export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; title: string; sub: string; colors: [string, string]; pat: 'dots' | 'lines' | 'rings' | 'grid'; onPress: () => void }) {
+export function PicCard({ e, title, sub, colors, pat, onPress, sheen = 0 }: { sheen?: number; e: string; title: string; sub: string; colors: [string, string]; pat: 'dots' | 'lines' | 'rings' | 'grid'; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ marginTop: 12, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
       <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
         <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 94, paddingHorizontal: 16, justifyContent: 'center' }}>
+          <Sheen delay={sheen} />
           <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
           <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,.12)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 30 }} />
           <Pat kind={pat} />
@@ -150,13 +193,14 @@ export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; ti
 }
 
 // My Vehicle: dark rose gold, circuit-board lines and a glass speedometer tile.
-export function VehicleCard({ onPress }: { onPress: () => void }) {
+export function VehicleCard({ onPress, sheen = 0 }: { onPress: () => void; sheen?: number }) {
   const gold = '#ffe3c2';
   return (
     <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 12, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
       <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
         <LinearGradient colors={['#8c5468', '#5b2d4e', '#2d1840']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 94, paddingHorizontal: 16, justifyContent: 'center' }}>
+          <Sheen delay={sheen} />
           <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
           <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,.12)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 30 }} />
           <Svg width="48%" height="100%" viewBox="0 0 160 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>

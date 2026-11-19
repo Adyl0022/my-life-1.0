@@ -2,13 +2,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Pressable, Animated, Easing, PanResponder, LayoutAnimation } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from './Txt';
-import { Glass } from './Glass';
+import { LinearGradient } from 'expo-linear-gradient';
 import { W } from './Ui';
 import { useStored } from '../lib/store';
 import { odoEstimate, taskState } from '../lib/maintTasks';
 
 // My Record top card: turns by itself every 10 seconds, swipe to change, hold to pause. Same behaviour as the Islamic Hub card.
 const CH = 196;
+// Clear glass: no blur and only a faint tint, so the page shows through.
+function Glass({ children, style, radius = 22 }: { children: React.ReactNode; style?: any; radius?: number }) {
+  return (
+    <View style={[{ borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.18)', backgroundColor: 'rgba(255,255,255,.035)' }, style]}>
+      <LinearGradient colors={['rgba(255,255,255,.08)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+      {children}
+    </View>
+  );
+}
 const pad = (n: number) => String(n).padStart(2, '0');
 const dayN = (s: string) => { const p = s.split('-'); return Math.round(new Date(+p[0], +p[1] - 1, +p[2], 12).getTime() / 86400000); };
 const TIPS = [
