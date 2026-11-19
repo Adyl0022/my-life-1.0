@@ -113,8 +113,9 @@ export function checkRecitation(expected: { word: string; verse: number }[], hea
   let last = -1; res.forEach((r, k) => { if (r.status !== 'missing') last = k; });
   for (let k = last + 1; k < m; k++) res[k] = { ...res[k], status: 'pending' };
   const reached = last + 1;
-  const ok = res.filter((r) => r.status === 'ok').length + res.filter((r) => r.status === 'close').length * 0.5;
-  return { words: res, extra, reached, total: m, score: reached ? Math.round((ok / reached) * 100) : 0 };
+  // The score is coverage: how many of the words the person recited were actually said. Only skipped words lower it, because the app cannot judge tajwid.
+  const skipped = res.filter((r) => r.status === 'missing').length;
+  return { words: res, extra, reached, total: m, score: reached ? Math.round(((reached - skipped) / reached) * 100) : 0 };
 }
 
 // ---- Tajwid reminders (from the written text, NOT heard from the audio) ----
