@@ -102,6 +102,8 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
   const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [view, setView] = useState(false); const [tried, setTried] = useState(false);
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
   const t = typeOf(f.type);
+  const [tab0] = useState(typeOf(f.type).tab);
+  const allowed = DOC_TYPES.filter((x) => x.tab === tab0);
   const fill = (base: Form, r: Read): Form => {
     const t = typeOf(base.type);
     const nm = r.name ? r.name.replace(/\b([A-Z])([A-Z]+)\b/g, (_m, x, y) => x + y.toLowerCase()) : '';
@@ -114,11 +116,11 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       if (uri) {
         const text = Platform.OS === 'web' ? null : await scanPhoto(uri);
         const fresh = !f.id && !f.title.trim() && !f.number.trim();
-        const g = text && fresh ? guessType(text) : null; const ty = g ? g.type : f.type;
+        const g0 = text && fresh ? guessType(text) : null; const g = g0 && allowed.some((a) => a.key === g0.type) ? g0 : null; const pre = g0 && !g ? 'This looks like a ' + typeOf(g0.type).label.toLowerCase() + ', which belongs in the ' + (TABS.find((x) => x.k === typeOf(g0.type).tab)?.n || 'other') + ' tab. ' : ''; const ty = g ? g.type : f.type;
         const r = text ? (readText(ty, text) || (ty !== f.type ? readText(f.type, text) : null)) : null; const base = { ...f, type: ty, photo: uri };
         if (text == null) { setF(base); setMsg(Platform.OS === 'web' ? 'Scanning works in the Android app. You can still type the details in.' : 'Scanning is not ready on this phone. You can still type the details in.'); }
-        else if (!r) { setF(base); setMsg((g && g.type !== f.type ? 'Looks like a ' + typeOf(g.type).label.toLowerCase() + ', but no details could be read. ' : '') + 'Could not read this photo. Try again in good light, hold the camera steady, or type it in.'); }
-        else { setF(fill(base, r)); const sw = g && g.type !== f.type ? 'Looks like a ' + typeOf(g.type).label.toLowerCase() + (g.sure ? '. ' : ', but I am not sure. Change the type above if it is wrong. ') : ''; setMsg(sw + (r.sure ? '✓ The two code lines matched. Please still check each box.' : 'Read some details from the photo. Please check each box before you save.')); }
+        else if (!r) { setF(base); setMsg(pre + (g && g.type !== f.type ? 'Looks like a ' + typeOf(g.type).label.toLowerCase() + ', but no details could be read. ' : '') + 'Could not read this photo. Try again in good light, hold the camera steady, or type it in.'); }
+        else { setF(fill(base, r)); const sw = g && g.type !== f.type ? 'Looks like a ' + typeOf(g.type).label.toLowerCase() + (g.sure ? '. ' : ', but I am not sure. Change the type above if it is wrong. ') : ''; setMsg(pre + sw + (r.sure ? '✓ The two code lines matched. Please still check each box.' : 'Read some details from the photo. Please check each box before you save.')); }
       }
     } catch (e: any) { setMsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings to scan, or choose a photo instead.' : 'Could not open the photo. Please try again.'); }
     setBusy(false);
@@ -139,8 +141,8 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
             </View>
             {lab('TYPE')}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {DOC_TYPES.map((x) => (
-                <Pressable key={x.key} onPress={() => set({ type: x.key })} style={{ width: '23.2%' }} accessibilityLabel={x.label}>
+              {allowed.map((x) => (
+                <Pressable key={x.key} onPress={() => set({ type: x.key })} style={{ flexGrow: 1, flexBasis: '30%' }} accessibilityLabel={x.label}>
                   <View style={{ ...chip(f.type === x.key, x.c), paddingVertical: 12 }}><Text style={{ fontSize: 22 }}>{x.e}</Text><Text numberOfLines={1} style={{ color: W, fontSize: 11, fontWeight: '700', marginTop: 3 }}>{x.label}</Text></View>
                 </Pressable>
               ))}

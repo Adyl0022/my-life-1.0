@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Pressable, Animated, ScrollView, Platform } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { useStored } from '../lib/store';
@@ -49,7 +49,7 @@ function Premium({ k, label, title, sub, tone, ring, val }: { k: string; label: 
     <View style={{ flex: 1, minWidth: 0 }}>
       <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{label}</Text>
       <Text numberOfLines={1} style={{ color: '#fff', fontSize: 17, fontWeight: '800', marginTop: 2 }}>{title}</Text>
-      <Text numberOfLines={1} style={{ color: col, fontSize: 12.5, fontWeight: '700', marginTop: 2 }}>{sub}</Text>
+      <Text numberOfLines={3} style={{ color: col, fontSize: 12.5, lineHeight: 16, fontWeight: '700', marginTop: 2 }}>{sub}</Text>
     </View>
     {ring != null && val ? <Ring pct={ring} val={val} col={col} /> : null}
   </>);
@@ -97,6 +97,8 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'memories' ? '/memories' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   nextRef.current = next;
+  // Coming back from another page: the card must keep turning, and must never be left half faded.
+  useFocusEffect(React.useCallback(() => { last.current = 0; v.setValue(1); ty.setValue(0); }, [v, ty]));
   // The card turns by itself every few seconds. It waits after a touch, and stays put while you are sleeping or typing something.
   React.useEffect(() => { const i = setInterval(() => { if (busy.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 5000); return () => clearInterval(i); }, []);
 
@@ -215,7 +217,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { prog.setValue(0); const a = Animated.timing(prog, { toValue: 1, duration: 5000, useNativeDriver: false }); a.start(); return () => a.stop(); }, [kind]);
   return (
     <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={logOpen ? (cur0 === 'heart' || (cur0 === undefined && unw) ? undefined : next) : open} onLongPress={logOpen ? open : next} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <Glass style={{ height: 100, justifyContent: 'center', borderRadius: 26, ...(urgent ? { backgroundColor: 'rgba(255,107,129,.10)', borderWidth: 1.5, borderColor: 'rgba(255,107,129,.55)', shadowColor: '#ff6b81', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
+      <Glass style={{ minHeight: 100, justifyContent: 'center', borderRadius: 26, ...(urgent ? { backgroundColor: 'rgba(255,107,129,.10)', borderWidth: 1.5, borderColor: 'rgba(255,107,129,.55)', shadowColor: '#ff6b81', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
         <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: barOn ? 8 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {barOn ? (
           <View style={{ position: 'absolute', left: 18, right: 18, bottom: 8, flexDirection: 'row', gap: 4 }}>

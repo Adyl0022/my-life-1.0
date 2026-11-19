@@ -23,8 +23,8 @@ export const Tile = ({ icon, c, size = 54, breathe }: { icon: ColIconName; c: st
   }, [breathe, a]);
   const r = size * 0.31;
   return (
-    <View style={{ width: size, height: size, borderRadius: r, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c, backgroundColor: 'rgba(255,255,255,.08)', shadowColor: c, shadowOpacity: 0.55, shadowRadius: 9, shadowOffset: { width: 0, height: 0 }, elevation: 3 }}>
-      {breathe ? <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -5, top: -5, right: -5, bottom: -5, borderRadius: r + 5, backgroundColor: c + '30', opacity: a.interpolate({ inputRange: [0, 1], outputRange: [0.15, 1] }), transform: [{ scale: a.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1.08] }) }] }} /> : null}
+    <View style={{ width: size, height: size, borderRadius: r, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c, backgroundColor: 'rgba(255,255,255,.08)', shadowColor: c, shadowOpacity: 0.55, shadowRadius: 9, shadowOffset: { width: 0, height: 0 } }}>
+      <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -5, top: -5, right: -5, bottom: -5, borderRadius: r + 5, backgroundColor: c + '30', opacity: breathe ? a.interpolate({ inputRange: [0, 1], outputRange: [0.15, 1] }) : 0.55, transform: [{ scale: breathe ? a.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1.08] }) : 1 }] }} />
       <LinearGradient colors={[c + '44', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, borderRadius: r }} />
       <ColIcon name={icon} c={c} size={size * 0.5} />
     </View>
