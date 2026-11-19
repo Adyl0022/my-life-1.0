@@ -159,20 +159,30 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
         {shown.map((t, i) => {
           const s = taskState(t, odoNow, oe.est); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3); const pr = s.text.split(' · ');
           return (
-            <View key={t.id} style={{ marginTop: i === 0 ? 12 : 10, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.08)', overflow: 'hidden', flexDirection: 'row' }}>
-              <View style={{ width: 5, backgroundColor: BAR[s.level] }} />
-              <View style={{ flex: 1, padding: 13 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ flex: 1, color: W, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>{t.name}</Text>
-                  <View style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: s.level === 2 ? 'rgba(255,143,171,.28)' : s.level === 1 ? 'rgba(255,196,107,.24)' : 'rgba(94,231,181,.2)' }}><Text style={{ color: COL[s.level], fontSize: 11.5, fontWeight: '800' }}>{pr[0]}</Text></View>
-                </View>
-                <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>{t.kind === 'part' ? 'Replace · changed ' + fd(t.last) + ' · ' + (s.since === 0 ? 'today' : s.since + (s.since === 1 ? ' day ago' : ' days ago')) + ' · lasts ' + [t.km ? 'about ' + t.km.toLocaleString('en-MY') + ' km' : '', t.days ? t.days + ' days' : ''].filter(Boolean).join(' or ') : 'Last done ' + fd(t.last) + ' · ' + (s.since === 0 ? 'today' : s.since + (s.since === 1 ? ' day ago' : ' days ago')) + ' · every ' + [t.days ? t.days + (t.days === 1 ? ' day' : ' days') : '', t.km ? t.km.toLocaleString('en-MY') + ' km' : ''].filter(Boolean).join(' or ')}</Text>
-                <View style={{ height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: Math.round(s.frac * 100) + '%', height: '100%', borderRadius: 3, backgroundColor: BAR[s.level] }} /></View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 }}>
-                  <Text style={{ flex: 1, color: 'rgba(255,255,255,.55)', fontSize: 11 }} numberOfLines={1}>{pr[1] ? pr[1] : hist.length ? 'Before: ' + hist.map(fd).join(', ') : ''}</Text>
-                  <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + (t.kind === 'part' ? ' changed today' : ' done today')} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.26)' }}><Text style={{ color: '#9af3d3', fontSize: 12.5, fontWeight: '800' }}>{t.kind === 'part' ? 'Changed today' : 'Done today'}</Text></Pressable>
-                  <Sq t="✕" label={'Delete ' + t.name} c="#ff9aa9" onPress={() => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) }))} />
-                </View>
+            <View key={t.id} style={{ marginTop: i === 0 ? 12 : 10, borderRadius: 24, backgroundColor: 'rgba(255,255,255,.07)', padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: BAR[s.level] }} />
+                <Text style={{ flex: 1, color: W, fontSize: 17, fontWeight: '800' }} numberOfLines={1}>{t.name}</Text>
+                <View style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: s.level === 2 ? 'rgba(255,143,171,.26)' : s.level === 1 ? 'rgba(255,196,107,.22)' : 'rgba(94,231,181,.18)' }}><Text style={{ color: COL[s.level], fontSize: 12, fontWeight: '800' }}>{pr[0]}</Text></View>
+              </View>
+              <View style={{ flexDirection: 'row', marginTop: 14 }}>
+                {[
+                  [t.kind === 'part' ? 'Changed' : 'Last done', fd(t.last)],
+                  ['Since', s.since === 0 ? 'Today' : s.since + (s.since === 1 ? ' day' : ' days')],
+                  [t.kind === 'part' ? 'Lasts' : 'Every', [t.days ? t.days + (t.days === 1 ? ' day' : ' days') : '', t.km ? t.km.toLocaleString('en-MY') + ' km' : ''].filter(Boolean).join('\n')],
+                ].map((c, k) => (
+                  <View key={c[0]} style={{ flex: 1, paddingLeft: k === 0 ? 0 : 12, borderLeftWidth: k === 0 ? 0 : 1, borderLeftColor: 'rgba(255,255,255,.12)' }}>
+                    <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' }}>{c[0]}</Text>
+                    <Text style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 3 }} numberOfLines={2}>{c[1]}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 14, overflow: 'hidden' }}><View style={{ width: Math.round(s.frac * 100) + '%', height: '100%', borderRadius: 3, backgroundColor: BAR[s.level] }} /></View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 10 }}>
+                <Text style={{ flex: 1, color: 'rgba(255,255,255,.6)', fontSize: 12 }} numberOfLines={1}>{pr[1] ? pr[1] : hist.length ? 'Before: ' + hist.map(fd).join(', ') : ''}</Text>
+                <Pressable onPress={() => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) }))} accessibilityLabel={'Delete ' + t.name} style={{ paddingVertical: 9, paddingHorizontal: 6 }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '700' }}>Remove</Text></Pressable>
+                <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + (t.kind === 'part' ? ' changed today' : ' done today')} style={{ paddingVertical: 10, paddingHorizontal: 20, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)' }}><Text style={{ color: '#b6f7de', fontSize: 13, fontWeight: '800' }}>{t.kind === 'part' ? 'Changed today' : 'Done today'}</Text></Pressable>
+              </View>
                 {doneId === t.id ? (
                   <View style={{ marginTop: 10, gap: 8 }}>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -183,7 +193,6 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
                     <View style={{ alignSelf: 'flex-start' }}><Btn t="Save" h={40} w={22} onPress={() => done(t)} /></View>
                   </View>
                 ) : null}
-              </View>
             </View>
           );
         })}
