@@ -38,6 +38,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const { setPeriod } = useCycleSave(hd, setHd);
   const [sn] = useStored<SleepNow>(SLEEP_KEY, null); const [snMsg, setSnMsg] = React.useState(''); const [, setTick] = React.useState(0);
   const sleeping = !!(sn && sn.start);
+  React.useEffect(() => { const i = setInterval(() => setTick((x) => x + 1), 300000); return () => clearInterval(i); }, []);
   React.useEffect(() => { if (!sleeping) return; const i = setInterval(() => setTick((x) => x + 1), 30000); return () => clearInterval(i); }, [sleeping]);
   const v = React.useRef(new Animated.Value(1)).current;
   const ty = React.useRef(new Animated.Value(0)).current;
@@ -65,11 +66,12 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
     const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
     const cg = cupsGoal(hd); const due = (hd.meds || []).filter((m) => medDue(m, dateOf(0))); const took = td.med || []; const med = due.find((m) => !took.includes(m.id));
-    const todo: string[] = []; if (!(td.sleep > 0)) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
+    const todo: string[] = []; const hr = new Date().getHours(); const nightNow = hr >= 20 || hr < 9; const needSleep = !(td.sleep > 0); if (needSleep && nightNow) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
     // Pulse and period are not daily, so they are asked only when they fit, and "Skip" hides them until tomorrow.
     const dk = keyOfDate(dateOf(0)); const sk = skip.d === dk ? skip.k : []; const later = (k: string) => setSkip({ d: dk, k: [...sk, k] });
     if ((hd.heart || []).length && !(hd.heart || []).some((x) => x.d === dk) && !sk.includes('heart')) todo.push('heart');
     const cy = cycleInfo(hd); if (hd.cyOn && !td.pd && cy.nextOff != null && cy.nextOff <= 2 && !sk.includes('period')) todo.push('period');
+    if (needSleep && !nightNow) todo.push('sleep');
     const cur = todo[0]; cur0 = cur; const head = (t: string, sub: string, onSub?: () => void) => (
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{'QUICK LOG' + (todo.length ? ' · ' + todo.length + ' LEFT' : '')}</Text>
