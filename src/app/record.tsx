@@ -9,6 +9,7 @@ import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { Inp, DateField, Sheet, SBtn, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
+import { MaintCard } from '../components/MaintCard';
 import { Ext, ProfileCard, RenewCard, FuelCard, PartsCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
 import { TOP } from '../lib/layout';
 import { cs, cu, useRegion } from '../lib/region';
@@ -296,6 +297,8 @@ export default function Record() {
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8 }}>General tips only. Always follow the service schedule in your owner's manual.</Text>
           </Glass>
+
+          <MaintCard d={d} upd={(fn) => upd(fn)} latest={allOdo} cat={catName} />
 
           <RenewCard d={d} upd={(fn) => upd(fn)} />
 

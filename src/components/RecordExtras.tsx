@@ -13,7 +13,8 @@ export type Fu = { id: number; date: string; liters: number; amt: number; odo: n
 export type Pt = { id: number; name: string; date: string; odo: number; life: number };
 export type Dc = { id: number; title: string; date: string; uri: string };
 export type Ren = { roadtax?: string; insurance?: string; licence?: string };
-export type Ext = { profile?: { model: string; plate: string }; renew?: Ren; fuel?: Fu[]; parts?: Pt[]; docs?: Dc[] };
+export type Tk = { id: number; name: string; days: number; km?: number; last: string; odo?: number; hist?: string[] };
+export type Ext = { profile?: { model: string; plate: string }; renew?: Ren; fuel?: Fu[]; parts?: Pt[]; docs?: Dc[]; tasks?: Tk[]; trem?: boolean };
 type P<T> = { d: T; upd: (fn: (x: any) => any) => void };
 
 const PG = ['#ff8fab', '#b794ff'] as [string, string];
@@ -25,7 +26,7 @@ const dim = 'rgba(255,255,255,.65)';
 const f = (s: string) => parseFloat((s || '').replace(',', '.'));
 const daysTo = (s: string) => { const a = new Date(s + 'T00:00:00').getTime(); const n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((a - n.getTime()) / 86400000); };
 
-const Card = ({ title, sub, children, right }: { title: string; sub?: string; children: React.ReactNode; right?: React.ReactNode }) => (
+export const Card = ({ title, sub, children, right }: { title: string; sub?: string; children: React.ReactNode; right?: React.ReactNode }) => (
   <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{title}</Text>{sub ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{sub}</Text> : null}</View>
@@ -34,11 +35,11 @@ const Card = ({ title, sub, children, right }: { title: string; sub?: string; ch
     {children}
   </Glass>
 );
-const Btn = ({ t, onPress, h = 42, w = 16 }: { t: string; onPress: () => void; h?: number; w?: number }) => <Pressable onPress={onPress}><LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: h, paddingHorizontal: w, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{t}</Text></LinearGradient></Pressable>;
-const Sq = ({ t, onPress, c = W, label }: { t: string; onPress: () => void; c?: string; label: string }) => <Pressable accessibilityLabel={label} onPress={onPress} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: c, fontSize: 14 }}>{t}</Text></Pressable>;
+export const Btn = ({ t, onPress, h = 42, w = 16 }: { t: string; onPress: () => void; h?: number; w?: number }) => <Pressable onPress={onPress}><LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: h, paddingHorizontal: w, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{t}</Text></LinearGradient></Pressable>;
+export const Sq = ({ t, onPress, c = W, label }: { t: string; onPress: () => void; c?: string; label: string }) => <Pressable accessibilityLabel={label} onPress={onPress} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: c, fontSize: 14 }}>{t}</Text></Pressable>;
 const Stat = ({ l, v }: { l: string; v: string }) => <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 2 }} numberOfLines={1}>{v}</Text></View>;
 const Row = ({ children, last }: { children: React.ReactNode; last?: boolean }) => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: last ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>{children}</View>;
-const Chip = ({ t, on, onPress }: { t: string; on?: boolean; onPress: () => void }) => <Pressable onPress={onPress} style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: on ? 'transparent' : 'rgba(255,255,255,.2)', backgroundColor: on ? '#b06ad8' : 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{t}</Text></Pressable>;
+export const Chip = ({ t, on, onPress }: { t: string; on?: boolean; onPress: () => void }) => <Pressable onPress={onPress} style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: on ? 'transparent' : 'rgba(255,255,255,.2)', backgroundColor: on ? '#b06ad8' : 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{t}</Text></Pressable>;
 
 // 7. Vehicle profile ---------------------------------------------------------
 export function ProfileCard({ d, upd, name }: P<Ext> & { name: string }) {
