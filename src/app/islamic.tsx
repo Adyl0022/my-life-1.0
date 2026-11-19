@@ -49,7 +49,7 @@ export default function IslamicHub() {
     return { h: 'Fasting log', b: rs.phase === 'before' ? 'Ramadan in ' + rs.daysTo + ' days. Track make-up fasts and sunnah fasts.' : 'Track Ramadan, make-up fasts and sunnah fasts.' };
   })();
   const hoff = useHijriSync();
-  const evs = upcoming(now, hoff, 4);
+  const evs = upcoming(now, hoff, 6);
   const hasRead = !!(isl.lastKey && SURAH[isl.lastKey]);
   const CH = 196;
   const lkTotal = React.useMemo(() => (SURAH[lk] ? SURAH[lk].verses.length : 0), [lk]);
@@ -160,10 +160,10 @@ export default function IslamicHub() {
             ) : cur === 'verse' ? (
             <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + ay.key + '?v=' + ay.n)}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
               <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{ay.why.toUpperCase()}{ayv ? ' · ' + SURAH[ay.key].title.replace('Surah ', '') + ' ' + SURAH[ay.key].num + ':' + ay.n : ''}</Text>
-              {ayv ? (<>
-                <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 21, lineHeight: 36, textAlign: 'right', marginTop: 6 }}>{ayv.ar}</Text>
-                <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{ayv.en}</Text>
-              </>) : null}
+              {ayv ? (<View style={{ flex: 1, justifyContent: 'center' }}>
+                <Text numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 23, lineHeight: 42, textAlign: 'right' }}>{ayv.ar}</Text>
+                <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{ayv.en}</Text>
+              </View>) : null}
             </Glass></Pressable>
             ) : ev0 ? (
             <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => setOpenEv((v) => !v)}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
@@ -172,15 +172,17 @@ export default function IslamicHub() {
                 <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>UPCOMING · ISLAMIC CALENDAR</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{ev0.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{ev0.days === 0 ? 'Today' : ev0.days === 1 ? 'Tomorrow' : 'In ' + ev0.days + ' days'} · {ev0.hText}</Text></View>
                 <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>{openEv ? '⌃' : '⌄'}</Text>
               </View>
-              <Text numberOfLines={3} style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 12 }}>{ev0.tip}</Text>
-              <Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '700', marginTop: 10 }}>{openEv ? 'Hide the next events' : 'Tap to see the next events'}</Text>
+              <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 8 }}>{ev0.tip}</Text>
+              <View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
+                {evs.slice(1, 3).map((e) => (<View key={e.n + e.hText} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{e.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12 }}>{e.days === 1 ? 'Tomorrow' : 'In ' + e.days + ' days'}</Text></View>))}
+              </View>
             </Glass></Pressable>
             ) : null}
             </Animated.View>
             {kinds.length > 1 ? (<View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 10, flexDirection: 'row', gap: 6 }}>{kinds.map((_k, i) => (<View key={i} style={{ flex: 1, height: 3, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.2)' }}>{slide === i ? <Animated.View style={{ height: 3, borderRadius: 2, backgroundColor: '#5ee7df', width: prog.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} /> : null}</View>))}</View>) : null}
             </View>
             {openEv && cur === 'ev' ? (<Glass radius={22} style={{ padding: 14 }}>
-              {evs.slice(1).map((e) => (<View key={e.n + e.hText} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{e.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12 }}>{e.days === 1 ? 'Tomorrow' : 'In ' + e.days + ' days'}</Text></View>))}
+              {evs.slice(3).map((e) => (<View key={e.n + e.hText} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{e.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12 }}>{e.days === 1 ? 'Tomorrow' : 'In ' + e.days + ' days'}</Text></View>))}
               <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 6 }}>Dates are estimates and follow JAKIM when you are online. The final date depends on the moon sighting.</Text>
             </Glass>) : null}
             <Pressable onPress={() => go('/puasa')}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
