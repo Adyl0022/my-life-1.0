@@ -126,18 +126,18 @@ export function Chev() {
 // Documents and Personal Collection: gradient, a pattern, a big faint picture and the icon tile.
 export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; title: string; sub: string; colors: [string, string]; pat: 'dots' | 'lines' | 'rings' | 'grid'; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ marginTop: 14, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+    <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ marginTop: 12, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
       <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
-        <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
+        <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 94, paddingHorizontal: 16, justifyContent: 'center' }}>
           <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
           <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,.12)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 30 }} />
           <Pat kind={pat} />
-          <Text style={{ position: 'absolute', right: -4, bottom: -10, fontSize: 80, opacity: 0.2, transform: [{ rotate: '-10deg' }] }}>{e}</Text>
+          <Text style={{ position: 'absolute', right: -4, bottom: -10, fontSize: 66, opacity: 0.2, transform: [{ rotate: '-10deg' }] }}>{e}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
-            <GlassTile><Text style={{ fontSize: 27 }}>{e}</Text></GlassTile>
+            <GlassTile size={46} radius={16}><Text style={{ fontSize: 23 }}>{e}</Text></GlassTile>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text numberOfLines={1} style={{ color: W, fontSize: 18, fontWeight: '800', letterSpacing: -0.2 }}>{title}</Text>
+              <Text numberOfLines={1} style={{ color: W, fontSize: 17, fontWeight: '800', letterSpacing: -0.2 }}>{title}</Text>
               <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.82)', fontSize: 12, marginTop: 3 }}>{sub}</Text>
             </View>
             <Chev />
@@ -153,10 +153,10 @@ export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; ti
 export function VehicleCard({ onPress }: { onPress: () => void }) {
   const gold = '#ffe3c2';
   return (
-    <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 14, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+    <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 12, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
       <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
-        <LinearGradient colors={['#8c5468', '#5b2d4e', '#2d1840']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
+        <LinearGradient colors={['#8c5468', '#5b2d4e', '#2d1840']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 94, paddingHorizontal: 16, justifyContent: 'center' }}>
           <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
           <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,.12)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 30 }} />
           <Svg width="48%" height="100%" viewBox="0 0 160 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
@@ -171,13 +171,13 @@ export function VehicleCard({ onPress }: { onPress: () => void }) {
             </G>
           </Svg>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
-            <GlassTile rim="rgba(255,227,194,.55)">
-              <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke="#fff1dc" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+            <GlassTile size={46} radius={16} rim="rgba(255,227,194,.55)">
+              <Svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="#fff1dc" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                 <Path d="M3.8 17.5a9 9 0 1 1 16.4 0" /><Path d="M12 16L15.8 9.6" /><Circle cx={12} cy={16.3} r={1.4} /><Path d="M6.2 12.4l1 .6M9 8.4l.6 1M15 8.4l-.6 1M17.8 12.4l-1 .6M12 6.4v1.2" />
               </Svg>
             </GlassTile>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text numberOfLines={1} style={{ color: W, fontSize: 18, fontWeight: '800', letterSpacing: -0.2 }}>My Vehicle</Text>
+              <Text numberOfLines={1} style={{ color: W, fontSize: 17, fontWeight: '800', letterSpacing: -0.2 }}>My Vehicle</Text>
               <Text numberOfLines={1} style={{ color: 'rgba(255,236,214,.85)', fontSize: 12, marginTop: 3 }}>Mileage, service and road tax</Text>
             </View>
             <Chev />
