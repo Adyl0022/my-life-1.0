@@ -56,7 +56,7 @@ export function ModCard({ e, title, sub, chip, colors, pat, onPress }: { e: stri
       <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)', borderTopColor: 'rgba(255,255,255,.45)' }}>
         <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, minHeight: 124, justifyContent: 'center' }}>
           <Pat kind={pat} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
             <GlassTile><Text style={{ fontSize: 27 }}>{e}</Text></GlassTile>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={{ color: W, fontSize: 19, fontWeight: '800', letterSpacing: -0.2 }}>{title}</Text>
@@ -126,7 +126,7 @@ export function PicCard({ e, title, sub, colors, pat, onPress }: { e: string; ti
         <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
           <Pat kind={pat} />
           <Text style={{ position: 'absolute', right: -4, bottom: -10, fontSize: 80, opacity: 0.2, transform: [{ rotate: '-10deg' }] }}>{e}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
             <GlassTile><Text style={{ fontSize: 27 }}>{e}</Text></GlassTile>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={{ color: W, fontSize: 18, fontWeight: '800', letterSpacing: -0.2 }}>{title}</Text>
@@ -149,13 +149,13 @@ export function VehicleCard({ onPress }: { onPress: () => void }) {
         <LinearGradient colors={['#bb7189', '#82416a', '#472454']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
           <Svg width="55%" height="100%" viewBox="0 0 120 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
             <Defs>
-              <SvgGrad id="rd" x1="0" y1="0" x2="120" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0" stopColor={gold} stopOpacity={0} /><Stop offset="0.55" stopColor={gold} stopOpacity={0.62} /><Stop offset="1" stopColor={gold} stopOpacity={0.68} /></SvgGrad>
+              <SvgGrad id="rd" x1="0" y1="0" x2="120" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0.2" stopColor={gold} stopOpacity={0} /><Stop offset="0.65" stopColor={gold} stopOpacity={0.55} /><Stop offset="1" stopColor={gold} stopOpacity={0.68} /></SvgGrad>
             </Defs>
             <G stroke="url(#rd)" strokeWidth={1.5} fill="none">
               <Path d="M120 56 L0 56" /><Path d="M120 56 L0 20" /><Path d="M120 56 L0 92" /><Path d="M120 56 L40 0" /><Path d="M120 56 L40 112" /><Path d="M70 0V112" /><Path d="M40 0V112" />
             </G>
           </Svg>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
             <GlassTile rim="rgba(255,227,194,.55)">
               <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke="#fff1dc" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                 <Path d="M3.8 17.5a9 9 0 1 1 16.4 0" /><Path d="M12 16L15.8 9.6" /><Circle cx={12} cy={16.3} r={1.4} /><Path d="M6.2 12.4l1 .6M9 8.4l.6 1M15 8.4l-.6 1M17.8 12.4l-1 .6M12 6.4v1.2" />
