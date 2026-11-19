@@ -96,7 +96,7 @@ export default function Screen() {
   const ws = cur ? wStatus(cur) : null;
   return (
     <RecordPage title={C.title} sub={mine.length + (mine.length === 1 ? ' item' : ' items')} right={plus} bg={<ColArt />}>
-      <Intro title={C.title} text={C.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
+      <Intro plain title={C.title} text={C.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder={'Search ' + C.title.toLowerCase()} /></View>
       {mine.length ? <Sums a={['VALUE', rm(total)]} b={C.warranty ? ['IN WARRANTY', inW + ' of ' + mine.length] : undefined} /> : null}
       {list.length ? list.map((x) => {

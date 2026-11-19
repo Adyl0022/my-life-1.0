@@ -30,7 +30,7 @@ export default function Screen() {
   const go = (p: string) => router.push(p as any);
   return (
     <RecordPage title="Personal Collection" sub="Your things, your lessons" bg={<ColArt />}>
-      <Intro title="Your things, your lessons" text="Gadgets, belongings, property, what you lent or borrowed, and what you learned" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
+      <Intro plain title="Your things, your lessons" text="Gadgets, belongings, property, what you lent or borrowed, and what you learned" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 14 }}>
         <Card icon="gadget" title={CATS.gadget.title} sub={CATS.gadget.sub} c={ACC.gadget} onPress={() => go('/collection-items?c=gadget')} />
         <Card icon="life" title={CATS.lifestyle.title} sub={CATS.lifestyle.sub} c={ACC.lifestyle} onPress={() => go('/collection-items?c=lifestyle')} />

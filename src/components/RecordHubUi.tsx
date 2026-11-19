@@ -134,18 +134,18 @@ function PageArt() {
 }
 
 // Top banner of My Record: same shape as the Daily Planner banner, in this page's pink and violet.
-export function Intro({ title, text, colors }: { title: string; text: string; colors?: [string, string] }) {
+export function Intro({ title, text, colors, plain }: { title: string; text: string; colors?: [string, string]; plain?: boolean }) {
   return (
     <View style={{ marginTop: 16, borderRadius: 26, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 }}>
       <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
         <LinearGradient colors={colors || ['rgba(255,143,171,.5)', 'rgba(150,120,255,.42)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 18, paddingVertical: 20 }}>
-          <Spin dur={40000} style={{ position: 'absolute', right: -34, top: -40, width: 150, height: 150 }}>
+          {plain ? null : <Spin dur={40000} style={{ position: 'absolute', right: -34, top: -40, width: 150, height: 150 }}>
             <Svg width={150} height={150} viewBox="0 0 150 150">
               <G fill="none" stroke="#fff" strokeOpacity={0.22} strokeWidth={1.2}>
                 <Circle cx={75} cy={75} r={70} strokeDasharray="2 9" /><Circle cx={75} cy={75} r={52} strokeDasharray="3 5" /><Circle cx={75} cy={75} r={34} />
               </G>
             </Svg>
-          </Spin>
+          </Spin>}
           <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>{title}</Text>
           <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 14, marginTop: 4 }}>{text}</Text>
         </LinearGradient>

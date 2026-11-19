@@ -56,7 +56,7 @@ export default function Screen() {
   const plus = <Pressable onPress={() => setF({ id: 0, title: '', text: '', date: today(), tag: 'Self' })} accessibilityLabel="Add lesson"><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
   return (
     <RecordPage title="Life Lessons" sub={all.length + (all.length === 1 ? ' lesson' : ' lessons')} right={plus} bg={<ColArt />}>
-      <Intro title="So you do not forget" text="Write down what life taught you" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
+      <Intro plain title="So you do not forget" text="Write down what life taught you" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder="Search lessons" /></View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
         {['', ...TAGS].map((t) => <Pressable key={t || 'all'} onPress={() => setTag(t)} accessibilityLabel={t || 'All'}><View style={chip(tag === t, t ? TAGC[t] : '#8ea8ff')}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{t || 'All'}</Text></View></Pressable>)}

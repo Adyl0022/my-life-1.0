@@ -88,7 +88,7 @@ export default function Screen() {
   const sub = (l: Loan) => (l.what === 'money' ? rm(num(l.amount)) + ' · ' + (l.dir === 'lent' ? 'lent ' : 'borrowed ') + dmy(l.date) : (l.dir === 'lent' ? 'Lent to ' : 'Borrowed from ') + l.who + ' · ' + dmy(l.date));
   return (
     <RecordPage title="Lent & Borrowed" sub={open.length + ' open'} right={plus} bg={<ColArt />}>
-      <Intro title="Never forget who has what" text="Money and things you lent or borrowed" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
+      <Intro plain title="Never forget who has what" text="Money and things you lent or borrowed" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View onLayout={pill.onLayout} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
         {pill.indicator}
         {TABS.map(([k, n]) => <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }} accessibilityLabel={n}><View style={{ paddingVertical: 9, alignItems: 'center' }}><Text style={{ color: tab === k ? W : 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: tab === k ? '800' : '700' }}>{n}</Text></View></Pressable>)}
