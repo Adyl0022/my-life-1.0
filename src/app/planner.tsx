@@ -15,8 +15,8 @@ import { useRegion, regionCountry } from '../lib/region';
 import { upcomingMy, fetchMy, EMPTY_CACHE, MyCache } from '../lib/myEvents';
 
 import { confirmDelete } from '../lib/dialog';
-type Ev = { id: number; name: string; date: string; remind: string; done: boolean };
-type Tk = { id: number; name: string; note: string; prio: string; due: string; cat: string; status: 'todo' | 'doing' | 'done' };
+type Ev = { id: number; name: string; date: string; remind: string; done: boolean; doneAt?: string };
+type Tk = { id: number; name: string; note: string; prio: string; due: string; cat: string; status: 'todo' | 'doing' | 'done'; doneAt?: string };
 type Data = { events: Ev[]; tasks: Tk[]; cats: string[]; nextId: number };
 const EMPTY: Data = { events: [], tasks: [], cats: ['Tasks'], nextId: 1 };
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -82,7 +82,7 @@ export default function Planner() {
     else setD({ ...d, nextId: d.nextId + 1, tasks: [...d.tasks, { id: d.nextId, name, note: (add.note || '').trim(), prio: add.prio, due: add.due || '', cat: add.cat || 'Tasks', status: 'todo' }] });
     setAdd(null); say(add.kind === 'event' ? 'Event added' : 'Task added');
   };
-  const setStatus = (id: number, status: Tk['status']) => { setD({ ...d, tasks: d.tasks.map((x) => (x.id === id ? { ...x, status } : x)) }); setEdit(null); };
+  const setStatus = (id: number, status: Tk['status']) => { setD({ ...d, tasks: d.tasks.map((x) => (x.id === id ? { ...x, status, doneAt: status === 'done' ? (x.status === 'done' && x.doneAt ? x.doneAt : todayStr()) : undefined } : x)) }); setEdit(null); };
   const saveEdit = () => {
     const name = edit.name.trim() || 'Untitled';
     if (edit.kind === 'event') setD({ ...d, events: d.events.map((x) => (x.id === edit.id ? { ...x, name, date: edit.date, remind: edit.remind } : x)) });
@@ -114,7 +114,7 @@ export default function Planner() {
     const dc = dl == null ? null : dl < 0 ? '#ff6b81' : dl <= 7 ? '#ffd24a' : '#5ee7b5';
     const dt = dl == null ? '' : dl < 0 ? (-dl === 1 ? 'Overdue 1 day' : 'Overdue ' + -dl + ' days') : dl === 0 ? 'Today' : dl === 1 ? '1 day left' : dl + ' days left';
     return (
-      <Pressable onPress={() => setD({ ...d, events: d.events.map((y) => (y.id === x.id ? { ...y, done: !y.done } : y)) })}>
+      <Pressable onPress={() => setD({ ...d, events: d.events.map((y) => (y.id === x.id ? { ...y, done: !y.done, doneAt: !y.done ? todayStr() : undefined } : y)) })}>
         <Raise c={x.done ? '#7df0a0' : '#8ea8ff'} dim={x.done}>
           <LinearGradient colors={x.done ? ['#2fae7a', '#5ee7b5'] : GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 48, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 10, fontWeight: '700' }}>{okd ? MON[+p[1] - 1] : 'NEW'}</Text><Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>{okd ? p[2] : '--'}</Text>

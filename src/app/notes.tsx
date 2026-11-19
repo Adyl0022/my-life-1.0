@@ -16,7 +16,7 @@ import { TOP } from '../lib/layout';
 import { confirmDelete } from '../lib/dialog';
 import { SearchField } from '../components/Shine';
 // rm: when to remind (a time in ms), rd: the reminder is done
-type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean; ra?: number[] };
+type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean; ra?: number[]; cr?: number };
 type Data = { notes: Note[]; seq: number };
 const COL = ['#7c9cff', '#5ee7df', '#ffc46b', '#ff8fb1', '#a78bfa', '#9be37a', '#94a3b8'];
 const PAPER = [['#4f6bff', '#8a6cff', '#3fb0ff'], ['#0fae9f', '#2f84d8', '#3fd1a8'], ['#f5a623', '#ef6a3a', '#e8436b'], ['#e0518a', '#a24fe0', '#ff8f6b'], ['#7a50e6', '#c05fd8', '#5b7cff'], ['#2fae64', '#2f93c4', '#8bd45a'], ['#334155', '#475569', '#94a3b8']];
@@ -78,7 +78,7 @@ export default function Notes() {
   const save = () => {
     if (!draft) return;
     if (!(draft.t.trim() || draft.s.trim())) return say('Add a title or some text first');
-    const nn = { ...draft, u: Date.now() };
+    const nn = { ...draft, u: Date.now(), cr: draft.cr || (isNew ? Date.now() : undefined) };
     setData(isNew ? { notes: [nn, ...notes], seq: data.seq + 1 } : { ...data, notes: notes.map((x) => (x.id === nn.id ? nn : x)) });
     closeEd(); say('Note saved');
   };

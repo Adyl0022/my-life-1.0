@@ -1,5 +1,6 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { useStored } from '../lib/store';
@@ -10,6 +11,7 @@ const DIM = 'rgba(255,255,255,.65)'; const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'M
 const nf = (n: number) => n.toLocaleString('en-GB');
 
 export function MemoriesCard({ since }: { since?: string }) {
+  const router = useRouter();
   const [h] = useStored<HData>('ml_habit', HEMPTY);
   const [pl] = useStored<any>('ml_planner', { events: [], tasks: [] });
   const [fin] = useStored<any>('ml_finance', { spends: [] });
@@ -29,8 +31,9 @@ export function MemoriesCard({ since }: { since?: string }) {
     ['best streak', bestStreakAll(h || HEMPTY) + ' days'],
   ] as [string, string][]).filter((x) => x[1] !== '0' && x[1] !== '0 days');
   return (
+    <Pressable onPress={() => router.push('/memories' as any)} accessibilityLabel="Open Your Memories">
     <Glass style={{ paddingVertical: 12, paddingHorizontal: 14 }}>
-      <Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '800' }}>Your memories with My Life</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ flex: 1, color: '#fff', fontSize: 14.5, fontWeight: '800' }}>Your memories with My Life</Text><Text style={{ color: '#fff', fontSize: 22, marginTop: -2 }}>›</Text></View>
       {ok ? <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>{'Since ' + (sd as Date).getDate() + ' ' + MON[(sd as Date).getMonth()] + ' ' + (sd as Date).getFullYear() + '  ·  day ' + days + ' together'}</Text> : null}
       {stats.length ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 9 }}>
@@ -42,5 +45,6 @@ export function MemoriesCard({ since }: { since?: string }) {
         </View>) : <Text style={{ color: DIM, fontSize: 12, marginTop: 8 }}>Your numbers will show up here as you use the app.</Text>}
       <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, lineHeight: 17, marginTop: 10 }}>Thank you for using My Life and for your support. It means a lot to me.  —  Adli</Text>
     </Glass>
+    </Pressable>
   );
 }

@@ -657,11 +657,11 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "event acara days left hari lagi overdue lewat today hari ini upcoming akan datang red yellow green merah kuning hijau tarikh date"
  },
  {
-  "t": "Your memories with My Life",
-  "s": "Settings, About: the day you started and what you have done so far",
+  "t": "Your Memories with My Life",
+  "s": "Journey, numbers, timeline, on this day, badges and year in review",
   "m": "System",
   "c": "#b794ff",
   "h": "Settings.dc.html",
-  "k": "memories kenangan since started mula guna day together hari bersama register daftar journey statistics statistik streak about settings"
+  "k": "memories kenangan journey perjalanan timeline on this day pada hari ini achievements badge pencapaian year in review ringkasan tahun milestone 30 days 100 days 1 year every moment matters since started day together streak"
  },
 ];
