@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { KbScroll } from '../components/KbScroll';
 import { View, Pressable, Animated, Modal, ScrollView, Image, Platform, KeyboardAvoidingView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
@@ -134,8 +135,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
         <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 40 }}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 40 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></View></Pressable>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{f.id ? 'Edit document' : 'Add document'}</Text><Text style={{ color: dim, fontSize: 12 }}>Scan it or type it in</Text></View>
@@ -178,8 +178,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
             {f.noExp ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>No reminder is needed when there is no expiry.</Text> : null}
             <Pressable onPress={save} style={{ marginTop: 26 }} accessibilityLabel="Save document"><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
             {onDelete ? <Pressable onPress={onDelete} style={{ marginTop: 12, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,107,129,.5)', alignItems: 'center', justifyContent: 'center' }} accessibilityLabel="Delete document"><Text style={{ color: '#ff9aa9', fontSize: 14, fontWeight: '700' }}>Delete document</Text></Pressable> : null}
-          </ScrollView>
-        </KeyboardAvoidingView>
+        </KbScroll>
         {view && f.photo ? (
           <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setView(false)}>
             <Pressable onPress={() => setView(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: f.photo }} style={{ width: '100%', height: '80%' }} resizeMode="contain" /><Text style={{ color: dim, fontSize: 12, textAlign: 'center', marginTop: 10 }}>Tap anywhere to close</Text></Pressable>

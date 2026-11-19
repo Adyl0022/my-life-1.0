@@ -167,7 +167,7 @@ export default function Memories() {
             <Head t="Your Achievements" s={M.badges.filter((b) => b.ok).length + ' of ' + M.badges.length + ' unlocked. A badge opens only when you really meet it'} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {M.badges.map((b) => (
-                <View key={b.id} style={[RAISED, { width: '48%', flexGrow: 1, borderRadius: 20, padding: 12, alignItems: 'center', opacity: b.ok ? 1 : 0.62, borderColor: b.ok ? b.color + 'aa' : 'rgba(255,255,255,.2)' }]}>
+                <View key={b.id} style={[RAISED, { width: '48%', flexGrow: 1, borderRadius: 20, padding: 12, alignItems: 'center', justifyContent: 'center', opacity: b.ok ? 1 : 0.62, borderColor: b.ok ? b.color + 'aa' : 'rgba(255,255,255,.2)' }]}>
                   <View style={{ width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', backgroundColor: b.ok ? b.color + '33' : 'rgba(255,255,255,.08)', borderWidth: 1.5, borderColor: b.ok ? b.color : 'rgba(255,255,255,.2)' }}>
                     <Text allowFontScaling={false} style={{ fontSize: 24, lineHeight: 30, width: 54, height: 30, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false, opacity: b.ok ? 1 : 0.4 }}>{b.ok ? b.icon : '🔒'}</Text>
                   </View>

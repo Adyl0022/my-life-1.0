@@ -105,7 +105,7 @@ export function RecordCarousel() {
       <Animated.View {...pan.panHandlers} style={{ opacity: fade, transform: [{ translateX: tx }] }}>
         {cur === 'veh' ? (
           <Pressable {...hold} onPress={() => go('/vehicle')}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
-            <Text style={lab}>MY VEHICLE · JOBS</Text>
+            <Text style={lab}>MAINTENANCE TASK</Text>
             {jobs.length ? jobs.slice(0, 3).map((j, i) => <Row key={i} l={j.name} r={j.text} c={j.lv === 2 ? '#ff6b81' : j.lv === 1 ? '#ffd593' : '#5ee7b5'} />) : (
               <View style={{ flex: 1, justifyContent: 'center' }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>No jobs yet</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Add oil change, chain spray or tyre checks and the app tells you when they are due.</Text></View>
             )}

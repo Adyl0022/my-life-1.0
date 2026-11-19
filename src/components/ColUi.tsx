@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { KbScroll } from './KbScroll';
 import { View, Pressable, Modal, ScrollView, Image, KeyboardAvoidingView, Platform, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
@@ -97,16 +98,14 @@ export function SheetFrame({ title, sub, onClose, children }: { title: string; s
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
         <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 40 }}>
+        <KbScroll contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 40 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 22 }}>‹</Text></View></Pressable>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{title}</Text>{sub ? <Text style={{ color: dim, fontSize: 12 }}>{sub}</Text> : null}</View>
             </View>
             <PrivateNote />
             {children}
-          </ScrollView>
-        </KeyboardAvoidingView>
+        </KbScroll>
       </View>
     </Modal>
   );
