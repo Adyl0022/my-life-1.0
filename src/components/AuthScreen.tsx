@@ -91,7 +91,7 @@ function Rock({ size, seed, id }: { size: number; seed: number; id: string }) {
   );
 }
 const FRAG = [[-150, 78, 16, 1.1], [-95, 62, 12, -1.4], [-40, 90, 9, 1.8], [20, 70, 14, -1.0], [75, 96, 8, 2.0], [130, 66, 13, -1.6], [170, 84, 10, 1.3]] as const;
-function Collision({ left, top, ang, dur, gap, delay, id, on = true }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string; on?: boolean }) {
+export function Collision({ left, top, ang, dur, gap, delay, id, on = true }: { left: string; top: string; ang: number; dur: number; gap: number; delay: number; id: string; on?: boolean }) {
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!on) { p.setValue(0); return; } // keyboard open: the scene is hidden, so stop animating and save battery
