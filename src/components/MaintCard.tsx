@@ -152,7 +152,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
             <View style={{ flex: 1 }}>
               <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, fontWeight: '700', letterSpacing: 0.3 }}>{oe.est ? 'Odometer now (estimate)' : 'Odometer'}</Text>
               <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 8 }}>{oe.odo > 0 ? (oe.est ? '~' : '') + oe.odo.toLocaleString('en-MY') + ' km' : 'No reading yet'}</Text>
-              {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'From your average of about ' + Math.round(oe.perDay) + ' km a day since ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
+              {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'From about ' + Math.round(oe.perDay) + ' km a day over the ' + 'last ' + oe.span + ' days' + ' before ' + oe.lastDate.split('-').reverse().join('/') + '. Days you do not ride are counted too. Type a new reading any time to make it exact.'}</Text> : null}
             </View>
             <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)', borderWidth: 1, borderColor: 'rgba(94,231,181,.45)' }}><Text style={{ color: '#b6f7de', fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
           </View>

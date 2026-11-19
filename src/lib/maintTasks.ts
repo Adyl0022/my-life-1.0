@@ -14,18 +14,23 @@ export const todayKey = () => ymd(new Date());
 /** The highest odometer reading saved for this vehicle. */
 export const latestOdo = (v: any): number => Math.max(0, ...((v && v.readings) || []).map((r: any) => r.odo || 0), ...((v && v.yreadings) || []).map((r: any) => r.odo || 0), ...((v && v.fuel) || []).map((f: any) => f.odo || 0));
 
-/** Best guess of the odometer today. With two or more dated readings spanning a week or more, it adds your average daily distance since the last reading. est is true when it is a guess. */
-export function odoEstimate(v: any): { odo: number; est: boolean; perDay: number; last: number; lastDate: string } {
+/** Best guess of the odometer today. It uses how far you ride per day in the most recent weeks (the last 45 days before your newest reading, widening only if there is too little data), so an old busy or quiet period does not drag the guess. The average counts every calendar day, so days you do not ride are already in it. est is true when it is a guess. */
+export function odoEstimate(v: any): { odo: number; est: boolean; perDay: number; last: number; lastDate: string; span: number } {
   const pts: { d: string; o: number }[] = [];
   const add = (a: any) => { if (a && a.date && a.odo > 0) pts.push({ d: a.date, o: a.odo }); };
   ((v && v.readings) || []).forEach(add); ((v && v.yreadings) || []).forEach(add); ((v && v.fuel) || []).forEach(add);
   const real = latestOdo(v);
-  if (pts.length < 2) return { odo: real, est: false, perDay: 0, last: real, lastDate: '' };
+  if (pts.length < 2) return { odo: real, est: false, perDay: 0, last: real, lastDate: '', span: 0 };
   pts.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.o - b.o));
-  const f = pts[0], l = pts[pts.length - 1]; const span = dayN(l.d) - dayN(f.d); const perDay = span >= 7 ? (l.o - f.o) / span : 0;
-  const since = todayN() - dayN(l.d);
-  if (!(perDay > 0) || since < 2) return { odo: real, est: false, perDay, last: real, lastDate: l.d };
-  return { odo: Math.max(real, l.o + Math.round(perDay * Math.min(since, 90))), est: true, perDay, last: real, lastDate: l.d };
+  const l = pts[pts.length - 1]; const ln = dayN(l.d);
+  let perDay = 0; let span = 0;
+  for (const win of [45, 120, 100000]) {
+    const c = pts.filter((q) => ln - dayN(q.d) <= win); const f = c[0]; const sp = ln - dayN(f.d);
+    if (c.length >= 2 && sp >= 7 && l.o > f.o) { perDay = (l.o - f.o) / sp; span = sp; break; }
+  }
+  const since = todayN() - ln;
+  if (!(perDay > 0) || since < 2) return { odo: real, est: false, perDay, last: real, lastDate: l.d, span };
+  return { odo: Math.max(real, l.o + Math.round(perDay * Math.min(since, 45))), est: true, perDay, last: real, lastDate: l.d, span };
 }
 
 export type TkState = { level: 0 | 1 | 2; since: number; dueIn: number; kmLeft: number | null; frac: number; text: string };
