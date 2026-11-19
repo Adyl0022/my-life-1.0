@@ -20,7 +20,7 @@ export const LOCK_OFF: LockCfg = { on: false, bio: false, after: 60, scope: 'all
 const KEY = 'ml_lock';
 export const AFTER = [[0, 'Instantly'], [60, '1 min'], [300, '5 min'], [900, '15 min']] as [number, string][];
 // Finance, debts, notes and vehicle records are the sensitive part of the app.
-export const SENSITIVE = ['/finance', '/notes', '/record'];
+export const SENSITIVE = ['/finance', '/notes', '/record', '/vehicle', '/documents', '/collection'];
 
 let cfg: LockCfg = LOCK_OFF;
 let loaded = false;

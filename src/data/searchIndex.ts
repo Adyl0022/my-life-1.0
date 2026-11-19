@@ -194,7 +194,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "My Record",
-  "s": "Motorcycle logs and records",
+  "s": "Documents, vehicle and personal collection",
   "m": "Record",
   "c": "#ff8fab",
   "h": "Record.dc.html",
