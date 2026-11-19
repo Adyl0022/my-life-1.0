@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SG, Stop } from 'react-native-svg';
@@ -42,38 +42,58 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
   const bad = items.filter((x) => x.lv > 0 && x.show).sort((a, b) => b.lv - a.lv).slice(0, 3);
   const RING = score >= 80 ? ['#5ee7b5', '#7c9cff'] : score >= 50 ? ['#ffc46b', '#ff8fab'] : ['#ff8fab', '#ff5d8f'];
   const word = !items.length ? 'Add a job to start' : score >= 80 ? 'In great shape' : score >= 50 ? 'Needs a little care' : 'Needs attention';
-  const R = 40, CIR = 2 * Math.PI * R;
+  const R = 46, CIR = 2 * Math.PI * R;
+  // The ring fills up to the score, a little at a time.
+  const [shownScore, setShownScore] = useState(0);
+  useEffect(() => { let n = 0; const id = setInterval(() => { n += 1; setShownScore(Math.round(score * Math.min(1, n / 14))); if (n >= 14) clearInterval(id); }, 28); return () => clearInterval(id); }, [score]);
+  const nOk = items.filter((x) => x.lv === 0).length, nSoon = items.filter((x) => x.lv === 1).length, nLate = items.filter((x) => x.lv === 2).length;
   const [ek, setEk] = useState<keyof Ren | ''>(''); const [ev, setEv] = useState(todayStr());
   const preset = moto ? BIKE : CAR;
+  const Hd = ({ t, sub, right }: { t: string; sub?: string; right?: React.ReactNode }) => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+      <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800', letterSpacing: -0.2 }}>{t}</Text>{sub ? <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{sub}</Text> : null}</View>
+      {right}
+    </View>);
+  const Line = () => <LinearGradient pointerEvents="none" colors={['rgba(255,255,255,0)', 'rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 1, marginTop: 20, marginBottom: 12 }} />;
+  const Stat = ({ n, l, c }: { n: number; l: string; c: string }) => (
+    <View style={{ flex: 1, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center' }}>
+      <Text style={{ color: c, fontSize: 18, fontWeight: '800' }}>{n}</Text>
+      <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 10.5, fontWeight: '700', marginTop: 1 }}>{l}</Text>
+    </View>);
   return (
-    <Glass radius={30} style={{ marginTop: 12, padding: 18, overflow: 'hidden' }}>
-      <LinearGradient pointerEvents="none" colors={['rgba(255,143,171,.26)', 'rgba(183,148,255,.14)', 'rgba(183,148,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 }}>{(cat + ' score').toUpperCase()}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12 }}>
-        <View style={{ width: 104, height: 104, alignItems: 'center', justifyContent: 'center' }}>
-          <Svg width={104} height={104} viewBox="0 0 104 104" style={{ position: 'absolute' }}>
+    <Glass radius={32} style={{ marginTop: 12, padding: 18, overflow: 'hidden' }}>
+      <LinearGradient pointerEvents="none" colors={['rgba(255,143,171,.30)', 'rgba(183,148,255,.16)', 'rgba(124,156,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+      <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11, fontWeight: '800', letterSpacing: 2 }}>{(cat + ' score').toUpperCase()}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 }}>
+        <View style={{ width: 128, height: 128, alignItems: 'center', justifyContent: 'center' }}>
+          <Svg width={128} height={128} viewBox="0 0 128 128" style={{ position: 'absolute' }}>
             <Defs><SG id="rg" x1="0" y1="0" x2="1" y2="1"><Stop offset="0" stopColor={RING[0]} /><Stop offset="1" stopColor={RING[1]} /></SG></Defs>
-            <Circle cx={52} cy={52} r={R} stroke="rgba(255,255,255,.14)" strokeWidth={10} fill="none" />
-            {items.length ? <Circle cx={52} cy={52} r={R} stroke="url(#rg)" strokeWidth={10} strokeLinecap="round" fill="none" strokeDasharray={CIR} strokeDashoffset={CIR * (1 - score / 100)} transform="rotate(-90 52 52)" /> : null}
+            {Array.from({ length: 48 }, (_, i) => { const a = (i / 48) * Math.PI * 2; return <Circle key={i} cx={64 + Math.cos(a) * 60} cy={64 + Math.sin(a) * 60} r={i % 4 === 0 ? 1.6 : 0.9} fill="rgba(255,255,255,.35)" />; })}
+            <Circle cx={64} cy={64} r={R} stroke="rgba(255,255,255,.12)" strokeWidth={12} fill="none" />
+            {items.length ? <Circle cx={64} cy={64} r={R} stroke="url(#rg)" strokeOpacity={0.28} strokeWidth={20} strokeLinecap="round" fill="none" strokeDasharray={CIR} strokeDashoffset={CIR * (1 - shownScore / 100)} transform="rotate(-90 64 64)" /> : null}
+            {items.length ? <Circle cx={64} cy={64} r={R} stroke="url(#rg)" strokeWidth={12} strokeLinecap="round" fill="none" strokeDasharray={CIR} strokeDashoffset={CIR * (1 - shownScore / 100)} transform="rotate(-90 64 64)" /> : null}
           </Svg>
-          <Text style={{ color: W, fontSize: 27, fontWeight: '800' }}>{items.length ? score + '%' : '-'}</Text>
+          <Text style={{ color: W, fontSize: 31, fontWeight: '800', letterSpacing: -1 }}>{items.length ? shownScore + '%' : '-'}</Text>
+          <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6, marginTop: -1 }}>HEALTH</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: W, fontSize: 19, fontWeight: '800', letterSpacing: -0.3 }}>{word}</Text>
-          <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 3 }}>Jobs, parts and paperwork together</Text>
+          <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.4 }}>{word}</Text>
+          <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 3, lineHeight: 16 }}>Jobs, parts and paperwork together</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
             {bad.length ? bad.map((x) => <View key={x.n} style={{ paddingVertical: 4, paddingHorizontal: 9, borderRadius: 999, backgroundColor: x.lv === 2 ? 'rgba(255,143,171,.28)' : 'rgba(255,196,107,.24)' }}><Text style={{ color: x.lv === 2 ? '#ffc2d0' : '#ffe0a8', fontSize: 11, fontWeight: '700' }}>{x.n + ' · ' + x.why}</Text></View>)
               : items.length ? <View style={{ paddingVertical: 4, paddingHorizontal: 9, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.22)' }}><Text style={{ color: '#9af3d3', fontSize: 11, fontWeight: '700' }}>Everything is on track</Text></View> : null}
           </View>
         </View>
       </View>
+      {items.length ? <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}><Stat n={nOk} l="On track" c="#7df0c6" /><Stat n={nSoon} l="Coming up" c="#ffd593" /><Stat n={nLate} l="Late" c="#ffb3c6" /></View> : null}
 
-      <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 22 }}>ROAD TAX, INSURANCE AND LICENCE</Text>
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+      <Line />
+      <Hd t="Road tax, insurance and licence" sub="Tap one to set or change its date" />
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
         {RK.map(([k, label]) => { const st = renewStatus(rn[k]); const on = ek === k; return (
-          <Pressable key={k} onPress={() => { setEv(rn[k] || todayStr()); setEk(on ? '' : k); }} accessibilityLabel={(rn[k] ? 'Edit ' : 'Set ') + label} style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 10, borderRadius: 18, backgroundColor: on ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.09)' }}>
+          <Pressable key={k} onPress={() => { setEv(rn[k] || todayStr()); setEk(on ? '' : k); }} accessibilityLabel={(rn[k] ? 'Edit ' : 'Set ') + label} style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 10, borderRadius: 20, backgroundColor: on ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.09)' }}>
             <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11, fontWeight: '700' }}>{label}</Text>
-            <Text style={{ color: rn[k] ? st.col : W, fontSize: 15, fontWeight: '800', marginTop: 4 }} numberOfLines={1} adjustsFontSizeToFit>{rn[k] ? (st.n < 0 ? 'Expired' : st.n + (st.n === 1 ? ' day' : ' days')) : '+ Set'}</Text>
+            <Text style={{ color: rn[k] ? st.col : W, fontSize: 16, fontWeight: '800', marginTop: 5 }} numberOfLines={1} adjustsFontSizeToFit>{rn[k] ? (st.n < 0 ? 'Expired' : st.n + (st.n === 1 ? ' day' : ' days')) : '+ Set'}</Text>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5, marginTop: 2 }} numberOfLines={1}>{rn[k] ? fd(rn[k] as string) : 'No date yet'}</Text>
           </Pressable>); })}
       </View>
@@ -84,10 +104,8 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
         </View>
       ) : null}
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22 }}>
-        <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4 }}>{moto ? 'REPEAT JOBS · CHAIN, TYRES, OIL' : 'REPEAT JOBS · TYRES, OIL, COOLANT'}</Text>
-        {!open ? <Btn t="+ Add task" h={34} w={12} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setDt(todayStr()); }} /> : null}
-      </View>
+      <Line />
+      <Hd t="Maintenance tasks" sub={moto ? 'Chain, tyres, oil and more' : 'Tyres, oil, coolant and more'} right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setDt(todayStr()); }} /> : undefined} />
       {open ? (
         <View style={{ marginTop: 10, gap: 10 }}>
           <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 6 }}>Task</Text>
@@ -105,28 +123,29 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       {list.length === 0 && !open ? <Text style={{ marginTop: 10, color: dim, fontSize: 12, lineHeight: 18 }}>No tasks yet. Tap + Add task, choose Spray chain or Tyre pressure, and My Record counts the days since you last did it and the days until the next time.</Text> : null}
       <View>
         {shown.map((t, i) => {
-          const s = taskState(t, latest); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3);
+          const s = taskState(t, latest); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3); const pr = s.text.split(' · ');
           return (
-            <View key={t.id} style={{ marginTop: i === 0 ? 10 : 8, padding: 12, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.08)' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{t.name}</Text>
-                  <Text style={{ color: dim, fontSize: 11.5, marginTop: 3 }}>{'Last done ' + fd(t.last) + ' · ' + (s.since === 0 ? 'today' : s.since + (s.since === 1 ? ' day ago' : ' days ago')) + ' · every ' + t.days + (t.days === 1 ? ' day' : ' days') + (t.km ? ' or ' + t.km + ' km' : '')}</Text>
+            <View key={t.id} style={{ marginTop: i === 0 ? 12 : 10, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.08)', overflow: 'hidden', flexDirection: 'row' }}>
+              <View style={{ width: 5, backgroundColor: BAR[s.level] }} />
+              <View style={{ flex: 1, padding: 13 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ flex: 1, color: W, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>{t.name}</Text>
+                  <View style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: s.level === 2 ? 'rgba(255,143,171,.28)' : s.level === 1 ? 'rgba(255,196,107,.24)' : 'rgba(94,231,181,.2)' }}><Text style={{ color: COL[s.level], fontSize: 11.5, fontWeight: '800' }}>{pr[0]}</Text></View>
                 </View>
-                <Sq t="✕" label={'Delete ' + t.name} c="#ff9aa9" onPress={() => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) }))} />
-              </View>
-              <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 7, overflow: 'hidden' }}><View style={{ width: Math.round(s.frac * 100) + '%', height: '100%', backgroundColor: BAR[s.level] }} /></View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, gap: 8 }}>
-                <Text style={{ flex: 1, color: COL[s.level], fontSize: 11.5, fontWeight: '700' }}>{s.text}</Text>
-                <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + ' done today'} style={{ paddingVertical: 5, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.24)' }}><Text style={{ color: '#9af3d3', fontSize: 12, fontWeight: '800' }}>Done today</Text></Pressable>
-              </View>
-              {hist.length ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 3 }}>{'Before: ' + hist.map(fd).join(', ')}</Text> : null}
-              {doneId === t.id ? (
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                  <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={cost} onChangeText={setCost} placeholder={'Cost in ' + cu() + ' (optional)'} onSubmitEditing={() => done(t)} />
-                  <Btn t="Save" h={42} w={16} onPress={() => done(t)} />
+                <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>{'Last done ' + fd(t.last) + ' · ' + (s.since === 0 ? 'today' : s.since + (s.since === 1 ? ' day ago' : ' days ago')) + ' · every ' + t.days + (t.days === 1 ? ' day' : ' days') + (t.km ? ' or ' + t.km + ' km' : '')}</Text>
+                <View style={{ height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: Math.round(s.frac * 100) + '%', height: '100%', borderRadius: 3, backgroundColor: BAR[s.level] }} /></View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 }}>
+                  <Text style={{ flex: 1, color: 'rgba(255,255,255,.55)', fontSize: 11 }} numberOfLines={1}>{pr[1] ? pr[1] : hist.length ? 'Before: ' + hist.map(fd).join(', ') : ''}</Text>
+                  <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + ' done today'} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.26)' }}><Text style={{ color: '#9af3d3', fontSize: 12.5, fontWeight: '800' }}>Done today</Text></Pressable>
+                  <Sq t="✕" label={'Delete ' + t.name} c="#ff9aa9" onPress={() => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) }))} />
                 </View>
-              ) : null}
+                {doneId === t.id ? (
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
+                    <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={cost} onChangeText={setCost} placeholder={'Cost in ' + cu() + ' (optional)'} onSubmitEditing={() => done(t)} />
+                    <Btn t="Save" h={42} w={16} onPress={() => done(t)} />
+                  </View>
+                ) : null}
+              </View>
             </View>
           );
         })}
