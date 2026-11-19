@@ -101,12 +101,24 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
 
       <Line />
       <Hd t="Road tax, insurance and licence" sub="Tap one to set or change its date" />
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-        {RK.map(([k, label]) => { const st = renewStatus(rn[k]); const on = ek === k; return (
-          <Pressable key={k} onPress={() => { setEv(rn[k] || todayStr()); setEk(on ? '' : k); }} accessibilityLabel={(rn[k] ? 'Edit ' : 'Set ') + label} style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 10, borderRadius: 20, backgroundColor: on ? 'rgba(255,255,255,.26)' : 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
-            <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11, fontWeight: '700' }}>{label}</Text>
-            <Text style={{ color: rn[k] ? st.col : W, fontSize: 16, fontWeight: '800', marginTop: 5 }} numberOfLines={1} adjustsFontSizeToFit>{rn[k] ? (st.n < 0 ? 'Expired' : st.n + (st.n === 1 ? ' day' : ' days')) : '+ Set'}</Text>
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5, marginTop: 2 }} numberOfLines={1}>{rn[k] ? fdy(rn[k] as string) : 'No date yet'}</Text>
+      <View style={{ marginTop: 12, gap: 10 }}>
+        {RK.map(([k, label]) => { const st = renewStatus(rn[k]); const on = ek === k; const has = !!rn[k]; const gone = has && st.n < 0;
+          const sub = !has ? 'Add the expiry date to get a reminder' : gone ? 'Expired on ' + fdy(rn[k] as string) + '. Renew it soon.' : 'Expires on ' + fdy(rn[k] as string);
+          return (
+          <Pressable key={k} onPress={() => { setEv(rn[k] || todayStr()); setEk(on ? '' : k); }} accessibilityLabel={(has ? 'Edit ' : 'Set ') + label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 22, backgroundColor: on ? 'rgba(255,255,255,.26)' : 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
+            <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: has ? st.col : 'rgba(255,255,255,.3)' }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{label}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, lineHeight: 17, marginTop: 3 }}>{sub}</Text>
+            </View>
+            {has ? (
+              <View style={{ alignItems: 'center', minWidth: 64 }}>
+                <Text style={{ color: st.col, fontSize: gone ? 17 : 26, fontWeight: '800', lineHeight: 30 }}>{gone ? 'Expired' : st.n}</Text>
+                {gone ? null : <Text style={{ color: st.col, fontSize: 11.5, fontWeight: '700' }}>{st.n === 1 ? 'day left' : 'days left'}</Text>}
+              </View>
+            ) : (
+              <View style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>+ Set</Text></View>
+            )}
           </Pressable>); })}
       </View>
       {ek ? (
