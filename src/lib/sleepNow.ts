@@ -38,7 +38,7 @@ export async function endSleep(): Promise<string> {
   const end = Date.now(); const ms = end - cur.start;
   await setItem(SLEEP_KEY, null);
   try { await Notifications.dismissNotificationAsync(NID); await Notifications.cancelScheduledNotificationAsync(NID); } catch (e) {}
-  let msg: string;
+  let msg: string; let title = 'Good morning';
   if (ms < 10 * 60000) msg = 'That was under 10 minutes, so it was not saved.';
   else if (ms > 16 * 3600000) msg = 'That was over 16 hours, so it was not saved. You can type your sleep by hand.';
   else {
@@ -47,7 +47,9 @@ export async function endSleep(): Promise<string> {
     const day: HDay = { ...BLANK, ...(h.days[k] || {}) };
     await setItem('ml_habit', { ...h, days: { ...h.days, [k]: { ...day, sleep: hrs, bed: hhmm(new Date(cur.start)), wake: hhmm(w) } } });
     msg = 'You slept ' + fmtDur(ms) + '. Saved to Sleep Tracker.';
+    if (hrs < 6) { title = 'Short night'; msg += ' Less than 6 hours is not enough. Try to rest earlier tonight.'; }
+    else if (hrs > 9) { title = 'Long sleep'; msg += ' More than 9 hours is a lot. Try to keep your sleep steady.'; }
   }
-  if (await prep()) { try { await Notifications.scheduleNotificationAsync({ content: { title: 'Good morning', body: msg, sound: false } as any, trigger: { channelId: 'sleeping' } as any }); } catch (e) {} }
+  if (await prep()) { try { await Notifications.scheduleNotificationAsync({ content: { title, body: msg, sound: false } as any, trigger: { channelId: 'sleeping' } as any }); } catch (e) {} }
   return msg;
 }
