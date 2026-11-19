@@ -15,7 +15,7 @@ import { PageArt } from '../components/PageArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { missedDoses } from '../lib/medMissed';
-import { HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
+import { weekOffs, HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
 
 const T = '#5ee7df';
 const DN = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -103,7 +103,7 @@ export default function Medicine() {
         </View>
       )}
     </View>); };
-  const week = Array.from({ length: 7 }, (_, i) => { const off = i - 6; const d = dateOf(off); const x = getDay(h, off); const dm = meds.filter((m) => medDue(m, d)); return { d, n: dm.length, k: dm.filter((m) => (x.med || []).includes(m.id)).length, off }; });
+  const week = weekOffs().map((off) => { const d = dateOf(off); const x = getDay(h, off); const dm = meds.filter((m) => medDue(m, d)); return { d, n: off > 0 ? 0 : dm.length, k: dm.filter((m) => (x.med || []).includes(m.id)).length, off }; });
   const R = 36; const C = 2 * Math.PI * R;
   return (
     <View style={{ flex: 1, backgroundColor: '#0d1030' }}>
@@ -197,7 +197,7 @@ export default function Medicine() {
               ) : null}
               {tab === 'week' ? (
                 <Glass radius={24} style={{ marginTop: 14, padding: 14 }}>
-                  <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Last 7 days</Text>
+                  <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>This week</Text>
                   {week.map((x) => { const full = x.n > 0 && x.k === x.n; return (
                     <View key={x.off} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }}>
                       <Text style={{ color: 'rgba(255,255,255,.8)', width: 78, fontSize: 12.5, fontWeight: x.off === 0 ? '800' : '600' }}>{x.off === 0 ? 'Today' : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][x.d.getDay()] + ' ' + x.d.getDate()}</Text>

@@ -22,7 +22,7 @@ import { useCycleSave } from '../lib/cycleHook';
 import { TOP } from '../lib/layout';
 import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
-import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf, medDue, to12 } from '../lib/habit';
+import { weekOffs, HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf, medDue, to12 } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
 import { sensorToday } from '../lib/stepSensor';
 import { stepWhy, addSleepTile } from '../../modules/step-counter';
@@ -103,7 +103,7 @@ export default function Habit() {
   const km = (t.steps * 0.00075).toFixed(1);
   const gp = goalPctOf(t, goal, cg);
   const stepPct = Math.min(t.steps / goal, 1);
-  const wk = [-6, -5, -4, -3, -2, -1, 0].map((o) => ({ o, d: getDay(h, o), dt: dateOf(o) }));
+  const wk = weekOffs().map((o) => ({ o, d: getDay(h, o), dt: dateOf(o) }));
   const wl = wk.map((x) => x.o === 0 ? 'Today' : WD[x.dt.getDay()]);
   const saveGoal = () => { const n = parseInt(gv.replace(/[^0-9]/g, ''), 10); if (n >= 500 && n <= 100000) { setH({ ...h, goal: n }); setEdit(false); } };
   // streak: consecutive days reaching 70%
@@ -290,7 +290,7 @@ export default function Habit() {
               </Pressable>
             </SoftShow>
             <SleepSchedule h={h} />
-            <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={6} />
+            <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={wk.findIndex((x) => x.o === 0)} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
@@ -322,7 +322,7 @@ export default function Habit() {
               <View><Text style={{ color: W, fontSize: 30, fontWeight: '800', letterSpacing: -0.5 }}>{km}</Text><Lbl t="km" /></View>
             </View>
             <View style={{ height: 10, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 10, overflow: 'hidden' }}><LinearGradient colors={['#7c9cff', T]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 10, width: (stepPct * 100 + '%') as any }} /></View>
-            <Bars vals={wk.map((x) => x.d.steps)} labels={wl} max={Math.max(goal, ...wk.map((x) => x.d.steps))} goal={goal} color={T} hi={6} />
+            <Bars vals={wk.map((x) => x.d.steps)} labels={wl} max={Math.max(goal, ...wk.map((x) => x.d.steps))} goal={goal} color={T} hi={wk.findIndex((x) => x.o === 0)} />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <Pressable onPress={() => setSteps(t.steps + 500)} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>+500 steps</Text></Pressable>
               <Pressable onPress={() => setSteps(Math.max(0, t.steps - 500))} style={{ paddingVertical: 11, paddingHorizontal: 18, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>−500</Text></Pressable>

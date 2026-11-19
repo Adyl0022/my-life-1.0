@@ -14,7 +14,7 @@ import { CardArt } from '../components/CardArt';
 import { PageArt } from '../components/PageArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
-import { HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
+import { weekOffs, HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
 import { BREATH, STYLES, LOOK, mins, fmtMin, weekMins, relaxStreak, recentSess, addSess, delSess, nowHM } from '../lib/relax';
 import { dayKind } from '../lib/cycle';
 import { scheduleRelaxEnd, cancelRelaxEnd } from '../lib/alerts';
@@ -144,7 +144,7 @@ export default function Relax() {
   const start = (r: Run) => setRun(r);
   const startM = () => { const m = cust ? Math.round(+cm) : ml; if (!(m >= 1 && m <= 90)) return; start({ kind: 'm', k: mk, total: m * 60 }); };
   const save = (sec: number) => setH(addSess(h, { k: run ? run.k : 'sit', s: Math.round(sec), at: nowHM() }));
-  const week = Array.from({ length: 7 }, (_, i) => { const off = i - 6; return { off, d: dateOf(off), m: mins(getDay(h, off)) }; });
+  const week = weekOffs().map((off) => { return { off, d: dateOf(off), m: mins(getDay(h, off)) }; });
   const mx = Math.max(10, ...week.map((x) => x.m));
   const Row = ({ ic, n, d, sel, onPress }: { ic: string; n: string; d: string; sel?: boolean; onPress?: () => void }) => (
     <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: sel ? 'rgba(94,231,223,.14)' : 'rgba(255,255,255,.09)', borderWidth: 2, borderColor: sel ? T : 'transparent' }}>
@@ -209,7 +209,7 @@ export default function Relax() {
                     {[[fmtMin(today), 'min today'], [fmtMin(weekMins(h)), 'min this week'], [String(relaxStreak(h)), 'day streak']].map((x) => <View key={x[1]} style={{ alignItems: 'center' }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{x[0]}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{x[1]}</Text></View>)}
                   </Glass>
                   <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-                    <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Last 7 days</Text>
+                    <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>This week</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 90, marginTop: 10 }}>
                       {week.map((x) => <View key={x.off} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}><View style={{ width: '100%', height: Math.max(x.m > 0 ? 6 : 0, (x.m / mx) * 70), borderRadius: 8, backgroundColor: x.m >= goal ? T : 'rgba(94,231,223,.5)' }} /><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 10.5, marginTop: 4 }}>{['S', 'M', 'T', 'W', 'T', 'F', 'S'][x.d.getDay()]}</Text></View>)}
                     </View>

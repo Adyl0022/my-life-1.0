@@ -18,7 +18,7 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useStored } from '../../lib/store';
 import { MODS } from '../../lib/modules';
 import { useHidden } from '../../lib/hidden';
-import { HEMPTY, getDay, cupsGoal, dateOf, keyOfDate, MOODS } from '../../lib/habit';
+import { weekOffs, HEMPTY, getDay, cupsGoal, dateOf, keyOfDate, MOODS } from '../../lib/habit';
 import { useCore, weekly, records, hasData as hasHab, dayPct, incomeOf } from '../../lib/insights';
 import { mins as relaxMins, fmtMin } from '../../lib/relax';
 import { medAdherence } from '../../lib/medMissed';
@@ -92,25 +92,25 @@ export default function Stats() {
   const btop = bt.slice().sort((a, b) => b.v - a.v)[0];
   const heat = Array.from({ length: 30 }, (_, i) => { const o = i - 29; return hasHab(core, o) ? dayPct(core, o) : -1; });
   const fd = (k: string) => { if (!k) return ''; const [y, m, d] = k.split('-'); return Number(d) + ' ' + MON[Number(m) - 1]; };
-  const last7 = [-6, -5, -4, -3, -2, -1, 0];
+  const last7 = weekOffs(); const el = last7.indexOf(0) + 1; // days of this week so far (Monday = 1)
   const wd = last7.map((o) => ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dateOf(o).getDay()]);
   const spendOn = (o: number) => ((fin && fin.spends) || []).filter((x: any) => x.cat !== 'Savings' && x.date === keyOfDate(dateOf(o))).reduce((a, b) => a + (b.amt || 0), 0);
   // Relax, energy and medicine join the list once there is something logged
   const rl7 = last7.map((o) => relaxMins(getDay(hd, o)));
   const en7 = last7.map((o) => { const e = getDay(hd, o).en; return e !== undefined && e >= 0 ? 4 - e : 0; });
-  const ad7 = hd.meds && hd.meds.length ? medAdherence(hd, new Date(), 7) : null;
+  const ad7 = hd.meds && hd.meds.length ? medAdherence(hd, new Date(), el) : null;
   type Tr = { t: string; k: string; c: string; v: number[]; fmt: (n: number) => string; unit: string; sum?: boolean };
   const extraTr: Tr[] = [];
   if (rl7.some((v) => v > 0)) extraTr.push({ t: 'Relax', k: 'relax', c: '#8fe9e2', v: rl7, fmt: (n: number) => fmtMin(n), unit: 'min a day' });
   if (en7.some((v) => v > 0)) extraTr.push({ t: 'Energy', k: 'energy', c: '#ffc46b', v: en7, fmt: () => { const l = en7.filter((v) => v > 0); return ENERGY[Math.max(0, Math.min(3, 4 - Math.round(l.reduce((a, b) => a + b, 0) / l.length)))][0]; }, unit: 'on average' });
-  if (ad7 && ad7.due > 0) extraTr.push({ t: 'Medicine', k: 'medicine', c: '#5ee7df', v: ad7.daily, fmt: (n: number) => String(Math.round(n)), unit: 'of ' + ad7.due + ' doses taken', sum: true });
+  if (ad7 && ad7.due > 0) extraTr.push({ t: 'Medicine', k: 'medicine', c: '#5ee7df', v: [...ad7.daily, ...Array(7 - el).fill(0)], fmt: (n: number) => String(Math.round(n)), unit: 'of ' + ad7.due + ' doses taken', sum: true });
   const trends: Tr[] = [
     { t: 'Steps', k: 'steps', c: '#34d399', v: last7.map((o) => getDay(hd, o).steps), fmt: (n: number) => Math.round(n).toLocaleString(), unit: 'a day' },
     { t: 'Water', k: 'water', c: '#5ee7df', v: last7.map((o) => getDay(hd, o).cups), fmt: (n: number) => String(Math.round(n * 10) / 10), unit: 'of ' + cg + ' glasses' },
     { t: 'Sleep', k: 'sleep', c: '#b794ff', v: last7.map((o) => getDay(hd, o).sleep), fmt: (n: number) => String(Math.round(n * 10) / 10), unit: 'hours a night' },
     { t: 'Mood', k: 'mood', c: '#ff8fab', v: last7.map((o) => { const m = getDay(hd, o).mood; return m >= 0 ? m + 1 : 0; }), fmt: (n: number) => { const lg = last7.map((o) => getDay(hd, o).mood).filter((m) => m >= 0); if (!lg.length) return 'None'; return MOODS[Math.max(0, Math.min(4, Math.round(lg.reduce((a, b) => a + b, 0) / lg.length)))][0]; }, unit: 'on average' },
     ...extraTr,
-    { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'in 7 days', sum: true },
+    { t: 'Spending', k: '', c: '#ffc46b', v: last7.map((o) => spendOn(o)), fmt: (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }), unit: 'this week', sum: true },
   ];
   const tot: Record<string, number> = u.mods;
   const ranked = MODS.map((m) => ({ ...m, n: tot[m.k] || 0 })).filter((m) => m.n > 0 && hid.on(m.k as any)).sort((a, b) => b.n - a.n);
@@ -431,23 +431,23 @@ export default function Stats() {
 
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Your last 7 days</Text>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>This week</Text>
             <View style={{ gap: 16, marginTop: 14 }}>
               {trends.filter((x) => x.k).map((tr, ti) => {
-                const mx = Math.max(...tr.v, 1); const avg = tr.v.reduce((a, b) => a + b, 0) / 7;
+                const mx = Math.max(...tr.v, 1); const avg = tr.v.reduce((a, b) => a + b, 0) / el;
                 return (
                   <View key={tr.t}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       {tr.k ? <HeadIcon k={tr.k} size={24} /> : <MI k="finance" s={24} />}
                       <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', flex: 1 }}>{tr.t}</Text>
-                      <Text style={{ color: tr.c, fontSize: 13, fontWeight: '800' }}>{tr.fmt((tr as any).sum ? avg * 7 : avg)}</Text>
+                      <Text style={{ color: tr.c, fontSize: 13, fontWeight: '800' }}>{tr.fmt((tr as any).sum ? avg * el : avg)}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{tr.unit}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 44 }}>
                       {tr.v.map((v, i) => (
                         <View key={i} style={{ flex: 1, height: 44, justifyContent: 'flex-end' }}>
                           <GrowBar h={Math.max(4, Math.round((v / mx) * 44))} delay={ti * 60 + i * 40} dep={tr.v.join()} style={{ width: '100%' }}>
-                            <View style={{ flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === 6 ? 1 : 0.5 }} />
+                            <View style={{ flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === el - 1 ? 1 : 0.5 }} />
                           </GrowBar>
                         </View>
                       ))}
@@ -527,23 +527,23 @@ export default function Stats() {
 
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Spending, last 7 days</Text>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Spending this week</Text>
             <View style={{ gap: 16, marginTop: 14 }}>
               {trends.filter((x) => !x.k).map((tr, ti) => {
-                const mx = Math.max(...tr.v, 1); const avg = tr.v.reduce((a, b) => a + b, 0) / 7;
+                const mx = Math.max(...tr.v, 1); const avg = tr.v.reduce((a, b) => a + b, 0) / el;
                 return (
                   <View key={tr.t}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       {tr.k ? <HeadIcon k={tr.k} size={24} /> : <MI k="finance" s={24} />}
                       <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', flex: 1 }}>{tr.t}</Text>
-                      <Text style={{ color: tr.c, fontSize: 13, fontWeight: '800' }}>{tr.fmt((tr as any).sum ? avg * 7 : avg)}</Text>
+                      <Text style={{ color: tr.c, fontSize: 13, fontWeight: '800' }}>{tr.fmt((tr as any).sum ? avg * el : avg)}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{tr.unit}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 44 }}>
                       {tr.v.map((v, i) => (
                         <View key={i} style={{ flex: 1, height: 44, justifyContent: 'flex-end' }}>
                           <GrowBar h={Math.max(4, Math.round((v / mx) * 44))} delay={ti * 60 + i * 40} dep={tr.v.join()} style={{ width: '100%' }}>
-                            <View style={{ flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === 6 ? 1 : 0.5 }} />
+                            <View style={{ flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === el - 1 ? 1 : 0.5 }} />
                           </GrowBar>
                         </View>
                       ))}
