@@ -13,24 +13,8 @@ import { usePrayer } from '../lib/prayer';
 import { TOP } from '../lib/layout';
 import { useStored } from '../lib/store';
 import { useHijriSync, upcoming } from '../lib/hijriSync';
-import { HubLog, weekDays, ayatOfDay } from '../lib/hubInsight';
+import { HubLog, weekRow, streaks, ayatOfDay } from '../lib/hubInsight';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram, keyD } from '../lib/fasting';
-
-const Ring = ({ v, max, label, c }: { v: number; max: number; label: string; c: string }) => {
-  const R = 20, C = 2 * Math.PI * R, f = Math.min(1, v / max);
-  return (
-    <View style={{ alignItems: 'center', flex: 1 }}>
-      <View style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width={52} height={52} style={{ position: 'absolute' }}>
-          <Circle cx={26} cy={26} r={R} stroke="rgba(255,255,255,.16)" strokeWidth={5} fill="none" />
-          <Circle cx={26} cy={26} r={R} stroke={c} strokeWidth={5} fill="none" strokeLinecap="round" strokeDasharray={C + ' ' + C} strokeDashoffset={C * (1 - f)} rotation={-90} origin="26, 26" />
-        </Svg>
-        <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{v}</Text>
-      </View>
-      <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{label}</Text>
-    </View>
-  );
-};
 
 const Item = ({ t, s, c, ic = 'book', onPress }: { t: string; s: string; c: string; ic?: string; onPress: () => void }) => (
   <Pressable onPress={onPress}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -67,14 +51,17 @@ export default function IslamicHub() {
   const hoff = useHijriSync();
   const evs = upcoming(now, hoff, 4);
   const hasRead = !!(isl.lastKey && SURAH[isl.lastKey]);
-  const kinds = hasRead ? ['read', 'ev', 'ins'] : ['ev', 'ins'];
+  const kinds = hasRead ? ['ins', 'ev', 'verse', 'read'] : ['ins', 'ev', 'verse'];
   const [slide, setSlide] = useState(evs[0] && evs[0].days <= 3 ? kinds.indexOf('ev') : 0);
   const cur = kinds[Math.min(slide, kinds.length - 1)];
   const [hl] = useStored<HubLog>('ml_hub_log', {});
   const rs0 = ramadanState(pz, now), ow0 = qadhaOwed(pz, now);
-  const ay = ayatOfDay(now, rs0.phase === 'during');
+  const ay = ayatOfDay(now, rs0.phase === 'during', evs[0] && evs[0].days === 0 ? evs[0].n : undefined);
   const ayv = SURAH[ay.key] ? SURAH[ay.key].verses[ay.n - 1] : null;
-  let sunnahWk = 0; for (let i = 0; i < 7; i++) if ((pz.days || {})[keyD(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i))] === 's') sunnahWk++;
+  const [tas] = useStored<{ day: string; total: number }>('ml_tasbih', { day: '', total: 0 });
+  const tasToday = tas.day === keyD(now) ? tas.total : 0;
+  const rowQ = weekRow((k) => !!(hl[k] && hl[k].q), now), rowZ = weekRow((k) => !!(hl[k] && hl[k].z), now), rowF = weekRow((k) => !!(pz.days || {})[k] && ['r', 's', 'q'].includes((pz.days || {})[k]), now);
+  const stk = streaks(hl, 'q', now);
   const [openEv, setOpenEv] = useState(false);
   const fade = useRef(new Animated.Value(1)).current;
   const tx = useRef(new Animated.Value(0)).current;
@@ -140,19 +127,31 @@ export default function IslamicHub() {
               <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
             </Glass></Pressable>
             ) : cur === 'ins' ? (
-            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + ay.key + '?v=' + ay.n)}><Glass radius={22} style={{ padding: 14 }}>
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)}><Glass radius={22} style={{ padding: 14 }}>
               <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR WEEK · INSIGHT</Text>
-              <View style={{ flexDirection: 'row', marginTop: 12 }}>
-                <Ring v={weekDays(hl, 'q')} max={7} label="Quran days" c="#5ee7b5" />
-                <Ring v={weekDays(hl, 'z')} max={7} label="Zikir days" c="#ffd593" />
-                <Ring v={sunnahWk} max={2} label="Sunnah fasts" c="#7c9cff" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                <View style={{ width: 62 }} />
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (<Text key={i} style={{ flex: 1, textAlign: 'center', color: rowQ[i].today ? '#5ee7df' : 'rgba(255,255,255,.55)', fontSize: 11, fontWeight: '700' }}>{d}</Text>))}
               </View>
-              {rs0.phase === 'before' || rs0.phase === 'during' ? (<Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 12 }}>{rs0.phase === 'during' ? 'Ramadan day ' + rs0.day + ' of ' + rs0.r.len : 'Ramadan in ' + rs0.daysTo + ' days'}{ow0 > 0 ? ' · ' + ow0 + ' make-up ' + (ow0 === 1 ? 'fast' : 'fasts') + ' to finish' : ' · no make-up fasts owed'}</Text>) : ow0 > 0 ? (<Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 12 }}>{ow0 + ' make-up ' + (ow0 === 1 ? 'fast' : 'fasts') + ' to finish before Ramadan'}</Text>) : null}
-              {ayv ? (<View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
-                <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.1 }}>{ay.why.toUpperCase()} · {SURAH[ay.key].title.replace('Surah ', '')} {SURAH[ay.key].num}:{ay.n}</Text>
-                <Text numberOfLines={2} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 21, lineHeight: 36, textAlign: 'right', marginTop: 4 }}>{ayv.ar}</Text>
-                <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 2 }}>{ayv.en}</Text>
-              </View>) : null}
+              {([['Quran', rowQ, '#5ee7b5'], ['Zikir', rowZ, '#ffd593'], ['Fasting', rowF, '#7c9cff']] as [string, ReturnType<typeof weekRow>, string][]).map(([lb, row, c]) => (
+                <View key={lb} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                  <Text style={{ width: 62, color: 'rgba(255,255,255,.85)', fontSize: 12.5, fontWeight: '700' }}>{lb}</Text>
+                  {row.map((d, i) => (<View key={i} style={{ flex: 1, alignItems: 'center' }}><View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: d.on ? c : 'transparent', borderWidth: d.on ? 0 : 1.5, borderColor: d.today ? c : 'rgba(255,255,255,' + (d.future ? '.1' : '.22') + ')' }} /></View>))}
+                </View>
+              ))}
+              <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)', flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700' }}>{stk.cur > 0 ? 'Streak ' + stk.cur + (stk.cur === 1 ? ' day' : ' days') : 'No streak yet'}{stk.best > 1 ? ' · Best ' + stk.best : ''}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, fontWeight: '600' }}>Tasbih today {tasToday}</Text>
+              </View>
+            </Glass></Pressable>
+            ) : cur === 'verse' ? (
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + ay.key + '?v=' + ay.n)}><Glass radius={22} style={{ padding: 14 }}>
+              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{ay.why.toUpperCase()}</Text>
+              {ayv ? (<>
+                <Text numberOfLines={4} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 22, lineHeight: 40, textAlign: 'right', marginTop: 8 }}>{ayv.ar}</Text>
+                <Text numberOfLines={3} style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{ayv.en}</Text>
+                <Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '700', marginTop: 8 }}>{SURAH[ay.key].title.replace('Surah ', '')} {SURAH[ay.key].num}:{ay.n}  ›</Text>
+              </>) : null}
             </Glass></Pressable>
             ) : ev0 ? (
             <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => setOpenEv((v) => !v)}><Glass radius={22} style={{ padding: 14 }}>
