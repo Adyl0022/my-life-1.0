@@ -51,6 +51,8 @@ export default function IslamicHub() {
   const hoff = useHijriSync();
   const evs = upcoming(now, hoff, 4);
   const hasRead = !!(isl.lastKey && SURAH[isl.lastKey]);
+  const CH = 196;
+  const lkTotal = React.useMemo(() => (SURAH[lk] ? SURAH[lk].verses.length : 0), [lk]);
   const kinds = hasRead ? ['ins', 'ev', 'verse', 'read'] : ['ins', 'ev', 'verse'];
   const [slide, setSlide] = useState(evs[0] && evs[0].days <= 3 ? kinds.indexOf('ev') : 0);
   const cur = kinds[Math.min(slide, kinds.length - 1)];
@@ -119,15 +121,26 @@ export default function IslamicHub() {
               <View style={{ flex: 1 }}><Text style={{ color: '#ffd593', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{z[0]}</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{z[1]}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{z[2]}</Text></View>
               <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
             </Glass></Pressable>
+            <View style={{ height: CH }}>
             <Animated.View {...pan.panHandlers} style={{ opacity: fade, transform: [{ translateX: tx }] }}>
             {cur === 'read' ? (
-            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + lk + (lv ? '?v=' + lv : ''))}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(94,231,181,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="book" size={24} /></View>
-              <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>CONTINUE READING</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{SURAH[lk].title}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{lv ? 'Last read: verse ' + lv : 'Start reading'}</Text></View>
-              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + lk + (lv ? '?v=' + lv : ''))}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(94,231,181,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="book" size={24} /></View>
+                <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>CONTINUE READING</Text><Text numberOfLines={1} style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{SURAH[lk].title}</Text></View>
+                <Text numberOfLines={1} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 26, lineHeight: 44, maxWidth: 130 }}>{SURAH[lk].ar}</Text>
+              </View>
+              <View style={{ marginTop: 18 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 7 }}>
+                  <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, fontWeight: '600' }}>{lv ? 'Verse ' + lv + ' of ' + lkTotal : lkTotal + ' verses'}</Text>
+                  <Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '700' }}>{lv && lkTotal ? Math.round((lv / lkTotal) * 100) + '%' : ''}</Text>
+                </View>
+                <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.18)', overflow: 'hidden' }}><View style={{ height: 6, borderRadius: 3, backgroundColor: '#5ee7b5', width: (lv && lkTotal ? Math.min(100, (lv / lkTotal) * 100) : 0) + '%' }} /></View>
+              </View>
+              <View style={{ marginTop: 14, alignSelf: 'flex-start', backgroundColor: 'rgba(94,231,181,.28)', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 16 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{lv ? 'Resume' : 'Start reading'}</Text></View>
             </Glass></Pressable>
             ) : cur === 'ins' ? (
-            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)}><Glass radius={22} style={{ padding: 14 }}>
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
               <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR WEEK · INSIGHT</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
                 <View style={{ width: 62 }} />
@@ -145,30 +158,31 @@ export default function IslamicHub() {
               </View>
             </Glass></Pressable>
             ) : cur === 'verse' ? (
-            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + ay.key + '?v=' + ay.n)}><Glass radius={22} style={{ padding: 14 }}>
-              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{ay.why.toUpperCase()}</Text>
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => go('/surah/' + ay.key + '?v=' + ay.n)}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
+              <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{ay.why.toUpperCase()}{ayv ? ' · ' + SURAH[ay.key].title.replace('Surah ', '') + ' ' + SURAH[ay.key].num + ':' + ay.n : ''}</Text>
               {ayv ? (<>
-                <Text numberOfLines={4} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 22, lineHeight: 40, textAlign: 'right', marginTop: 8 }}>{ayv.ar}</Text>
-                <Text numberOfLines={3} style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{ayv.en}</Text>
-                <Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '700', marginTop: 8 }}>{SURAH[ay.key].title.replace('Surah ', '')} {SURAH[ay.key].num}:{ay.n}  ›</Text>
+                <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: W, fontFamily: QURAN_FONT, fontSize: 21, lineHeight: 36, textAlign: 'right', marginTop: 6 }}>{ayv.ar}</Text>
+                <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{ayv.en}</Text>
               </>) : null}
             </Glass></Pressable>
             ) : ev0 ? (
-            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => setOpenEv((v) => !v)}><Glass radius={22} style={{ padding: 14 }}>
+            <Pressable onPressIn={() => setHeld(true)} onPressOut={() => setHeld(false)} onPress={() => setOpenEv((v) => !v)}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(52,211,153,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="moon" size={24} /></View>
                 <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>UPCOMING · ISLAMIC CALENDAR</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{ev0.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 1 }}>{ev0.days === 0 ? 'Today' : ev0.days === 1 ? 'Tomorrow' : 'In ' + ev0.days + ' days'} · {ev0.hText}</Text></View>
                 <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>{openEv ? '⌃' : '⌄'}</Text>
               </View>
-              <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>{ev0.tip}</Text>
-              {openEv ? (<View style={{ marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
-                {evs.slice(1).map((e) => (<View key={e.n + e.hText} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{e.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12 }}>{e.days === 1 ? 'Tomorrow' : 'In ' + e.days + ' days'}</Text></View>))}
-                <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 6 }}>Dates are estimates and follow JAKIM when you are online. The final date depends on the moon sighting.</Text>
-              </View>) : null}
+              <Text numberOfLines={3} style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 12 }}>{ev0.tip}</Text>
+              <Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '700', marginTop: 10 }}>{openEv ? 'Hide the next events' : 'Tap to see the next events'}</Text>
             </Glass></Pressable>
             ) : null}
             </Animated.View>
-            {kinds.length > 1 ? (<View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: -4 }}>{kinds.map((_k, i) => i).map((i) => (<View key={i} style={{ width: 34, height: 4, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.22)' }}>{slide === i ? <Animated.View style={{ height: 4, borderRadius: 2, backgroundColor: '#5ee7df', width: prog.interpolate({ inputRange: [0, 1], outputRange: [6, 34] }) }} /> : null}</View>))}</View>) : null}
+            {kinds.length > 1 ? (<View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 10, flexDirection: 'row', gap: 6 }}>{kinds.map((_k, i) => (<View key={i} style={{ flex: 1, height: 3, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.2)' }}>{slide === i ? <Animated.View style={{ height: 3, borderRadius: 2, backgroundColor: '#5ee7df', width: prog.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} /> : null}</View>))}</View>) : null}
+            </View>
+            {openEv && cur === 'ev' ? (<Glass radius={22} style={{ padding: 14 }}>
+              {evs.slice(1).map((e) => (<View key={e.n + e.hText} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{e.n}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12 }}>{e.days === 1 ? 'Tomorrow' : 'In ' + e.days + ' days'}</Text></View>))}
+              <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 6 }}>Dates are estimates and follow JAKIM when you are online. The final date depends on the moon sighting.</Text>
+            </Glass>) : null}
             <Pressable onPress={() => go('/puasa')}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(52,211,153,.4)', alignItems: 'center', justifyContent: 'center' }}><Ic n="moon" size={24} /></View>
               <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>RAMADAN · SUNNAH</Text><Text style={{ color: W, fontSize: 14.5, fontWeight: '700', marginTop: 2 }}>{pst.h}</Text><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 2 }}>{pst.b}</Text></View>
