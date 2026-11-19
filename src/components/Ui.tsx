@@ -1,6 +1,7 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import React from 'react';
-import { View, TextInput, Pressable, Modal, Platform, Keyboard, Dimensions, ScrollView, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, Modal, Platform, Keyboard, Dimensions, ScrollView, StyleSheet, Animated } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -29,15 +30,25 @@ export const Inp = (p: any) => {
   if (err.indexOf('Too low') === 0 && !seen && String(p.value).replace(/\D/g, '').length < String(max != null ? max : min).length) err = '';
   if (!err && need0) err = need0;
   const base = { minWidth: 0, color: W, fontSize: 14, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: err ? '#ff6b81' : 'rgba(255,255,255,.14)', outlineStyle: 'none' } as any;
-  if (!err) return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} style={[base, p.style]} />;
+  // A short side-to-side shake (plus a buzz on the phone) each time the box becomes wrong or you type another wrong thing.
+  const sh = React.useRef(new Animated.Value(0)).current;
+  const lastErr = React.useRef('');
+  React.useEffect(() => {
+    if (err && err !== lastErr.current) {
+      Animated.sequence([-7, 7, -5, 5, -2, 0].map((v) => Animated.timing(sh, { toValue: v, duration: 55, useNativeDriver: Platform.OS !== 'web' }))).start();
+      if (Platform.OS !== 'web') { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {} }
+    }
+    lastErr.current = err;
+  }, [err, p.value]);
+  if (!numeric && !err) return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} style={[base, p.style]} />;
   // Only while a number is wrong: the box gets a red edge and a short reason under it. The layout styles move to the wrapper so rows keep their shape.
   const flat: any = StyleSheet.flatten(p.style) || {}; const outer: any = {}; const inner: any = {};
   Object.keys(flat).forEach((k) => { if (LAYOUT.indexOf(k) >= 0) outer[k] = flat[k]; else inner[k] = flat[k]; });
   return (
-    <View style={outer}>
+    <Animated.View style={[outer, { transform: [{ translateX: sh }] }]}>
       <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} accessibilityHint={err} style={[base, inner]} />
-      <Text style={{ color: '#ff8fa3', fontSize: 11.5, fontWeight: '700', marginTop: 4, marginLeft: 4 }}>{err}</Text>
-    </View>
+      {err ? <Text style={{ color: '#ff8fa3', fontSize: 11.5, fontWeight: '700', marginTop: 4, marginLeft: 4 }}>{err}</Text> : null}
+    </Animated.View>
   );
 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
