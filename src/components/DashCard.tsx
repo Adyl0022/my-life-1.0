@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Pressable, Animated, ScrollView } from 'react-native';
+import { View, Pressable, Animated, ScrollView, Platform } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,8 @@ import { useHidden } from '../lib/hidden';
 import { Inp } from './Ui';
 import { useCycleSave } from '../lib/cycleHook';
 import { cycleInfo } from '../lib/cycle';
+import { addSleepTile } from '../../modules/step-counter';
+import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepNow';
 const UNWELL = ['Headache', 'Tired', 'Fever'];
 const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
@@ -34,6 +36,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const [unw, setUnw] = React.useState(false); const [usy, setUsy] = React.useState<string[]>([]); const [oth, setOth] = React.useState(''); const [othOn, setOthOn] = React.useState(false);
   const [skip, setSkip] = useStored<{ d: string; k: string[] }>('ml_qlskip', { d: '', k: [] });
   const { setPeriod } = useCycleSave(hd, setHd);
+  const [sn] = useStored<SleepNow>(SLEEP_KEY, null); const [snMsg, setSnMsg] = React.useState(''); const [manual, setManual] = React.useState(false); const [, setTick] = React.useState(0);
+  const sleeping = !!(sn && sn.start);
+  React.useEffect(() => { if (!sleeping) return; const i = setInterval(() => setTick((x) => x + 1), 30000); return () => clearInterval(i); }, [sleeping]);
   const v = React.useRef(new Animated.Value(1)).current;
   const ty = React.useRef(new Animated.Value(0)).current;
 
@@ -41,7 +46,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const tp = tips(core, false);
   const ok: Record<Kind, boolean> = { log: hid.on('habit'), usage: true, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0 };
   const avail = ORDER.filter((k) => ok[k]);
-  const kind: Kind = (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : 'usage');
+  const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : 'usage');
   const idx = avail.indexOf(kind);
 
   const next = () => {
@@ -74,7 +79,12 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     );
     const Btn = ({ t, onPress, w }: { t: string; onPress: () => void; w?: number }) => <Pressable onPress={onPress} hitSlop={6} style={{ minWidth: w || 0, paddingVertical: 9, paddingHorizontal: 13, borderRadius: 999, backgroundColor: '#8fe9e2', alignItems: 'center' }}><Text style={{ color: '#06222a', fontSize: 12.5, fontWeight: '800' }}>{t}</Text></Pressable>;
     const Rnd = ({ t, onPress, z = 30 }: { t: string; onPress: () => void; z?: number }) => <Pressable onPress={onPress} hitSlop={6} style={{ width: z, height: z, borderRadius: z / 2, backgroundColor: 'rgba(255,255,255,.16)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 17, fontWeight: '800', marginTop: -2 }}>{t}</Text></Pressable>;
-    if (cur === 'sleep' && hrsOnly) body = (<>{head('Sleep last night', 'Set times ›', () => setHrsOnly(false))}
+    const tileMsg = async () => { const r = await addSleepTile(); setSnMsg(r === 2 ? 'Added to Quick Settings' : r === 1 ? 'Already in Quick Settings' : r === 0 ? 'Not added' : 'Open Quick Settings, tap the pencil and drag Going to sleep up'); };
+    if (sleeping && sn) body = (<>{head('You are sleeping', 'Since ' + to12(new Date(sn.start).toTimeString().slice(0, 5)) + ' · ' + fmtDur(Date.now() - sn.start))}
+      <Btn t="I'm awake" onPress={async () => setSnMsg(await endSleep())} /></>);
+    else if (cur === 'sleep' && !manual) body = (<>{head("You haven't slept yet", snMsg || (Platform.OS === 'android' ? 'Add to Quick Settings ›' : 'Tap when you go to bed'), Platform.OS === 'android' ? tileMsg : undefined)}
+      <View style={{ alignItems: 'center', gap: 6 }}><Btn t="Going to sleep" onPress={async () => { setSnMsg(''); await startSleep(); }} /><Pressable onPress={() => setManual(true)} hitSlop={8}><Text style={{ color: dim, fontSize: 11, fontWeight: '700' }}>Log by hand</Text></Pressable></View></>);
+    else if (cur === 'sleep' && hrsOnly) body = (<>{head('Sleep last night', 'Set times ›', () => setHrsOnly(false))}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Rnd t="−" onPress={() => setSlp(Math.max(0.5, slp - 0.5))} /><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800', minWidth: 40, textAlign: 'center' }}>{slp} h</Text><Rnd t="+" onPress={() => setSlp(Math.min(14, slp + 0.5))} /><Btn t="Save" onPress={() => put({ sleep: slp })} /></View></>);
     else if (cur === 'sleep' && sleepStep === 0) body = (<>{head('Went to bed', 'Use hours only ›', () => setHrsOnly(true))}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Rnd z={26} t="−" onPress={() => setBedM((bedM + 1425) % 1440)} /><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', minWidth: 62, textAlign: 'center' }}>{to12(fm(bedM))}</Text><Rnd z={26} t="+" onPress={() => setBedM((bedM + 15) % 1440)} /><View style={{ width: 0 }} /><Btn t="Next" onPress={() => setSleepStep(1)} /></View></>);
