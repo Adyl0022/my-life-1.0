@@ -74,6 +74,15 @@ export default function Habit() {
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'patterns' | 'today' | 'progress' | 'body'>('patterns');
+  const tabOrder = ['patterns', 'today', 'progress', 'body'] as const; const [pw, setPw] = useState(0);
+  const pos = useRef(new Animated.Value(0)).current; const fx = useRef(new Animated.Value(1)).current; const dir = useRef(1);
+  useEffect(() => { Animated.spring(pos, { toValue: tabOrder.indexOf(tab), useNativeDriver: true, friction: 8, tension: 90 }).start(); }, [tab]);
+  const goTab = (k: typeof tabOrder[number]) => {
+    if (k === tab) return; dir.current = tabOrder.indexOf(k) > tabOrder.indexOf(tab) ? 1 : -1;
+    fx.setValue(0); setTab(k); Animated.timing(fx, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  };
+  const tw = pw ? (pw - 6) / 4 : 0;
+  const slide = { opacity: fx, transform: [{ translateX: fx.interpolate({ inputRange: [0, 1], outputRange: [dir.current * 38, 0] }) }] };
   const svRef = useRef<any>(null); const scrollY = useRef(0); const [kb, setKb] = useState(0);
   useEffect(() => {
     const sh = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -232,18 +241,18 @@ export default function Habit() {
             <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Small habits, big health</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Mood, water, sleep and goals</Text></View>
           </Glass>
 
-          <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
+          <View onLayout={(e) => setPw(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
+            {tw ? <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 3, top: 3, bottom: 3, width: tw, transform: [{ translateX: Animated.multiply(pos, tw) }] }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 999 }} /></Animated.View> : null}
             {([['patterns', 'Patterns'], ['today', 'Today'], ['progress', 'Progress'], ['body', 'Body']] as ['patterns' | 'today' | 'progress' | 'body', string][]).map(([k, n]) => (
-              <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
-                {tab === k ? (
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                ) : (<View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
+              <Pressable key={k} onPress={() => goTab(k)} style={{ flex: 1 }}>
+                <View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: tab === k ? '#fff' : 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: tab === k ? '800' : '700' }}>{n}</Text></View>
               </Pressable>
             ))}
           </View>
           {tab === 'patterns' || tab === 'progress' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>{tab === 'patterns' ? 'What the app notices in your records' : 'How you are doing, week by week'}</Text> : null}
 
-          {tab === 'patterns' && <PatternsTab h={h} setH={setH} onToday={() => setTab('today')} />}
+          <Animated.View style={slide}>
+          {tab === 'patterns' && <PatternsTab h={h} setH={setH} onToday={() => goTab('today')} />}
           {tab === 'today' && (<>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="goal" t="Goal Tracker" />
@@ -504,6 +513,7 @@ export default function Habit() {
           <WeightGoal h={h} setH={setH} />
           <DailyNeeds h={h} setH={setH} />
           </>)}
+          </Animated.View>
           <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center', marginTop: 14 }}>Your habits are saved on this phone and backed up to your account.</Text>
         </ScrollView>
       </SafeAreaView>
