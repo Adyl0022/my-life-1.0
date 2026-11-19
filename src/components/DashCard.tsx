@@ -36,7 +36,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const [unw, setUnw] = React.useState(false); const [usy, setUsy] = React.useState<string[]>([]); const [oth, setOth] = React.useState(''); const [othOn, setOthOn] = React.useState(false);
   const [skip, setSkip] = useStored<{ d: string; k: string[] }>('ml_qlskip', { d: '', k: [] });
   const { setPeriod } = useCycleSave(hd, setHd);
-  const [sn] = useStored<SleepNow>(SLEEP_KEY, null); const [snMsg, setSnMsg] = React.useState(''); const [manual, setManual] = React.useState(false); const [, setTick] = React.useState(0);
+  const [sn] = useStored<SleepNow>(SLEEP_KEY, null); const [snMsg, setSnMsg] = React.useState(''); const [, setTick] = React.useState(0);
   const sleeping = !!(sn && sn.start);
   React.useEffect(() => { if (!sleeping) return; const i = setInterval(() => setTick((x) => x + 1), 30000); return () => clearInterval(i); }, [sleeping]);
   const v = React.useRef(new Animated.Value(1)).current;
@@ -82,8 +82,8 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     const tileMsg = async () => { const r = await addSleepTile(); setSnMsg(r === 2 ? 'Added to Quick Settings' : r === 1 ? 'Already in Quick Settings' : r === 0 ? 'Not added' : 'Open Quick Settings, tap the pencil and drag Going to sleep up'); };
     if (sleeping && sn) body = (<>{head('You are sleeping', 'Since ' + to12(new Date(sn.start).toTimeString().slice(0, 5)) + ' · ' + fmtDur(Date.now() - sn.start))}
       <Btn t="I'm awake" onPress={async () => setSnMsg(await endSleep())} /></>);
-    else if (cur === 'sleep' && !manual) body = (<>{head("You haven't slept yet", snMsg || (Platform.OS === 'android' ? 'Add to Quick Settings ›' : 'Tap when you go to bed'), Platform.OS === 'android' ? tileMsg : undefined)}
-      <View style={{ alignItems: 'center', gap: 6 }}><Btn t="Going to sleep" onPress={async () => { setSnMsg(''); await startSleep(); }} /><Pressable onPress={() => setManual(true)} hitSlop={8}><Text style={{ color: dim, fontSize: 11, fontWeight: '700' }}>Log by hand</Text></Pressable></View></>);
+    else if (cur === 'sleep') body = (<>{head("You haven't slept yet", snMsg || (Platform.OS === 'android' ? 'Add to Quick Settings ›' : 'Tap when you go to bed'), Platform.OS === 'android' ? tileMsg : undefined)}
+      <Btn t="Going to sleep" onPress={async () => { setSnMsg(''); await startSleep(); }} /></>);
     else if (cur === 'sleep' && hrsOnly) body = (<>{head('Sleep last night', 'Set times ›', () => setHrsOnly(false))}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Rnd t="−" onPress={() => setSlp(Math.max(0.5, slp - 0.5))} /><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800', minWidth: 40, textAlign: 'center' }}>{slp} h</Text><Rnd t="+" onPress={() => setSlp(Math.min(14, slp + 0.5))} /><Btn t="Save" onPress={() => put({ sleep: slp })} /></View></>);
     else if (cur === 'sleep' && sleepStep === 0) body = (<>{head('Went to bed', 'Use hours only ›', () => setHrsOnly(true))}
