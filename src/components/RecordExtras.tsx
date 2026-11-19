@@ -13,7 +13,7 @@ export type Fu = { id: number; date: string; liters: number; amt: number; odo: n
 export type Pt = { id: number; name: string; date: string; odo: number; life: number };
 export type Dc = { id: number; title: string; date: string; uri: string };
 export type Ren = { roadtax?: string; insurance?: string; licence?: string };
-export type Tk = { id: number; name: string; days: number; km?: number; last: string; odo?: number; hist?: string[] };
+export type Tk = { id: number; name: string; kind?: 'check' | 'part'; days?: number; km?: number; last: string; odo?: number; hist?: string[] };
 export type Ext = { profile?: { model: string; plate: string }; renew?: Ren; fuel?: Fu[]; parts?: Pt[]; docs?: Dc[]; tasks?: Tk[]; trem?: boolean };
 type P<T> = { d: T; upd: (fn: (x: any) => any) => void };
 

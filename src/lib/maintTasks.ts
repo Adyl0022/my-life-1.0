@@ -5,7 +5,7 @@ import { setup, cancelPrefix, inQuiet, Toggles } from './adhan';
 
 // Repeating maintenance tasks for a vehicle (spray the chain, check tyre pressure, oil level ...).
 // A task is due after a number of days, or after a number of km if you set one, whichever comes first.
-export type Tk = { id: number; name: string; days: number; km?: number; last: string; odo?: number; hist?: string[] };
+export type Tk = { id: number; name: string; kind?: 'check' | 'part'; days?: number; km?: number; last: string; odo?: number; hist?: string[] };
 const dayN = (s: string) => { const [y, m, d] = s.split('-').map(Number); return Math.round(new Date(y, (m || 1) - 1, d || 1).getTime() / 86400000 - new Date().getTimezoneOffset() / 1440); };
 const todayN = () => { const n = new Date(); return Math.round(new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime() / 86400000 - n.getTimezoneOffset() / 1440); };
 const ymd = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -30,14 +30,15 @@ export function odoEstimate(v: any): { odo: number; est: boolean; perDay: number
 
 export type TkState = { level: 0 | 1 | 2; since: number; dueIn: number; kmLeft: number | null; frac: number; text: string };
 export function taskState(t: Tk, latest: number, est = false): TkState {
-  const since = Math.max(0, todayN() - dayN(t.last)); const dueIn = t.days - since;
+  const since = Math.max(0, todayN() - dayN(t.last)); const hasDays = !!(t.days && t.days > 0); const dueIn = hasDays ? (t.days as number) - since : 99999;
   const kmLeft = t.km && t.odo != null && latest > 0 ? t.km - (latest - t.odo) : null;
   const late = dueIn < 0 || (kmLeft != null && kmLeft < 0);
-  const soon = !late && (dueIn <= Math.max(1, Math.round(t.days * 0.25)) || (kmLeft != null && t.km != null && kmLeft <= t.km * 0.2));
-  const frac = Math.min(1, Math.max(since / Math.max(1, t.days), kmLeft != null && t.km ? (t.km - kmLeft) / t.km : 0));
+  const soon = !late && ((hasDays && dueIn <= Math.max(1, Math.round((t.days as number) * 0.25))) || (kmLeft != null && t.km != null && kmLeft <= t.km * 0.2));
+  const frac = Math.min(1, Math.max(hasDays ? since / Math.max(1, t.days as number) : 0, kmLeft != null && t.km ? (t.km - kmLeft) / t.km : 0));
   const parts: string[] = [];
-  if (dueIn < 0) parts.push('Late ' + -dueIn + (dueIn === -1 ? ' day' : ' days')); else if (dueIn === 0) parts.push('Due today'); else parts.push('Due in ' + dueIn + (dueIn === 1 ? ' day' : ' days'));
-  if (kmLeft != null) parts.push((est ? '~' : '') + (kmLeft < 0 ? -kmLeft + ' km over' : kmLeft + ' km left'));
+  if (!hasDays) { /* km only */ } else if (dueIn < 0) parts.push('Late ' + -dueIn + (dueIn === -1 ? ' day' : ' days')); else if (dueIn === 0) parts.push('Due today'); else parts.push('Due in ' + dueIn + (dueIn === 1 ? ' day' : ' days'));
+  if (kmLeft != null) parts.push((est ? '~' : '') + (kmLeft < 0 ? (-kmLeft).toLocaleString('en-MY') + ' km over' : kmLeft.toLocaleString('en-MY') + ' km left'));
+  if (!parts.length) parts.push(t.km ? 'Needs an odometer reading' : 'No schedule');
   return { level: late ? 2 : soon ? 1 : 0, since, dueIn, kmLeft, frac, text: parts.join(' · ') };
 }
 
@@ -69,11 +70,12 @@ export async function syncTaskAlerts(rec: any, tg: Toggles, on: boolean): Promis
     Object.entries((rec && rec.data) || {}).forEach(([cat, v]: [string, any], vi) => {
       if (!v || v.trem === false) return;
       ((v.tasks || []) as Tk[]).forEach((t) => {
+        if (!(t.days && t.days > 0)) return;
         const [y, m, d] = (t.last || '').split('-').map(Number); if (!y || !m || !d) return;
         let at = new Date(y, m - 1, d + t.days, 9, 0, 0);
         if (at.getTime() <= now + 5000) { at = new Date(); at.setDate(at.getDate() + 1); at.setHours(9, 0, 0, 0); }
         if (inQuiet(at, tg)) return;
-        todo.push({ id: 'mtask-' + vi + '-' + t.id, at, title: t.name + ' is due', body: (cat ? cat + '. ' : '') + 'Last done ' + t.last + '. Tap Done when you have done it.', cat, tid: t.id });
+        todo.push({ id: 'mtask-' + vi + '-' + t.id, at, title: t.name + (t.kind === 'part' ? ' may need changing' : ' is due'), body: (cat ? cat + '. ' : '') + 'Last done ' + t.last + '. Tap Done when you have done it.', cat, tid: t.id });
       });
     });
     if (!todo.length) return;

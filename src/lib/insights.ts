@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { partsOf } from './partsOf';
 import { mergeVeh, VEH_KEY, VMode } from './vehicleSpend';
 import { modOn, Mod } from './hidden';
 import { useStored } from './store';
@@ -346,7 +347,7 @@ export function tips(c: Core, week: boolean): Tip[] {
     const f = (v.fuel || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
     const latest = Math.max(0, ...r.map((x) => x.odo), ...f.map((x) => x.odo));
     if (r.length) { anyReading = true; if ((r[r.length - 1].date || '').slice(0, 7) === mk) hadOdo = true; }
-    (v.parts || []).forEach((p) => { if (latest > 0 && p.life > 0) { const left = p.life - Math.max(0, latest - p.odo); if (left <= 500) add({ id: 'part-' + name + p.name, title: p.name + (left <= 0 ? ' is due for a change' : ' due in about ' + Math.round(left).toLocaleString() + ' km'), sub: name + ' · lasts about ' + p.life.toLocaleString() + ' km.', why: 'From the last change and your latest odometer in My Record.', go: '/record', k: 'insight', pri: left <= 0 ? 86 : 72 }); } });
+    partsOf(v).forEach((p) => { if (latest > 0 && p.life > 0) { const left = p.life - Math.max(0, latest - p.odo); if (left <= 500) add({ id: 'part-' + name + p.name, title: p.name + (left <= 0 ? ' is due for a change' : ' due in about ' + Math.round(left).toLocaleString() + ' km'), sub: name + ' · lasts about ' + p.life.toLocaleString() + ' km.', why: 'From the last change and your latest odometer in My Record.', go: '/record', k: 'insight', pri: left <= 0 ? 86 : 72 }); } });
     const rn = v.renew || {}; ([['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Driving licence']] as [keyof typeof rn, string][]).forEach(([k, lab]) => { const s = rn[k]; if (s) { const d = daysTo(s); if (d <= 30) add({ id: 'ren-' + name + k, title: lab + (d < 0 ? ' expired ' + -d + (d === -1 ? ' day ago' : ' days ago') : d === 0 ? ' expires today' : ' expires in ' + d + (d === 1 ? ' day' : ' days')), sub: name + ' · renew before it lapses.', why: 'Based on the expiry date saved in My Record.', go: '/record', k: 'badge', pri: d <= 7 ? 90 : 74 }); } });
     if (f.length >= 3) {
       const span = f[f.length - 1].odo - f[0].odo; const cost = f.slice(0, -1).reduce((a, b) => a + (b.amt || 0), 0);

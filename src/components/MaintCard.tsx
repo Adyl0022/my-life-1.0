@@ -5,7 +5,7 @@ import Svg, { Circle, Defs, LinearGradient as SG, Stop } from 'react-native-svg'
 import { Glass } from './Glass';
 import { Text } from './Txt';
 import { Inp, DateField, todayStr, W } from './Ui';
-import { Btn, Chip, Sq, Ext, Pt, Ren, renewStatus } from './RecordExtras';
+import { Btn, Chip, Sq, Ext, Ren, renewStatus } from './RecordExtras';
 import { Tk, taskState, odoEstimate } from '../lib/maintTasks';
 import { cu } from '../lib/region';
 
@@ -14,21 +14,27 @@ const COL = ['#7df0c6', '#ffd593', '#ffb3c6']; const BAR = ['#5ee7b5', '#ffc46b'
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const fd = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MO[parseInt(p[1], 10) - 1] : s; };
 const BIKE: [string, number, number][] = [['Spray chain', 7, 0], ['Tyre pressure', 7, 0], ['Engine oil level', 14, 0], ['Wash', 14, 0]];
+const BIKE_P: [string, number, number][] = [['Front tyre', 0, 15000], ['Rear tyre', 0, 12000], ['Battery', 0, 24000], ['Brake pads', 0, 12000], ['Chain and sprocket', 0, 20000], ['Spark plug', 0, 8000]];
+const CAR_P: [string, number, number][] = [['Tyres', 0, 40000], ['Battery', 0, 36000], ['Brake pads', 0, 30000], ['Engine oil', 0, 10000], ['Air filter', 0, 15000]];
 const CAR: [string, number, number][] = [['Tyre pressure', 14, 0], ['Engine oil level', 14, 0], ['Coolant level', 30, 0], ['Wipers and washer', 60, 0], ['Wash', 14, 0]];
 
 // One card for the small jobs you repeat: chain, tyre pressure, oil level. Shows how long since, and how long until the next one.
 export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) => any) => void; latest: number; cat: string }) {
   const moto = !/car|van|truck|mpv|suv|sedan|kereta/i.test(cat);
-  const [open, setOpen] = useState(false); const [nm, setNm] = useState(''); const [dy, setDy] = useState(''); const [km, setKm] = useState(''); const [dt, setDt] = useState(todayStr());
+  const [open, setOpen] = useState(false); const [nm, setNm] = useState(''); const [dy, setDy] = useState(''); const [km, setKm] = useState(''); const [dt, setDt] = useState(todayStr()); const [kind, setKind] = useState<'check' | 'part'>('check'); const [odAt, setOdAt] = useState('');
   const [all, setAll] = useState(false); const [doneId, setDoneId] = useState<number | null>(null); const [cost, setCost] = useState('');
   // Most urgent first, so the three shown are the ones that need you.
   const oe = odoEstimate(d); const odoNow = oe.odo;
   const list: Tk[] = (d.tasks || []).slice().sort((a, b) => { const x = taskState(a, odoNow, oe.est), y = taskState(b, odoNow, oe.est); return y.level - x.level || x.dueIn - y.dueIn; });
-  const LIM = 3; const shown = all ? list : list.slice(0, LIM); const parts: Pt[] = d.parts || [];
-  const pick = (n: string, days: number, k: number) => { setNm(n); setDy(String(days)); setKm(k ? String(k) : ''); };
-  const nDays = parseInt(dy, 10); const ok = !!nm.trim() && nDays > 0 && nDays <= 365;
-  const save = () => { if (!ok) return; const k = parseInt(km, 10);
-    upd((x) => ({ ...x, tasks: [...(x.tasks || []), { id: Date.now(), name: nm.trim(), days: nDays, km: k > 0 ? k : undefined, last: dt, odo: odoNow > 0 ? odoNow : undefined, hist: [dt] }] })); setOpen(false); };
+  const LIM = 3; const shown = all ? list : list.slice(0, LIM);
+  const pick = (n: string, days: number, k: number) => { setNm(n); setDy(days ? String(days) : ''); setKm(k ? String(k) : ''); };
+  const nDays = parseInt(dy, 10), nKm = parseInt(km, 10); const ok = !!nm.trim() && (nDays > 0 || nKm > 0) && !(nDays > 3650);
+  const isToday = dt === todayStr();
+  const save = () => { if (!ok) return; const typed = parseInt(odAt.replace(/[^0-9]/g, ''), 10); const base = typed > 0 ? typed : isToday && odoNow > 0 ? odoNow : undefined;
+    upd((x) => ({ ...x, tasks: [...(x.tasks || []), { id: Date.now(), name: nm.trim(), kind, days: nDays > 0 ? nDays : undefined, km: nKm > 0 ? nKm : undefined, last: dt, odo: base, hist: [dt] }] })); setOpen(false); };
+  // Parts saved before the lists were joined move into this list once.
+  useEffect(() => { const ps: any[] = (d as any).parts || []; if (!ps.length) return;
+    upd((x) => ({ ...x, parts: [], tasks: [...(x.tasks || []), ...(x.parts || []).map((p: any) => ({ id: p.id, name: p.name, kind: 'part', km: p.life, last: p.date, odo: p.odo, hist: [p.date] }))] })); }, [((d as any).parts || []).length]);
   const [od, setOd] = useState(''); const [odErr, setOdErr] = useState(''); const [fixOdo, setFixOdo] = useState(false);
   // Saves a real odometer reading (today). A reading lower than the last real one is refused, so the monthly mileage stays right.
   const saveOdo = (v: string): number | null => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); if (!(n > 0)) return null; if (n < oe.last) { setOdErr('That is lower than your last reading (' + oe.last.toLocaleString('en-MY') + ' km).'); return -1; }
@@ -37,10 +43,9 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
     let base = odoNow; if (od.trim()) { const n = saveOdo(od); if (n === -1) return; if (n) base = n; }
     upd((x) => { return { ...x, tasks: (x.tasks || []).map((y: Tk) => { if (y.id !== t.id) return y; const h = (y.hist || []).slice(); if (y.last && h[0] !== y.last) h.unshift(y.last); if (h[0] !== today) h.unshift(today); return { ...y, last: today, odo: base > 0 ? base : y.odo, hist: Array.from(new Set(h)).slice(0, 8) }; }), exps: c > 0 ? [{ id: Date.now(), name: t.name, amt: c, date: today }, ...(x.exps || [])] : x.exps }; });
     setDoneId(null); setCost(''); setOd(''); };
-  // Health: tasks, parts and renewals together. Green counts 1, yellow half, red 0.
+  // Health: jobs, parts and renewals together. Green counts 1, yellow half, red 0.
   const items: { n: string; lv: 0 | 1 | 2; why: string; show: boolean }[] = [];
   list.forEach((t) => { const s = taskState(t, odoNow, oe.est); items.push({ n: t.name, lv: s.level, why: s.text.split(' · ')[0].toLowerCase(), show: true }); });
-  if (latest > 0) parts.forEach((p) => { const left = p.life - Math.max(0, latest - p.odo); const lv = left < 0 ? 2 : left <= p.life * 0.15 ? 1 : 0; items.push({ n: p.name, lv: lv as 0 | 1 | 2, why: left < 0 ? 'change it' : left + ' km left', show: true }); });
   const RK: [keyof Ren, string][] = [['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Licence']];
   const rn: Ren = d.renew || {};
   RK.forEach(([k, n]) => { const s = rn[k]; if (!s) return; const r = renewStatus(s); items.push({ n, lv: (r.n < 0 ? 2 : r.n <= 30 ? 1 : 0) as 0 | 1 | 2, why: r.txt.toLowerCase(), show: false }); });
@@ -54,7 +59,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
   useEffect(() => { let n = 0; const id = setInterval(() => { n += 1; setShownScore(Math.round(score * Math.min(1, n / 14))); if (n >= 14) clearInterval(id); }, 28); return () => clearInterval(id); }, [score]);
   const nOk = items.filter((x) => x.lv === 0).length, nSoon = items.filter((x) => x.lv === 1).length, nLate = items.filter((x) => x.lv === 2).length;
   const [ek, setEk] = useState<keyof Ren | ''>(''); const [ev, setEv] = useState(todayStr());
-  const preset = moto ? BIKE : CAR;
+  const preset = kind === 'part' ? (moto ? BIKE_P : CAR_P) : moto ? BIKE : CAR;
   const Hd = ({ t, sub, right }: { t: string; sub?: string; right?: React.ReactNode }) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
       <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800', letterSpacing: -0.2 }}>{t}</Text>{sub ? <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{sub}</Text> : null}</View>
@@ -111,7 +116,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       ) : null}
 
       <Line />
-      <Hd t="Maintenance tasks" sub={moto ? 'Chain, tyres, oil and more' : 'Tyres, oil, coolant and more'} right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setDt(todayStr()); }} /> : undefined} />
+      <Hd t="Maintenance tasks" sub="Repeat jobs and parts in one list" right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setOdAt(''); setKind('check'); setDt(todayStr()); }} /> : undefined} />
       {oe.odo > 0 || list.some((t) => t.km) ? (
         <View style={{ marginTop: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -131,20 +136,25 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
         </View>
       ) : null}
       {open ? (
-        <View style={{ marginTop: 10, gap: 10 }}>
-          <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 6 }}>Task</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>{preset.map(([n, a, b]) => <Chip key={n} t={n} on={nm === n} onPress={() => pick(n, a, b)} />)}</View>
-            <Inp value={nm} onChangeText={setNm} placeholder="Or type your own task" /></View>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>Repeat every (days)</Text><Inp keyboardType="number-pad" value={dy} onChangeText={setDy} placeholder="e.g. 7" /></View>
-            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>or every (km), optional</Text><Inp keyboardType="number-pad" value={km} onChangeText={setKm} placeholder="e.g. 500" /></View>
+        <View style={{ marginTop: 12, gap: 10, padding: 14, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.08)' }}>
+          <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.25)' }}>
+            {([['check', 'Repeat job'], ['part', 'Replace a part']] as const).map(([k, l]) => (
+              <Pressable key={k} onPress={() => { setKind(k); setNm(''); setDy(''); setKm(''); }} style={{ flex: 1, paddingVertical: 8, borderRadius: 999, alignItems: 'center', backgroundColor: kind === k ? 'rgba(183,148,255,.55)' : 'transparent' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{l}</Text></Pressable>))}
           </View>
-          <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>Last done</Text><DateField value={dt} onChange={setDt} /></View>
-          <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16 }}>It is due when the days pass or the km are reached, whichever comes first. The km part needs odometer readings in My Record.</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ opacity: ok ? 1 : 0.5 }}><Btn t="Save task" onPress={save} /></View><Pressable onPress={() => setOpen(false)} style={{ height: 42, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontWeight: '700' }}>Cancel</Text></Pressable></View>
+          <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 6 }}>{kind === 'part' ? 'Part' : 'Job'}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>{preset.map(([n, a, b]) => <Chip key={n} t={n} on={nm === n} onPress={() => pick(n, a, b)} />)}</View>
+            <Inp value={nm} onChangeText={setNm} placeholder={kind === 'part' ? 'Or type your own part' : 'Or type your own job'} /></View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'Lasts about (km)' : 'Repeat every (days)'}</Text><Inp keyboardType="number-pad" value={kind === 'part' ? km : dy} onChangeText={kind === 'part' ? setKm : setDy} placeholder={kind === 'part' ? 'e.g. 12000' : 'e.g. 7'} /></View>
+            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'or (days), optional' : 'or every (km), optional'}</Text><Inp keyboardType="number-pad" value={kind === 'part' ? dy : km} onChangeText={kind === 'part' ? setDy : setKm} placeholder={kind === 'part' ? 'e.g. 730' : 'e.g. 500'} /></View>
+          </View>
+          <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'Date changed' : 'Last done'}</Text><DateField value={dt} onChange={setDt} /></View>
+          <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{isToday ? 'Odometer that day (km), optional' : 'Odometer that day (km)'}</Text><Inp keyboardType="number-pad" value={odAt} onChangeText={setOdAt} placeholder={isToday && odoNow > 0 ? 'Leave empty to use ' + (oe.est ? '~' : '') + odoNow.toLocaleString('en-MY') : 'What the meter showed'} /></View>
+          <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16 }}>{'It is due when the days pass or the km are reached, whichever comes first.' + (!isToday ? ' For an earlier date, type the odometer from that day so the km can be counted.' : '')}</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ opacity: ok ? 1 : 0.5 }}><Btn t={kind === 'part' ? 'Save part' : 'Save job'} onPress={save} /></View><Pressable onPress={() => setOpen(false)} style={{ height: 42, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontWeight: '700' }}>Cancel</Text></Pressable></View>
         </View>
       ) : null}
-      {list.length === 0 && !open ? <Text style={{ marginTop: 10, color: dim, fontSize: 12, lineHeight: 18 }}>No tasks yet. Tap + Add task, choose Spray chain or Tyre pressure, and My Record counts the days since you last did it and the days until the next time.</Text> : null}
+      {list.length === 0 && !open ? <Text style={{ marginTop: 10, color: dim, fontSize: 12, lineHeight: 18 }}>Nothing here yet. Tap + Add task. Choose Repeat job for Spray chain or Tyre pressure, or Replace a part for tyres, battery and brake pads. My Record counts the days and km for you.</Text> : null}
       <View>
         {shown.map((t, i) => {
           const s = taskState(t, odoNow, oe.est); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3); const pr = s.text.split(' · ');
@@ -156,11 +166,11 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
                   <Text style={{ flex: 1, color: W, fontSize: 15, fontWeight: '800' }} numberOfLines={1}>{t.name}</Text>
                   <View style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: s.level === 2 ? 'rgba(255,143,171,.28)' : s.level === 1 ? 'rgba(255,196,107,.24)' : 'rgba(94,231,181,.2)' }}><Text style={{ color: COL[s.level], fontSize: 11.5, fontWeight: '800' }}>{pr[0]}</Text></View>
                 </View>
-                <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>{'Last done ' + fd(t.last) + ' · ' + (s.since === 0 ? 'today' : s.since + (s.since === 1 ? ' day ago' : ' days ago')) + ' · every ' + t.days + (t.days === 1 ? ' day' : ' days') + (t.km ? ' or ' + t.km + ' km' : '')}</Text>
+                <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>{t.kind === 'part' ? 'Replace · changed ' + fd(t.last) + ' · ' + (s.since === 0 ? 'today' : s.since + (s.since === 1 ? ' day ago' : ' days ago')) + ' · lasts ' + [t.km ? 'about ' + t.km.toLocaleString('en-MY') + ' km' : '', t.days ? t.days + ' days' : ''].filter(Boolean).join(' or ') : 'Last done ' + fd(t.last) + ' · ' + (s.since === 0 ? 'today' : s.since + (s.since === 1 ? ' day ago' : ' days ago')) + ' · every ' + [t.days ? t.days + (t.days === 1 ? ' day' : ' days') : '', t.km ? t.km.toLocaleString('en-MY') + ' km' : ''].filter(Boolean).join(' or ')}</Text>
                 <View style={{ height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 10, overflow: 'hidden' }}><View style={{ width: Math.round(s.frac * 100) + '%', height: '100%', borderRadius: 3, backgroundColor: BAR[s.level] }} /></View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 }}>
                   <Text style={{ flex: 1, color: 'rgba(255,255,255,.55)', fontSize: 11 }} numberOfLines={1}>{pr[1] ? pr[1] : hist.length ? 'Before: ' + hist.map(fd).join(', ') : ''}</Text>
-                  <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + ' done today'} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.26)' }}><Text style={{ color: '#9af3d3', fontSize: 12.5, fontWeight: '800' }}>Done today</Text></Pressable>
+                  <Pressable onPress={() => { setDoneId(doneId === t.id ? null : t.id); setCost(''); }} accessibilityLabel={'Mark ' + t.name + (t.kind === 'part' ? ' changed today' : ' done today')} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.26)' }}><Text style={{ color: '#9af3d3', fontSize: 12.5, fontWeight: '800' }}>{t.kind === 'part' ? 'Changed today' : 'Done today'}</Text></Pressable>
                   <Sq t="✕" label={'Delete ' + t.name} c="#ff9aa9" onPress={() => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) }))} />
                 </View>
                 {doneId === t.id ? (

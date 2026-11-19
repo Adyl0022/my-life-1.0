@@ -10,7 +10,7 @@ import { Blob } from '../components/Bg';
 import { Inp, DateField, Sheet, SBtn, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { MaintCard } from '../components/MaintCard';
-import { Ext, ProfileCard, FuelCard, PartsCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
+import { Ext, ProfileCard, FuelCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
 import { TOP } from '../lib/layout';
 import { cs, cu, useRegion } from '../lib/region';
 
@@ -415,7 +415,6 @@ export default function Record() {
               );
             })()}
           </Glass>
-          <PartsCard d={d} upd={(fn) => upd(fn)} latest={allOdo} addNow={(o) => upd((x) => ({ ...x, readings: [...x.readings, { id: Date.now(), date: t0, odo: o }] }))} />
           <DocsCard d={d} upd={(fn) => upd(fn)} />
           <ExportCard name={catName} d={d} latest={latest} />
         </ScrollView>

@@ -1,5 +1,6 @@
 import { PDF_CSS, pdfFooter, escHtml as esc, fmtN, chartSvg, stamp, Chart } from './exporter';
 import { cs, cu } from './region';
+import { partsOf } from './partsOf';
 
 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const n0 = (x: any) => (typeof x === 'number' && isFinite(x) ? x : Number(x) || 0);
@@ -26,7 +27,7 @@ export function buildRecordHtml(vehicle: string, d: any, latest: number, owner =
   const rd: { date: string; odo: number }[] = (d.readings || []).concat(d.yreadings || []).filter((r: any) => r && r.date).sort((a: any, b: any) => (a.date < b.date ? -1 : 1));
   const exps = (d.exps || []).slice().sort((a: any, b: any) => (a.date < b.date ? 1 : -1));
   const fuel = (d.fuel || []).slice().sort((a: any, b: any) => (a.date < b.date ? 1 : -1));
-  const parts = d.parts || []; const ren = d.renew || {};
+  const parts = partsOf(d); const ren = d.renew || {};
   const mTot = exps.reduce((s: number, e: any) => s + n0(e.amt), 0);
   const fTot = fuel.reduce((s: number, e: any) => s + n0(e.amt), 0);
   const lit = fuel.reduce((s: number, e: any) => s + n0(e.liters), 0);

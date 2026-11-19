@@ -1,4 +1,5 @@
 import { mergeVeh, VEH_KEY, VMode } from './vehicleSpend';
+import { partsOf } from './partsOf';
 import { goalSaved } from './savings';
 import { useEffect } from 'react';
 import { useStored, getItem, getItemStrict, setItem } from './store';
@@ -77,7 +78,7 @@ export function useReal(P: [string, number, number][]): Real {
   const odo = sorted.length ? sorted[sorted.length - 1].odo : 0;
   const mtcMonth = (v.exps || []).filter((x) => (x.date || '').slice(0, 7) === ym).reduce((a, x) => a + num(x.amt), 0);
   let nextSvc: number | null = null, nextSvcName = '';
-  (v.parts || []).forEach((p) => { const due = num(p.odo) + num(p.life); if (p.life > 0 && (nextSvc == null || due < nextSvc)) { nextSvc = due; nextSvcName = p.name; } });
+  partsOf(v).forEach((p) => { const due = num(p.odo) + num(p.life); if (p.life > 0 && (nextSvc == null || due < nextSvc)) { nextSvc = due; nextSvcName = p.name; } });
 
   return {
     ready, hd, goal: hd.goal || 8000, cupGoal: cg, steps: t.steps, cups: t.cups, sleep: t.sleep, mood: t.mood >= 0 ? t.mood + 1 : 0,
