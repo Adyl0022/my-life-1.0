@@ -56,7 +56,6 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const idx = avail.indexOf(kind);
 
   const next = () => {
-    last.current = Date.now();
     if (avail.length < 2) return;
     const to = avail[(idx + 1) % avail.length];
     Animated.parallel([Animated.timing(v, { toValue: 0, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: -8, duration: 160, useNativeDriver: true })]).start(() => {
