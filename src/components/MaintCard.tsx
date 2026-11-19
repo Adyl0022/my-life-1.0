@@ -40,8 +40,11 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
     upd((x) => ({ ...x, parts: [], tasks: [...(x.tasks || []), ...(x.parts || []).map((p: any) => ({ id: p.id, name: p.name, kind: 'part', km: p.life, last: p.date, odo: p.odo, hist: [p.date] }))] })); }, [((d as any).parts || []).length]);
   const [od, setOd] = useState(''); const [odErr, setOdErr] = useState(''); const [fixOdo, setFixOdo] = useState(false);
   // Saves a real odometer reading (today). A reading lower than the last real one is refused, so the monthly mileage stays right.
-  const saveOdo = (v: string): number | null => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); if (!(n > 0)) return null; if (n < oe.last) { setOdErr('That is lower than your last reading (' + oe.last.toLocaleString('en-MY') + ' km).'); return -1; }
-    upd((x) => ({ ...x, readings: [...(x.readings || []), { id: Date.now(), date: todayStr(), odo: n }] })); setOdErr(''); return n; };
+  // A reading typed here goes into the same list as Monthly Mileage, and the yearly comparison reads that list too, so it is typed only once. A second reading on the same day replaces the first.
+  const saveOdo = (v: string): number | null => { const n = pi(v, { max: 2000000 }); if (!(n > 0)) { if (v.trim()) setOdErr('Not a valid number'); return null; } const t0 = todayStr();
+    const other = Math.max(0, ...(((d as any).readings || []) as any[]).filter((r) => r.date !== t0).map((r) => r.odo || 0), ...(((d as any).yreadings || []) as any[]).map((r) => r.odo || 0), ...((d.fuel || []) as any[]).map((f) => f.odo || 0));
+    if (n < other) { setOdErr('That is lower than your last reading (' + other.toLocaleString('en-MY') + ' km).'); return -1; }
+    upd((x) => ({ ...x, readings: [...(x.readings || []).filter((r: any) => r.date !== t0), { id: Date.now(), date: t0, odo: n }] })); setOdErr(''); return n; };
   const done = (t: Tk) => { const c = pn(cost); const today = todayStr();
     let base = odoNow; if (od.trim()) { const n = saveOdo(od); if (n === -1) return; if (n) base = n; }
     upd((x) => { return { ...x, tasks: (x.tasks || []).map((y: Tk) => { if (y.id !== t.id) return y; const h = (y.hist || []).slice(); if (y.last && h[0] !== y.last) h.unshift(y.last); if (h[0] !== today) h.unshift(today); return { ...y, last: today, odo: base > 0 ? base : y.odo, hist: Array.from(new Set(h)).slice(0, 8) }; }), exps: c > 0 ? [{ id: Date.now(), name: t.name, amt: c, date: today }, ...(x.exps || [])] : x.exps }; });
@@ -159,7 +162,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
           {fixOdo ? (
             <View style={{ marginTop: 10, gap: 6 }}>
               <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="What your meter shows now (km)" onSubmitEditing={() => { const n = saveOdo(od); if (n && n > 0) { setFixOdo(false); setOd(''); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od); if (n && n > 0) { setFixOdo(false); setOd(''); } }} /></View>
-              {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : null}
+              {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 15 }}>Saved for today. It also goes into Monthly Mileage and the yearly comparison, so you only type it once.</Text>}
             </View>
           ) : null}
         </View>
