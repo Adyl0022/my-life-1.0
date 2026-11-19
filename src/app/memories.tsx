@@ -212,7 +212,7 @@ export default function Memories() {
             <Head t="You are in control" s="Memories stay on your phone and in your own backup" />
             <Glass style={{ padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Show on Dashboard</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 1 }}>The small Your Memories card on the Home screen</Text></View>
+                <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Show on Dashboard</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 1 }}>A Your Memories page in the card at the bottom of Home</Text></View>
                 <Sw on={M.mem.dash} set={(v) => M.setMem({ ...M.mem, dash: v })} label="Show Your Memories on the Dashboard" />
               </View>
               {M.hiddenCount > 0 ? <Pressable onPress={() => M.setMem({ ...M.mem, hide: [] })} style={{ marginTop: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{'Show ' + M.hiddenCount + ' hidden ' + (M.hiddenCount === 1 ? 'memory' : 'memories') + ' again'}</Text></Pressable> : null}

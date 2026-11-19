@@ -11,6 +11,8 @@ import { Inp } from './Ui';
 import { useCycleSave } from '../lib/cycleHook';
 import { cycleInfo } from '../lib/cycle';
 import { addSleepTile } from '../../modules/step-counter';
+import { useSession } from '../lib/auth';
+import { MemSave, MEM_EMPTY } from '../lib/memories';
 import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepNow';
 const UNWELL = ['Headache', 'Tired', 'Fever'];
 const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
@@ -19,8 +21,8 @@ import { HeadIcon, Face } from './HabitIcons';
 import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
-type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip';
-const ORDER: Kind[] = ['log', 'usage', 'streak', 'score', 'tip'];
+type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'memories';
+const ORDER: Kind[] = ['log', 'usage', 'streak', 'score', 'tip', 'memories'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -38,6 +40,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const { setPeriod } = useCycleSave(hd, setHd);
   const [sn] = useStored<SleepNow>(SLEEP_KEY, null); const [snMsg, setSnMsg] = React.useState(''); const [, setTick] = React.useState(0);
   const sleeping = !!(sn && sn.start);
+  const [sess] = useSession(); const [mem] = useStored<MemSave>('ml_memories', MEM_EMPTY);
+  const ca = sess?.user?.created_at ? new Date(sess.user.created_at) : null; const mdays = ca && !isNaN(ca.getTime()) ? Math.max(1, Math.floor((Date.now() - ca.getTime()) / 86400000) + 1) : 0;
+  const last = React.useRef(Date.now()); const busy = React.useRef(false); const nextRef = React.useRef<() => void>(() => {});
   React.useEffect(() => { const i = setInterval(() => setTick((x) => x + 1), 300000); return () => clearInterval(i); }, []);
   React.useEffect(() => { if (!sleeping) return; const i = setInterval(() => setTick((x) => x + 1), 30000); return () => clearInterval(i); }, [sleeping]);
   const v = React.useRef(new Animated.Value(1)).current;
@@ -45,12 +50,13 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
 
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
-  const ok: Record<Kind, boolean> = { log: hid.on('habit'), usage: true, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0 };
+  const ok: Record<Kind, boolean> = { log: hid.on('habit'), usage: true, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, memories: !!sess && !(mem && mem.dash === false) };
   const avail = ORDER.filter((k) => ok[k]);
   const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : 'usage');
   const idx = avail.indexOf(kind);
 
   const next = () => {
+    last.current = Date.now();
     if (avail.length < 2) return;
     const to = avail[(idx + 1) % avail.length];
     Animated.parallel([Animated.timing(v, { toValue: 0, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: -8, duration: 160, useNativeDriver: true })]).start(() => {
@@ -58,7 +64,11 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       Animated.parallel([Animated.timing(v, { toValue: 1, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: 0, duration: 160, useNativeDriver: true })]).start();
     });
   };
-  const open = () => router.push((kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
+  const open = () => router.push((kind === 'memories' ? '/memories' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
+
+  nextRef.current = next;
+  // The card turns by itself every few seconds. It waits after a touch, and stays put while you are sleeping or typing something.
+  React.useEffect(() => { const i = setInterval(() => { if (busy.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 7000); return () => clearInterval(i); }, []);
 
   const maxM = Math.max(...series.filter((x) => Number.isFinite(x)), 1);
   let body: React.ReactNode = null; let cur0: string | undefined;
@@ -168,6 +178,15 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
         <Text style={{ color: dim, fontSize: 11 }}>This week · ring = today</Text>
       </View>
     </>);
+  } else if (kind === 'memories') {
+    body = (<>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>YOUR MEMORIES</Text>
+        <Text numberOfLines={1} style={{ color: '#fff', fontSize: 14.5, fontWeight: '800', marginTop: 3 }}>{mdays ? 'Day ' + mdays + ' with My Life' : 'Your Memories with My Life'}</Text>
+        <Text numberOfLines={2} style={{ color: dim, fontSize: 10.5, marginTop: 3, lineHeight: 14 }}>Every moment matters. Every journey tells a story</Text>
+      </View>
+      <Pressable onPress={() => router.push('/memories' as any)} accessibilityLabel="Open Your Memories" style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#8fe9e2' }}><Text style={{ color: '#0d3a3a', fontSize: 13, fontWeight: '800' }}>Open</Text></Pressable>
+    </>);
   } else if (kind === 'score') {
     const sc = lifeScore(parts); const R = 24, C = 2 * Math.PI * R;
     const sorted = parts.slice().sort((a, b) => b.pct - a.pct); const warn = sorted.find(p => p.k === 'spend' && /(over budget|nearly used)$/.test(p.detail)); const top = warn ? [warn, ...sorted.filter(p => p !== warn).slice(0, 2)] : sorted.slice(0, 3);
@@ -195,8 +214,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     </>);
   }
 
+  busy.current = sleeping || (kind === 'log' && (cur0 === 'heart' || unw || othOn || !!bpm));
   return (
-    <Pressable onPress={kind === 'log' && (cur0 === 'heart' || (cur0 === undefined && unw)) ? undefined : next} onLongPress={open} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+    <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={kind === 'log' && (cur0 === 'heart' || (cur0 === undefined && unw)) ? undefined : next} onLongPress={open} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <Glass style={{ height: 90, justifyContent: 'center' }}>
         <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {avail.length > 1 && !(kind === 'log' && cur0 === undefined && unw) ? (

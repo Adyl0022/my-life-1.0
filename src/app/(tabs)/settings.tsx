@@ -369,7 +369,6 @@ export default function Settings() {
                 <Pressable onPress={checkUpd} style={{ marginTop: 12, paddingVertical: 8, paddingHorizontal: 16, minWidth: 210, alignItems: 'center', borderRadius: 999, backgroundColor: upd === 'latest' || upd === 'web' ? 'rgba(94,231,181,.25)' : upd === 'new' ? 'rgba(124,156,255,.4)' : upd === 'err' ? 'rgba(255,196,107,.25)' : 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{upd === 'busy' ? 'Checking...' : upd === 'latest' ? "You're up to date" : upd === 'web' ? 'The web version is always the latest' : upd === 'new' ? 'A new version is available' : upd === 'err' ? 'Could not check. Tap to try again' : 'Check for updates'}</Text></Pressable>
                 {upd === 'new' ? <Pressable onPress={() => Linking.openURL('https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest')} style={{ marginTop: 8 }}><LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 18, borderRadius: 999 }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Download the new version</Text></LinearGradient></Pressable> : null}
               </View>
-              <MemoriesCard since={sess?.user?.created_at} />
               <Glass style={{ paddingHorizontal: 16 }}>
                 {[['Version', '1.0.1'], ['Build', '1'], ['Developed', 'November 2026'], ['Developer', 'Adli Syahmi']].map(([a, b], i) => <Row key={a} t={a} last={i === 3} right={<Text style={{ color: DIM, fontSize: 13 }}>{b}</Text>} />)}
               </Glass>
@@ -387,6 +386,7 @@ export default function Settings() {
                 <Row t="Report a problem" onPress={() => mail('My Life: problem report', 'What happened?\n\n\nWhat did you expect?\n\n\n' + info)} right={<Chev />} />
                 <Row t="Send feedback" last onPress={() => mail('My Life: feedback', 'My idea or comment:\n\n\n' + info)} right={<Chev />} />
               </Glass>
+              <MemoriesCard />
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Storage" />
                 <Lbl t="What My Life uses on this phone" style={{ marginBottom: 10 }} />
