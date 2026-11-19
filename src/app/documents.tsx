@@ -7,6 +7,7 @@ import { RecordPage, Intro } from '../components/RecordHubUi';
 import { DocArt } from '../components/DocArt';
 import { SearchField } from '../components/Shine';
 import { Inp, DateField, W } from '../components/Ui';
+import { PrivateNote } from '../components/ColUi';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm } from '../lib/num';
@@ -139,6 +140,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
               <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 24, marginTop: -3 }}>‹</Text></View></Pressable>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{f.id ? 'Edit document' : 'Add document'}</Text><Text style={{ color: dim, fontSize: 12 }}>Scan it or type it in</Text></View>
             </View>
+            <PrivateNote />
             {lab('TYPE')}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {allowed.map((x) => (

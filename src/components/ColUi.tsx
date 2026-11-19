@@ -82,6 +82,16 @@ export const BigBtn = ({ t, g, onPress, a11y, dark, outline }: { t: string; g?: 
 );
 
 /** Full screen sheet used for adding and editing. */
+/** Tells the person, where they type, that this stays on the phone. */
+export function PrivateNote() {
+  return (
+    <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9, paddingHorizontal: 12, borderRadius: 14, backgroundColor: 'rgba(143,233,226,.08)', borderWidth: 1, borderColor: 'rgba(143,233,226,.3)' }}>
+      <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 0.8 }}>PRIVATE</Text>
+      <Text style={{ flex: 1, color: 'rgba(255,255,255,.78)', fontSize: 11.5, lineHeight: 16 }}>Kept on this phone only. It is not synced online.</Text>
+    </View>
+  );
+}
+
 export function SheetFrame({ title, sub, onClose, children }: { title: string; sub?: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
@@ -93,6 +103,7 @@ export function SheetFrame({ title, sub, onClose, children }: { title: string; s
               <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 22 }}>‹</Text></View></Pressable>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{title}</Text>{sub ? <Text style={{ color: dim, fontSize: 12 }}>{sub}</Text> : null}</View>
             </View>
+            <PrivateNote />
             {children}
           </ScrollView>
         </KeyboardAvoidingView>
