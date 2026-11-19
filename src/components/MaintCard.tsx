@@ -10,7 +10,7 @@ import { Tk, taskState, odoEstimate } from '../lib/maintTasks';
 import { cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
-import { pn, pi } from '../lib/num';
+import { pn, pi, tryForm } from '../lib/num';
 const dim = 'rgba(255,255,255,.65)';
 const COL = ['#7df0c6', '#ffd593', '#ffb3c6']; const BAR = ['#5ee7b5', '#ffc46b', '#ff8fab'];
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -33,7 +33,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
   const pick = (n: string, days: number, k: number) => { setNm(n); setDy(days ? String(days) : ''); setKm(k ? String(k) : ''); };
   const nDays = pi(dy), nKm = pi(km, { max: 2000000 }); const ok = !!nm.trim() && (nDays > 0 || nKm > 0) && !(nDays > 3650);
   const isToday = dt === todayStr();
-  const save = () => { if (!ok) return; const typed = parseInt(odAt.replace(/[^0-9]/g, ''), 10); const base = typed > 0 ? typed : isToday && odoNow > 0 ? odoNow : undefined;
+  const save = () => { if (!ok) { if (!(nDays > 0 || nKm > 0)) tryForm('task'); return; } const typed = parseInt(odAt.replace(/[^0-9]/g, ''), 10); const base = typed > 0 ? typed : isToday && odoNow > 0 ? odoNow : undefined;
     upd((x) => ({ ...x, tasks: [...(x.tasks || []), { id: Date.now(), name: nm.trim(), kind, days: nDays > 0 ? nDays : undefined, km: nKm > 0 ? nKm : undefined, last: dt, odo: base, hist: [dt] }] })); setOpen(false); };
   // Parts saved before the lists were joined move into this list once.
   useEffect(() => { const ps: any[] = (d as any).parts || []; if (!ps.length) return;
@@ -174,8 +174,8 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>{preset.map(([n, a, b]) => <Chip key={n} t={n} on={nm === n} onPress={() => pick(n, a, b)} />)}</View>
             <Inp value={nm} onChangeText={setNm} placeholder={kind === 'part' ? 'Or type your own part' : 'Or type your own job'} /></View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'Lasts about (km)' : 'Repeat every (days)'}</Text><Inp keyboardType="number-pad" value={kind === 'part' ? km : dy} onChangeText={kind === 'part' ? setKm : setDy} placeholder={kind === 'part' ? 'e.g. 12000' : 'e.g. 7'} /></View>
-            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'or (days), optional' : 'or every (km), optional'}</Text><Inp keyboardType="number-pad" value={kind === 'part' ? dy : km} onChangeText={kind === 'part' ? setDy : setKm} placeholder={kind === 'part' ? 'e.g. 730' : 'e.g. 500'} /></View>
+            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'Lasts about (km)' : 'Repeat every (days)'}</Text><Inp form="task" need="the days or the km" keyboardType="number-pad" value={kind === 'part' ? km : dy} onChangeText={kind === 'part' ? setKm : setDy} placeholder={kind === 'part' ? 'e.g. 12000' : 'e.g. 7'} /></View>
+            <View style={{ flex: 1 }}><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'or (days), optional' : 'or every (km), optional'}</Text><Inp form="task" need="the days or the km" keyboardType="number-pad" value={kind === 'part' ? dy : km} onChangeText={kind === 'part' ? setDy : setKm} placeholder={kind === 'part' ? 'e.g. 730' : 'e.g. 500'} /></View>
           </View>
           <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{kind === 'part' ? 'Date changed' : 'Last done'}</Text><DateField value={dt} onChange={setDt} /></View>
           <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 4 }}>{isToday ? 'Odometer that day (km), optional' : 'Odometer that day (km)'}</Text><Inp keyboardType="number-pad" value={odAt} onChangeText={setOdAt} placeholder={isToday && odoNow > 0 ? 'Leave empty to use ' + (oe.est ? '~' : '') + odoNow.toLocaleString('en-MY') : 'What the meter showed'} /></View>

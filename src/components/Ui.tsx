@@ -11,17 +11,23 @@ export const GP = ['#7c9cff', '#b794ff'] as [string, string];
 const LAYOUT = ['flex', 'flexGrow', 'flexShrink', 'flexBasis', 'width', 'minWidth', 'maxWidth', 'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical', 'alignSelf', 'position', 'left', 'right', 'top', 'bottom', 'zIndex'];
 const NUMKB = ['decimal-pad', 'number-pad', 'numeric'];
 export { numberError } from '../lib/num';
-import { numberError } from '../lib/num';
+import { numberError, onTryForm } from '../lib/num';
 export const Inp = (p: any) => {
   const n = useNextInput(p);
   const setRef = (el: any) => { n.ref.current = el; if (typeof p.ref === 'function') p.ref(el); else if (p.ref) p.ref.current = el; };
-  const { min, max, noCheck, ...rest0 } = p;
+  const { min, max, noCheck, form, need, zeroOk, ...rest0 } = p;
+  const [tried, setTried] = React.useState(false);
+  React.useEffect(() => (form ? onTryForm(form, () => setTried(true)) : undefined), [form]);
+  React.useEffect(() => { if (tried && String(p.value || '').trim() !== '' && !(String(p.value).replace(',', '.') === '0' || parseFloat(String(p.value).replace(',', '.')) === 0)) setTried(false); }, [p.value, tried]);
   const [seen, setSeen] = React.useState(false);
   const rest = { ...rest0, onFocus: (e: any) => { setSeen(false); if (p.onFocus) p.onFocus(e); }, onBlur: (e: any) => { setSeen(true); if (p.onBlur) p.onBlur(e); } };
   const numeric = NUMKB.indexOf(p.keyboardType) >= 0 && !p.secureTextEntry && !noCheck && typeof p.value === 'string' && !/\d\d:\d\d/.test(String(p.placeholder || ''));
+  const txt = String(p.value == null ? '' : p.value).trim();
+  const need0 = tried && form && typeof p.value === 'string' ? (txt === '' ? 'Please enter ' + (need || 'a number') + '.' : !zeroOk && /^0*[.,]?0*$/.test(txt) ? 'This must be more than 0.' : '') : '';
   let err = numeric ? numberError(p.value, { min, max, ph: String(p.placeholder || '') }) : '';
   // "Too low" waits until you leave the box or have typed as many digits as the top limit, so typing 120 is not flagged at 1 and 12.
   if (err.indexOf('Too low') === 0 && !seen && String(p.value).replace(/\D/g, '').length < String(max != null ? max : min).length) err = '';
+  if (!err && need0) err = need0;
   const base = { minWidth: 0, color: W, fontSize: 14, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: err ? '#ff6b81' : 'rgba(255,255,255,.14)', outlineStyle: 'none' } as any;
   if (!err) return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} style={[base, p.style]} />;
   // Only while a number is wrong: the box gets a red edge and a short reason under it. The layout styles move to the wrapper so rows keep their shape.

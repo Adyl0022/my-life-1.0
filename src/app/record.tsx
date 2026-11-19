@@ -15,7 +15,7 @@ import { TOP } from '../lib/layout';
 import { cs, cu, useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
-import { pn, pi } from '../lib/num';
+import { pn, pi, tryForm } from '../lib/num';
 type Rd = { id: number; date: string; odo: number };
 type Ex = { id: number; name: string; amt: number; date: string };
 type Veh = Ext & { readings: Rd[]; yreadings: Rd[]; exps: Ex[] };
@@ -205,9 +205,9 @@ export default function Record() {
   const sugg = sg.sort((x, y) => x.p - y.p).slice(0, 3).concat([{ p: 99, kind: 'good', title: 'Tip of the day', text: (moto ? TIPS : TIPS_GEN)[(now.getDate() - 1) % 31], tag: 'Tip' }]);
 
   const nextId = () => st.nextId;
-  const addReading = () => { const o = pi(rOdo, { max: 2000000 }); if (!(o >= 0) || !rDate) return; upd((x) => ({ ...x, readings: [...x.readings, { id: nextId(), date: rDate, odo: o }] }), { nextId: st.nextId + 1 }); setROdo(''); };
-  const addYReading = () => { const o = pi(yOdo, { max: 2000000 }); if (!(o >= 0) || !yDate) return; upd((x) => ({ ...x, yreadings: [...(x.yreadings || []), { id: nextId(), date: yDate, odo: o }] }), { nextId: st.nextId + 1 }); setYOdo(''); };
-  const addExp = () => { const a = pn(eAmt); if (!(a > 0)) return; upd((x) => ({ ...x, exps: [{ id: nextId(), name: eName.trim() || 'Service', amt: a, date: eDate || t0 }, ...x.exps] }), { nextId: st.nextId + 1 }); setEName(''); setEAmt(''); };
+  const addReading = () => { const o = pi(rOdo, { max: 2000000 }); if (!(o >= 0)) { tryForm('odoM'); return; } if (!rDate) return; upd((x) => ({ ...x, readings: [...x.readings, { id: nextId(), date: rDate, odo: o }] }), { nextId: st.nextId + 1 }); setROdo(''); };
+  const addYReading = () => { const o = pi(yOdo, { max: 2000000 }); if (!(o >= 0)) { tryForm('odoY'); return; } if (!yDate) return; upd((x) => ({ ...x, yreadings: [...(x.yreadings || []), { id: nextId(), date: yDate, odo: o }] }), { nextId: st.nextId + 1 }); setYOdo(''); };
+  const addExp = () => { const a = pn(eAmt); if (!(a > 0)) { tryForm('exp'); return; } upd((x) => ({ ...x, exps: [{ id: nextId(), name: eName.trim() || 'Service', amt: a, date: eDate || t0 }, ...x.exps] }), { nextId: st.nextId + 1 }); setEName(''); setEAmt(''); };
   const saveQuick = () => {
     const q = quick; if (!q) return;
     if (q.type === 'odo') { const o = parseInt(q.odo, 10); if (!(o >= 0) || !q.date) return; upd((x) => ({ ...x, readings: [...x.readings, { id: nextId(), date: q.date, odo: o }] }), { nextId: st.nextId + 1 }); }
@@ -314,7 +314,7 @@ export default function Record() {
             <Text style={{ color: dim, fontSize: 12, marginTop: 10 }}>Starts Nov 2026 and adds new months automatically. Enter the odometer reading; distance is worked out from the difference between months.</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
               <DateField value={rDate} onChange={setRDate} style={{ flex: 1 }} />
-              <Inp style={{ flex: 1 }} keyboardType="number-pad" value={rOdo} onChangeText={setROdo} placeholder="Odometer km" />
+              <Inp form="odoM" need="the odometer reading" zeroOk style={{ flex: 1 }} keyboardType="number-pad" value={rOdo} onChangeText={setROdo} placeholder="Odometer km" />
               <AddB t="+ Add" onPress={addReading} />
             </View>
             <View style={{ marginTop: 6 }}>
@@ -334,7 +334,7 @@ export default function Record() {
             <Text style={{ color: dim, fontSize: 12, marginTop: 10, lineHeight: 18 }}>Starts from 2024 and adds new years automatically. Enter the odometer reading with any date from 2024. Each bar shows the latest reading in that year, and the small number is how far you rode since the year before. Readings from Monthly Mileage count here too.</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
               <DateField value={yDate} onChange={setYDate} style={{ flex: 1 }} />
-              <Inp style={{ flex: 1 }} keyboardType="number-pad" value={yOdo} onChangeText={setYOdo} placeholder="Odometer km" />
+              <Inp form="odoY" need="the odometer reading" zeroOk style={{ flex: 1 }} keyboardType="number-pad" value={yOdo} onChangeText={setYOdo} placeholder="Odometer km" />
               <AddB t="+ Add" onPress={addYReading} />
             </View>
             <View style={{ marginTop: 6 }}>
@@ -399,7 +399,7 @@ export default function Record() {
             <DateField value={eDate} onChange={setEDate} style={{ marginTop: 12 }} />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
               <Inp style={{ flex: 1.3 }} value={eName} onChangeText={setEName} placeholder="e.g. Engine oil" />
-              <Inp style={{ flex: 0.8 }} keyboardType="decimal-pad" value={eAmt} onChangeText={setEAmt} placeholder={cu()} onSubmitEditing={addExp} />
+              <Inp form="exp" need="an amount" style={{ flex: 0.8 }} keyboardType="decimal-pad" value={eAmt} onChangeText={setEAmt} placeholder={cu()} onSubmitEditing={addExp} />
               <AddB t="+ Add" onPress={addExp} w={14} />
             </View>
             {d.exps.length === 0 ? <Text style={{ marginTop: 10, color: dim, fontSize: 12 }}>No spending recorded yet.</Text> : null}

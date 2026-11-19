@@ -19,7 +19,7 @@ import { TOP } from '../lib/layout';
 import { cs, cu, cw, useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
-import { pn } from '../lib/num';
+import { pn, tryForm } from '../lib/num';
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
@@ -109,7 +109,7 @@ export default function Finance() {
   sav.goals.filter((g) => PRE.indexOf(g.kind) < 0 && g.kind !== 'wedding').forEach((g) => opts.push({ key: 'g' + g.id, id: g.id, name: g.name, kind: g.kind }));
   { const ex = sav.goals.filter((g) => g.kind === 'wedding'); if (ex.length) ex.forEach((g) => opts.push({ key: 'g' + g.id, id: g.id, name: g.name, kind: 'wedding' })); else opts.push({ key: 'pwedding', id: 0, name: kindOf('wedding').name, kind: 'wedding' }); }
   const addSpend = () => {
-    const n = pn(fAmt); if (!(n > 0)) return;
+    const n = pn(fAmt); if (!(n > 0)) { tryForm('spend'); return; }
     let fGoal2 = fGoal;
     if (fCat === 'Savings' && fPre) {
       const k = fPre.slice(1); const g = { id: sav.nextId, name: kindOf(k).name || 'Other', kind: k, target: 0, place: '', due: '', start: 0, out: [], made: todayStr() } as any;
@@ -265,7 +265,7 @@ export default function Finance() {
               ); })}
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-              <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
+              <Inp form="spend" need="an amount" style={{ flex: 1 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
               <Pressable onPress={addSpend}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>+ Add</Text></LinearGradient></Pressable>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
@@ -309,7 +309,7 @@ export default function Finance() {
                     <View style={{ marginTop: 8 }}>
                       <DateField value={remF.date} onChange={(v: string) => setRemF({ ...remF, date: v })} />
                       <Inp style={{ marginTop: 8 }} value={remF.name} onChangeText={(v: string) => setRemF({ ...remF, name: v })} placeholder="What did you buy?" />
-                      <Inp style={{ marginTop: 8 }} value={remF.amt} onChangeText={(v: string) => setRemF({ ...remF, amt: v })} keyboardType="decimal-pad" placeholder={'Amount (' + cu() + ')'} />
+                      <Inp form="spendEdit" need="an amount" style={{ marginTop: 8 }} value={remF.amt} onChangeText={(v: string) => setRemF({ ...remF, amt: v })} keyboardType="decimal-pad" placeholder={'Amount (' + cu() + ')'} />
                       {p.cat !== 'Savings' ? (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                           {CATS.filter((x) => x[0] !== 'Savings').map(([n, c]) => <Chip key={n} t={n} on={remF.cat === n} c={c} onPress={() => setRemF({ ...remF, cat: n })} />)}
@@ -319,7 +319,7 @@ export default function Finance() {
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                         <Pressable onPress={() => setRemId(0)} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
                         <Pressable onPress={() => {
-                          const n = pn(remF.amt); if (!(n > 0)) return;
+                          const n = pn(remF.amt); if (!(n > 0)) { tryForm('spendEdit'); return; }
                           const v = remF.note.trim();
                           setD({ ...d, spends: d.spends.map((x) => x.id === p.id ? { ...x, name: remF.name.trim() || x.name, amt: n, date: remF.date || x.date, cat: p.cat === 'Savings' ? 'Savings' : remF.cat, note: v || undefined } : x) });
                           setRemId(0);

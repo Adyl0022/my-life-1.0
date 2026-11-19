@@ -14,3 +14,8 @@ export const numberError = (raw: string, o: { min?: number; max?: number; ph?: s
 };
 export const pn = (s: string, o?: { min?: number; max?: number }): number => (numberError(s, o) || String(s).indexOf(':') >= 0 ? NaN : parseFloat(String(s == null ? '' : s).replace(',', '.')));
 export const pi = (s: string, o?: { min?: number; max?: number }): number => (numberError(s, o) || String(s).indexOf(':') >= 0 ? NaN : parseInt(String(s == null ? '' : s).replace(/[.,].*$/, ''), 10));
+
+// When a Save or Add button is pressed with a required number missing, the form calls tryForm('name'). Boxes tagged with form="name" and need="an amount" then show what is missing.
+const subs: Record<string, Set<() => void>> = {};
+export const tryForm = (k: string) => { (subs[k] || []).forEach((f) => f()); };
+export const onTryForm = (k: string, f: () => void) => { (subs[k] = subs[k] || new Set()).add(f); return () => { subs[k].delete(f); }; };

@@ -29,7 +29,7 @@ import { stepWhy } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
-import { pn } from '../lib/num';
+import { pn, tryForm } from '../lib/num';
 const T = '#5ee7df';
 // Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
 function SoftShow({ show, children }: { show: boolean; children: React.ReactNode }) {
@@ -199,7 +199,7 @@ export default function Habit() {
   const klist = (h.kg || []).slice().sort((a, b) => (a.d < b.d ? -1 : 1)); const kl = klist.slice(-8);
   const bmi = kg > 0 && h.cm ? kg / Math.pow(h.cm / 100, 2) : 0;
   const bmiTxt = bmi ? (bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy range' : bmi < 30 ? 'Overweight' : 'Obese') : '';
-  const logKg = () => { const v = pn(kgIn); const c = parseInt(cmIn, 10); const nk = (v >= 20 && v <= 300) ? [...klist.filter((x) => x.d !== keyOfDate(dateOf(0))), { d: keyOfDate(dateOf(0)), v: Math.round(v * 10) / 10 }] : h.kg; setH({ ...h, kg: nk, cm: c >= 100 && c <= 250 ? c : h.cm }); setKgIn(''); setCmIn(''); };
+  const logKg = () => { const v = pn(kgIn); const c = parseInt(cmIn, 10); if (!(v >= 20 && v <= 300) && !(c >= 100 && c <= 250)) { tryForm('kg'); return; } const nk = (v >= 20 && v <= 300) ? [...klist.filter((x) => x.d !== keyOfDate(dateOf(0))), { d: keyOfDate(dateOf(0)), v: Math.round(v * 10) / 10 }] : h.kg; setH({ ...h, kg: nk, cm: c >= 100 && c <= 250 ? c : h.cm }); setKgIn(''); setCmIn(''); };
   // water vs mood / sleep
   const wd: { ok: boolean; mood: number; sleep: number }[] = []; for (let o = -60; o <= 0; o++) { const x = getDay(h, o); if (x.cups > 0 && x.mood >= 0) wd.push({ ok: x.cups >= cg, mood: x.mood, sleep: x.sleep }); }
   const hiW = wd.filter((x) => x.ok), loW = wd.filter((x) => !x.ok);
@@ -495,8 +495,8 @@ export default function Habit() {
             {kg > 0 && <Text style={{ color: T, fontSize: 12, fontWeight: '700', marginTop: 6 }}>Water goal: {(cg * GLASS / 1000).toFixed(1)} L a day ({cg} glasses)</Text>}
             {kl.length >= 2 && <Bars vals={kl.map((x) => x.v - Math.min(...kl.map((y) => y.v)) + 1)} labels={kl.map((x) => parseInt(x.d.slice(8), 10) + '/' + parseInt(x.d.slice(5, 7), 10))} max={Math.max(...kl.map((x) => x.v)) - Math.min(...kl.map((x) => x.v)) + 2} color="#b794ff" hi={kl.length - 1} />}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <Inp min={20} max={300} value={kgIn} onChangeText={setKgIn} keyboardType="decimal-pad" placeholder="Weight (kg)" style={{ flex: 1 }} />
-              <Inp min={50} max={260} value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
+              <Inp form="kg" need="your weight in kg" min={20} max={300} value={kgIn} onChangeText={setKgIn} keyboardType="decimal-pad" placeholder="Weight (kg)" style={{ flex: 1 }} />
+              <Inp min={100} max={250} value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
               <Pressable onPress={logKg} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Log</Text></Pressable>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Weigh yourself once a week. Water goal is about 33 ml per kg. BMI is a rough guide only.</Text>

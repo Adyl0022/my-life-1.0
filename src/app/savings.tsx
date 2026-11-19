@@ -15,7 +15,7 @@ import { SAV_EMPTY, SavData, Goal, KINDS, kindOf, goalLines, goalSaved, perMonth
 import { cs, cu, useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
-import { pn } from '../lib/num';
+import { pn, tryForm } from '../lib/num';
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ICON: Record<string, string> = { motor: '🏍️', car: '🚗', house: '🏠', wedding: '💍', travel: '✈️', hajj: '🕋', emergency: '🛟', medical: '🩺', other: '⭐' };
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -64,26 +64,26 @@ export default function Savings() {
   const pickKind = (k: string) => { const prev = kindOf(kind); setKind(k); if (!name.trim() || name === prev.name) setName(kindOf(k).name); };
   const create = () => {
     const t = num(target); const st = num(start) > 0 ? num(start) : 0;
-    if (!name.trim() || !(t > 0)) { setMsg('Give the goal a name and a target amount.'); return; }
+    if (!name.trim() || !(t > 0)) { tryForm('goalNew'); setMsg('Give the goal a name and a target amount.'); return; }
     const g: Goal = { id: sv.nextId, name: name.trim(), kind, target: t, place: place.trim(), due, start: st, out: [], made: todayStr() };
     setSv({ goals: [...goals, g], nextId: sv.nextId + 1 });
     setAdding(false); setMsg(''); setTarget(''); setPlace(''); setStart(''); setDue(''); setOpen(g.id); setMode('');
   };
   const openMode = (g: Goal, m: typeof mode) => { setOk(''); if (open === g.id && mode === m) { setMode(''); return; } setOpen(g.id); setMode(m); setAmt(''); setNote(''); setDt(todayStr()); if (m === 'edit') { setEName(g.name); setEPlace(g.place); setETarget(String(g.target)); setEDue(g.due); } };
   const addMoney = (g: Goal) => {
-    const n = num(amt); if (!(n > 0)) return;
+    const n = num(amt); if (!(n > 0)) { tryForm('goalMoney'); return; }
     const id = (fin && fin.nextId) || 1;
     setFin({ ...fin, spends: [{ id, name: note.trim() || g.name, cat: 'Savings', amt: n, date: dt || todayStr(), goal: g.id }, ...spends], nextId: id + 1 });
     setAmt(''); setNote(''); setMode(''); setOk(cs() + money(n) + ' added to ' + g.name + '. It is also in your Spending Tracker and Money Left.');
   };
   const withdraw = (g: Goal) => {
-    const n = num(amt); if (!(n > 0)) return; const s = saved(g);
+    const n = num(amt); if (!(n > 0)) { tryForm('goalMoney'); return; } const s = saved(g);
     const take = Math.min(n, s);
     setSv({ ...sv, goals: goals.map((x) => (x.id === g.id ? { ...x, out: [...(x.out || []), { id: Date.now(), amt: take, date: dt || todayStr(), note: note.trim() }] } : x)) });
     setAmt(''); setNote(''); setMode(''); setOk('Took ' + cs() + money(take) + ' out of ' + g.name + '.');
   };
   const saveEdit = (g: Goal) => {
-    const t = num(eTarget); if (!eName.trim() || !(t > 0)) return;
+    const t = num(eTarget); if (!eName.trim() || !(t > 0)) { tryForm('goalEdit'); return; }
     setSv({ ...sv, goals: goals.map((x) => (x.id === g.id ? { ...x, name: eName.trim(), place: ePlace.trim(), target: t, due: eDue } : x)) });
     setMode(''); setOk('Saved.');
   };
@@ -127,7 +127,7 @@ export default function Savings() {
                 {KINDS.map((k) => <Chip key={k.k} t={ICON[k.k] + ' ' + k.label} on={kind === k.k} c={k.color} onPress={() => pickKind(k.k)} />)}
               </View>
               <Inp onFocus={reveal} style={{ marginTop: 10 }} value={name} onChangeText={setName} placeholder="Name your goal, for example Wedding fund" />
-              <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={target} onChangeText={setTarget} placeholder={'Target (' + cu() + ')'} />
+              <Inp form="goalNew" need="a target amount" onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={target} onChangeText={setTarget} placeholder={'Target (' + cu() + ')'} />
               <Inp onFocus={reveal} style={{ marginTop: 8 }} value={place} onChangeText={setPlace} placeholder="Kept in, e.g. Maybank" />
               <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={start} onChangeText={setStart} placeholder={'Already saved (' + cu() + '), optional'} />
               <Text style={{ color: dimC, fontSize: 11.5, marginTop: 10 }}>Target date (optional)</Text>
@@ -179,7 +179,7 @@ export default function Savings() {
                 {isOpen && (mode === 'add' || mode === 'out') ? (
                   <View style={{ marginTop: 12, gap: 8 }}>
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{mode === 'add' ? 'Add money to this goal' : 'Take money out of this goal'}</Text>
-                    <Inp onFocus={reveal} autoFocus keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={() => (mode === 'add' ? addMoney(g) : withdraw(g))} />
+                    <Inp form="goalMoney" need="an amount" onFocus={reveal} autoFocus keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={() => (mode === 'add' ? addMoney(g) : withdraw(g))} />
                     <Inp onFocus={reveal} value={note} onChangeText={setNote} placeholder={mode === 'add' ? 'Note (optional), e.g. March saving' : 'Why? (optional)'} />
                     <DateField value={dt} onChange={setDt} />
                     <Lbl t={mode === 'add' ? 'This is saved in your Spending Tracker under Savings, so Money Left counts it too.' : 'This lowers the goal only. Add the money back to your spending or income if you need to track it.'} />
@@ -192,7 +192,7 @@ export default function Savings() {
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Edit goal</Text>
                     <Inp onFocus={reveal} value={eName} onChangeText={setEName} placeholder="Goal name" />
                     <Inp onFocus={reveal} value={ePlace} onChangeText={setEPlace} placeholder="Kept in, e.g. Maybank" />
-                    <Inp onFocus={reveal} keyboardType="decimal-pad" value={eTarget} onChangeText={setETarget} placeholder={'Target (' + cu() + ')'} />
+                    <Inp form="goalEdit" need="a target amount" onFocus={reveal} keyboardType="decimal-pad" value={eTarget} onChangeText={setETarget} placeholder={'Target (' + cu() + ')'} />
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ flex: 1 }}><DateField value={eDue || todayStr()} onChange={setEDue} /></View>
                       {eDue ? <Pressable onPress={() => setEDue('')} style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>No date</Text></Pressable> : null}

@@ -10,7 +10,7 @@ import { HData, GLASS, cupsGoal, latestKg, avgOf, keyOfDate, dateOf } from '../l
 import { cs, cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
-import { pn } from '../lib/num';
+import { pn, tryForm } from '../lib/num';
 const W = '#fff'; const T = '#5ee7df';
 const dim = 'rgba(255,255,255,.65)';
 const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (
@@ -218,7 +218,7 @@ export function HealthSpend() {
   const mon = healthMonths(spends); const cur = mon[mon.length - 1].v, prev = mon[mon.length - 2].v; const mx = Math.max(...mon.map((m) => m.v), 1);
   const list = spends.filter((x) => x.cat === HEALTH_CAT).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id)).slice(0, 5);
   const add = () => {
-    const n = pn(amt); if (!(n > 0)) return;
+    const n = pn(amt); if (!(n > 0)) { tryForm('bodySpend'); return; }
     const t = new Date(); const date = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
     const id = (fin && fin.nextId) || 1;
     setFin({ ...fin, spends: [{ id, name: nm.trim() || 'Health', cat: HEALTH_CAT, amt: n, date }, ...spends], nextId: id + 1 });
@@ -237,7 +237,7 @@ export function HealthSpend() {
         <View style={{ marginTop: 12, gap: 8 }}>
           <Inp value={nm} onChangeText={setNm} placeholder="What for? e.g. Clinic consultation" />
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={add} />
+            <Inp form="bodySpend" need="an amount" style={{ flex: 1 }} keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={add} />
             <Pressable onPress={add}><LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 13, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
           </View>
         </View>
