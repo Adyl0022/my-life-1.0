@@ -69,7 +69,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
 
   nextRef.current = next;
   // The card turns by itself every few seconds. It waits after a touch, and stays put while you are sleeping or typing something.
-  React.useEffect(() => { const i = setInterval(() => { if (busy.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 7000); return () => clearInterval(i); }, []);
+  React.useEffect(() => { const i = setInterval(() => { if (busy.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 5000); return () => clearInterval(i); }, []);
 
   const maxM = Math.max(...series.filter((x) => Number.isFinite(x)), 1);
   let body: React.ReactNode = null; let cur0: string | undefined;
