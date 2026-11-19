@@ -1,28 +1,31 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Line, Polygon } from 'react-native-svg';
+import Svg, { Polygon } from 'react-native-svg';
 
-// Art for Personal Collection: fine geometry. Nested hexagons that turn slowly, a dotted lattice and a few crossing guide lines. Lines only, so text stays easy to read.
-const T = '#8fe9e2', L = '#b9a6ff', Gd = '#ffd9a8';
-function poly(cx: number, cy: number, r: number, n: number, rot: number) {
-  return Array.from({ length: n }, (_, i) => { const a = rot + (2 * Math.PI * i) / n; return (cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1); }).join(' ');
+// Art for Personal Collection: a honeycomb that fills the bottom (a few cells glow) and a small fine star rosette in the top right corner. Lines only, so text stays easy to read.
+const T = '#8fe9e2', L = '#b9a6ff', Gd = '#ffd9a8', COL = [L, T, Gd];
+const S = 26, H = (S * Math.sqrt(3)) / 2;
+const fade = (y: number) => Math.pow(Math.max(0, Math.min(1, (y - 560) / 260)), 0.8);
+let seed = 11;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+const CELLS: { p: string; c: string; hot: boolean; f: number }[] = [];
+for (let r = 0; r < 16; r++) for (let c = -1; c < 16; c++) {
+  const x = c * S * 1.5, y = 560 + r * H * 2 + (c % 2 ? H : 0), f = fade(y);
+  if (f <= 0.03) continue;
+  const p = Array.from({ length: 6 }, (_, i) => (x + S * Math.cos((Math.PI / 3) * i)).toFixed(1) + ',' + (y + S * Math.sin((Math.PI / 3) * i)).toFixed(1)).join(' ');
+  CELLS.push({ p, c: COL[(((r + c) % 3) + 3) % 3], hot: rnd() < 0.14 * f + 0.03, f });
 }
-function Nest({ cx, cy, n, count, r0, dr, twist, col, op }: { cx: number; cy: number; n: number; count: number; r0: number; dr: number; twist: number; col: string; op: number }) {
-  return <>{Array.from({ length: count }, (_, i) => <Polygon key={i} points={poly(cx, cy, r0 + i * dr, n, i * twist)} fill="none" stroke={col} strokeWidth={0.6} strokeOpacity={op * (1 - i / (count * 1.3))} />)}</>;
-}
-const DOTS: number[][] = [];
-for (let r = 0; r < 7; r++) for (let c = 0; c < 9; c++) DOTS.push([6 + c * 14, 600 + r * 14, 0.34 * (1 - (r + (8 - c)) / 16)]);
+const star = (cx: number, cy: number, R: number, n: number, k: number) =>
+  Array.from({ length: n }, (_, i) => (cx + R * Math.cos((2 * Math.PI * i * k) / n)).toFixed(1) + ',' + (cy + R * Math.sin((2 * Math.PI * i * k) / n)).toFixed(1)).join(' ');
+const ROS = [[24, 5], [24, 7], [18, 5], [18, 7], [12, 5]].map(([n, k], i) => ({ p: star(372, 30, 56 * (1 - i * 0.14), n, k), c: COL[(i + 1) % 3] }));
 export function ColArt() {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}>
       <Svg width="100%" height="100%" viewBox="0 0 390 820" preserveAspectRatio="xMidYMax slice">
-        <Nest cx={318} cy={742} n={6} count={30} r0={10} dr={6.5} twist={0.07} col={L} op={0.5} />
-        <Nest cx={318} cy={742} n={3} count={14} r0={10} dr={9} twist={0.16} col={Gd} op={0.42} />
-        <Nest cx={64} cy={700} n={4} count={18} r0={8} dr={6} twist={0.09} col={T} op={0.4} />
-        <Nest cx={374} cy={36} n={6} count={12} r0={6} dr={5} twist={0.12} col={T} op={0.4} />
-        {DOTS.map((d, i) => <Circle key={i} cx={d[0]} cy={d[1]} r={0.9} fill={L} fillOpacity={Math.max(0.04, d[2])} />)}
-        <Line x1={0} y1={620} x2={390} y2={820} stroke={T} strokeWidth={0.5} strokeOpacity={0.2} />
-        <Line x1={0} y1={700} x2={390} y2={640} stroke={Gd} strokeWidth={0.5} strokeOpacity={0.18} />
+        {CELLS.map((c, i) => <Polygon key={i} points={c.p} fill={c.hot ? c.c : 'none'} fillOpacity={c.hot ? 0.22 * c.f : 0} stroke={c.c} strokeOpacity={(c.hot ? 0.7 : 0.4) * c.f} strokeWidth={0.6} />)}
+      </Svg>
+      <Svg width={140} height={120} viewBox="300 0 90 120" style={{ position: 'absolute', right: 0, top: 0 }}>
+        {ROS.map((r, i) => <Polygon key={i} points={r.p} fill="none" stroke={r.c} strokeOpacity={0.42} strokeWidth={0.6} />)}
       </Svg>
     </View>
   );
