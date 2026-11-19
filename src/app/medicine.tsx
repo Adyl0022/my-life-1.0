@@ -37,7 +37,7 @@ export default function Medicine() {
   const [editId, setEditId] = useState('');
   const [name, setName] = useState(''); const [dose, setDose] = useState(''); const [time, setTime] = useState('');
   const [rep, setRep] = useState<'every' | 'weekdays' | 'pick'>('every'); const [pick, setPick] = useState<number[]>([]);
-  const [ic, setIc] = useState('medicine'); const [err, setErr] = useState('');
+  const [ic, setIc] = useState('medicine'); const [err, setErr] = useState(''); const [eN, setEN] = useState(0);
   const meds = h.meds || [];
   const [clock, setClock] = useState(Date.now());
   React.useEffect(() => { const t = setInterval(() => setClock(Date.now()), 60000); return () => clearInterval(t); }, []);
@@ -62,7 +62,7 @@ export default function Medicine() {
   const save = () => {
     const nm = name.trim(); const tm = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(time);
     if (!nm) { setErr('Type the name of the medicine.'); return; }
-    if (!tm) { setErr('Type the time as 24-hour, for example 20:30.'); return; }
+    if (!tm) { setErr('Type the time as 24-hour, for example 20:30.'); setEN((n) => n + 1); return; }
     if (rep === 'pick' && pick.length === 0) { setErr('Pick at least one day.'); return; }
     if (!editId && meds.length >= 10) { setErr('You can keep up to 10 medicines.'); return; }
     const days = rep === 'every' ? undefined : rep === 'weekdays' ? [1, 2, 3, 4, 5] : [...pick].sort();
@@ -128,7 +128,7 @@ export default function Medicine() {
                 <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 14 }}>DOSE (FROM YOUR LABEL OR DOCTOR)</Text>
                 <Inp value={dose} onChangeText={setDose} placeholder="e.g. 500 mg, 1 tablet" style={{ marginTop: 6 }} />
                 <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 14 }}>REMINDER TIME (24-HOUR)</Text>
-                <Inp value={time} onChangeText={(v: string) => setTime(fmtTime(v))} placeholder="e.g. 20:30" keyboardType="number-pad" maxLength={5} style={{ marginTop: 6 }} />
+                <Inp value={time} onChangeText={(v: string) => { setTime(fmtTime(v)); setErr(''); }} placeholder="e.g. 20:30" keyboardType="number-pad" maxLength={5} bad={err.indexOf('time') >= 0 ? eN : 0} style={{ marginTop: 6 }} />
                 <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 14 }}>REPEAT</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                   <Chip on={rep === 'every'} t="Every day" onPress={() => setRep('every')} /><Chip on={rep === 'weekdays'} t="Weekdays" onPress={() => setRep('weekdays')} /><Chip on={rep === 'pick'} t="Pick days" onPress={() => setRep('pick')} />

@@ -16,7 +16,7 @@ import { numberError, onTryForm } from '../lib/num';
 export const Inp = (p: any) => {
   const n = useNextInput(p);
   const setRef = (el: any) => { n.ref.current = el; if (typeof p.ref === 'function') p.ref(el); else if (p.ref) p.ref.current = el; };
-  const { min, max, noCheck, form, need, zeroOk, ...rest0 } = p;
+  const { min, max, noCheck, form, need, zeroOk, bad, ...rest0 } = p;
   const [tried, setTried] = React.useState(false);
   React.useEffect(() => (form ? onTryForm(form, () => setTried(true)) : undefined), [form]);
   React.useEffect(() => { if (tried && String(p.value || '').trim() !== '' && !(String(p.value).replace(',', '.') === '0' || parseFloat(String(p.value).replace(',', '.')) === 0)) setTried(false); }, [p.value, tried]);
@@ -29,25 +29,28 @@ export const Inp = (p: any) => {
   // "Too low" waits until you leave the box or have typed as many digits as the top limit, so typing 120 is not flagged at 1 and 12.
   if (err.indexOf('Too low') === 0 && !seen && String(p.value).replace(/\D/g, '').length < String(max != null ? max : min).length) err = '';
   if (!err && need0) err = need0;
+  // `bad` lets a screen mark a box wrong by itself (a time that is not a real time). The reason is shown by the screen; a changing number makes it shake again.
+  const shown = err;
+  if (!err && bad) err = ' ';
   const base = { minWidth: 0, color: W, fontSize: 14, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: err ? '#ff6b81' : 'rgba(255,255,255,.14)', outlineStyle: 'none' } as any;
   // A short side-to-side shake (plus a buzz on the phone) each time the box becomes wrong or you type another wrong thing.
   const sh = React.useRef(new Animated.Value(0)).current;
   const lastErr = React.useRef('');
   React.useEffect(() => {
-    if (err && err !== lastErr.current) {
+    if (err && (err + '|' + (bad || '')) !== lastErr.current) {
       Animated.sequence([-7, 7, -5, 5, -2, 0].map((v) => Animated.timing(sh, { toValue: v, duration: 55, useNativeDriver: Platform.OS !== 'web' }))).start();
       if (Platform.OS !== 'web') { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {} }
     }
-    lastErr.current = err;
-  }, [err, p.value]);
-  if (!numeric && !err) return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} style={[base, p.style]} />;
+    lastErr.current = err ? err + '|' + (bad || '') : '';
+  }, [err, p.value, bad]);
+  if (!numeric && bad === undefined && !err) return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} style={[base, p.style]} />;
   // Only while a number is wrong: the box gets a red edge and a short reason under it. The layout styles move to the wrapper so rows keep their shape.
   const flat: any = StyleSheet.flatten(p.style) || {}; const outer: any = {}; const inner: any = {};
   Object.keys(flat).forEach((k) => { if (LAYOUT.indexOf(k) >= 0) outer[k] = flat[k]; else inner[k] = flat[k]; });
   return (
     <Animated.View style={[outer, { transform: [{ translateX: sh }] }]}>
       <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} accessibilityHint={err} style={[base, inner]} />
-      {err ? <Text style={{ color: '#ff8fa3', fontSize: 11.5, fontWeight: '700', marginTop: 4, marginLeft: 4 }}>{err}</Text> : null}
+      {shown ? <Text style={{ color: '#ff8fa3', fontSize: 11.5, fontWeight: '700', marginTop: 4, marginLeft: 4 }}>{shown}</Text> : null}
     </Animated.View>
   );
 };

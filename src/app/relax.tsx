@@ -137,7 +137,7 @@ export default function Relax() {
   const [bk, setBk] = useState('box'); const [bl, setBl] = useState(180);
   const [mk, setMk] = useState('sit'); const [ml, setMl] = useState(10); const [cust, setCust] = useState(false); const [cm, setCm] = useState('');
   const [run, setRun] = useState<Run | null>(null); const [reduce, setReduce] = useState(false);
-  const [rem, setRem] = useState(''); const [remErr, setRemErr] = useState(''); const [delKey, setDelKey] = useState<string | null>(null);
+  const [rem, setRem] = useState(''); const [remErr, setRemErr] = useState(''); const [rN, setRN] = useState(0); const [delKey, setDelKey] = useState<string | null>(null);
   useEffect(() => { try { AccessibilityInfo.isReduceMotionEnabled().then(setReduce); } catch (e) {} }, []);
   const goal = h.rlGoal || 10; const bell = h.rlBell !== false;
   const today = mins(getDay(h, 0));
@@ -154,7 +154,7 @@ export default function Relax() {
   );
   const setRemind = () => {
     const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(rem);
-    if (!m) { setRemErr('Type the time as 24-hour, for example 07:00.'); return; }
+    if (!m) { setRemErr('Type the time as 24-hour, for example 07:00.'); setRN((n) => n + 1); return; }
     setRemErr(''); setH({ ...h, rlRem: String(+m[1]).padStart(2, '0') + ':' + m[2] }); setRem('');
   };
   return (
@@ -236,7 +236,7 @@ export default function Relax() {
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>{[5, 10, 15, 20].map((m) => <Chip key={m} on={goal === m} t={m + ' min'} onPress={() => setH({ ...h, rlGoal: m })} />)}</View>
                     <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 14 }}>{h.rlRem ? 'Reminder every day at ' + h.rlRem : 'Reminder: off'}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                      <View style={{ flex: 1 }}><Inp value={rem} onChangeText={(v: string) => setRem(fmtTime(v))} placeholder="24-hour, e.g. 07:00" keyboardType="number-pad" maxLength={5} /></View>
+                      <View style={{ flex: 1 }}><Inp value={rem} onChangeText={(v: string) => { setRem(fmtTime(v)); setRemErr(''); }} placeholder="24-hour, e.g. 07:00" keyboardType="number-pad" maxLength={5} bad={remErr ? rN : 0} /></View>
                       <Chip on t="Set" onPress={setRemind} />
                       {h.rlRem ? <Chip on={false} t="Clear" onPress={() => { const n = { ...h }; delete n.rlRem; setH(n); }} /> : null}
                     </View>
