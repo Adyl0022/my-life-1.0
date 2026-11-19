@@ -146,10 +146,10 @@ export function VehicleCard({ onPress }: { onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
-        <LinearGradient colors={['#a8667c', '#74385f', '#3f2050']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
-          <Svg width="58%" height="100%" viewBox="0 0 120 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
+        <LinearGradient colors={['#bb7189', '#82416a', '#472454']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 112, paddingHorizontal: 16, justifyContent: 'center' }}>
+          <Svg width="55%" height="100%" viewBox="0 0 120 112" preserveAspectRatio="none" style={{ position: 'absolute', right: 0, top: 0 }}>
             <Defs>
-              <SvgGrad id="rd" x1="0" y1="0" x2="120" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0" stopColor={gold} stopOpacity={0} /><Stop offset="0.55" stopColor={gold} stopOpacity={0.5} /><Stop offset="1" stopColor={gold} stopOpacity={0.55} /></SvgGrad>
+              <SvgGrad id="rd" x1="0" y1="0" x2="120" y2="0" gradientUnits="userSpaceOnUse"><Stop offset="0" stopColor={gold} stopOpacity={0} /><Stop offset="0.55" stopColor={gold} stopOpacity={0.62} /><Stop offset="1" stopColor={gold} stopOpacity={0.68} /></SvgGrad>
             </Defs>
             <G stroke="url(#rd)" strokeWidth={1.5} fill="none">
               <Path d="M120 56 L0 56" /><Path d="M120 56 L0 20" /><Path d="M120 56 L0 92" /><Path d="M120 56 L40 0" /><Path d="M120 56 L40 112" /><Path d="M70 0V112" /><Path d="M40 0V112" />
