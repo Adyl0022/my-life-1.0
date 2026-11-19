@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from './Txt';
 import { Inp, DateField, todayStr, W } from './Ui';
-import { Card, Btn, Chip, Sq, Ext, Pt, renewStatus } from './RecordExtras';
+import { Card, Btn, Chip, Sq, Ext, Pt, renewStatus, RenewRows } from './RecordExtras';
 import { Tk, taskState } from '../lib/maintTasks';
 import { cu } from '../lib/region';
 
@@ -38,19 +38,25 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
   const hc = score >= 80 ? '#7df0c6' : score >= 50 ? '#ffd593' : '#ffb3c6';
   const preset = moto ? BIKE : CAR;
   return (
-    <Card title="Maintenance" sub={moto ? 'Chain, tyres, oil and more' : 'Tyres, oil, coolant and more'} right={!open ? <Btn t="+ Add task" h={34} w={12} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setDt(todayStr()); }} /> : undefined}>
+    <Card title={cat + ' score'} sub="Health, road tax and insurance, and repeat jobs">
       {items.length > 0 ? (
         <View style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.08)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Text style={{ color: hc, fontSize: 28, fontWeight: '800' }}>{score + '%'}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{moto ? 'Motorcycle' : 'Vehicle'} health</Text>
+              <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{cat + ' health'}</Text>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 6, overflow: 'hidden' }}><View style={{ width: score + '%', height: '100%', backgroundColor: hc }} /></View>
             </View>
           </View>
           <Text style={{ color: bad.length ? '#ffd593' : '#7df0c6', fontSize: 12, marginTop: 8, lineHeight: 17 }}>{bad.length ? bad.map((x) => x.n + ': ' + x.why).join('\n') : 'Everything is on track.'}</Text>
         </View>
       ) : null}
+      <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginTop: 16 }}>ROAD TAX, INSURANCE AND LICENCE</Text>
+      <RenewRows d={d} upd={upd} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+        <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{moto ? 'REPEAT JOBS · CHAIN, TYRES, OIL' : 'REPEAT JOBS · TYRES, OIL, COOLANT'}</Text>
+        {!open ? <Btn t="+ Add task" h={34} w={12} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setDt(todayStr()); }} /> : null}
+      </View>
       {open ? (
         <View style={{ marginTop: 10, gap: 10 }}>
           <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 6 }}>Task</Text>

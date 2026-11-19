@@ -78,11 +78,11 @@ export const renewStatus = (s?: string) => {
   if (n <= 60) return { txt: n + ' days left', col: '#ffe9b0', bg: 'rgba(255,196,107,.14)', n };
   return { txt: n + ' days left', col: '#7df0c6', bg: 'rgba(94,231,181,.18)', n };
 };
-export function RenewCard({ d, upd }: P<Ext>) {
+export function RenewRows({ d, upd }: P<Ext>) {
   const [ek, setEk] = useState<keyof Ren | ''>(''); const [ev, setEv] = useState(todayStr());
   const r = d.renew || {};
   return (
-    <Card title="Road Tax, Insurance and Licence" sub="Enter the expiry date and see how many days are left">
+    <View>
       <View style={{ marginTop: 6 }}>
         {RK.map(([k, label], i) => {
           const s = renewStatus(r[k]);
@@ -101,9 +101,10 @@ export function RenewCard({ d, upd }: P<Ext>) {
           );
         })}
       </View>
-    </Card>
+    </View>
   );
 }
+export const RenewCard = (p: P<Ext>) => <Card title="Road Tax, Insurance and Licence" sub="Enter the expiry date and see how many days are left"><RenewRows {...p} /></Card>;
 
 // 3. Fuel log ----------------------------------------------------------------
 export function FuelCard({ d, upd }: P<Ext>) {

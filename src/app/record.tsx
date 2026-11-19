@@ -10,7 +10,7 @@ import { Blob } from '../components/Bg';
 import { Inp, DateField, Sheet, SBtn, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { MaintCard } from '../components/MaintCard';
-import { Ext, ProfileCard, RenewCard, FuelCard, PartsCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
+import { Ext, ProfileCard, FuelCard, PartsCard, DocsCard, ExportCard, renewStatus } from '../components/RecordExtras';
 import { TOP } from '../lib/layout';
 import { cs, cu, useRegion } from '../lib/region';
 
@@ -299,8 +299,6 @@ export default function Record() {
           </Glass>
 
           <MaintCard d={d} upd={(fn) => upd(fn)} latest={allOdo} cat={catName} />
-
-          <RenewCard d={d} upd={(fn) => upd(fn)} />
 
           {/* Monthly mileage */}
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
