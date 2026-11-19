@@ -22,7 +22,7 @@ import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf
 
 // The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
 type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'memories';
-const ORDER: Kind[] = ['log', 'usage', 'streak', 'score', 'tip', 'memories'];
+const ORDER: Kind[] = ['log', 'streak', 'score', 'tip', 'memories'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -50,9 +50,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
 
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
-  const ok: Record<Kind, boolean> = { log: hid.on('habit'), usage: true, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, memories: !!sess && !(mem && mem.dash === false) };
+  const ok: Record<Kind, boolean> = { log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, memories: !!sess && !(mem && mem.dash === false) };
   const avail = ORDER.filter((k) => ok[k]);
-  const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : 'usage');
+  const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
   const idx = avail.indexOf(kind);
 
   const next = () => {
