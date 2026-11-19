@@ -96,9 +96,29 @@ export function readPaper(text: string): Read | null {
   const near = good.filter((f) => f.near); const pick = (near.length ? near : good).map((f) => f.s).sort().pop() as string;
   return { expiry: pick, sure: false, kind: 'paper' };
 }
+const luhn = (d: string) => { let t = 0; for (let i = 0; i < d.length; i++) { let n = +d[d.length - 1 - i]; if (i % 2) { n *= 2; if (n > 9) n -= 9; } t += n; } return t % 10 === 0; };
+/** A bank card number found in the text. Only the last 4 digits are kept. */
+const cardTail = (text: string) => { const m = text.replace(/[Oo]/g, '0').match(/\b(?:\d[ -]?){15,18}\d\b/g) || []; for (const x of m) { const d = x.replace(/\D/g, ''); if (d.length >= 15 && d.length <= 19 && luhn(d)) return d.slice(-4); } return ''; };
+/** Guess what kind of paper it is from its words. Best effort: returns null when it cannot tell. */
+export function guessType(text: string): { type: string; sure: boolean } | null {
+  const T = text.toUpperCase();
+  if (readPassport(text)) return { type: 'passport', sure: true };
+  if (/\bP[<«]\s*[A-Z]{3}/.test(T.replace(/\s+/g, ''))) return { type: 'passport', sure: false };
+  if (/KAD PENGENALAN|MYKAD|WARGANEGARA/.test(T) || /\b\d{6}[-\s]\d{2}[-\s]\d{4}\b/.test(T)) return { type: 'mykad', sure: /KAD PENGENALAN|MYKAD/.test(T) };
+  if (/\bCIDB\b|PEMBANGUNAN INDUSTRI BINAAN|GREEN CARD|KAD HIJAU/.test(T)) return { type: 'cidb', sure: true };
+  if (/WARRANTY|WARANTI|JAMINAN|PROOF OF PURCHASE/.test(T)) return { type: 'warranty', sure: true };
+  if (/INSURANCE|INSURANS|TAKAFUL|POLICY NO|POLISI/.test(T)) return { type: 'insurance', sure: false };
+  if (/PERMIT|ENTRY VISA|PAS LAWATAN|PEKERJA ASING|WORK PASS/.test(T)) return { type: 'permit', sure: false };
+  if (/CERTIFICATE|SIJIL|DIPLOMA/.test(T)) return { type: 'certificate', sure: false };
+  if (/AGREEMENT|PERJANJIAN|TENANCY|SEWA/.test(T)) return { type: 'agreement', sure: false };
+  if (cardTail(text) || /\b(VISA|MASTERCARD|MAESTRO|AMEX|DEBIT|CREDIT|MYDEBIT)\b/.test(T)) return { type: 'bank', sure: !!cardTail(text) };
+  if (/MEMBER|AHLI|LOYALTY|REWARDS|POINTS|MATAWANG|WATSONS|AEON|MYDIN|GUARDIAN|BIG\b|TESCO|LOTUS/.test(T)) return { type: 'member', sure: false };
+  return null;
+}
 export function readText(type: string, text: string): Read | null {
   if (type === 'passport') return readPassport(text) || readPaper(text);
   if (type === 'mykad') return readMyKad(text);
+  if (type === 'bank') { const tail = cardTail(text); const r = readPaper(text); if (!tail) return r; return { ...(r || { sure: false, kind: 'paper' }), number: '•••• ' + tail }; }
   return readPaper(text);
 }
 /** Reads the words in a photo on the phone itself. Nothing is sent anywhere. Returns null when it cannot (web, or the reader is missing). */

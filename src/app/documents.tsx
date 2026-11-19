@@ -10,7 +10,7 @@ import { Inp, DateField, W } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm } from '../lib/num';
-import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
+import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, guessType, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
 
 const dim = 'rgba(255,255,255,.62)';
 async function takePhoto(camera: boolean): Promise<string | null> {
@@ -70,6 +70,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
   const t = typeOf(f.type);
   const fill = (base: Form, r: Read): Form => {
+    const t = typeOf(base.type);
     const nm = r.name ? r.name.replace(/\b([A-Z])([A-Z]+)\b/g, (_m, x, y) => x + y.toLowerCase()) : '';
     return { ...base, title: base.title.trim() ? base.title : (nm ? t.label + ' · ' + nm : base.title), number: r.number || base.number, expiry: r.expiry || base.expiry, noExp: r.expiry ? false : base.noExp };
   };
@@ -79,10 +80,12 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       const uri = await takePhoto(camera);
       if (uri) {
         const text = Platform.OS === 'web' ? null : await scanPhoto(uri);
-        const r = text ? readText(f.type, text) : null; const base = { ...f, photo: uri };
+        const fresh = !f.id && !f.title.trim() && !f.number.trim();
+        const g = text && fresh ? guessType(text) : null; const ty = g ? g.type : f.type;
+        const r = text ? (readText(ty, text) || (ty !== f.type ? readText(f.type, text) : null)) : null; const base = { ...f, type: ty, photo: uri };
         if (text == null) { setF(base); setMsg(Platform.OS === 'web' ? 'Scanning works in the Android app. You can still type the details in.' : 'Scanning is not ready on this phone. You can still type the details in.'); }
-        else if (!r) { setF(base); setMsg('Could not read this photo. Try again in good light, hold the camera steady, or type it in.'); }
-        else { setF(fill(base, r)); setMsg(r.sure ? '✓ The two code lines matched. Please still check each box.' : 'Read some details from the photo. Please check each box before you save.'); }
+        else if (!r) { setF(base); setMsg((g && g.type !== f.type ? 'Looks like a ' + typeOf(g.type).label.toLowerCase() + ', but no details could be read. ' : '') + 'Could not read this photo. Try again in good light, hold the camera steady, or type it in.'); }
+        else { setF(fill(base, r)); const sw = g && g.type !== f.type ? 'Looks like a ' + typeOf(g.type).label.toLowerCase() + (g.sure ? '. ' : ', but I am not sure. Change the type above if it is wrong. ') : ''; setMsg(sw + (r.sure ? '✓ The two code lines matched. Please still check each box.' : 'Read some details from the photo. Please check each box before you save.')); }
       }
     } catch (e: any) { setMsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings to scan, or choose a photo instead.' : 'Could not open the photo. Please try again.'); }
     setBusy(false);
