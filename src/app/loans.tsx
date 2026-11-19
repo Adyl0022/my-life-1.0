@@ -34,7 +34,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Lab t="WHAT" />
       {two(['money', '💵 Money'], ['thing', '🔧 A thing'], f.what, (v) => set({ what: v as any }))}
       <Lab t="DETAILS" />
-      <Inp value={f.who} onChangeText={(x: string) => set({ who: x })} placeholder={f.dir === 'lent' ? 'Lent to, e.g. Aiman' : 'Borrowed from, e.g. Aiman'} maxLength={50} />
+      <Inp value={f.who} onChangeText={(x: string) => set({ who: x })} placeholder={f.dir === 'lent' ? 'Lent to, e.g. a friend' : 'Borrowed from, e.g. a friend'} maxLength={50} />
       {tried && !f.who.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
       {money ? (<>
         <Inp form="loan" need="an amount" style={{ marginTop: 9 }} value={f.amount} onChangeText={(x: string) => set({ amount: x })} keyboardType="decimal-pad" placeholder="Amount in RM" />
