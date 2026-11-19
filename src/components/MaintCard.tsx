@@ -12,6 +12,7 @@ import { cu } from '../lib/region';
 const dim = 'rgba(255,255,255,.65)';
 const COL = ['#7df0c6', '#ffd593', '#ffb3c6']; const BAR = ['#5ee7b5', '#ffc46b', '#ff8fab'];
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fdy = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MO[parseInt(p[1], 10) - 1] + ' ' + p[0] : s; };
 const fd = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MO[parseInt(p[1], 10) - 1] : s; };
 const BIKE: [string, number, number][] = [['Spray chain', 7, 0], ['Tyre pressure', 7, 0], ['Engine oil level', 14, 0], ['Wash', 14, 0]];
 const BIKE_P: [string, number, number][] = [['Front tyre', 0, 15000], ['Rear tyre', 0, 12000], ['Battery', 0, 24000], ['Brake pads', 0, 12000], ['Chain and sprocket', 0, 20000], ['Spark plug', 0, 8000]];
@@ -105,7 +106,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
           <Pressable key={k} onPress={() => { setEv(rn[k] || todayStr()); setEk(on ? '' : k); }} accessibilityLabel={(rn[k] ? 'Edit ' : 'Set ') + label} style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 10, borderRadius: 20, backgroundColor: on ? 'rgba(255,255,255,.26)' : 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
             <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11, fontWeight: '700' }}>{label}</Text>
             <Text style={{ color: rn[k] ? st.col : W, fontSize: 16, fontWeight: '800', marginTop: 5 }} numberOfLines={1} adjustsFontSizeToFit>{rn[k] ? (st.n < 0 ? 'Expired' : st.n + (st.n === 1 ? ' day' : ' days')) : '+ Set'}</Text>
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5, marginTop: 2 }} numberOfLines={1}>{rn[k] ? fd(rn[k] as string) : 'No date yet'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5, marginTop: 2 }} numberOfLines={1}>{rn[k] ? fdy(rn[k] as string) : 'No date yet'}</Text>
           </Pressable>); })}
       </View>
       {ek ? (
@@ -118,12 +119,12 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       <Line />
       <Hd t="Maintenance tasks" sub="Repeat jobs and parts in one list" right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setOdAt(''); setKind('check'); setDt(todayStr()); }} /> : undefined} />
       {oe.odo > 0 || list.some((t) => t.km) ? (
-        <View style={{ marginTop: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
+        <View style={{ marginTop: 14, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11, fontWeight: '700' }}>{oe.est ? 'Odometer now (estimate)' : 'Odometer'}</Text>
-              <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginTop: 2 }}>{oe.odo > 0 ? (oe.est ? '~' : '') + oe.odo.toLocaleString('en-MY') + ' km' : 'No reading yet'}</Text>
-              {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, marginTop: 2 }}>{'From your average of about ' + Math.round(oe.perDay) + ' km a day since ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, fontWeight: '700', letterSpacing: 0.3 }}>{oe.est ? 'Odometer now (estimate)' : 'Odometer'}</Text>
+              <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 8 }}>{oe.odo > 0 ? (oe.est ? '~' : '') + oe.odo.toLocaleString('en-MY') + ' km' : 'No reading yet'}</Text>
+              {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'From your average of about ' + Math.round(oe.perDay) + ' km a day since ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
             </View>
             <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)', borderWidth: 1, borderColor: 'rgba(94,231,181,.45)' }}><Text style={{ color: '#b6f7de', fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
           </View>
