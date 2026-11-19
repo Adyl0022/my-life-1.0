@@ -159,7 +159,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
         {shown.map((t, i) => {
           const s = taskState(t, odoNow, oe.est); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3); const pr = s.text.split(' · ');
           return (
-            <View key={t.id} style={{ marginTop: i === 0 ? 12 : 10, borderRadius: 24, backgroundColor: 'rgba(255,255,255,.07)', padding: 16 }}>
+            <View key={t.id} style={{ marginTop: i === 0 ? 12 : 10, borderRadius: 24, backgroundColor: 'rgba(255,255,255,.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)', padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: BAR[s.level] }} />
                 <Text style={{ flex: 1, color: W, fontSize: 17, fontWeight: '800' }} numberOfLines={1}>{t.name}</Text>
@@ -197,7 +197,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
           );
         })}
       </View>
-      {list.length > LIM ? <Pressable onPress={() => setAll(!all)} accessibilityLabel={all ? 'Show fewer tasks' : 'Show all tasks'} style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 8, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{all ? 'Show less' : 'Show all ' + list.length + ' tasks'}</Text></Pressable> : null}
+      {list.length > LIM ? <Pressable onPress={() => setAll(!all)} accessibilityLabel={all ? 'See fewer tasks' : 'See more tasks'} style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 8, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{all ? 'See less' : 'See more · ' + (list.length - LIM) + ' more'}</Text></Pressable> : null}
       {list.length > 0 ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
           <Text style={{ flex: 1, color: dim, fontSize: 11.5 }}>Remind me when a task is due</Text>
