@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { W } from './Ui';
 import { useStored } from '../lib/store';
 import { odoEstimate, taskState } from '../lib/maintTasks';
+import { DocStore, EMPTY_DOCS, daysLeft } from '../lib/documents';
 
 // My Record top card: turns by itself every 10 seconds, swipe to change, hold to pause. Same behaviour as the Islamic Hub card.
 const CH = 196;
@@ -34,6 +35,8 @@ const tone = (n: number) => (n <= 7 ? '#ff6b81' : n <= 30 ? '#ffd593' : '#5ee7b5
 export function RecordCarousel() {
   const router = useRouter();
   const [rec] = useStored<any>('ml_record', { data: {} });
+  const [dst] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
+  const dsoon = ((dst && dst.docs) || []).filter(d => d.expiry).map(d => ({ label: d.title, n: daysLeft(d.expiry as string) })).filter(x => x.n !== null && x.n !== undefined).sort((a, b) => (a.n as number) - (b.n as number)) as { label: string; n: number }[];
   const now = new Date(); const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
   const jobs: { name: string; text: string; lv: number; di: number }[] = [];
   const rens: { label: string; n: number }[] = [];
@@ -121,10 +124,14 @@ export function RecordCarousel() {
         ) : cur === 'doc' ? (
           <Pressable {...hold} onPress={() => go('/documents')}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
             <Text style={lab}>DOCUMENTS</Text>
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-              <Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>Passport, cards and warranty</Text>
-              <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>Keep every paper in one place with its end date, so nothing runs out without you knowing.</Text>
-            </View>
+            {dsoon.length ? dsoon.slice(0, 3).map((x, i) => <Row key={i} l={x.label} r={dueText(x.n)} c={tone(x.n)} />) : (
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>Passport, cards and warranty</Text>
+                <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>Keep every paper in one place with its end date, so nothing runs out without you knowing.</Text>
+              </View>
+            )}
+            {dsoon.length ? <View style={{ flex: 1 }} /> : null}
+            {dsoon.length ? <Foot l={dsoon[0].n < 0 ? 'Something has expired' : dsoon[0].n <= 30 ? 'Renew soon' : 'All up to date'} r="Open ›" /> : null}
           </Glass></Pressable>
         ) : (
           <Pressable {...hold}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>

@@ -105,6 +105,37 @@ export async function syncRenewAlerts(rec: RenData, tg: Toggles, on: boolean): P
   } catch (e) { /* ignore */ }
 }
 
+// Documents: a reminder per document on the day chosen in the document (days before expiry) and on the day itself, at 9 am.
+export async function syncDocAlerts(store: { docs?: { id: string; title: string; expiry?: string; remind?: string }[] }, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('doc-');
+    if (!on || !tg.ev) return;
+    const DAYS: Record<string, number> = { '1w': 7, '1m': 30, '3m': 90, '6m': 180 };
+    const now = Date.now(); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    ((store && store.docs) || []).forEach(dc => {
+      const s = dc.expiry; const rd = DAYS[dc.remind || ''];
+      if (!s || !rd) return;
+      const [y, m, d] = s.split('-').map(Number); if (!y || !m || !d) return;
+      ([[rd, 'is due in ' + (rd >= 30 ? Math.round(rd / 30) + (rd >= 60 ? ' months' : ' month') : '1 week')], [0, 'expires today']] as [number, string][]).forEach(([back, when]) => {
+        const at = new Date(y, m - 1, d - back, 9, 0, 0);
+        if (at.getTime() <= now + 5000 || inQuiet(at, tg)) return;
+        todo.push({ id: 'doc-' + dc.id + '-' + back, at, title: dc.title + ' ' + (back === 0 ? when : 'expires soon'), body: back === 0 ? 'Open Documents to see it.' : 'It ' + when.replace('is due', 'expires') + '. Open Documents to see it.' });
+      });
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('renewals', { name: 'Renewal reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ff8fab' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: t.id,
+        content: { title: t.title, body: t.body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals' } as any,
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
+
 // Every Sunday at 8 pm: a nudge to look at the weekly review in Insights. Only when notifications are already allowed.
 export async function syncWeekAlert(tg: Toggles): Promise<void> {
   if (Platform.OS === 'web') return;

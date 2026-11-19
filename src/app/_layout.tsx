@@ -24,7 +24,7 @@ import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
 import { cycleInfo } from '../lib/cycle';
 import { syncTaskAlerts } from '../lib/maintTasks';
-import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
+import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncDocAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles, allowPermissionPrompts, openPrompts, usePromptsOpen } from '../lib/adhan';
 import { useFamily } from '../lib/family';
 import { useFamTasks, useFamEvents } from '../lib/familyData';
@@ -70,6 +70,8 @@ function AlertSync() {
   useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncCycleAlert(cyNext, !!(hb && hb.cyOn) && hb.cyRem !== false && hid.on('habit')); }, [okh, ok2, hid.ready, cyNext, hb && hb.cyOn, hb && hb.cyRem]);
   const [rc, , okr] = useStored<{ data?: Record<string, any> }>('ml_record', { data: {} });
   useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncRenewAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify((rc && rc.data) || {}), tg.ev, t.qh]);
+  const [dcs, , okd] = useStored<{ docs?: any[] }>('ml_documents', { docs: [] });
+  useEffect(() => { if (okd && ok2 && hid.ready && Platform.OS !== 'web') syncDocAlerts(dcs, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okd, ok2, hid.ready, JSON.stringify(((dcs && dcs.docs) || []).map((x: any) => [x.id, x.title, x.expiry, x.remind])), tg.ev, t.qh]);
   useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncTaskAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify(Object.values((rc && rc.data) || {}).map((v: any) => [v && v.tasks, v && v.trem])), tg.ev, t.qh]);
   const [bk, , okb] = useStored<number>('ml_backup_last', 0);
   const [bo, , okc] = useStored<boolean>('ml_backup_rem', false);

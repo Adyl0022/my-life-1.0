@@ -241,6 +241,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "parts bahagian servis service oil minyak enjin tyre tayar chain rantai brake brek bateri battery"
  },
  {
+  "t": "Documents",
+  "s": "Passport, cards, warranty",
+  "m": "Record",
+  "c": "#7c9cff",
+  "h": "Record.dc.html",
+  "k": "documents dokumen passport pasport mykad ic cidb permit bank card kad member warranty waranti insurance agreement certificate sijil scan imbas expiry tamat tempoh reminder peringatan"
+ },
+ {
   "t": "Road tax, insurance and licence",
   "s": "Renewal dates",
   "m": "Record",

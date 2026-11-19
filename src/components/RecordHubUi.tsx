@@ -51,7 +51,7 @@ function Spin({ dur, children, style }: { dur: number; children: React.ReactNode
 }
 
 // The soft dark-pink page used by every My Record screen.
-export function RecordPage({ title, sub, children, art }: { title: string; sub: string; children: React.ReactNode; art?: boolean }) {
+export function RecordPage({ title, sub, children, art, right, bg }: { title: string; sub: string; children: React.ReactNode; art?: boolean; right?: React.ReactNode; bg?: React.ReactNode }) {
   const router = useRouter();
   return (
     <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
@@ -59,6 +59,7 @@ export function RecordPage({ title, sub, children, art }: { title: string; sub: 
       <Drift dx={-28} dy={26} dur={7000}><Blob size={320} color="rgba(255,143,171,.38)" style={{ right: -100, top: -40 }} /></Drift>
       <Drift dx={30} dy={-24} dur={8500} delay={1200}><Blob size={340} color="rgba(124,156,255,.2)" style={{ left: -120, bottom: -150 }} /></Drift>
       {art ? <PageArt /> : null}
+      {bg}
       {art ? <Sky shooting={false} /> : null}
       {art ? <Collision left="84%" top="7%" ang={24} dur={15000} gap={2500} delay={1500} id="rc1" soft /> : null}
       {art ? <Collision left="19%" top="92%" ang={-16} dur={17000} gap={3500} delay={8000} id="rc2" soft /> : null}
@@ -71,6 +72,7 @@ export function RecordPage({ title, sub, children, art }: { title: string; sub: 
               <Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>{title}</Text>
               <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 1 }}>{sub}</Text>
             </View>
+            {right}
           </View>
           {children}
         </ScrollView>
@@ -132,11 +134,11 @@ function PageArt() {
 }
 
 // Top banner of My Record: same shape as the Daily Planner banner, in this page's pink and violet.
-export function Intro({ title, text }: { title: string; text: string }) {
+export function Intro({ title, text, colors }: { title: string; text: string; colors?: [string, string] }) {
   return (
     <View style={{ marginTop: 16, borderRadius: 26, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 }}>
       <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
-        <LinearGradient colors={['rgba(255,143,171,.5)', 'rgba(150,120,255,.42)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 18, paddingVertical: 20 }}>
+        <LinearGradient colors={colors || ['rgba(255,143,171,.5)', 'rgba(150,120,255,.42)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 18, paddingVertical: 20 }}>
           <Spin dur={40000} style={{ position: 'absolute', right: -34, top: -40, width: 150, height: 150 }}>
             <Svg width={150} height={150} viewBox="0 0 150 150">
               <G fill="none" stroke="#fff" strokeOpacity={0.22} strokeWidth={1.2}>
