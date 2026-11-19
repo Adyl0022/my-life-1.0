@@ -17,7 +17,7 @@ export function RecordPage({ title, sub, children, art }: { title: string; sub: 
     <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
       <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
       <Blob size={320} color="rgba(255,143,171,.38)" style={{ right: -100, top: -40 }} />
-      <Blob size={340} color="rgba(124,156,255,.32)" style={{ left: -120, bottom: 10 }} />
+      <Blob size={340} color="rgba(124,156,255,.2)" style={{ left: -120, bottom: -150 }} />
       {art ? <PageArt /> : null}
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 60 }}>
