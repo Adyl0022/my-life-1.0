@@ -6,7 +6,7 @@ import { Glass } from './Glass';
 import { HeadIcon } from './HabitIcons';
 import { useStored } from '../lib/store';
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal } from '../lib/habit';
-import { CardArt } from './CardArt';
+import { CardArt, IntelIcon } from './CardArt';
 import { TimeMachine } from './TimeMachine';
 import { cyclePatterns } from '../lib/cycle';
 import { ENERGY, energyEstimate, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, CATS, expState } from '../lib/patterns';
@@ -51,7 +51,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
       <LinearGradient colors={['#4b3fa6', '#6d4fc4']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
       <CardArt kind="intel" />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <HeadIcon k="brain" size={48} />
+        <IntelIcon size={48}><HeadIcon k="brain" size={48} /></IntelIcon>
         <View style={{ flex: 1 }}>
           <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>My Life Intelligence</Text>
           <Text style={{ color: DIM, fontSize: 12.5, lineHeight: 17, marginTop: 4 }}>Understand your habits, discover your patterns and improve your everyday life.</Text>
