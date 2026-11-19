@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { lessonOfDay } from './lessonOfDay';
 // The thinking part of the Assistant. Works fully offline, on the saved data of the app.
 // 1) fix() repairs typos and chat spelling   2) period() understands "yesterday", "this week", "last month"
 // 3) think() answers analysis questions, small talk and new actions, and remembers the last topic (ctx).
@@ -518,6 +519,11 @@ export function think(A, q, lang) {
       const nm = (a) => a.slice(0, 4).map((x) => x.who + (x.what === 'money' ? ' ' + rm(x.amount) : ' (' + (x.title || L('thing', 'barang')) + ')')).join(', ');
       return done(mk((lent.length ? L('Owed to you: ', 'Orang berhutang dengan awak: ') + rm(sum(lent)) + (nm(lent) ? ' · ' + nm(lent) : '') + '. ' : '') + (bor.length ? L('You owe: ', 'Awak berhutang: ') + rm(sum(bor)) + ' · ' + nm(bor) + '.' : ''), { label: L('Open Lent & Borrowed', 'Buka Lent & Borrowed'), href: 'Record.dc.html' }));
     }
+  }
+  // Today's life lesson (the same one the Dashboard card shows)
+  if (has(['lesson of the day', 'lesson today', 'today lesson', 'life lesson today', 'pengajaran hari ini', 'pengajaran harini', 'pengajaran today', 'nasihat hari ini', 'nasihat harini', 'give me a lesson', 'bagi pengajaran', 'bagi nasihat'])) {
+    const ld = lessonOfDay(R.lessons);
+    return done(mk((ld.mine ? L('One you wrote: ', 'Yang awak tulis: ') : L('Today\'s lesson: ', 'Pengajaran hari ini: ')) + ld.title + '. ' + ld.text, { label: L('Open Life Lessons', 'Buka Life Lessons'), href: 'Record.dc.html' }));
   }
   // Personal Collection help (how to, not data)
   if (modOn('record') && !/\d/.test(qn) && has(['lent', 'borrow', 'pinjam', 'hutang orang', 'gadget', 'lesson', 'pengajaran', 'personal collection'])) {

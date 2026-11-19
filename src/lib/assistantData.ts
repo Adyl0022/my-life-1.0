@@ -28,7 +28,7 @@ export type Real = {
   noteList: { t: string; s: string; rm?: number; rd?: boolean }[];
   plTasks: { id: number; name: string; due: string; prio: string; status: string }[]; plEvents: { id: number; name: string; date: string; done: boolean }[];
   parts: { k: string; label: string; pct: number; detail: string }[]; allow: number;
-  docs: { title: string; type: string; expiry: string; n: number | null }[]; loans: { dir: string; what: string; who: string; title: string; amount: number; due: string; done: boolean }[]; itemsN: number;
+  docs: { title: string; type: string; expiry: string; n: number | null }[]; loans: { dir: string; what: string; who: string; title: string; amount: number; due: string; done: boolean }[]; itemsN: number; lessons: { tag: string; title: string; text: string; id: number; date: string }[];
   incomeLast: number; commit: number; limits: Record<string, number>; goals: { id: number; name: string; target: number; place: string; due: string; saved: number }[];
 };
 
@@ -101,6 +101,7 @@ export function useReal(P: [string, number, number][]): Real {
     docs: ((dcs && dcs.docs) || []).map((d) => ({ title: d.title || '', type: typeOf(d.type).label, expiry: d.expiry || '', n: d.expiry && validDate(d.expiry) ? daysLeft(d.expiry) : null })),
     loans: ((col && col.loans) || []).map((l) => ({ dir: l.dir, what: l.what, who: l.who || '', title: l.title || '', amount: parseFloat(String(l.amount || '0').replace(',', '.')) || 0, due: l.due || '', done: !!l.done })),
     itemsN: ((col && col.items) || []).length,
+    lessons: ((col && col.lessons) || []) as any,
     incomeLast: incomeLastMonth(fin), commit: commitFor(debts, ym), limits: ((fin as any).limits || {}) as Record<string, number>,
   };
 }
