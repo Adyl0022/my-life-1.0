@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View, ScrollView, Pressable, TextInput, Platform, Linking, AppState, PermissionsAndroid } from 'react-native';
 import { Text } from '../components/Txt';
+import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
@@ -129,6 +130,7 @@ export default function Hafazan() {
   const [to, setTo] = useState('7');
   const [hide, setHide] = useState(true);
   const [mode, setMode] = useState<'test' | 'learn' | 'auto'>('learn');
+  const slide = useTabSlide(['learn', 'test', 'auto'].indexOf(mode));
   const [found, setFound] = useState<Found | null>(null);
   const [ci, setCi] = useState(0);
   const [cur, setCur] = useState(1);
@@ -345,6 +347,7 @@ export default function Hafazan() {
               ))}
             </View>
 
+            <Animated.View style={[slide, { gap: 16 }]}>
             {/* how to use this mode */}
             {(() => {
               const H: Record<string, { ic: string; t: string; sub: string; steps: string[]; tip: string }> = {
@@ -640,6 +643,7 @@ export default function Hafazan() {
                 <Pressable onPress={() => setConfirmDel(true)} style={{ marginTop: 12, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.45)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 13.5, fontWeight: '800' }}>Remove the downloaded model</Text></Pressable>
               )}
             </Glass>
+            </Animated.View>
           </>)}
         </ScrollView>
       </SafeAreaView>

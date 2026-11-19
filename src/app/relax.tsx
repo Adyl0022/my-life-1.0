@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, Animated, Easing, AccessibilityInfo, Vibration, Platform } from 'react-native';
 import { Text } from '../components/Txt';
+import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -134,6 +135,7 @@ export default function Relax() {
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'b' | 'm' | 'r'>('b');
+  const slide = useTabSlide(['b', 'm', 'r'].indexOf(tab));
   const [bk, setBk] = useState('box'); const [bl, setBl] = useState(180);
   const [mk, setMk] = useState('sit'); const [ml, setMl] = useState(10); const [cust, setCust] = useState(false); const [cm, setCm] = useState('');
   const [run, setRun] = useState<Run | null>(null); const [reduce, setReduce] = useState(false);
@@ -174,6 +176,7 @@ export default function Relax() {
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 14 }}>
                 <Chip on={tab === 'b'} t="Breathe" onPress={() => setTab('b')} /><Chip on={tab === 'm'} t="Meditate" onPress={() => setTab('m')} /><Chip on={tab === 'r'} t="Record" onPress={() => setTab('r')} />
               </View>
+              <Animated.View style={slide}>
               {tab === 'b' ? (
                 <>
                   {h.cyOn && dayKind(h, 0) !== 'other' ? <Glass radius={20} style={{ marginTop: 14, padding: 12 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{dayKind(h, 0) === 'period' ? 'On your period?' : 'Your period may be close.'}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 4 }}>Slow breathing such as Deep belly or Calm 4-7-8 can feel soothing. A warm drink, some water and a little rest help too.</Text></Glass> : null}
@@ -244,6 +247,7 @@ export default function Relax() {
                   </Glass>
                 </>
               ) : null}
+              </Animated.View>
             </>
           )}
         </ScrollView>

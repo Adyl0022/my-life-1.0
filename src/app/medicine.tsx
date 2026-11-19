@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Platform } from 'react-native';
+import { View, ScrollView, Pressable, Platform, Animated } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { Text } from '../components/Txt';
+import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
@@ -28,6 +29,7 @@ export default function Medicine() {
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'today' | 'week' | 'all'>('today');
+  const slide = useTabSlide(['today', 'week', 'all'].indexOf(tab));
   // Without "exact timing" Android may hold a reminder back by many minutes, even an hour. Tell the person and let them turn it on.
   const [exact, setExact] = useState<boolean | null>(null);
   React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
@@ -188,6 +190,7 @@ export default function Medicine() {
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 14 }}>
                 <Chip on={tab === 'today'} t="Today" onPress={() => setTab('today')} /><Chip on={tab === 'week'} t="Week" onPress={() => setTab('week')} /><Chip on={tab === 'all'} t="All medicines" onPress={() => setTab('all')} />
               </View>
+              <Animated.View style={slide}>
               {tab === 'today' ? (
                 !due.length ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 13, marginTop: 18 }}>{meds.length ? 'No medicine is due today.' : 'Tap + to add your first medicine.'}</Text>
                 : ORDER.filter((p) => due.some((m) => part(m.time) === p)).map((p) => (
@@ -219,6 +222,7 @@ export default function Medicine() {
                   {meds.length ? meds.map((m) => <Row key={m.id} m={m} />) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 13 }}>No medicines yet. Tap + to add one.</Text>}
                 </View>
               ) : null}
+              </Animated.View>
             </>
           )}
         </ScrollView>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, Animated } from 'react-native';
 import { Text } from '../components/Txt';
+import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -66,6 +67,7 @@ export default function Planner() {
   const [d, setD, ok] = useStored<Data>('ml_planner', EMPTY);
   const [tab, setTab] = useState<'events' | 'tasks'>('events');
   const [cat, setCat] = useState(0);
+  const slide = useTabSlide(tab === 'events' ? 0 : 1 + cat);
   const [addingCat, setAddingCat] = useState(false); const [catIn, setCatIn] = useState('');
   const [edit, setEdit] = useState<any>(null);
   const [add, setAdd] = useState<any>(null);
@@ -220,6 +222,7 @@ export default function Planner() {
             </View>
           )}
 
+          <Animated.View style={slide}>
           {tab === 'events' ? (
             <View style={{ gap: 8 }}>
               <Sec t={regionCountry().flag + ' ' + regionCountry().name + ' events'} hint="auto · official calendar" c="#ffd27d" n={my.length} />
@@ -281,6 +284,7 @@ export default function Planner() {
               {cat > 0 && <Pressable onPress={() => confirmDelete('this list', () => { const n = curCat; setD({ ...d, cats: d.cats.filter((c) => c !== n), tasks: d.tasks.filter((x) => (x.cat || 'Tasks') !== n) }); setCat(0); say('Category deleted'); }, { title: 'Delete this list?', message: 'All tasks in it are deleted too. This cannot be undone.' })} style={{ alignSelf: 'center', marginTop: 8 }}><Text style={{ color: '#ffb3bf', fontSize: 12.5, fontWeight: '700' }}>Delete this category</Text></Pressable>}
             </View>
           )}
+          </Animated.View>
         </ScrollView>
 
         {edit && <Sheet onClose={() => setEdit(null)}>{editBox(edit.kind)}</Sheet>}
