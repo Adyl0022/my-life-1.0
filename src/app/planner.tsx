@@ -14,6 +14,7 @@ import { TOP } from '../lib/layout';
 import { useRegion, regionCountry } from '../lib/region';
 import { upcomingMy, fetchMy, EMPTY_CACHE, MyCache } from '../lib/myEvents';
 
+import { confirmDelete } from '../lib/dialog';
 type Ev = { id: number; name: string; date: string; remind: string; done: boolean };
 type Tk = { id: number; name: string; note: string; prio: string; due: string; cat: string; status: 'todo' | 'doing' | 'done' };
 type Data = { events: Ev[]; tasks: Tk[]; cats: string[]; nextId: number };
@@ -100,7 +101,7 @@ export default function Planner() {
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <SBtn t="Cancel" onPress={() => setEdit(null)} />
-        {kind === 'task' && <SBtn t="Delete" kind="danger" onPress={() => { setD({ ...d, tasks: d.tasks.filter((y) => y.id !== edit.id) }); setEdit(null); }} />}
+        {kind === 'task' && <SBtn t="Delete" kind="danger" onPress={() => confirmDelete('this task', () => { setD({ ...d, tasks: d.tasks.filter((y) => y.id !== edit.id) }); setEdit(null); })} />}
         <SBtn t="Save" kind="primary" onPress={saveEdit} />
       </View>
     </View>
@@ -117,7 +118,7 @@ export default function Planner() {
           </LinearGradient>
           <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{(late ? 'Overdue · ' : '') + (x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind)}</Text></View>
           <Ic t="✎" label="Edit" onPress={() => setEdit({ id: x.id, kind: 'event', name: x.name, note: '', prio: 'Medium', date: x.date, remind: x.remind })} />
-          <Ic t="✕" label="Delete" onPress={() => { setD({ ...d, events: d.events.filter((y) => y.id !== x.id) }); setEdit(null); }} />
+          <Ic t="✕" label="Delete" onPress={() => confirmDelete('this event', () => { setD({ ...d, events: d.events.filter((y) => y.id !== x.id) }); setEdit(null); })} />
         </Raise>
       </Pressable>
     );
@@ -270,11 +271,11 @@ export default function Planner() {
               <Sec t="Not Done Yet" hint="tap a task to start it" c="#b794ff" n={todo.length} />
               {todo.map((x) => <TaskRow key={x.id} x={x} />)}
               {ok && todo.length === 0 && <Empty t="All caught up. Nothing waiting." c="#b794ff" />}
-              <Sec t="Done" hint="tap to bring back" c="#7df0a0" n={done.length} right={done.length ? <Pressable onPress={() => setD({ ...d, tasks: d.tasks.filter((x) => !((x.cat || 'Tasks') === curCat && x.status === 'done')) })}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '700' }}>Clear</Text></Pressable> : null} />
+              <Sec t="Done" hint="tap to bring back" c="#7df0a0" n={done.length} right={done.length ? <Pressable onPress={() => confirmDelete('done tasks', () => setD({ ...d, tasks: d.tasks.filter((x) => !((x.cat || 'Tasks') === curCat && x.status === 'done')) }), { title: 'Clear done tasks?', message: 'All done tasks in this list are removed.', yes: 'Clear' })}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '700' }}>Clear</Text></Pressable> : null} />
               {done.map((x) => <TaskRow key={x.id} x={x} />)}
               {ok && done.length === 0 && <Empty t="Nothing done yet." c="#7df0a0" />}
               <Pressable onPress={openAdd} style={{ marginTop: 10 }}><View style={{ paddingVertical: 13, borderRadius: 18, alignItems: 'center', borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.35)' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>+ Add task</Text></View></Pressable>
-              {cat > 0 && <Pressable onPress={() => { const n = curCat; setD({ ...d, cats: d.cats.filter((c) => c !== n), tasks: d.tasks.filter((x) => (x.cat || 'Tasks') !== n) }); setCat(0); say('Category deleted'); }} style={{ alignSelf: 'center', marginTop: 8 }}><Text style={{ color: '#ffb3bf', fontSize: 12.5, fontWeight: '700' }}>Delete this category</Text></Pressable>}
+              {cat > 0 && <Pressable onPress={() => confirmDelete('this list', () => { const n = curCat; setD({ ...d, cats: d.cats.filter((c) => c !== n), tasks: d.tasks.filter((x) => (x.cat || 'Tasks') !== n) }); setCat(0); say('Category deleted'); }, { title: 'Delete this list?', message: 'All tasks in it are deleted too. This cannot be undone.' })} style={{ alignSelf: 'center', marginTop: 8 }}><Text style={{ color: '#ffb3bf', fontSize: 12.5, fontWeight: '700' }}>Delete this category</Text></Pressable>}
             </View>
           )}
         </ScrollView>

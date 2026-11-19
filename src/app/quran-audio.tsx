@@ -13,6 +13,7 @@ import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, 
 import { Shine, GlowField } from '../components/Shine';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon, DownloadIcon, CheckIcon, CloseIcon, SearchIcon } from '../components/AudioIcons';
 
+import { confirmDelete } from '../lib/dialog';
 const TEAL = '#7df0c6';
 const Btn = ({ ic, onPress, big, label, pulse }: { ic: React.ReactNode; onPress: () => void; big?: boolean; label: string; pulse?: boolean }) => (
   <Shine label={label} hitSlop={8} onPress={onPress} pulse={pulse} radius={big ? 29 : 22} style={{ width: big ? 58 : 44, height: big ? 58 : 44, backgroundColor: big ? '#7df0c6' : 'rgba(255,255,255,.12)' }}>{ic}</Shine>
@@ -235,7 +236,7 @@ export default function QuranAudio() {
                           <Text numberOfLines={1} style={{ color: W, fontSize: 14, fontWeight: '700' }}>{u.s + '. ' + (m ? m.title : 'Surah')}</Text>
                           <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, marginTop: 1 }}>{fmtBytes(u.bytes) + (u.total === 0 ? ' · part of a juz' : u.have < u.total ? ' · partly saved (' + u.have + '/' + u.total + ')' : '')}</Text>
                         </View>
-                        <Pressable onPress={() => deleteSurah(cur.id, u.s)} hitSlop={6} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '800' }}>Delete</Text></Pressable>
+                        <Pressable onPress={() => confirmDelete('this download', () => deleteSurah(cur.id, u.s), { title: 'Delete this download?', message: 'You can download it again later.' })} hitSlop={6} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '800' }}>Delete</Text></Pressable>
                       </View>
                     );
                   })}

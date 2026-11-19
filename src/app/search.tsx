@@ -14,6 +14,7 @@ import { TOP } from '../lib/layout';
 import { useHidden, modOnName } from '../lib/hidden';
 import { useStored } from '../lib/store';
 
+import { SearchField } from '../components/Shine';
 const MODS = ['All', 'Planner', 'Islamic', 'Finance', 'Record', 'Habit', 'Family', 'System'];
 
 export default function Search() {
@@ -49,10 +50,7 @@ export default function Search() {
           <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3, flex: 1 }}>Search</Text>
         </View>
         <View style={{ marginTop: 14 }}>
-          <View>
-            <View style={{ position: 'absolute', left: 14, top: 14, zIndex: 2 }}><Svg width={22} height={22} viewBox="0 0 24 24"><Circle cx={11} cy={11} r={7} stroke="rgba(255,255,255,.7)" strokeWidth={1.8} fill="none" /><Path d="M20 20l-4-4" stroke="rgba(255,255,255,.7)" strokeWidth={1.8} strokeLinecap="round" /></Svg></View>
-            <TextInput value={q} onChangeText={setQ} autoFocus placeholder="Search planner, surah, finance, records..." placeholderTextColor="rgba(255,255,255,.5)" style={{ height: 50, borderRadius: 18, paddingLeft: 44, paddingRight: 14, color: '#fff', fontSize: 15, fontWeight: '600', backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', outlineStyle: 'none' } as any} />
-          </View>
+          <SearchField value={q} onChangeText={setQ} autoFocus placeholder="Search planner, surah, finance, records..." />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, flexGrow: 0 }} contentContainerStyle={{ gap: 8 }}>
             {MODS.filter((n) => modOnName(n)).map((n) => (
               <Pressable key={n} onPress={() => setMod(n)}>

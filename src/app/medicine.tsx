@@ -17,6 +17,7 @@ import { TOP } from '../lib/layout';
 import { missedDoses } from '../lib/medMissed';
 import { weekOffs, HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
 
+import { confirmDelete } from '../lib/dialog';
 const T = '#5ee7df';
 const DN = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const ICS: [string, string][] = [['medicine', 'Capsule'], ['tablet', 'Tablet'], ['syrup', 'Syrup'], ['needle', 'Injection'], ['drops', 'Drops'], ['inhaler', 'Inhaler'], ['cream', 'Cream'], ['vitamin', 'Vitamin']];
@@ -99,7 +100,7 @@ export default function Medicine() {
       ) : (
         <View style={{ alignItems: 'flex-end', gap: 10 }}>
           <Pressable onPress={() => startEdit(m)} hitSlop={8} accessibilityLabel={'Edit ' + m.name}><Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Edit</Text></Pressable>
-          <Pressable onPress={() => drop(m.id)} hitSlop={8}><Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable>
+          <Pressable onPress={() => confirmDelete('this medicine', () => drop(m.id), { title: 'Remove this medicine?', yes: 'Remove' })} hitSlop={8}><Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable>
         </View>
       )}
     </View>); };

@@ -18,6 +18,7 @@ import { useMergedSpends, useVehMode, VEH_CAT, VEH_COLOR } from '../lib/vehicleS
 import { TOP } from '../lib/layout';
 import { cs, cu, cw, useRegion } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
@@ -301,7 +302,7 @@ export default function Finance() {
                       {p.note ? <Text style={{ color: '#ffd593', fontSize: 12, marginTop: 1 }} numberOfLines={2}>{p.note}</Text> : null}
                     </Pressable>
                     <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{money(p.amt)}</Text>
-                    {p.src === 'record' ? <View style={{ width: 34 }} /> : <Pressable accessibilityLabel="Delete" onPress={() => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) })} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>}
+                    {p.src === 'record' ? <View style={{ width: 34 }} /> : <Pressable accessibilityLabel="Delete" onPress={() => confirmDelete('this spending', () => setD({ ...d, spends: d.spends.filter((x) => x.id !== p.id) }))} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>}
                   </View>
                   {remId === p.id ? (
                     <View style={{ marginTop: 8 }}>

@@ -14,6 +14,7 @@ import { Ext, ProfileCard, FuelCard, DocsCard, ExportCard, renewStatus } from '.
 import { TOP } from '../lib/layout';
 import { cs, cu, useRegion } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
 type Rd = { id: number; date: string; odo: number };
 type Ex = { id: number; name: string; amt: number; date: string };
 type Veh = Ext & { readings: Rd[]; yreadings: Rd[]; exps: Ex[] };
@@ -85,7 +86,7 @@ const Stat = ({ l, v, bg, vc }: { l: string; v: string; bg?: string; vc?: string
 const Arrow = ({ t, onPress, op, label }: { t: string; onPress: () => void; op: number; label: string }) => (
   <Pressable accessibilityLabel={label} onPress={onPress} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center', opacity: op }}><Text style={{ color: W, fontSize: 20, marginTop: -2 }}>{t}</Text></Pressable>
 );
-const Del = ({ onPress }: { onPress: () => void }) => <Pressable accessibilityLabel="Delete" onPress={onPress} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>;
+const Del = ({ onPress }: { onPress: () => void }) => <Pressable accessibilityLabel="Delete" onPress={() => confirmDelete('this entry', onPress)} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 14 }}>✕</Text></Pressable>;
 const AddB = ({ t, onPress, w = 16 }: { t: string; onPress: () => void; w?: number }) => <Pressable onPress={onPress}><LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: w, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{t}</Text></LinearGradient></Pressable>;
 type Bar = { label: string; sub?: string; top: string; h: number; hot: boolean; delta: string; dc: string; warm?: boolean; note?: string };
 const Bars = ({ bars, height = 158, noteH = 13 }: { bars: Bar[]; height?: number; noteH?: number }) => {

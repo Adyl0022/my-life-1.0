@@ -17,6 +17,8 @@ import { useHijriSync, upcoming } from '../lib/hijriSync';
 import { HubLog, weekRow, streaks, ayatOfDay } from '../lib/hubInsight';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, sunatToday, isHaram, keyD } from '../lib/fasting';
 
+import { confirmDelete } from '../lib/dialog';
+import { SearchField } from '../components/Shine';
 const Item = ({ t, s, c, ic = 'book', onPress }: { t: string; s: string; c: string; ic?: string; onPress: () => void }) => (
   <Pressable onPress={onPress}><Glass radius={22} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
     <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c, alignItems: 'center', justifyContent: 'center' }}><Ic n={ic} size={22} /></View>
@@ -206,10 +208,7 @@ export default function IslamicHub() {
             <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4 }}>FEATURED READINGS</Text>
             {FEATURED.map((k) => <Item key={k} ic="star" t={SURAH[k].title} s={SURAH[k].sub + (isl.bm[k] ? ' · Saved' : '')} c="rgba(255,196,107,.4)" onPress={() => go('/surah/' + k)} />)}
             <Text style={{ color: '#8fe9e2', fontSize: 11, fontWeight: '800', letterSpacing: 1.4, marginTop: 6 }}>ALL 114 SURAHS</Text>
-            <Glass radius={16} style={{ paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ color: 'rgba(255,255,255,.6)' }}>⌕</Text>
-              <TextInput value={q} onChangeText={setQ} placeholder="Search surah name or number" placeholderTextColor="rgba(255,255,255,.45)" style={{ flex: 1, color: W, fontSize: 14, paddingVertical: 11, outlineStyle: 'none' } as any} />
-            </Glass>
+            <SearchField value={q} onChangeText={setQ} placeholder="Search surah name or number" />
             {SURAH_LIST.filter((x) => { const t = q.trim().toLowerCase(); return !t || x.title.toLowerCase().includes(t) || String(x.num) === t || x.sub.toLowerCase().includes(t); }).map((x) => (
               <Pressable key={x.key} onPress={() => go('/surah/' + x.key)}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
@@ -237,14 +236,14 @@ export default function IslamicHub() {
                   <Text style={{ color: '#ffd593', fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>★ {SURAH[k].title.toUpperCase()} · VERSE {n}</Text>
                   <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, lineHeight: 18, marginTop: 4 }}>{vs ? vs.ms : ''}</Text>
                 </Glass></Pressable>
-                <Pressable onPress={() => setIsl({ ...isl, vb: { ...(isl.vb || {}), [k]: ((isl.vb || {})[k] || []).filter((x) => x !== n) } })} accessibilityLabel="Remove verse bookmark"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 15 }}>✕</Text></Glass></Pressable>
+                <Pressable onPress={() => confirmDelete('this bookmark', () => setIsl({ ...isl, vb: { ...(isl.vb || {}), [k]: ((isl.vb || {})[k] || []).filter((x) => x !== n) } }), { title: 'Remove this bookmark?', yes: 'Remove' })} accessibilityLabel="Remove verse bookmark"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 15 }}>✕</Text></Glass></Pressable>
               </View>); });
             return [...vrows, ...keys.map((k) => {
               const t = SURAH[k] ? SURAH[k].title : OTHER[k][0], sub = SURAH[k] ? SURAH[k].sub : OTHER[k][1], path = SURAH[k] ? '/surah/' + k : OTHER[k][2];
               return (
                 <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View style={{ flex: 1 }}><Item t={t} s={sub} c="rgba(255,196,107,.4)" ic={SURAH[k] ? "book" : k === "tahlil" ? "scroll" : "sun"} onPress={() => go(path)} /></View>
-                  <Pressable onPress={() => setIsl({ ...isl, bm: { ...isl.bm, [k]: false } })} accessibilityLabel="Remove bookmark"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 15 }}>✕</Text></Glass></Pressable>
+                  <Pressable onPress={() => confirmDelete('this bookmark', () => setIsl({ ...isl, bm: { ...isl.bm, [k]: false } }), { title: 'Remove this bookmark?', yes: 'Remove' })} accessibilityLabel="Remove bookmark"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 15 }}>✕</Text></Glass></Pressable>
                 </View>
               );
             })];

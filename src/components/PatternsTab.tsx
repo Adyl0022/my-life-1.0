@@ -11,6 +11,7 @@ import { TimeMachine } from './TimeMachine';
 import { cyclePatterns } from '../lib/cycle';
 import { ENERGY, energyEstimate, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, CATS, expState } from '../lib/patterns';
 
+import { confirmDelete } from '../lib/dialog';
 const T = '#5ee7df';
 const W = '#fff';
 const DIM = 'rgba(255,255,255,.7)';
@@ -113,7 +114,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
             {st!.cells.map((c, i) => <View key={i} style={{ flex: 1, height: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: c === 'hit' ? T : c === 'miss' ? 'rgba(255,143,171,.55)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: c === 'hit' ? '#06222a' : W, fontSize: 10, fontWeight: '800' }}>{c === 'hit' ? '✓' : c === 'miss' ? '✕' : ''}</Text></View>)}
           </View>
           <Text style={{ color: DIM, fontSize: 11.5, marginTop: 6 }}>{'Target met on ' + st!.hit + ' of ' + st!.logged + ' recorded days. ' + st!.tpl.note + '.'}</Text>
-          <Pressable onPress={() => dropExp(e.id)} hitSlop={6} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.55)' }}><Text style={{ color: '#ff8fa0', fontSize: 12.5, fontWeight: '800' }}>Stop this experiment</Text></Pressable>
+          <Pressable onPress={() => confirmDelete('this entry', () => dropExp(e.id))} hitSlop={6} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.55)' }}><Text style={{ color: '#ff8fa0', fontSize: 12.5, fontWeight: '800' }}>Stop this experiment</Text></Pressable>
         </View>
       ))}
       {newOpen ? (

@@ -29,6 +29,7 @@ import { stepWhy, addSleepTile } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
 import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepNow';
 
+import { confirmDelete } from '../lib/dialog';
 const T = '#5ee7df';
 // Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
 function SoftShow({ show, children }: { show: boolean; children: React.ReactNode }) {
@@ -257,19 +258,6 @@ export default function Habit() {
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl nm k="sleep" t="Sleep Tracker" />
-            {sn && sn.start ? (
-              <View style={{ marginTop: 12, padding: 14, borderRadius: 18, backgroundColor: 'rgba(183,148,255,.16)', borderWidth: 1, borderColor: 'rgba(183,148,255,.45)' }}>
-                <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{'Sleeping since ' + to12(new Date(sn.start).toTimeString().slice(0, 5))}</Text>
-                <Text style={{ color: W, fontSize: 26, fontWeight: '800', marginTop: 2 }}>{fmtDur(Date.now() - sn.start)}</Text>
-                <Pressable onPress={async () => setSnMsg(await endSleep())} accessibilityLabel="I'm awake" style={{ marginTop: 10, paddingVertical: 12, borderRadius: 14, backgroundColor: '#b794ff', alignItems: 'center' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>I'm awake</Text></Pressable>
-              </View>
-            ) : (
-              <View style={{ marginTop: 12 }}>
-                <Pressable onPress={async () => { setSnMsg(''); await startSleep(); }} accessibilityLabel="Going to sleep" style={{ paddingVertical: 14, borderRadius: 16, backgroundColor: '#b794ff', alignItems: 'center' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 15 }}>Going to sleep</Text></Pressable>
-                <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 6, textAlign: 'center' }}>{snMsg || 'Tap when you go to bed. Tap "I\'m awake" in the notification when you wake up and your hours are saved.'}</Text>
-                {Platform.OS === 'android' ? <Pressable onPress={async () => { const r = await addSleepTile(); setSnMsg(r === 2 ? 'Added. Look for "Going to sleep" in your Quick Settings.' : r === 1 ? 'It is already in your Quick Settings.' : r === 0 ? 'Not added.' : 'To add it, open Quick Settings, tap the edit pencil and drag "Going to sleep" up.'); }} accessibilityLabel="Add to Quick Settings" style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(183,148,255,.6)' }}><Text style={{ color: '#d6c2ff', fontSize: 12.5, fontWeight: '800' }}>Add to Quick Settings</Text></Pressable> : null}
-              </View>
-            )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
               <Lbl t="Last night" />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -285,10 +273,23 @@ export default function Habit() {
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
             <SoftShow show={!!(t.sleep > 0 || t.bed || t.wake)}>
-              <Pressable onPress={() => { put({ sleep: 0, bed: '', wake: '' }); setBed(null); setWake(null); }} accessibilityLabel="Clear last night's sleep" style={{ alignSelf: 'flex-start', marginTop: 10,  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,143,171,.7)', backgroundColor: 'rgba(255,143,171,.14)' }}>
+              <Pressable onPress={() => confirmDelete('last night\'s sleep', () => { put({ sleep: 0, bed: '', wake: '' }); setBed(null); setWake(null); }, { title: 'Clear last night\'s sleep?', yes: 'Clear' })} accessibilityLabel="Clear last night's sleep" style={{ alignSelf: 'flex-start', marginTop: 10,  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,143,171,.7)', backgroundColor: 'rgba(255,143,171,.14)' }}>
                 <Text style={{ color: '#ffb3c4', fontSize: 12.5, fontWeight: '800' }}>Clear last night's sleep</Text>
               </Pressable>
             </SoftShow>
+            {sn && sn.start ? (
+              <View style={{ marginTop: 12, padding: 14, borderRadius: 18, backgroundColor: 'rgba(183,148,255,.16)', borderWidth: 1, borderColor: 'rgba(183,148,255,.45)' }}>
+                <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{'Sleeping since ' + to12(new Date(sn.start).toTimeString().slice(0, 5))}</Text>
+                <Text style={{ color: W, fontSize: 26, fontWeight: '800', marginTop: 2 }}>{fmtDur(Date.now() - sn.start)}</Text>
+                <Pressable onPress={async () => setSnMsg(await endSleep())} accessibilityLabel="I'm awake" style={{ marginTop: 10, paddingVertical: 12, borderRadius: 14, backgroundColor: '#b794ff', alignItems: 'center' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>I'm awake</Text></Pressable>
+              </View>
+            ) : (
+              <View style={{ marginTop: 14 }}>
+                <Pressable onPress={async () => { setSnMsg(''); await startSleep(); }} accessibilityLabel="Going to sleep" style={{ paddingVertical: 14, borderRadius: 16, backgroundColor: '#b794ff', alignItems: 'center' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 15 }}>Going to sleep</Text></Pressable>
+                <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 6, textAlign: 'center' }}>{snMsg || 'Tap when you go to bed. Tap "I\'m awake" in the notification when you wake up and your hours are saved.'}</Text>
+                {Platform.OS === 'android' ? <Pressable onPress={async () => { const r = await addSleepTile(); setSnMsg(r === 2 ? 'Added. Look for "Going to sleep" in your Quick Settings.' : r === 1 ? 'It is already in your Quick Settings.' : r === 0 ? 'Not added.' : 'To add it, open Quick Settings, tap the edit pencil and drag "Going to sleep" up.'); }} accessibilityLabel="Add to Quick Settings" style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(183,148,255,.6)' }}><Text style={{ color: '#d6c2ff', fontSize: 12.5, fontWeight: '800' }}>Add to Quick Settings</Text></Pressable> : null}
+              </View>
+            )}
             <SleepSchedule h={h} />
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={wk.findIndex((x) => x.o === 0)} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>

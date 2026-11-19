@@ -9,6 +9,7 @@ import { useStored } from '../lib/store';
 import { HData, GLASS, cupsGoal, latestKg, avgOf, keyOfDate, dateOf } from '../lib/habit';
 import { cs, cu } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
 const W = '#fff'; const T = '#5ee7df';
 const dim = 'rgba(255,255,255,.65)';
 const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (
@@ -255,7 +256,7 @@ export function HealthSpend() {
             <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
               <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ color: W, fontSize: 13.5, fontWeight: '600' }}>{x.name}</Text><Text style={{ color: dim, fontSize: 11 }}>{x.date}</Text></View>
               <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{rmh(x.amt)}</Text>
-              <Pressable accessibilityLabel="Delete" onPress={() => del(x.id)} hitSlop={6}><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 15 }}>✕</Text></Pressable>
+              <Pressable accessibilityLabel="Delete" onPress={() => confirmDelete('this entry', () => del(x.id))} hitSlop={6}><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 15 }}>✕</Text></Pressable>
             </View>
           ))}
         </View>

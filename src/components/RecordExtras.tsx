@@ -9,6 +9,7 @@ import { useName } from '../lib/store';
 import { Inp, DateField, todayStr, W } from './Ui';
 import { cs, cu } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
 export type Fu = { id: number; date: string; liters: number; amt: number; odo: number };
 export type Pt = { id: number; name: string; date: string; odo: number; life: number };
 export type Dc = { id: number; title: string; date: string; uri: string };
@@ -142,7 +143,7 @@ export function FuelCard({ d, upd }: P<Ext>) {
             <Row key={x.id} last={i === a.length - 1}>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14 }}>{fd(x.date)}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 1 }}>{dec(x.liters, 1)} L{x.odo > 0 ? ' · ' + num(x.odo) + ' km' : ''}{e ? ' · ' + dec(e.kml, 1) + ' km/L' : ''}</Text></View>
               <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{dec(x.amt)}</Text>
-              <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => upd((y) => ({ ...y, fuel: (y.fuel || []).filter((z: Fu) => z.id !== x.id) }))} />
+              <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => confirmDelete('this fuel entry', () => upd((y) => ({ ...y, fuel: (y.fuel || []).filter((z: Fu) => z.id !== x.id) })))} />
             </Row>
           );
         })}
@@ -192,7 +193,7 @@ export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number;
             <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === list.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p.name}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>Changed {fd(p.date)} at {num(p.odo)} km · lasts about {num(p.life)} km</Text></View>
-                <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => upd((x) => ({ ...x, parts: (x.parts || []).filter((y: Pt) => y.id !== p.id) }))} />
+                <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => confirmDelete(p.name, () => upd((x) => ({ ...x, parts: (x.parts || []).filter((y: Pt) => y.id !== p.id) })))} />
               </View>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 7, overflow: 'hidden' }}><View style={{ width: pct + '%', height: '100%', backgroundColor: st.b }} /></View>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, gap: 8 }}>
@@ -258,7 +259,7 @@ export function DocsCard({ d, upd }: P<Ext>) {
             <Text style={{ color: W, fontSize: 15, fontWeight: '800', textAlign: 'center', marginTop: 10 }}>{view.title}</Text>
             <Text style={{ color: dim, fontSize: 12, textAlign: 'center' }}>{fd(view.date)}</Text>
             <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', marginTop: 14 }}>
-              <Pressable onPress={() => { upd((x) => ({ ...x, docs: (x.docs || []).filter((y: Dc) => y.id !== view.id) })); setView(null); }} style={{ height: 42, paddingHorizontal: 20, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.28)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 13, fontWeight: '700' }}>Delete</Text></Pressable>
+              <Pressable onPress={() => confirmDelete('this document', () => { upd((x) => ({ ...x, docs: (x.docs || []).filter((y: Dc) => y.id !== view.id) })); setView(null); })} style={{ height: 42, paddingHorizontal: 20, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.28)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 13, fontWeight: '700' }}>Delete</Text></Pressable>
               <Btn t="Close" onPress={() => setView(null)} />
             </View>
           </View>

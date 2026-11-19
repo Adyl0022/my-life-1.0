@@ -5,6 +5,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { Text } from './Txt';
 import { XLANGS, xlOk, useAssistLang, useLangPacks, flagOf, xlLang } from '../lib/xlate';
 
+import { confirmDelete } from '../lib/dialog';
 const DIM = 'rgba(255,255,255,.7)';
 const TONES: [string, string][] = [['#7c9cff', '#b794ff'], ['#34d399', '#5ee7df'], ['#ffc46b', '#ff8f5a'], ['#ff8fab', '#c79bff'], ['#5ee7df', '#4a8dff'], ['#b794ff', '#7059e8']];
 const sv = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -86,7 +87,7 @@ function Item({ mono, flag, tone, t, sub, on, have, busy, onPress, onRemove }: {
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t}</Text>
           <Text numberOfLines={1} style={{ color: DIM, fontSize: 12, marginTop: 2 }}>{busy ? 'Downloading...' : sub}</Text>
-          {onRemove ? <Pressable onPress={onRemove} hitSlop={8} accessibilityLabel={'Remove ' + t} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text style={{ color: 'rgba(255,143,171,.95)', fontSize: 11.5, fontWeight: '700' }}>Remove download</Text></Pressable> : null}
+          {onRemove ? <Pressable onPress={() => confirmDelete(t, onRemove, { title: 'Remove ' + t + '?', message: 'The downloaded files are deleted from your phone. You can download them again later.', yes: 'Remove' })} hitSlop={8} accessibilityLabel={'Remove ' + t} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text style={{ color: 'rgba(255,143,171,.95)', fontSize: 11.5, fontWeight: '700' }}>Remove download</Text></Pressable> : null}
         </View>
         {busy ? <ActivityIndicator color="#8fe9e2" /> : on ? (
           <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#34d399', alignItems: 'center', justifyContent: 'center' }}><Svg width={16} height={16} viewBox="0 0 24 24"><Path d="M5 12.5l4.5 4.5L19 7" stroke="#06281c" strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg></View>

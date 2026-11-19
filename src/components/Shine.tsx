@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, Pressable, View, ViewStyle, StyleProp, LayoutChangeEvent } from 'react-native';
+import { Animated, Easing, Platform, Pressable, View, TextInput, ViewStyle, StyleProp, LayoutChangeEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SearchIcon, CloseIcon } from './AudioIcons';
 
 const ND = Platform.OS !== 'web';
 
@@ -68,5 +69,17 @@ export function GlowField({ children, focused, radius = 16 }: { children: React.
         </Animated.View>
       </Animated.View>
     </View>
+  );
+}
+
+// Ready-made search box used everywhere: the same glow and shine as the Quran Audio search, a clear button once you type.
+export function SearchField({ value, onChangeText, placeholder, autoFocus, autoCapitalize }: { value: string; onChangeText: (t: string) => void; placeholder: string; autoFocus?: boolean; autoCapitalize?: 'none' | 'sentences' }) {
+  const [f, setF] = useState(false);
+  return (
+    <GlowField focused={f}>
+      <SearchIcon size={18} color={f ? '#7df0c6' : 'rgba(255,255,255,.6)'} />
+      <TextInput value={value} onChangeText={onChangeText} onFocus={() => setF(true)} onBlur={() => setF(false)} autoFocus={autoFocus} autoCapitalize={autoCapitalize} placeholder={placeholder} placeholderTextColor="rgba(255,255,255,.45)" accessibilityLabel={placeholder} style={{ flex: 1, color: '#fff', fontSize: 14, paddingVertical: 11, outlineStyle: 'none' } as any} />
+      {value ? <Pressable onPress={() => onChangeText('')} hitSlop={8} accessibilityLabel="Clear search"><CloseIcon size={16} color="rgba(255,255,255,.7)" /></Pressable> : null}
+    </GlowField>
   );
 }

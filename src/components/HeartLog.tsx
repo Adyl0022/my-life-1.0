@@ -5,6 +5,7 @@ import { Text } from './Txt';
 import { Inp, W } from './Ui';
 import { HData, HeartRead, dateOf, keyOfDate } from '../lib/habit';
 
+import { confirmDelete } from '../lib/dialog';
 // A notebook for pulse and blood pressure. The person types the numbers; the app only keeps them and shows them back. It never judges a reading.
 const DIM = 'rgba(255,255,255,.7)'; const T = '#ff8fab';
 const num = (s: string) => { const n = parseInt(s.replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? n : undefined; };
@@ -77,7 +78,7 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
             <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)' }}>
               <Text style={{ color: DIM, fontSize: 12, width: 86 }}>{dlabel(x.d) + ' ' + x.at}</Text>
               <Text style={{ color: W, fontSize: 13, fontWeight: '800', flex: 1 }}>{[x.bpm != null ? x.bpm + ' bpm' : '', x.sys != null ? x.sys + '/' + x.dia + ' mmHg' : ''].filter(Boolean).join('   ')}</Text>
-              <Pressable onPress={() => drop(x.id)} hitSlop={10} accessibilityLabel="Delete this reading"><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 18, paddingHorizontal: 6 }}>×</Text></Pressable>
+              <Pressable onPress={() => confirmDelete('this reading', () => drop(x.id))} hitSlop={10} accessibilityLabel="Delete this reading"><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 18, paddingHorizontal: 6 }}>×</Text></Pressable>
             </View>
           ))}
           {list.length > 6 ? (

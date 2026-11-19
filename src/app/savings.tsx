@@ -14,6 +14,7 @@ import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import { SAV_EMPTY, SavData, Goal, KINDS, kindOf, goalLines, goalSaved, perMonth, monthsUntil } from '../lib/savings';
 import { cs, cu, useRegion } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ICON: Record<string, string> = { motor: '🏍️', car: '🚗', house: '🏠', wedding: '💍', travel: '✈️', hajj: '🕋', emergency: '🛟', medical: '🩺', other: '⭐' };
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -223,7 +224,7 @@ export default function Savings() {
                           <Text style={{ color: dimC, fontSize: 11 }}>{(l.date ? nice(l.date.length === 7 ? l.date + '-01' : l.date) + ' · ' : '') + (l.src === 'tracker' ? 'Spending Tracker' : l.src === 'commit' ? 'Monthly commitment' : l.src === 'out' ? 'Taken out' : 'Opening amount')}</Text>
                         </View>
                         <Text style={{ color: l.amt < 0 ? '#ff9aa9' : '#7df0c6', fontSize: 13.5, fontWeight: '800' }}>{(l.amt < 0 ? '- ' : '+ ') + cs() + money(Math.abs(l.amt))}</Text>
-                        {l.src === 'tracker' || l.src === 'out' ? <Pressable accessibilityLabel="Delete" onPress={() => rmLine(g, l)} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 13 }}>✕</Text></Pressable> : <View style={{ width: 32 }} />}
+                        {l.src === 'tracker' || l.src === 'out' ? <Pressable accessibilityLabel="Delete" onPress={() => confirmDelete('this entry', () => rmLine(g, l))} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 13 }}>✕</Text></Pressable> : <View style={{ width: 32 }} />}
                       </View>
                     ))}
                   </View>

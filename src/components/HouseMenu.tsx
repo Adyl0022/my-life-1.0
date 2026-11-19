@@ -8,6 +8,7 @@ import { Avatar, Btn, Chip, Field, Note, W, DIM } from './FamilyUi';
 import { famError, useAutoRefresh, FInfo } from '../lib/family';
 import { useFamMenu, useFamShop, menuSave, shopSave, peopleOf, localDay, useReloadOnFocus, FMenu } from '../lib/familyData';
 
+import { confirmDelete } from '../lib/dialog';
 // The family menu: breakfast, lunch and dinner for each day. "Needs" can be sent to the shopping list in one tap.
 const SLOTS: { k: FMenu['slot']; t: string; ic: string }[] = [{ k: 'breakfast', t: 'Breakfast', ic: '🍳' }, { k: 'lunch', t: 'Lunch', ic: '🍜' }, { k: 'dinner', t: 'Dinner', ic: '🍽️' }];
 const ACC = ['#ff8fab', '#ffc46b', '#5ee7df', '#b794ff', '#7c9cff', '#ff8fab', '#ffc46b'];
@@ -125,7 +126,7 @@ export function HouseMenu({ info }: { info: FInfo | null }) {
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
                   <Btn t="Save" kind="main" onPress={() => save()} busy={busy} disabled={!dish.trim()} flex />
-                  {at(s.k) ? <Btn t="Remove" kind="danger" onPress={() => save(true)} disabled={busy} /> : null}
+                  {at(s.k) ? <Btn t="Remove" kind="danger" onPress={() => confirmDelete('this meal', () => save(true), { title: 'Remove this meal?', yes: 'Remove' })} disabled={busy} /> : null}
                 </View>
               </Glass>
             ) : null}

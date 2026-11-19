@@ -11,6 +11,7 @@ import { CodeBoxes } from '../components/CodeBoxes';
 import { TOP } from '../lib/layout';
 import { adminCall, useIsAdmin } from '../lib/admin';
 
+import { SearchField } from '../components/Shine';
 const dim = 'rgba(255,255,255,.62)';
 const GOLD = '#f5c76b'; const EM = '#5ee7b5'; const CARD = '#14231f'; const LINE = 'rgba(245,199,107,.22)';
 const GR = ['#f5c76b', '#5ee7b5'] as [string, string];   // gold to emerald: the admin colours
@@ -233,7 +234,7 @@ export default function Admin() {
                 </Pressable>
               ))}
             </View>
-            {tab === 'users' ? <View style={{ marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}><View style={{ flex: 1 }}><Inp value={q} onChangeText={setQ} placeholder="Search by name or email" autoCapitalize="none" /></View><Pill t="Export" on={false} onPress={exportUsers} /></View> : null}
+            {tab === 'users' ? <View style={{ marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}><View style={{ flex: 1 }}><SearchField value={q} onChangeText={setQ} placeholder="Search by name or email" autoCapitalize="none" /></View><Pill t="Export" on={false} onPress={exportUsers} /></View> : null}
             {tab === 'codes' ? <View style={{ marginTop: 12, flexDirection: 'row' }}><Pill t="Export all codes" on={false} onPress={exportCodes} /></View> : null}
             {tab === 'users' ? [...users].sort((a, b) => (adm[b.id] ? 1 : 0) - (adm[a.id] ? 1 : 0)).filter((u) => !q.trim() || (u.email + ' ' + (u.name || '')).toLowerCase().includes(q.trim().toLowerCase())).map((u) => (
               <Pressable key={u.id} onPress={() => { setOpen(open === u.id ? '' : u.id); setAsk(''); }} style={{ marginTop: 10, padding: 12, borderRadius: 18, backgroundColor: CARD, borderWidth: 1, borderColor: open === u.id ? 'rgba(245,199,107,.55)' : 'rgba(255,255,255,.09)', overflow: 'hidden', ...RAISED }}>
