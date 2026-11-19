@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { getItem, setItem } from './store';
 import { HData, HDay, BLANK, HEMPTY, keyOfDate, to12 } from './habit';
 import { setSleepTile } from '../../modules/step-counter';
+import { periodOf } from './theme';
 import { ensureHandler, setup } from './adhan';
 
 // "Going to sleep" starts a timer, "I'm awake" stops it and saves the hours into the Sleep Tracker.
@@ -39,7 +40,7 @@ export async function endSleep(): Promise<string> {
   const end = Date.now(); const ms = end - cur.start;
   await setItem(SLEEP_KEY, null); setSleepTile(0);
   try { await Notifications.dismissNotificationAsync(NID); await Notifications.cancelScheduledNotificationAsync(NID); } catch (e) {}
-  let msg: string; const wh = new Date(end).getHours(); let title = wh >= 5 && wh < 12 ? 'Good morning' : wh >= 12 && wh < 16 ? 'Good afternoon' : 'Good evening';
+  let msg: string; const pd = periodOf(new Date(end)); let title = pd === 'Night' ? (new Date(end).getHours() >= 20 ? 'Good evening' : 'Hello') : 'Good ' + pd.toLowerCase();
   if (ms < 10 * 60000) msg = 'That was under 10 minutes, so it was not saved.';
   else if (ms > 16 * 3600000) msg = 'That was over 16 hours, so it was not saved. You can type your sleep by hand.';
   else {
