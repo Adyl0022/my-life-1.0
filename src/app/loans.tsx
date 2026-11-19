@@ -15,7 +15,7 @@ import { ColArt } from '../components/ColArt';
 import { ACC, BTN, EMPTY_COL, dueOf, dmy, num, rm, today, type ColStore, type Loan } from '../lib/collection';
 
 const g = BTN;
-const TABS = [['lent', 'I lent'], ['borrowed', 'I borrowed'], ['done', 'Done']] as const;
+const TABS = [['lent', 'Lent'], ['borrowed', 'Borrowed'], ['done', 'Done']] as const;
 type Form = Omit<Loan, 'id'> & { id: number; noDue: boolean };
 const blank = (dir: 'lent' | 'borrowed'): Form => ({ id: 0, dir, what: 'money', who: '', title: '', amount: '', date: today(), due: today(), done: false, doneAt: '', note: '', noDue: true });
 
