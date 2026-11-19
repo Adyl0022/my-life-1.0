@@ -14,8 +14,22 @@ export const todayKey = () => ymd(new Date());
 /** The highest odometer reading saved for this vehicle. */
 export const latestOdo = (v: any): number => Math.max(0, ...((v && v.readings) || []).map((r: any) => r.odo || 0), ...((v && v.yreadings) || []).map((r: any) => r.odo || 0), ...((v && v.fuel) || []).map((f: any) => f.odo || 0));
 
+/** Best guess of the odometer today. With two or more dated readings spanning a week or more, it adds your average daily distance since the last reading. est is true when it is a guess. */
+export function odoEstimate(v: any): { odo: number; est: boolean; perDay: number; last: number; lastDate: string } {
+  const pts: { d: string; o: number }[] = [];
+  const add = (a: any) => { if (a && a.date && a.odo > 0) pts.push({ d: a.date, o: a.odo }); };
+  ((v && v.readings) || []).forEach(add); ((v && v.yreadings) || []).forEach(add); ((v && v.fuel) || []).forEach(add);
+  const real = latestOdo(v);
+  if (pts.length < 2) return { odo: real, est: false, perDay: 0, last: real, lastDate: '' };
+  pts.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.o - b.o));
+  const f = pts[0], l = pts[pts.length - 1]; const span = dayN(l.d) - dayN(f.d); const perDay = span >= 7 ? (l.o - f.o) / span : 0;
+  const since = todayN() - dayN(l.d);
+  if (!(perDay > 0) || since < 2) return { odo: real, est: false, perDay, last: real, lastDate: l.d };
+  return { odo: Math.max(real, l.o + Math.round(perDay * Math.min(since, 90))), est: true, perDay, last: real, lastDate: l.d };
+}
+
 export type TkState = { level: 0 | 1 | 2; since: number; dueIn: number; kmLeft: number | null; frac: number; text: string };
-export function taskState(t: Tk, latest: number): TkState {
+export function taskState(t: Tk, latest: number, est = false): TkState {
   const since = Math.max(0, todayN() - dayN(t.last)); const dueIn = t.days - since;
   const kmLeft = t.km && t.odo != null && latest > 0 ? t.km - (latest - t.odo) : null;
   const late = dueIn < 0 || (kmLeft != null && kmLeft < 0);
@@ -23,14 +37,14 @@ export function taskState(t: Tk, latest: number): TkState {
   const frac = Math.min(1, Math.max(since / Math.max(1, t.days), kmLeft != null && t.km ? (t.km - kmLeft) / t.km : 0));
   const parts: string[] = [];
   if (dueIn < 0) parts.push('Late ' + -dueIn + (dueIn === -1 ? ' day' : ' days')); else if (dueIn === 0) parts.push('Due today'); else parts.push('Due in ' + dueIn + (dueIn === 1 ? ' day' : ' days'));
-  if (kmLeft != null) parts.push(kmLeft < 0 ? -kmLeft + ' km over' : kmLeft + ' km left');
+  if (kmLeft != null) parts.push((est ? '~' : '') + (kmLeft < 0 ? -kmLeft + ' km over' : kmLeft + ' km left'));
   return { level: late ? 2 : soon ? 1 : 0, since, dueIn, kmLeft, frac, text: parts.join(' · ') };
 }
 
 /** Marks a task done today. cost > 0 also adds a spending record. Done twice on the same day changes nothing the second time. */
 export function markDone(rec: any, cat: string, id: number, cost: number): any {
   const v = rec && rec.data && rec.data[cat]; if (!v || !(v.tasks || []).some((t: Tk) => t.id === id)) return rec;
-  const today = todayKey(); const odo = latestOdo(v); let nextId = rec.nextId || 1; let exps = v.exps || [];
+  const today = todayKey(); const odo = odoEstimate(v).odo; let nextId = rec.nextId || 1; let exps = v.exps || [];
   const tasks = (v.tasks as Tk[]).map((t) => {
     if (t.id !== id) return t;
     if (t.last === today && (t.hist || [])[0] === today && !(cost > 0)) return t;

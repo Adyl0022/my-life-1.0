@@ -6,14 +6,14 @@ import { Glass } from './Glass';
 import { Text } from './Txt';
 import { Inp, DateField, todayStr, W } from './Ui';
 import { Btn, Chip, Sq, Ext, Pt, Ren, renewStatus } from './RecordExtras';
-import { Tk, taskState } from '../lib/maintTasks';
+import { Tk, taskState, odoEstimate } from '../lib/maintTasks';
 import { cu } from '../lib/region';
 
 const dim = 'rgba(255,255,255,.65)';
 const COL = ['#7df0c6', '#ffd593', '#ffb3c6']; const BAR = ['#5ee7b5', '#ffc46b', '#ff8fab'];
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const fd = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MO[parseInt(p[1], 10) - 1] : s; };
-const BIKE: [string, number, number][] = [['Spray chain', 7, 500], ['Tyre pressure', 7, 0], ['Engine oil level', 14, 0], ['Wash', 14, 0]];
+const BIKE: [string, number, number][] = [['Spray chain', 7, 0], ['Tyre pressure', 7, 0], ['Engine oil level', 14, 0], ['Wash', 14, 0]];
 const CAR: [string, number, number][] = [['Tyre pressure', 14, 0], ['Engine oil level', 14, 0], ['Coolant level', 30, 0], ['Wipers and washer', 60, 0], ['Wash', 14, 0]];
 
 // One card for the small jobs you repeat: chain, tyre pressure, oil level. Shows how long since, and how long until the next one.
@@ -22,18 +22,24 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
   const [open, setOpen] = useState(false); const [nm, setNm] = useState(''); const [dy, setDy] = useState(''); const [km, setKm] = useState(''); const [dt, setDt] = useState(todayStr());
   const [all, setAll] = useState(false); const [doneId, setDoneId] = useState<number | null>(null); const [cost, setCost] = useState('');
   // Most urgent first, so the three shown are the ones that need you.
-  const list: Tk[] = (d.tasks || []).slice().sort((a, b) => { const x = taskState(a, latest), y = taskState(b, latest); return y.level - x.level || x.dueIn - y.dueIn; });
+  const oe = odoEstimate(d); const odoNow = oe.odo;
+  const list: Tk[] = (d.tasks || []).slice().sort((a, b) => { const x = taskState(a, odoNow, oe.est), y = taskState(b, odoNow, oe.est); return y.level - x.level || x.dueIn - y.dueIn; });
   const LIM = 3; const shown = all ? list : list.slice(0, LIM); const parts: Pt[] = d.parts || [];
   const pick = (n: string, days: number, k: number) => { setNm(n); setDy(String(days)); setKm(k ? String(k) : ''); };
   const nDays = parseInt(dy, 10); const ok = !!nm.trim() && nDays > 0 && nDays <= 365;
   const save = () => { if (!ok) return; const k = parseInt(km, 10);
-    upd((x) => ({ ...x, tasks: [...(x.tasks || []), { id: Date.now(), name: nm.trim(), days: nDays, km: k > 0 ? k : undefined, last: dt, odo: latest > 0 ? latest : undefined, hist: [dt] }] })); setOpen(false); };
+    upd((x) => ({ ...x, tasks: [...(x.tasks || []), { id: Date.now(), name: nm.trim(), days: nDays, km: k > 0 ? k : undefined, last: dt, odo: odoNow > 0 ? odoNow : undefined, hist: [dt] }] })); setOpen(false); };
+  const [od, setOd] = useState(''); const [odErr, setOdErr] = useState(''); const [fixOdo, setFixOdo] = useState(false);
+  // Saves a real odometer reading (today). A reading lower than the last real one is refused, so the monthly mileage stays right.
+  const saveOdo = (v: string): number | null => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); if (!(n > 0)) return null; if (n < oe.last) { setOdErr('That is lower than your last reading (' + oe.last.toLocaleString('en-MY') + ' km).'); return -1; }
+    upd((x) => ({ ...x, readings: [...(x.readings || []), { id: Date.now(), date: todayStr(), odo: n }] })); setOdErr(''); return n; };
   const done = (t: Tk) => { const c = parseFloat(cost.replace(',', '.')); const today = todayStr();
-    upd((x) => { return { ...x, tasks: (x.tasks || []).map((y: Tk) => { if (y.id !== t.id) return y; const h = (y.hist || []).slice(); if (y.last && h[0] !== y.last) h.unshift(y.last); if (h[0] !== today) h.unshift(today); return { ...y, last: today, odo: latest > 0 ? latest : y.odo, hist: Array.from(new Set(h)).slice(0, 8) }; }), exps: c > 0 ? [{ id: Date.now(), name: t.name, amt: c, date: today }, ...(x.exps || [])] : x.exps }; });
-    setDoneId(null); setCost(''); };
+    let base = odoNow; if (od.trim()) { const n = saveOdo(od); if (n === -1) return; if (n) base = n; }
+    upd((x) => { return { ...x, tasks: (x.tasks || []).map((y: Tk) => { if (y.id !== t.id) return y; const h = (y.hist || []).slice(); if (y.last && h[0] !== y.last) h.unshift(y.last); if (h[0] !== today) h.unshift(today); return { ...y, last: today, odo: base > 0 ? base : y.odo, hist: Array.from(new Set(h)).slice(0, 8) }; }), exps: c > 0 ? [{ id: Date.now(), name: t.name, amt: c, date: today }, ...(x.exps || [])] : x.exps }; });
+    setDoneId(null); setCost(''); setOd(''); };
   // Health: tasks, parts and renewals together. Green counts 1, yellow half, red 0.
   const items: { n: string; lv: 0 | 1 | 2; why: string; show: boolean }[] = [];
-  list.forEach((t) => { const s = taskState(t, latest); items.push({ n: t.name, lv: s.level, why: s.text.split(' · ')[0].toLowerCase(), show: true }); });
+  list.forEach((t) => { const s = taskState(t, odoNow, oe.est); items.push({ n: t.name, lv: s.level, why: s.text.split(' · ')[0].toLowerCase(), show: true }); });
   if (latest > 0) parts.forEach((p) => { const left = p.life - Math.max(0, latest - p.odo); const lv = left < 0 ? 2 : left <= p.life * 0.15 ? 1 : 0; items.push({ n: p.name, lv: lv as 0 | 1 | 2, why: left < 0 ? 'change it' : left + ' km left', show: true }); });
   const RK: [keyof Ren, string][] = [['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Licence']];
   const rn: Ren = d.renew || {};
@@ -106,6 +112,24 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
 
       <Line />
       <Hd t="Maintenance tasks" sub={moto ? 'Chain, tyres, oil and more' : 'Tyres, oil, coolant and more'} right={!open ? <Btn t="+ Add task" h={36} w={14} onPress={() => { setOpen(true); setNm(''); setDy(''); setKm(''); setDt(todayStr()); }} /> : undefined} />
+      {oe.odo > 0 || list.some((t) => t.km) ? (
+        <View style={{ marginTop: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.07)' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11, fontWeight: '700' }}>{oe.est ? 'Odometer now (estimate)' : 'Odometer'}</Text>
+              <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginTop: 2 }}>{oe.odo > 0 ? (oe.est ? '~' : '') + oe.odo.toLocaleString('en-MY') + ' km' : 'No reading yet'}</Text>
+              {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, marginTop: 2 }}>{'From your average of about ' + Math.round(oe.perDay) + ' km a day since ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
+            </View>
+            <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
+          </View>
+          {fixOdo ? (
+            <View style={{ marginTop: 10, gap: 6 }}>
+              <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="What your meter shows now (km)" onSubmitEditing={() => { const n = saveOdo(od); if (n && n > 0) { setFixOdo(false); setOd(''); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od); if (n && n > 0) { setFixOdo(false); setOd(''); } }} /></View>
+              {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : null}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
       {open ? (
         <View style={{ marginTop: 10, gap: 10 }}>
           <View><Text style={{ color: dim, fontSize: 11.5, marginBottom: 6 }}>Task</Text>
@@ -123,7 +147,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       {list.length === 0 && !open ? <Text style={{ marginTop: 10, color: dim, fontSize: 12, lineHeight: 18 }}>No tasks yet. Tap + Add task, choose Spray chain or Tyre pressure, and My Record counts the days since you last did it and the days until the next time.</Text> : null}
       <View>
         {shown.map((t, i) => {
-          const s = taskState(t, latest); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3); const pr = s.text.split(' · ');
+          const s = taskState(t, odoNow, oe.est); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3); const pr = s.text.split(' · ');
           return (
             <View key={t.id} style={{ marginTop: i === 0 ? 12 : 10, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.08)', overflow: 'hidden', flexDirection: 'row' }}>
               <View style={{ width: 5, backgroundColor: BAR[s.level] }} />
@@ -140,9 +164,13 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
                   <Sq t="✕" label={'Delete ' + t.name} c="#ff9aa9" onPress={() => upd((x) => ({ ...x, tasks: (x.tasks || []).filter((y: Tk) => y.id !== t.id) }))} />
                 </View>
                 {doneId === t.id ? (
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                    <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={cost} onChangeText={setCost} placeholder={'Cost in ' + cu() + ' (optional)'} onSubmitEditing={() => done(t)} />
-                    <Btn t="Save" h={42} w={16} onPress={() => done(t)} />
+                  <View style={{ marginTop: 10, gap: 8 }}>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={cost} onChangeText={setCost} placeholder={'Cost (' + cu() + ')'} />
+                      <Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="Odometer km" onSubmitEditing={() => done(t)} />
+                    </View>
+                    {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11 }}>Cost and odometer are optional. Type the odometer to correct the km count.</Text>}
+                    <View style={{ alignSelf: 'flex-start' }}><Btn t="Save" h={40} w={22} onPress={() => done(t)} /></View>
                   </View>
                 ) : null}
               </View>
