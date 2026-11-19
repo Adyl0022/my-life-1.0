@@ -87,16 +87,12 @@ function PageArt() {
   );
 }
 
-export function Hero({ e, label, title }: { e: string; label: string; title: string }) {
+// Plain welcome sentences at the top of My Record (no card).
+export function Intro({ title, text }: { title: string; text: string }) {
   return (
-    <View style={{ marginTop: 14, borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)' }}>
-      <LinearGradient colors={['rgba(255,143,171,.42)', 'rgba(183,148,255,.26)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <GlassTile size={50} radius={17}><Text style={{ fontSize: 24 }}>{e}</Text></GlassTile>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1 }}>{label}</Text>
-          <Text numberOfLines={1} style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{title}</Text>
-        </View>
-      </LinearGradient>
+    <View style={{ marginTop: 18, paddingHorizontal: 4 }}>
+      <Text style={{ color: W, fontSize: 20, fontWeight: '800', letterSpacing: -0.3, lineHeight: 26 }}>{title}</Text>
+      <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 14, lineHeight: 21, marginTop: 6 }}>{text}</Text>
     </View>
   );
 }
