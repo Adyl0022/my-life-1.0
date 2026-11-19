@@ -241,6 +241,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "parts bahagian servis service oil minyak enjin tyre tayar chain rantai brake brek bateri battery"
  },
  {
+  "t": "Personal Collection",
+  "s": "Gadgets, lifestyle, property, lent, lessons",
+  "m": "Record",
+  "c": "#3df0ff",
+  "h": "Record.dc.html",
+  "k": "personal collection gadget gadgets phone laptop warranty waranti lifestyle shoes bag property house land rent lent borrowed pinjam hutang utang loan lessons life lesson pengajaran barang koleksi"
+ },
+ {
   "t": "Documents",
   "s": "Passport, cards, warranty",
   "m": "Record",

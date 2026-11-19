@@ -10,25 +10,10 @@ import { Inp, DateField, W } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm } from '../lib/num';
+import { takePhoto } from '../lib/photo';
 import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, guessType, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
 
 const dim = 'rgba(255,255,255,.62)';
-async function takePhoto(camera: boolean): Promise<string | null> {
-  const IP = await import('expo-image-picker');
-  if (camera) { const p = await IP.requestCameraPermissionsAsync(); if (!p.granted) throw new Error('camera'); }
-  const r = camera ? await IP.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 }) : await IP.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: Platform.OS === 'web' });
-  if (r.canceled || !r.assets || !r.assets[0]) return null;
-  const a: any = r.assets[0];
-  if (Platform.OS === 'web') return a.base64 ? 'data:' + (a.mimeType || 'image/jpeg') + ';base64,' + a.base64 : a.uri;
-  try {
-    const FS = await import('expo-file-system/legacy');
-    const dir = (FS.documentDirectory || '') + 'docs/';
-    await FS.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
-    const to = dir + Date.now() + '.' + ((a.uri.split('.').pop() || 'jpg').split('?')[0]);
-    await FS.copyAsync({ from: a.uri, to }); return to;
-  } catch (e) { return a.uri; }
-}
-
 function Ring({ s }: { s: ReturnType<typeof statusOf> }) {
   const r = 20, C = 2 * Math.PI * r;
   if (s.ring == null) return <View style={{ width: 46, height: 46, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 22, fontWeight: '700' }}>∞</Text></View>;

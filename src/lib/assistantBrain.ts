@@ -502,6 +502,10 @@ export function think(A, q, lang) {
   let cat = null; CATK.forEach((c) => { if (!cat && c[1].some((w) => (' ' + qn + ' ').indexOf(' ' + w + ' ') >= 0)) cat = c[0]; });
   const intent = A.pick(qn);
   // A module that is turned off in Settings is not answered here.
+  // Personal Collection help (how to, not data)
+  if (modOn('record') && !/\d/.test(qn) && has(['lent', 'borrow', 'pinjam', 'hutang orang', 'gadget', 'lesson', 'pengajaran', 'personal collection'])) {
+    return done(mk(L('Open My Record, then Personal Collection. Gadgets, Lifestyle and Property keep what you own with a photo and price. Lent & Borrowed tracks money and things with a due date and a 9 am reminder. Life Lessons keeps short notes. Tap the plus button inside each part to add.', 'Buka My Record, kemudian Personal Collection. Gadgets, Lifestyle dan Property simpan barang awak dengan gambar dan harga. Lent & Borrowed jejak duit dan barang yang dipinjam dengan tarikh pulang dan peringatan jam 9 pagi. Life Lessons simpan nota pendek. Tekan butang tambah di dalam setiap bahagian.'), { label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' }));
+  }
   // Documents help (how to, not data)
   if (modOn('record') && !/\d/.test(qn) && has(['passport', 'pasport', 'mykad', 'cidb', 'warranty', 'waranti', 'dokumen', 'documents', 'member card', 'kad ahli', 'scan', 'imbas'])) {
     return done(mk(L('Open My Record, then Documents. Pick a tab (Identity, Cards, Warranty or Other), tap the plus button, and either scan or choose a photo to fill in the details, or type them. Choose a reminder before the expiry date. Photos and details stay on your phone.', 'Buka My Record, kemudian Documents. Pilih tab (Identity, Cards, Warranty atau Other), tekan butang tambah, dan imbas atau pilih foto untuk isi butiran, atau taip sendiri. Pilih peringatan sebelum tarikh tamat. Foto dan butiran kekal di telefon anda.'), { label: L('Open Documents', 'Buka Documents'), href: 'Record.dc.html' }));

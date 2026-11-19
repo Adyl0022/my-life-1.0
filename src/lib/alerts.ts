@@ -136,6 +136,32 @@ export async function syncDocAlerts(store: { docs?: { id: string; title: string;
   } catch (e) { /* ignore */ }
 }
 
+// Personal Collection: a 9 am reminder on the due date of money or things you lent or borrowed, and 30 days before a gadget's warranty ends.
+export async function syncColAlerts(col: { items?: any[]; loans?: any[] }, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('col-');
+    if (!on || !tg.ev) return;
+    const now = Date.now(); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    const at9 = (s: string, back: number) => { const [y, m, d] = String(s || '').split('-').map(Number); if (!y || !m || !d) return null; const t = new Date(y, m - 1, d - back, 9, 0, 0); return t.getTime() <= now + 5000 || inQuiet(t, tg) ? null : t; };
+    ((col && col.loans) || []).forEach((l) => {
+      if (l.done || !l.due) return; const t = at9(l.due, 0); if (!t) return;
+      const what = l.what === 'money' ? 'RM ' + l.amount : l.title;
+      todo.push({ id: 'col-loan-' + l.id, at: t, title: l.dir === 'lent' ? 'Due today: ' + l.who + ' should return ' + what : 'Due today: return ' + what + ' to ' + l.who, body: 'Open Lent & Borrowed to mark it returned.' });
+    });
+    ((col && col.items) || []).forEach((x) => {
+      if (x.cat !== 'gadget' || !x.warranty) return; const t = at9(x.warranty, 30); if (!t) return;
+      todo.push({ id: 'col-warr-' + x.id, at: t, title: x.name + ' warranty ends in 30 days', body: 'Check it now if anything needs fixing.' });
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('renewals', { name: 'Renewal reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ff8fab' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({ identifier: t.id, content: { title: t.title, body: t.body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals' } as any });
+    }
+  } catch (e) { /* ignore */ }
+}
+
 // Every Sunday at 8 pm: a nudge to look at the weekly review in Insights. Only when notifications are already allowed.
 export async function syncWeekAlert(tg: Toggles): Promise<void> {
   if (Platform.OS === 'web') return;
