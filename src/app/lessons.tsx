@@ -24,7 +24,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
   return (
     <SheetFrame title={f.id ? 'Edit lesson' : 'Add lesson'} sub="Life Lessons" onClose={onClose}>
       <Lab t="THE LESSON" />
-      <Inp value={f.title} onChangeText={(x: string) => set({ title: x })} placeholder="Short title, e.g. Check before you pay" maxLength={70} />
+      <Inp value={f.title} onChangeText={(x: string) => set({ title: x })} placeholder="Short title (up to 30 letters), e.g. Check before you pay" maxLength={30} />
       {tried && !f.title.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a title.</Text> : null}
       <Inp style={{ marginTop: 9, minHeight: 120, textAlignVertical: 'top' }} multiline value={f.text} onChangeText={(x: string) => set({ text: x })} placeholder="What happened, and what you learned" maxLength={1000} />
       {tried && !f.text.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please write what you learned.</Text> : null}
