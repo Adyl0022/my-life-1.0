@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { View, Pressable, Modal, ScrollView, Image, Platform, KeyboardAvoidingView } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Pressable, Animated, Modal, ScrollView, Image, Platform, KeyboardAvoidingView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Text } from '../components/Txt';
@@ -205,6 +205,15 @@ export default function Documents() {
   const [st, setSt] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
   const docs = (st && st.docs) || [];
   const [tab, setTab] = useState<DocTab>('identity'); const [q, setQ] = useState(''); const [f, setF] = useState<Form | null>(null); const [det, setDet] = useState(0);
+  const order = TABS.map((x) => x.k); const [pw, setPw] = useState(0);
+  const pos = useRef(new Animated.Value(0)).current; const fx = useRef(new Animated.Value(1)).current; const dir = useRef(1);
+  useEffect(() => { Animated.spring(pos, { toValue: order.indexOf(tab), useNativeDriver: true, friction: 8, tension: 90 }).start(); }, [tab]);
+  const goTab = (k: DocTab) => {
+    if (k === tab) return; dir.current = order.indexOf(k) > order.indexOf(tab) ? 1 : -1;
+    fx.setValue(0); setTab(k); Animated.timing(fx, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  };
+  const tw = pw ? (pw - 6) / TABS.length : 0;
+  const slide = { opacity: fx, transform: [{ translateX: fx.interpolate({ inputRange: [0, 1], outputRange: [dir.current * 38, 0] }) }] };
   const info = TABS.find((x) => x.k === tab) as (typeof TABS)[number];
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -225,16 +234,17 @@ export default function Documents() {
   );
   return (
     <RecordPage title="Documents" sub={docs.length + ' saved'} right={plus} bg={<DocArt />}>
-      <Intro title={info.title} text={info.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
-      <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
+      <Animated.View style={slide}><Intro title={info.title} text={info.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} /></Animated.View>
+      <View onLayout={(e) => setPw(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
+        {tw ? <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 3, top: 3, bottom: 3, width: tw, transform: [{ translateX: Animated.multiply(pos, tw) }] }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 999 }} /></Animated.View> : null}
         {TABS.map((x) => (
-          <Pressable key={x.k} onPress={() => setTab(x.k)} style={{ flex: 1 }} accessibilityLabel={x.n}>
-            {tab === x.k ? <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{x.n}</Text></LinearGradient>
-              : <View style={{ paddingVertical: 9, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{x.n}</Text></View>}
+          <Pressable key={x.k} onPress={() => goTab(x.k)} style={{ flex: 1 }} accessibilityLabel={x.n}>
+            <View style={{ paddingVertical: 9, alignItems: 'center' }}><Text style={{ color: tab === x.k ? W : 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: tab === x.k ? '800' : '700' }}>{x.n}</Text></View>
           </Pressable>
         ))}
       </View>
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder={'Search ' + info.n.toLowerCase()} /></View>
+      <Animated.View style={slide}>
       {list.length ? list.map((d) => <Row key={d.id} d={d} onPress={() => setDet(d.id)} />) : (
         <View style={{ marginTop: 28, alignItems: 'center', paddingHorizontal: 20 }}>
           <Text style={{ fontSize: 40 }}>{q.trim() ? '🔍' : typeOf(DOC_TYPES.find((x) => x.tab === tab)!.key).e}</Text>
@@ -242,6 +252,7 @@ export default function Documents() {
           <Text style={{ color: dim, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>{q.trim() ? 'Try another word.' : 'Tap + to add one. You can scan it with the camera.'}</Text>
         </View>
       )}
+      </Animated.View>
       {det && !f && docs.find((x) => x.id === det) ? <Detail d={docs.find((x) => x.id === det) as Doc} onEdit={() => { const x = docs.find((y) => y.id === det) as Doc; setDet(0); openEdit(x); }} onClose={() => setDet(0)} /> : null}
       {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </RecordPage>
