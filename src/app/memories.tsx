@@ -86,7 +86,7 @@ export default function Memories() {
                       </View>); })}
                   </View>
                   <Bar p={M.days / (nextMs || 365)} c="#ffd24a" />
-                  <Text style={{ color: DIM, fontSize: 12, marginTop: 7 }}>{nextMs ? (nextMs - M.days) + (nextMs - M.days === 1 ? ' day' : ' days') + ' to your ' + (nextMs === 365 ? '1 year' : nextMs + '-day') + ' milestone' : 'You have reached every milestone so far. Thank you for staying.'}</Text>
+                  <Text style={{ color: DIM, fontSize: 12, marginTop: 7 }}>{nextMs ? (nextMs - M.days) + (nextMs - M.days === 1 ? ' day' : ' days') + ' to your ' + (nextMs === 365 ? '1 year' : nextMs + '-day') + ' milestone' : 'You have reached every milestone so far.'}</Text>
                 </>) : <Text style={{ color: W, fontSize: 14, marginTop: 8, lineHeight: 20 }}>Sign in to see how long you have been with My Life 1.0.</Text>}
               </LinearGradient>
             </View>
