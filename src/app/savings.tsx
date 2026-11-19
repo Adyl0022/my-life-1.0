@@ -15,6 +15,7 @@ import { SAV_EMPTY, SavData, Goal, KINDS, kindOf, goalLines, goalSaved, perMonth
 import { cs, cu, useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn } from '../lib/num';
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ICON: Record<string, string> = { motor: '🏍️', car: '🚗', house: '🏠', wedding: '💍', travel: '✈️', hajj: '🕋', emergency: '🛟', medical: '🩺', other: '⭐' };
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -22,7 +23,7 @@ const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
 const dimC = 'rgba(255,255,255,.65)';
 const WARM = ['#5ee7b5', '#7c9cff'] as [string, string];
 const nice = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? Number(m[3]) + ' ' + MON[Number(m[2]) - 1] + ' ' + m[1] : ''; };
-const num = (s: string) => parseFloat((s || '').replace(',', '.'));
+const num = (s: string) => pn(s || '');
 
 const Btn = ({ t, onPress, c, dark }: { t: string; onPress: () => void; c?: string; dark?: boolean }) => (
   <Pressable onPress={onPress} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: c || 'rgba(255,255,255,.12)' }}>

@@ -1,6 +1,6 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import React from 'react';
-import { View, TextInput, Pressable, Modal, Platform, Keyboard, Dimensions, ScrollView } from 'react-native';
+import { View, TextInput, Pressable, Modal, Platform, Keyboard, Dimensions, ScrollView, StyleSheet } from 'react-native';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -8,10 +8,31 @@ import { useNextInput } from '../lib/nextInput';
 
 export const W = '#fff';
 export const GP = ['#7c9cff', '#b794ff'] as [string, string];
+const LAYOUT = ['flex', 'flexGrow', 'flexShrink', 'flexBasis', 'width', 'minWidth', 'maxWidth', 'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical', 'alignSelf', 'position', 'left', 'right', 'top', 'bottom', 'zIndex'];
+const NUMKB = ['decimal-pad', 'number-pad', 'numeric'];
+export { numberError } from '../lib/num';
+import { numberError } from '../lib/num';
 export const Inp = (p: any) => {
   const n = useNextInput(p);
   const setRef = (el: any) => { n.ref.current = el; if (typeof p.ref === 'function') p.ref(el); else if (p.ref) p.ref.current = el; };
-  return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...p} {...n.extra} ref={setRef} style={[{ minWidth: 0, color: W, fontSize: 14, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', outlineStyle: 'none' } as any, p.style]} />;
+  const { min, max, noCheck, ...rest0 } = p;
+  const [seen, setSeen] = React.useState(false);
+  const rest = { ...rest0, onFocus: (e: any) => { setSeen(false); if (p.onFocus) p.onFocus(e); }, onBlur: (e: any) => { setSeen(true); if (p.onBlur) p.onBlur(e); } };
+  const numeric = NUMKB.indexOf(p.keyboardType) >= 0 && !p.secureTextEntry && !noCheck && typeof p.value === 'string' && !/\d\d:\d\d/.test(String(p.placeholder || ''));
+  let err = numeric ? numberError(p.value, { min, max, ph: String(p.placeholder || '') }) : '';
+  // "Too low" waits until you leave the box or have typed as many digits as the top limit, so typing 120 is not flagged at 1 and 12.
+  if (err.indexOf('Too low') === 0 && !seen && String(p.value).replace(/\D/g, '').length < String(max != null ? max : min).length) err = '';
+  const base = { minWidth: 0, color: W, fontSize: 14, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderColor: err ? '#ff6b81' : 'rgba(255,255,255,.14)', outlineStyle: 'none' } as any;
+  if (!err) return <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} style={[base, p.style]} />;
+  // Only while a number is wrong: the box gets a red edge and a short reason under it. The layout styles move to the wrapper so rows keep their shape.
+  const flat: any = StyleSheet.flatten(p.style) || {}; const outer: any = {}; const inner: any = {};
+  Object.keys(flat).forEach((k) => { if (LAYOUT.indexOf(k) >= 0) outer[k] = flat[k]; else inner[k] = flat[k]; });
+  return (
+    <View style={outer}>
+      <TextInput placeholderTextColor="rgba(255,255,255,.4)" maxFontSizeMultiplier={1.12} {...rest} {...n.extra} ref={setRef} accessibilityHint={err} style={[base, inner]} />
+      <Text style={{ color: '#ff8fa3', fontSize: 11.5, fontWeight: '700', marginTop: 4, marginLeft: 4 }}>{err}</Text>
+    </View>
+  );
 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const nice = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? Number(m[3]) + ' ' + MON[Number(m[2]) - 1] + ' ' + m[1] : v; };

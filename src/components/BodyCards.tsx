@@ -10,6 +10,7 @@ import { HData, GLASS, cupsGoal, latestKg, avgOf, keyOfDate, dateOf } from '../l
 import { cs, cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn } from '../lib/num';
 const W = '#fff'; const T = '#5ee7df';
 const dim = 'rgba(255,255,255,.65)';
 const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (
@@ -28,7 +29,7 @@ export function WeightGoal({ h, setH }: { h: HData; setH: (v: HData) => void }) 
   const goal = h.goalKg || 0;
   const pts = list.filter((x) => x.d >= daysAgoKey(rng));
   const startW = list.length ? list[0].v : kg;
-  const save = () => { const v = parseFloat(gin.replace(',', '.')); setH({ ...h, goalKg: v >= 20 && v <= 300 ? r1(v) : 0 }); setGin(''); setEditing(false); };
+  const save = () => { const v = pn(gin); setH({ ...h, goalKg: v >= 20 && v <= 300 ? r1(v) : 0 }); setGin(''); setEditing(false); };
   // change over the last 30 days
   const cutK = daysAgoKey(30); const before = list.filter((x) => x.d <= cutK); const base30 = before.length ? before[before.length - 1].v : (list.length > 1 ? list[0].v : 0);
   const base30d = before.length ? 30 : list.length > 1 ? Math.max(1, Math.round((new Date(list[list.length - 1].d).getTime() - new Date(list[0].d).getTime()) / 86400000)) : 0;
@@ -56,7 +57,7 @@ export function WeightGoal({ h, setH }: { h: HData; setH: (v: HData) => void }) 
       </View>
       {editing ? (
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-          <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={gin} onChangeText={setGin} placeholder="Target weight (kg)" onSubmitEditing={save} />
+          <Inp min={20} max={300} style={{ flex: 1 }} keyboardType="decimal-pad" value={gin} onChangeText={setGin} placeholder="Target weight (kg)" onSubmitEditing={save} />
           <Pressable onPress={save} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
         </View>
       ) : null}
@@ -187,7 +188,7 @@ export function DailyNeeds({ h, setH }: { h: HData; setH: (v: HData) => void }) 
             {([['m', 'Male'], ['f', 'Female']] as ['m' | 'f', string][]).map(([k, n]) => <Pressable key={k} onPress={() => saveAge(k, age)} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: sx === k ? '#b794ff' : 'transparent' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{n}</Text></Pressable>)}
           </View>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <Inp style={{ flex: 1 }} keyboardType="number-pad" value={age} onChangeText={setAge} placeholder="Age (years)" onSubmitEditing={() => saveAge(undefined, age)} />
+            <Inp min={1} max={120} style={{ flex: 1 }} keyboardType="number-pad" value={age} onChangeText={setAge} placeholder="Age (years)" onSubmitEditing={() => saveAge(undefined, age)} />
             <Pressable onPress={() => saveAge(undefined, age)} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
           </View>
         </View>
@@ -217,7 +218,7 @@ export function HealthSpend() {
   const mon = healthMonths(spends); const cur = mon[mon.length - 1].v, prev = mon[mon.length - 2].v; const mx = Math.max(...mon.map((m) => m.v), 1);
   const list = spends.filter((x) => x.cat === HEALTH_CAT).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id)).slice(0, 5);
   const add = () => {
-    const n = parseFloat(amt.replace(',', '.')); if (!(n > 0)) return;
+    const n = pn(amt); if (!(n > 0)) return;
     const t = new Date(); const date = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
     const id = (fin && fin.nextId) || 1;
     setFin({ ...fin, spends: [{ id, name: nm.trim() || 'Health', cat: HEALTH_CAT, amt: n, date }, ...spends], nextId: id + 1 });

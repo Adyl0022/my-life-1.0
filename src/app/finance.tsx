@@ -19,6 +19,7 @@ import { TOP } from '../lib/layout';
 import { cs, cu, cw, useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn } from '../lib/num';
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
@@ -80,7 +81,7 @@ export default function Finance() {
   const goYear = (dy: number) => { const ny = Math.min(curY, Math.max(2024, selY + dy)); let k = keyOf(ny, selM); if (k > curKey) k = curKey; pickYm(k); };
   const open = (k: string, u: 'rm' | 'cnt') => { const n = ((u === 'cnt' ? d.cnt : d.inc)[ym] || {})[k] || 0; setEditKey(k); setEditUnit(u); setEditVal(n > 0 ? String(n) : ''); };
   const saveLine = (k: string) => {
-    const n = parseFloat(editVal.replace(',', '.')); const un = UN[k]; const store = editUnit === 'cnt' && un ? 'cnt' : 'inc';
+    const n = pn(editVal); const un = UN[k]; const store = editUnit === 'cnt' && un ? 'cnt' : 'inc';
     const alls = { ...d[store] }; alls[ym] = { ...alls[ym], [k]: n > 0 ? n : 0 };
     setD({ ...d, [store]: alls }); setEditKey(''); setEditVal('');
   };
@@ -97,7 +98,7 @@ export default function Finance() {
   const tr = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, t: sumOf(d.inc[k.key]) }; });
   const maxT = Math.max(...tr.map((x) => x.t), 1);
   const saveLimit = (k: string) => {
-    const n = parseFloat(limVal.replace(',', '.')); const lm = { ...(d.limits || {}) };
+    const n = pn(limVal); const lm = { ...(d.limits || {}) };
     if (n > 0) lm[k] = n; else delete lm[k];
     setD({ ...d, limits: lm }); setLimKey(''); setLimVal('');
   };
@@ -108,7 +109,7 @@ export default function Finance() {
   sav.goals.filter((g) => PRE.indexOf(g.kind) < 0 && g.kind !== 'wedding').forEach((g) => opts.push({ key: 'g' + g.id, id: g.id, name: g.name, kind: g.kind }));
   { const ex = sav.goals.filter((g) => g.kind === 'wedding'); if (ex.length) ex.forEach((g) => opts.push({ key: 'g' + g.id, id: g.id, name: g.name, kind: 'wedding' })); else opts.push({ key: 'pwedding', id: 0, name: kindOf('wedding').name, kind: 'wedding' }); }
   const addSpend = () => {
-    const n = parseFloat(fAmt.replace(',', '.')); if (!(n > 0)) return;
+    const n = pn(fAmt); if (!(n > 0)) return;
     let fGoal2 = fGoal;
     if (fCat === 'Savings' && fPre) {
       const k = fPre.slice(1); const g = { id: sav.nextId, name: kindOf(k).name || 'Other', kind: k, target: 0, place: '', due: '', start: 0, out: [], made: todayStr() } as any;
@@ -318,7 +319,7 @@ export default function Finance() {
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                         <Pressable onPress={() => setRemId(0)} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
                         <Pressable onPress={() => {
-                          const n = parseFloat(remF.amt.replace(',', '.')); if (!(n > 0)) return;
+                          const n = pn(remF.amt); if (!(n > 0)) return;
                           const v = remF.note.trim();
                           setD({ ...d, spends: d.spends.map((x) => x.id === p.id ? { ...x, name: remF.name.trim() || x.name, amt: n, date: remF.date || x.date, cat: p.cat === 'Savings' ? 'Savings' : remF.cat, note: v || undefined } : x) });
                           setRemId(0);

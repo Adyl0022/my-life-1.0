@@ -194,7 +194,7 @@ export default function Relax() {
                     {[5, 10, 15, 20].map((m) => <Chip key={m} on={!cust && ml === m} t={String(m)} onPress={() => { setCust(false); setMl(m); }} />)}
                     <Chip on={cust} t="Custom" onPress={() => setCust(true)} />
                   </View>
-                  {cust ? <Inp value={cm} onChangeText={(v: string) => setCm(v.replace(/\D/g, '').slice(0, 2))} placeholder="Minutes, 1 to 90" keyboardType="number-pad" style={{ marginTop: 10 }} /> : null}
+                  {cust ? <Inp min={1} max={90} value={cm} onChangeText={(v: string) => setCm(v.replace(/\D/g, '').slice(0, 2))} placeholder="Minutes, 1 to 90" keyboardType="number-pad" style={{ marginTop: 10 }} /> : null}
                   <Pressable onPress={() => setH({ ...h, rlBell: !bell })} style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: bell ? T : 'rgba(255,255,255,.4)', backgroundColor: bell ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{bell ? <Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>✓</Text> : null}</View>
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Soft bell when the timer ends</Text>

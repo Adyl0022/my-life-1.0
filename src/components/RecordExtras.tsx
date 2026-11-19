@@ -10,6 +10,7 @@ import { Inp, DateField, todayStr, W } from './Ui';
 import { cs, cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn, pi } from '../lib/num';
 export type Fu = { id: number; date: string; liters: number; amt: number; odo: number };
 export type Pt = { id: number; name: string; date: string; odo: number; life: number };
 export type Dc = { id: number; title: string; date: string; uri: string };
@@ -24,7 +25,7 @@ const num = (n: number) => n.toLocaleString('en-MY', { maximumFractionDigits: 0 
 const dec = (n: number, k = 2) => n.toLocaleString('en-MY', { minimumFractionDigits: k, maximumFractionDigits: k });
 const fd = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MO[parseInt(p[1], 10) - 1] + ' ' + p[0] : s; };
 const dim = 'rgba(255,255,255,.65)';
-const f = (s: string) => parseFloat((s || '').replace(',', '.'));
+const f = (s: string) => pn(s || '');
 const daysTo = (s: string) => { const a = new Date(s + 'T00:00:00').getTime(); const n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((a - n.getTime()) / 86400000); };
 
 export const Card = ({ title, sub, children, right }: { title: string; sub?: string; children: React.ReactNode; right?: React.ReactNode }) => (
@@ -120,7 +121,7 @@ export function FuelCard({ d, upd }: P<Ext>) {
   const nw = new Date(); const key = (x: Date) => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0');
   const cur = key(nw), prev = key(new Date(nw.getFullYear(), nw.getMonth() - 1, 1));
   const sp = (k: string) => list.filter((x) => x.date.slice(0, 7) === k).reduce((s, x) => s + x.amt, 0);
-  const add = () => { const l = f(li), a = f(rm), o = parseInt(od, 10); if (!(l > 0) || !(a > 0)) return; upd((x) => ({ ...x, fuel: [...(x.fuel || []), { id: Date.now(), date: dt || todayStr(), liters: l, amt: a, odo: o >= 0 ? o : 0 }] })); setLi(''); setRm(''); setOd(''); };
+  const add = () => { const l = f(li), a = f(rm), o = pi(od, { max: 2000000 }); if (!(l > 0) || !(a > 0)) return; upd((x) => ({ ...x, fuel: [...(x.fuel || []), { id: Date.now(), date: dt || todayStr(), liters: l, amt: a, odo: o >= 0 ? o : 0 }] })); setLi(''); setRm(''); setOd(''); };
   return (
     <Card title="Fuel Log" sub="Fuel economy and cost per km" right={<Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{dec(list.reduce((s, x) => s + x.amt, 0))}</Text>}>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
@@ -158,10 +159,10 @@ const Lbl = ({ t, s }: { t: string; s?: string }) => <View style={{ marginBottom
 export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number; addNow: (odo: number) => void }) {
   const [open, setOpen] = useState(false); const [nm, setNm] = useState(''); const [dt, setDt] = useState(todayStr()); const [od, setOd] = useState(''); const [life, setLife] = useState(''); const [cur, setCur] = useState('');
   const list = d.parts || [];
-  const odN = parseInt(od, 10); const tooHigh = latest > 0 && odN > latest;
+  const odN = pi(od, { max: 2000000 }); const tooHigh = latest > 0 && odN > latest;
   const pick = (n: string, l: number) => { setNm(n); setLife(String(l)); if (!od && latest > 0) setOd(String(latest)); };
-  const save = () => { const o = parseInt(od, 10), l = parseInt(life, 10); if (!nm.trim() || !(o >= 0) || !(l > 0)) return; upd((x) => ({ ...x, parts: [...(x.parts || []), { id: Date.now(), name: nm.trim(), date: dt, odo: o, life: l }] })); setOpen(false); setNm(''); setOd(''); setLife(''); };
-  const ok = !!nm.trim() && odN >= 0 && parseInt(life, 10) > 0;
+  const save = () => { const o = pi(od, { max: 2000000 }), l = pi(life, { max: 2000000 }); if (!nm.trim() || !(o >= 0) || !(l > 0)) return; upd((x) => ({ ...x, parts: [...(x.parts || []), { id: Date.now(), name: nm.trim(), date: dt, odo: o, life: l }] })); setOpen(false); setNm(''); setOd(''); setLife(''); };
+  const ok = !!nm.trim() && odN >= 0 && pi(life, { max: 2000000 }) > 0;
   return (
     <Card title="Parts Schedule" sub="Tyres, battery, brakes and chain" right={!open ? <Btn t="+ Add part" h={34} w={12} onPress={() => { setOpen(true); setDt(todayStr()); setNm(''); setLife(''); setOd(latest > 0 ? String(latest) : ''); }} /> : undefined}>
       {latest <= 0 && list.length > 0 ? (

@@ -10,6 +10,7 @@ import { Tk, taskState, odoEstimate } from '../lib/maintTasks';
 import { cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn, pi } from '../lib/num';
 const dim = 'rgba(255,255,255,.65)';
 const COL = ['#7df0c6', '#ffd593', '#ffb3c6']; const BAR = ['#5ee7b5', '#ffc46b', '#ff8fab'];
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -30,7 +31,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
   const list: Tk[] = (d.tasks || []).slice().sort((a, b) => { const x = taskState(a, odoNow, oe.est), y = taskState(b, odoNow, oe.est); return y.level - x.level || x.dueIn - y.dueIn; });
   const LIM = 3; const shown = all ? list : list.slice(0, LIM);
   const pick = (n: string, days: number, k: number) => { setNm(n); setDy(days ? String(days) : ''); setKm(k ? String(k) : ''); };
-  const nDays = parseInt(dy, 10), nKm = parseInt(km, 10); const ok = !!nm.trim() && (nDays > 0 || nKm > 0) && !(nDays > 3650);
+  const nDays = pi(dy), nKm = pi(km, { max: 2000000 }); const ok = !!nm.trim() && (nDays > 0 || nKm > 0) && !(nDays > 3650);
   const isToday = dt === todayStr();
   const save = () => { if (!ok) return; const typed = parseInt(odAt.replace(/[^0-9]/g, ''), 10); const base = typed > 0 ? typed : isToday && odoNow > 0 ? odoNow : undefined;
     upd((x) => ({ ...x, tasks: [...(x.tasks || []), { id: Date.now(), name: nm.trim(), kind, days: nDays > 0 ? nDays : undefined, km: nKm > 0 ? nKm : undefined, last: dt, odo: base, hist: [dt] }] })); setOpen(false); };
@@ -41,7 +42,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
   // Saves a real odometer reading (today). A reading lower than the last real one is refused, so the monthly mileage stays right.
   const saveOdo = (v: string): number | null => { const n = parseInt(v.replace(/[^0-9]/g, ''), 10); if (!(n > 0)) return null; if (n < oe.last) { setOdErr('That is lower than your last reading (' + oe.last.toLocaleString('en-MY') + ' km).'); return -1; }
     upd((x) => ({ ...x, readings: [...(x.readings || []), { id: Date.now(), date: todayStr(), odo: n }] })); setOdErr(''); return n; };
-  const done = (t: Tk) => { const c = parseFloat(cost.replace(',', '.')); const today = todayStr();
+  const done = (t: Tk) => { const c = pn(cost); const today = todayStr();
     let base = odoNow; if (od.trim()) { const n = saveOdo(od); if (n === -1) return; if (n) base = n; }
     upd((x) => { return { ...x, tasks: (x.tasks || []).map((y: Tk) => { if (y.id !== t.id) return y; const h = (y.hist || []).slice(); if (y.last && h[0] !== y.last) h.unshift(y.last); if (h[0] !== today) h.unshift(today); return { ...y, last: today, odo: base > 0 ? base : y.odo, hist: Array.from(new Set(h)).slice(0, 8) }; }), exps: c > 0 ? [{ id: Date.now(), name: t.name, amt: c, date: today }, ...(x.exps || [])] : x.exps }; });
     setDoneId(null); setCost(''); setOd(''); };

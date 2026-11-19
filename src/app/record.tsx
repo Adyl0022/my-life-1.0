@@ -15,6 +15,7 @@ import { TOP } from '../lib/layout';
 import { cs, cu, useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn, pi } from '../lib/num';
 type Rd = { id: number; date: string; odo: number };
 type Ex = { id: number; name: string; amt: number; date: string };
 type Veh = Ext & { readings: Rd[]; yreadings: Rd[]; exps: Ex[] };
@@ -204,19 +205,19 @@ export default function Record() {
   const sugg = sg.sort((x, y) => x.p - y.p).slice(0, 3).concat([{ p: 99, kind: 'good', title: 'Tip of the day', text: (moto ? TIPS : TIPS_GEN)[(now.getDate() - 1) % 31], tag: 'Tip' }]);
 
   const nextId = () => st.nextId;
-  const addReading = () => { const o = parseInt(rOdo, 10); if (!(o >= 0) || !rDate) return; upd((x) => ({ ...x, readings: [...x.readings, { id: nextId(), date: rDate, odo: o }] }), { nextId: st.nextId + 1 }); setROdo(''); };
-  const addYReading = () => { const o = parseInt(yOdo, 10); if (!(o >= 0) || !yDate) return; upd((x) => ({ ...x, yreadings: [...(x.yreadings || []), { id: nextId(), date: yDate, odo: o }] }), { nextId: st.nextId + 1 }); setYOdo(''); };
-  const addExp = () => { const a = parseFloat(eAmt.replace(',', '.')); if (!(a > 0)) return; upd((x) => ({ ...x, exps: [{ id: nextId(), name: eName.trim() || 'Service', amt: a, date: eDate || t0 }, ...x.exps] }), { nextId: st.nextId + 1 }); setEName(''); setEAmt(''); };
+  const addReading = () => { const o = pi(rOdo, { max: 2000000 }); if (!(o >= 0) || !rDate) return; upd((x) => ({ ...x, readings: [...x.readings, { id: nextId(), date: rDate, odo: o }] }), { nextId: st.nextId + 1 }); setROdo(''); };
+  const addYReading = () => { const o = pi(yOdo, { max: 2000000 }); if (!(o >= 0) || !yDate) return; upd((x) => ({ ...x, yreadings: [...(x.yreadings || []), { id: nextId(), date: yDate, odo: o }] }), { nextId: st.nextId + 1 }); setYOdo(''); };
+  const addExp = () => { const a = pn(eAmt); if (!(a > 0)) return; upd((x) => ({ ...x, exps: [{ id: nextId(), name: eName.trim() || 'Service', amt: a, date: eDate || t0 }, ...x.exps] }), { nextId: st.nextId + 1 }); setEName(''); setEAmt(''); };
   const saveQuick = () => {
     const q = quick; if (!q) return;
     if (q.type === 'odo') { const o = parseInt(q.odo, 10); if (!(o >= 0) || !q.date) return; upd((x) => ({ ...x, readings: [...x.readings, { id: nextId(), date: q.date, odo: o }] }), { nextId: st.nextId + 1 }); }
-    else { const a = parseFloat(q.amt.replace(',', '.')); if (!(a > 0)) return; upd((x) => ({ ...x, exps: [{ id: nextId(), name: (q.name || '').trim() || 'Service', amt: a, date: q.date }, ...x.exps] }), { nextId: st.nextId + 1 }); }
+    else { const a = pn(q.amt); if (!(a > 0)) return; upd((x) => ({ ...x, exps: [{ id: nextId(), name: (q.name || '').trim() || 'Service', amt: a, date: q.date }, ...x.exps] }), { nextId: st.nextId + 1 }); }
     setQuick(null);
   };
   const saveCat = () => { const n = catIn.trim(); if (!n || st.cats.includes(n)) { setAddingCat(false); return; } const c = [...st.cats, n]; setSt({ ...st, cats: c, sel: c.length - 1 }); setAddingCat(false); setCatIn(''); };
   const doRename = () => { const n = renIn.trim().slice(0, 30); const old = st.cats[st.sel]; if (!n || n === old || st.cats.includes(n)) { setRenaming(false); return; } const dd = { ...st.data }; if (dd[old]) { dd[n] = dd[old]; delete dd[old]; } setSt({ ...st, cats: st.cats.map((c, i) => (i === st.sel ? n : c)), data: dd }); setRenaming(false); };
   const doDel = () => { if (st.sel < 1) return; const nm = st.cats[st.sel]; const dd = { ...st.data }; delete dd[nm]; setSt({ ...st, cats: st.cats.filter((_, i) => i !== st.sel), data: dd, sel: st.sel - 1 }); setDelAsk(false); };
-  const qOk = !!quick && (quick.type === 'odo' ? parseInt(quick.odo, 10) >= 0 && !!quick.date : parseFloat(quick.amt.replace(',', '.')) > 0);
+  const qOk = !!quick && (quick.type === 'odo' ? pi(quick.odo, { max: 2000000 }) >= 0 && !!quick.date : pn(quick.amt) > 0);
   const diffS = sCurV === 0 && sPrevV === 0 ? '-' : sd === 0 ? 'Same' : (sd > 0 ? '+' : '-') + cs() + num(Math.abs(sd));
   const sNote = sCurV === 0 && sPrevV === 0 ? 'Add maintenance spending to see how this month compares with last month.' : sd === 0 ? 'Same spending as last month.' : sPrevV > 0 ? (sd > 0 ? 'Up ' : 'Down ') + sPct + '% compared with last month.' : 'No spending recorded last month to compare with.';
   const dim = 'rgba(255,255,255,.65)';

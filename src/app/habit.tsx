@@ -29,6 +29,7 @@ import { stepWhy } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn } from '../lib/num';
 const T = '#5ee7df';
 // Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
 function SoftShow({ show, children }: { show: boolean; children: React.ReactNode }) {
@@ -198,7 +199,7 @@ export default function Habit() {
   const klist = (h.kg || []).slice().sort((a, b) => (a.d < b.d ? -1 : 1)); const kl = klist.slice(-8);
   const bmi = kg > 0 && h.cm ? kg / Math.pow(h.cm / 100, 2) : 0;
   const bmiTxt = bmi ? (bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy range' : bmi < 30 ? 'Overweight' : 'Obese') : '';
-  const logKg = () => { const v = parseFloat(kgIn.replace(',', '.')); const c = parseInt(cmIn, 10); const nk = (v >= 20 && v <= 300) ? [...klist.filter((x) => x.d !== keyOfDate(dateOf(0))), { d: keyOfDate(dateOf(0)), v: Math.round(v * 10) / 10 }] : h.kg; setH({ ...h, kg: nk, cm: c >= 100 && c <= 250 ? c : h.cm }); setKgIn(''); setCmIn(''); };
+  const logKg = () => { const v = pn(kgIn); const c = parseInt(cmIn, 10); const nk = (v >= 20 && v <= 300) ? [...klist.filter((x) => x.d !== keyOfDate(dateOf(0))), { d: keyOfDate(dateOf(0)), v: Math.round(v * 10) / 10 }] : h.kg; setH({ ...h, kg: nk, cm: c >= 100 && c <= 250 ? c : h.cm }); setKgIn(''); setCmIn(''); };
   // water vs mood / sleep
   const wd: { ok: boolean; mood: number; sleep: number }[] = []; for (let o = -60; o <= 0; o++) { const x = getDay(h, o); if (x.cups > 0 && x.mood >= 0) wd.push({ ok: x.cups >= cg, mood: x.mood, sleep: x.sleep }); }
   const hiW = wd.filter((x) => x.ok), loW = wd.filter((x) => !x.ok);
@@ -299,7 +300,7 @@ export default function Habit() {
                   {[5000, 8000, 10000, 12000].map((n) => <Pressable key={n} onPress={() => { setH({ ...h, goal: n }); setEdit(false); }} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: goal === n ? T : 'rgba(255,255,255,.12)' }}><Text style={{ color: goal === n ? '#0d1030' : W, fontSize: 12, fontWeight: '700' }}>{n.toLocaleString('en-MY')}</Text></Pressable>)}
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                  <Inp value={gv} onChangeText={setGv} keyboardType="number-pad" placeholder="Custom (500 – 100,000)" style={{ flex: 1 }} />
+                  <Inp min={500} max={100000} value={gv} onChangeText={setGv} keyboardType="number-pad" placeholder="Custom (500 – 100,000)" style={{ flex: 1 }} />
                   <Pressable onPress={saveGoal} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
                 </View>
               </View>
@@ -315,7 +316,7 @@ export default function Habit() {
               <Pressable onPress={() => setSteps(Math.max(0, t.steps - 500))} style={{ paddingVertical: 11, paddingHorizontal: 18, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>−500</Text></Pressable>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-              <Inp value={stepIn} onChangeText={(v: string) => setStepIn(v.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="Type steps" style={{ flex: 1 }} />
+              <Inp max={100000} value={stepIn} onChangeText={(v: string) => setStepIn(v.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="Type steps" style={{ flex: 1 }} />
               <Pressable onPress={() => { const n = parseInt(stepIn, 10); if (n > 0) { setSteps(t.steps + n); setStepIn(''); } }} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Add</Text></Pressable>
               <Pressable onPress={() => { const n = parseInt(stepIn, 10); if (n >= 0 && stepIn !== '') { setSteps(Math.min(n, 200000)); setStepIn(''); } }} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set total</Text></Pressable>
             </View>
@@ -494,8 +495,8 @@ export default function Habit() {
             {kg > 0 && <Text style={{ color: T, fontSize: 12, fontWeight: '700', marginTop: 6 }}>Water goal: {(cg * GLASS / 1000).toFixed(1)} L a day ({cg} glasses)</Text>}
             {kl.length >= 2 && <Bars vals={kl.map((x) => x.v - Math.min(...kl.map((y) => y.v)) + 1)} labels={kl.map((x) => parseInt(x.d.slice(8), 10) + '/' + parseInt(x.d.slice(5, 7), 10))} max={Math.max(...kl.map((x) => x.v)) - Math.min(...kl.map((x) => x.v)) + 2} color="#b794ff" hi={kl.length - 1} />}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <Inp value={kgIn} onChangeText={setKgIn} keyboardType="decimal-pad" placeholder="Weight (kg)" style={{ flex: 1 }} />
-              <Inp value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
+              <Inp min={20} max={300} value={kgIn} onChangeText={setKgIn} keyboardType="decimal-pad" placeholder="Weight (kg)" style={{ flex: 1 }} />
+              <Inp min={50} max={260} value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
               <Pressable onPress={logKg} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Log</Text></Pressable>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Weigh yourself once a week. Water goal is about 33 ml per kg. BMI is a rough guide only.</Text>

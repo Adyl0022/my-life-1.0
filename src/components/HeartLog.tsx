@@ -61,9 +61,9 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
     <View>
       <Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>{off < 0 ? 'Add a reading for this day' : 'Add a reading'}</Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-        <Inp value={bpm} onChangeText={setBpm} keyboardType="number-pad" placeholder="Pulse" maxLength={3} style={{ flex: 1 }} />
-        <Inp value={sys} onChangeText={setSys} keyboardType="number-pad" placeholder="Systolic" maxLength={3} style={{ flex: 1 }} />
-        <Inp value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="Diastolic" maxLength={3} style={{ flex: 1 }} />
+        <Inp min={30} max={220} value={bpm} onChangeText={setBpm} keyboardType="number-pad" placeholder="Pulse" maxLength={3} style={{ flex: 1 }} />
+        <Inp min={60} max={260} value={sys} onChangeText={setSys} keyboardType="number-pad" placeholder="Systolic" maxLength={3} style={{ flex: 1 }} />
+        <Inp min={30} max={160} value={dia} onChangeText={setDia} keyboardType="number-pad" placeholder="Diastolic" maxLength={3} style={{ flex: 1 }} />
       </View>
       <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 4 }}>Pulse in bpm. Blood pressure: systolic (first number) and diastolic (second number), in mmHg.</Text>
       {err ? <Text style={{ color: '#ffd593', fontSize: 12, marginTop: 6 }}>{err}</Text> : null}

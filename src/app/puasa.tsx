@@ -208,7 +208,7 @@ export default function Puasa() {
               ) : <Text style={{ color: dim, fontSize: 12.5, marginTop: 8 }}>You have no missed fasts to make up. Alhamdulillah.</Text>}
               {qEd ? (
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                  <Inp style={{ flex: 1 }} keyboardType="number-pad" value={qIn} onChangeText={setQIn} placeholder="Days you owe now" onSubmitEditing={saveQ} />
+                  <Inp max={999} style={{ flex: 1 }} keyboardType="number-pad" value={qIn} onChangeText={setQIn} placeholder="Days you owe now" onSubmitEditing={saveQ} />
                   <Btn t="Save" on onPress={saveQ} />
                 </View>
               ) : <Pressable onPress={() => { setQEd(true); setQIn(String(owed)); }}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '700', marginTop: 10 }}>Set how many days you owe from before ✎</Text></Pressable>}

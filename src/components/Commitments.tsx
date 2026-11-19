@@ -10,6 +10,7 @@ import { DEBT_EMPTY, DebtData, Debt, remaining, monthsLeft, dueDay, isActive, am
 import { cs, cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
+import { pn } from '../lib/num';
 const WARM = ['#ffc46b', '#ff8fab'] as [string, string];
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const ord = (n: number) => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
@@ -70,7 +71,7 @@ export function Commitments({ income }: { income: number }) {
   const reset = () => { setFixed(false); setAdding(false); setEdit(0); setN(''); setBal(''); setMo(''); setDay(''); setGl(0); };
   const startEdit = (x: Debt) => { setEdit(x.id); setAdding(true); setN(x.name); setFixed(!!x.fixed); setBal(x.fixed ? '' : String(remaining(x) + (x.paid[ym] || 0))); setMo(String(x.monthly)); setDay(String(x.due)); setGl(x.goal || 0); };
   const submit = () => {
-    const b = parseFloat(bal.replace(',', '.')), m = parseFloat(mo.replace(',', '.')), dd = Math.round(parseFloat(day));
+    const b = pn(bal), m = pn(mo), dd = Math.round(pn(day));
     if (!n.trim() || (!fixed && !(b > 0)) || !(m > 0) || !(dd >= 1 && dd <= 31)) { setMsg(fixed ? 'Fill in the name, the monthly amount and a due day from 1 to 31.' : 'Fill in the name, balance, monthly payment and a due day from 1 to 31.'); return; }
     setMsg('');
     if (edit) {
@@ -141,7 +142,7 @@ export function Commitments({ income }: { income: number }) {
           {!fixed ? <Inp keyboardType="decimal-pad" value={bal} onChangeText={setBal} placeholder={'Balance left to pay (' + cu() + ')'} /> : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={mo} onChangeText={setMo} placeholder={'Monthly (' + cu() + ')'} />
-            <Inp style={{ flex: 1 }} keyboardType="number-pad" value={day} onChangeText={setDay} placeholder="Due day (1 to 31)" onSubmitEditing={submit} />
+            <Inp min={1} max={31} style={{ flex: 1 }} keyboardType="number-pad" value={day} onChangeText={setDay} placeholder="Due day (1 to 31)" onSubmitEditing={submit} />
           </View>
           <Pressable onPress={submit}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 13, fontWeight: '800' }}>{edit ? 'Save changes' : fixed ? 'Add commitment' : 'Add debt'}</Text></LinearGradient></Pressable>
         </View>
