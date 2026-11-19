@@ -27,6 +27,7 @@ import { withNavBar } from '../lib/permNav';
 import { sensorToday } from '../lib/stepSensor';
 import { stepWhy } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
+import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepNow';
 
 const T = '#5ee7df';
 // Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
@@ -87,6 +88,8 @@ export default function Habit() {
   const [edit, setEdit] = useState(false); const [gv, setGv] = useState('');
   const hRef = useRef(h); hRef.current = h;
   const [autoMsg, setAutoMsg] = useState('');
+  const [sn] = useStored<SleepNow>(SLEEP_KEY, null); const [snMsg, setSnMsg] = useState(''); const [tick, setTick] = useState(0);
+  useEffect(() => { if (!sn) return; const i = setInterval(() => setTick((x) => x + 1), 30000); return () => clearInterval(i); }, [!!sn]);
   const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState<string | null>(null); const [wake, setWake] = useState<string | null>(null);
   const goal = h.goal || 8000;
   const cg = cupsGoal(h); const kg = latestKg(h);
@@ -254,6 +257,18 @@ export default function Habit() {
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl nm k="sleep" t="Sleep Tracker" />
+            {sn && sn.start ? (
+              <View style={{ marginTop: 12, padding: 14, borderRadius: 18, backgroundColor: 'rgba(183,148,255,.16)', borderWidth: 1, borderColor: 'rgba(183,148,255,.45)' }}>
+                <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{'Sleeping since ' + to12(new Date(sn.start).toTimeString().slice(0, 5))}</Text>
+                <Text style={{ color: W, fontSize: 26, fontWeight: '800', marginTop: 2 }}>{fmtDur(Date.now() - sn.start)}</Text>
+                <Pressable onPress={async () => setSnMsg(await endSleep())} accessibilityLabel="I'm awake" style={{ marginTop: 10, paddingVertical: 12, borderRadius: 14, backgroundColor: '#b794ff', alignItems: 'center' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>I'm awake</Text></Pressable>
+              </View>
+            ) : (
+              <View style={{ marginTop: 12 }}>
+                <Pressable onPress={async () => { setSnMsg(''); await startSleep(); }} accessibilityLabel="Going to sleep" style={{ paddingVertical: 14, borderRadius: 16, backgroundColor: '#b794ff', alignItems: 'center' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 15 }}>Going to sleep</Text></Pressable>
+                <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 6, textAlign: 'center' }}>{snMsg || 'Tap when you go to bed. Tap "I\'m awake" in the notification when you wake up and your hours are saved.'}</Text>
+              </View>
+            )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
               <Lbl t="Last night" />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
