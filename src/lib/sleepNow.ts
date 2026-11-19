@@ -48,7 +48,7 @@ export async function endSleep(): Promise<string> {
     const day: HDay = { ...BLANK, ...(h.days[k] || {}) };
     await setItem('ml_habit', { ...h, days: { ...h.days, [k]: { ...day, sleep: hrs, bed: hhmm(new Date(cur.start)), wake: hhmm(w) } } });
     msg = 'You slept ' + fmtDur(ms) + '. Saved to Sleep Tracker.';
-    if (hrs < 6) { title = 'Short sleep'; msg += ' Less than 6 hours is not enough. Try to rest earlier tonight.'; }
+    if (hrs < 6) { title = 'Short sleep'; msg += ' Less than 6 hours is not enough. Try to get more rest next time.'; }
     else if (hrs > 9) { title = 'Long sleep'; msg += ' More than 9 hours is a lot. Try to keep your sleep steady.'; }
   }
   if (await prep()) { try { await Notifications.scheduleNotificationAsync({ content: { title, body: msg, sound: false } as any, trigger: { channelId: 'sleeping' } as any }); } catch (e) {} }
