@@ -17,8 +17,10 @@ const CAR: [string, number, number][] = [['Tyre pressure', 14, 0], ['Engine oil 
 export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) => any) => void; latest: number; cat: string }) {
   const moto = !/car|van|truck|mpv|suv|sedan|kereta/i.test(cat);
   const [open, setOpen] = useState(false); const [nm, setNm] = useState(''); const [dy, setDy] = useState(''); const [km, setKm] = useState(''); const [dt, setDt] = useState(todayStr());
-  const [doneId, setDoneId] = useState<number | null>(null); const [cost, setCost] = useState('');
-  const list: Tk[] = d.tasks || []; const parts: Pt[] = d.parts || [];
+  const [all, setAll] = useState(false); const [doneId, setDoneId] = useState<number | null>(null); const [cost, setCost] = useState('');
+  // Most urgent first, so the three shown are the ones that need you.
+  const list: Tk[] = (d.tasks || []).slice().sort((a, b) => { const x = taskState(a, latest), y = taskState(b, latest); return y.level - x.level || x.dueIn - y.dueIn; });
+  const LIM = 3; const shown = all ? list : list.slice(0, LIM); const parts: Pt[] = d.parts || [];
   const pick = (n: string, days: number, k: number) => { setNm(n); setDy(String(days)); setKm(k ? String(k) : ''); };
   const nDays = parseInt(dy, 10); const ok = !!nm.trim() && nDays > 0 && nDays <= 365;
   const save = () => { if (!ok) return; const k = parseInt(km, 10);
@@ -65,10 +67,10 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
       ) : null}
       {list.length === 0 && !open ? <Text style={{ marginTop: 10, color: dim, fontSize: 12, lineHeight: 18 }}>No tasks yet. Tap + Add task, choose Spray chain or Tyre pressure, and My Record counts the days since you last did it and the days until the next time.</Text> : null}
       <View style={{ marginTop: 6 }}>
-        {list.map((t, i) => {
+        {shown.map((t, i) => {
           const s = taskState(t, latest); const hist = (t.hist || []).filter((x) => x !== t.last).slice(0, 3);
           return (
-            <View key={t.id} style={{ paddingVertical: 9, borderBottomWidth: i === list.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+            <View key={t.id} style={{ paddingVertical: 9, borderBottomWidth: i === shown.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{t.name}</Text>
@@ -92,6 +94,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
           );
         })}
       </View>
+      {list.length > LIM ? <Pressable onPress={() => setAll(!all)} accessibilityLabel={all ? 'Show fewer tasks' : 'Show all tasks'} style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 8, paddingHorizontal: 18, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{all ? 'Show less' : 'Show all ' + list.length + ' tasks'}</Text></Pressable> : null}
       {list.length > 0 ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
           <Text style={{ flex: 1, color: dim, fontSize: 11.5 }}>Remind me when a task is due</Text>
