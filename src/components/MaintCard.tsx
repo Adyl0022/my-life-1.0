@@ -162,7 +162,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
               {!oe.est && oe.odo > 0 && oe.lastDate ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'What your meter or fuel log showed on ' + oe.lastDate.split('-').reverse().join('/') + '.'}</Text> : null}
               {oe.est ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 8 }}>{'From about ' + Math.round(oe.perDay) + ' km a day over the ' + 'last ' + oe.span + ' days' + ' before ' + oe.lastDate.split('-').reverse().join('/') + '. Days you do not ride are counted. Type a new reading to make it exact.'}</Text> : null}
             </View>
-            <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Correct odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)', borderWidth: 1, borderColor: 'rgba(94,231,181,.45)' }}><Text style={{ color: '#b6f7de', fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : oe.est ? 'Correct' : 'Update'}</Text></Pressable>
+            <Pressable onPress={() => { setFixOdo(!fixOdo); setOd(''); setOdErr(''); }} accessibilityLabel="Update odometer" style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.3)', borderWidth: 1, borderColor: 'rgba(94,231,181,.45)' }}><Text style={{ color: '#b6f7de', fontSize: 12.5, fontWeight: '800' }}>{fixOdo ? 'Close' : 'Update'}</Text></Pressable>
           </View>
           {fixOdo ? (
             <View style={{ marginTop: 10, gap: 6 }}>
