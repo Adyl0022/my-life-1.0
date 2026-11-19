@@ -18,6 +18,31 @@ class StepCounterModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("StepCounter")
 
+    // Tells the Quick Settings tile when sleep started (0 = not sleeping).
+    Function("setSleepTile") { start: Double ->
+      try { appContext.reactContext?.let { SleepTile.set(it, start.toLong()) } } catch (e: Throwable) {}
+    }
+
+    // Android 13+: shows the system "Add tile?" prompt. Gives 2 added, 1 already there, 0 not added, -1 not available.
+    AsyncFunction("addSleepTile") { promise: Promise ->
+      try {
+        val ctx = appContext.reactContext
+        if (ctx == null || android.os.Build.VERSION.SDK_INT < 33) {
+          promise.resolve(-1)
+        } else {
+          val sbm = ctx.getSystemService(android.app.StatusBarManager::class.java)
+          sbm.requestAddTileService(
+            android.content.ComponentName(ctx, SleepTileService::class.java),
+            "Going to sleep",
+            android.graphics.drawable.Icon.createWithResource(ctx, R.drawable.ic_sleep_tile),
+            ctx.mainExecutor
+          ) { result -> promise.resolve(result) }
+        }
+      } catch (e: Throwable) {
+        promise.resolve(-1)
+      }
+    }
+
     AsyncFunction("getTotal") { promise: Promise ->
       try {
         val ctx = appContext.reactContext

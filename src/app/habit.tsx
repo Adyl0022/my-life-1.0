@@ -25,7 +25,7 @@ import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fa
 import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf, medDue, to12 } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
 import { sensorToday } from '../lib/stepSensor';
-import { stepWhy } from '../../modules/step-counter';
+import { stepWhy, addSleepTile } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
 import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepNow';
 
@@ -267,6 +267,7 @@ export default function Habit() {
               <View style={{ marginTop: 12 }}>
                 <Pressable onPress={async () => { setSnMsg(''); await startSleep(); }} accessibilityLabel="Going to sleep" style={{ paddingVertical: 14, borderRadius: 16, backgroundColor: '#b794ff', alignItems: 'center' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 15 }}>Going to sleep</Text></Pressable>
                 <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 6, textAlign: 'center' }}>{snMsg || 'Tap when you go to bed. Tap "I\'m awake" in the notification when you wake up and your hours are saved.'}</Text>
+                {Platform.OS === 'android' ? <Pressable onPress={async () => { const r = await addSleepTile(); setSnMsg(r === 2 ? 'Added. Look for "Going to sleep" in your Quick Settings.' : r === 1 ? 'It is already in your Quick Settings.' : r === 0 ? 'Not added.' : 'To add it, open Quick Settings, tap the edit pencil and drag "Going to sleep" up.'); }} accessibilityLabel="Add to Quick Settings" style={{ alignSelf: 'center', marginTop: 8, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(183,148,255,.6)' }}><Text style={{ color: '#d6c2ff', fontSize: 12.5, fontWeight: '800' }}>Add to Quick Settings</Text></Pressable> : null}
               </View>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>

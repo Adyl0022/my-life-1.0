@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { getItem, setItem } from './store';
 import { HData, HDay, BLANK, HEMPTY, keyOfDate, to12 } from './habit';
+import { setSleepTile } from '../../modules/step-counter';
 import { ensureHandler, setup } from './adhan';
 
 // "Going to sleep" starts a timer, "I'm awake" stops it and saves the hours into the Sleep Tracker.
@@ -25,7 +26,7 @@ async function prep() {
 export async function startSleep(): Promise<void> {
   const cur = await getItem<SleepNow>(SLEEP_KEY, null); if (cur && cur.start) return;
   const start = Date.now();
-  await setItem(SLEEP_KEY, { start });
+  await setItem(SLEEP_KEY, { start }); setSleepTile(start);
   if (!(await prep())) return;
   try {
     await Notifications.scheduleNotificationAsync({ identifier: NID, content: { title: 'Sleeping since ' + to12(hhmm(new Date(start))), body: 'Tap "I\'m awake" when you wake up.', categoryIdentifier: 'sleeping', sticky: true, autoDismiss: false, sound: false } as any, trigger: { channelId: 'sleeping' } as any });
@@ -36,7 +37,7 @@ export async function startSleep(): Promise<void> {
 export async function endSleep(): Promise<string> {
   const cur = await getItem<SleepNow>(SLEEP_KEY, null); if (!cur || !cur.start) return '';
   const end = Date.now(); const ms = end - cur.start;
-  await setItem(SLEEP_KEY, null);
+  await setItem(SLEEP_KEY, null); setSleepTile(0);
   try { await Notifications.dismissNotificationAsync(NID); await Notifications.cancelScheduledNotificationAsync(NID); } catch (e) {}
   let msg: string; let title = 'Good morning';
   if (ms < 10 * 60000) msg = 'That was under 10 minutes, so it was not saved.';

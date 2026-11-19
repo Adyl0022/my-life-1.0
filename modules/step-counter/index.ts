@@ -7,3 +7,8 @@ export async function stepTotal(): Promise<number> {
   try { if (!M) return -5; const n = await M.getTotal(); return typeof n === 'number' ? n : -4; } catch (e) { return -4; }
 }
 export const stepWhy = (c: number) => c === -1 ? 'this phone has no step sensor' : c === -2 ? 'the sensor could not start (allow Physical activity permission)' : c === -3 ? 'the sensor gave no reading' : c === -5 ? 'step sensor is not in this build' : 'sensor error';
+
+// Quick Settings tile for the sleep timer.
+export function setSleepTile(start: number) { try { if (M && M.setSleepTile) M.setSleepTile(start); } catch (e) {} }
+// 2 added, 1 already there, 0 not added, -1 not available on this phone.
+export async function addSleepTile(): Promise<number> { try { if (!M || !M.addSleepTile) return -1; const r = await M.addSleepTile(); return typeof r === 'number' ? r : -1; } catch (e) { return -1; } }
