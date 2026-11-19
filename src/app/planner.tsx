@@ -110,13 +110,16 @@ export default function Planner() {
   const EventRow = ({ x }: { x: Ev }) => {
     const p = x.date.split('-'); const okd = p.length === 3;
     const late = !x.done && okd && x.date < today;
+    const dl = okd ? Math.round((new Date(+p[0], +p[1] - 1, +p[2]).getTime() - new Date(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10)).getTime()) / 86400000) : null;
+    const dc = dl == null ? null : dl < 0 ? '#ff6b81' : dl <= 7 ? '#ffd24a' : '#5ee7b5';
+    const dt = dl == null ? '' : dl < 0 ? (-dl === 1 ? 'Overdue 1 day' : 'Overdue ' + -dl + ' days') : dl === 0 ? 'Today' : dl === 1 ? '1 day left' : dl + ' days left';
     return (
       <Pressable onPress={() => setD({ ...d, events: d.events.map((y) => (y.id === x.id ? { ...y, done: !y.done } : y)) })}>
         <Raise c={x.done ? '#7df0a0' : '#8ea8ff'} dim={x.done}>
           <LinearGradient colors={x.done ? ['#2fae7a', '#5ee7b5'] : GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 48, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 10, fontWeight: '700' }}>{okd ? MON[+p[1] - 1] : 'NEW'}</Text><Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>{okd ? p[2] : '--'}</Text>
           </LinearGradient>
-          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{(late ? 'Overdue · ' : '') + (x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind)}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind}</Text>{!x.done && dc ? <View style={{ alignSelf: 'flex-start', marginTop: 6, paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999, backgroundColor: dc + '33', borderWidth: 1, borderColor: dc + '88' }}><Text style={{ color: dc, fontSize: 11.5, fontWeight: '800' }}>{dt}</Text></View> : null}</View>
           <Ic t="✎" label="Edit" onPress={() => setEdit({ id: x.id, kind: 'event', name: x.name, note: '', prio: 'Medium', date: x.date, remind: x.remind })} />
           <Ic t="✕" label="Delete" onPress={() => confirmDelete('this event', () => { setD({ ...d, events: d.events.filter((y) => y.id !== x.id) }); setEdit(null); })} />
         </Raise>

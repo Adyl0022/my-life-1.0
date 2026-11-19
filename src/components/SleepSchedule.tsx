@@ -16,6 +16,9 @@ export function SleepSchedule({ h }: { h: HData }) {
   const back = weekBack(dateOf(0));
   const days: { label: string; d: HDay; today: boolean; fut: boolean }[] = Array.from({ length: n }, (_, i) => { const o = big ? i - (n - 1) : i - back; const dt = dateOf(o); return { label: o === 0 && big ? 'Last night' : big ? dt.getDate() + ' ' + MON[dt.getMonth()] : WD[dt.getDay()], d: getDay(h, o), today: o === 0, fut: o > 0 }; });
   const rows = days.map((x) => { const b = mins(x.d.bed), w = mins(x.d.wake); if (b == null || w == null) return { ...x, b: null as number | null, w: null as number | null, len: 0 }; let len = (w - b + 1440) % 1440; if (len === 0) len = 1440; return { ...x, b, w, len }; });
+  // In the 30-day view, skip the days before the first record so the list never opens with a long empty block.
+  const first = big ? rows.findIndex((r) => r.b != null || r.d.sleep > 0) : 0;
+  const shown = big && first > 0 ? rows.slice(first) : rows;
   const timed = rows.filter((r) => r.b != null);
   const today = rows.find((r) => r.today) || rows[rows.length - 1];
   // Average bed and wake times, counted on the same 6 PM clock so a bedtime after midnight averages correctly.
@@ -41,7 +44,7 @@ export function SleepSchedule({ h }: { h: HData }) {
         </View>
       </View>
       <View style={{ marginTop: 12 }}>
-        {rows.map((r, i) => {
+        {shown.map((r, i) => {
           const segs: [number, number][] = []; if (r.b != null) { const s = shift(r.b); if (s + r.len > 1440) { segs.push([s, 1440 - s]); segs.push([0, s + r.len - 1440]); } else segs.push([s, r.len]); }
           return (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'center', height: big ? 18 : 24, opacity: r.fut ? 0.45 : 1 }}>
