@@ -62,6 +62,54 @@ function Row({ d, onPress }: { d: Doc; onPress: () => void }) {
   );
 }
 
+function Detail({ d, onEdit, onClose }: { d: Doc; onEdit: () => void; onClose: () => void }) {
+  const t = typeOf(d.type), s = statusOf(d); const [big, setBig] = useState(false);
+  const rem = REMINDS.find((x) => x.k === d.remind);
+  const line = (k: string, v: string) => (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 14, paddingVertical: 13, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
+      <Text style={{ color: dim, fontSize: 13 }}>{k}</Text><Text style={{ color: W, fontSize: 14, fontWeight: '700', flexShrink: 1, textAlign: 'right' }} selectable>{v}</Text>
+    </View>
+  );
+  return (
+    <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+      <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
+        <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+        <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 40 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 22 }}>‹</Text></View></Pressable>
+            <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{t.lab}</Text><Text numberOfLines={2} style={{ color: W, fontSize: 22, fontWeight: '800' }}>{d.title}</Text></View>
+          </View>
+          {d.photo ? (
+            <Pressable onPress={() => setBig(true)} accessibilityLabel="View photo" style={{ marginTop: 20 }}>
+              <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.06)' }}>
+                <Image source={{ uri: d.photo }} style={{ width: '100%', aspectRatio: 1.58 }} resizeMode="contain" />
+              </View>
+              <Text style={{ color: dim, fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>Tap the photo to see it full screen</Text>
+            </Pressable>
+          ) : (
+            <Pressable onPress={onEdit} style={{ marginTop: 20, height: 150, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.05)' }}>
+              <Text style={{ fontSize: 30 }}>{t.e}</Text><Text style={{ color: W, fontSize: 14, fontWeight: '700', marginTop: 6 }}>No photo yet</Text><Text style={{ color: dim, fontSize: 12, marginTop: 2 }}>Tap to add one</Text>
+            </Pressable>
+          )}
+          <View style={{ marginTop: 18, borderRadius: 20, borderWidth: 1, borderColor: s.hot ? 'rgba(255,107,129,.5)' : 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)', paddingHorizontal: 16, paddingVertical: 6 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 14, paddingVertical: 13 }}><Text style={{ color: dim, fontSize: 13 }}>Status</Text><Text style={{ color: s.col, fontSize: 14, fontWeight: '800' }}>{s.txt}</Text></View>
+            {d.number ? line('Number', d.number) : null}
+            {d.expiry ? line(d.type === 'warranty' ? 'Warranty ends' : 'Expires', d.expiry.split('-').reverse().join('/')) : line('Expiry', 'No expiry')}
+            {d.expiry ? line('Reminder', rem && rem.k !== 'off' ? rem.n : 'None') : null}
+            {d.note ? line('Note', d.note) : null}
+          </View>
+          <Pressable onPress={onEdit} accessibilityLabel="Edit document" style={{ marginTop: 20 }}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Edit</Text></LinearGradient></Pressable>
+        </ScrollView>
+        {big && d.photo ? (
+          <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setBig(false)}>
+            <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: d.photo }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
+          </Modal>
+        ) : null}
+      </View>
+    </Modal>
+  );
+}
+
 type Form = { id: number; type: string; title: string; number: string; expiry: string; noExp: boolean; remind: Remind; photo: string; note: string };
 const blank = (type: string): Form => ({ id: 0, type, title: '', number: '', expiry: ymd(new Date(Date.now() + 365 * 86400000)), noExp: false, remind: '3m', photo: '', note: '' });
 
@@ -126,7 +174,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
             {lab('DETAILS')}
             <Inp value={f.title} onChangeText={(x: string) => set({ title: x })} placeholder={t.label + ' name, e.g. ' + (f.type === 'passport' ? 'Passport · Adli' : f.type === 'bank' ? 'Maybank Visa' : f.type === 'warranty' ? 'Samsung TV' : 'My ' + t.label.toLowerCase())} maxLength={60} />
             {(tried || false) && !f.title.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
-            <Inp style={{ marginTop: 9 }} value={f.number} onChangeText={(x: string) => set({ number: x })} placeholder="Number (optional)" maxLength={40} autoCapitalize="characters" />
+            <Inp style={{ marginTop: 9 }} value={f.number} onChangeText={(x: string) => set({ number: x })} placeholder={f.type === 'bank' ? 'Card number (optional, you can leave it empty)' : 'Number (optional)'} maxLength={40} autoCapitalize="characters" />
             {lab(f.type === 'warranty' ? 'WARRANTY ENDS' : 'EXPIRY DATE')}
             <Pressable onPress={() => set({ noExp: !f.noExp })} accessibilityLabel="No expiry" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: f.noExp ? '#8fe9e2' : 'rgba(255,255,255,.4)', backgroundColor: f.noExp ? 'rgba(143,233,226,.35)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{f.noExp ? <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>✓</Text> : null}</View>
@@ -156,7 +204,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
 export default function Documents() {
   const [st, setSt] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
   const docs = (st && st.docs) || [];
-  const [tab, setTab] = useState<DocTab>('identity'); const [q, setQ] = useState(''); const [f, setF] = useState<Form | null>(null);
+  const [tab, setTab] = useState<DocTab>('identity'); const [q, setQ] = useState(''); const [f, setF] = useState<Form | null>(null); const [det, setDet] = useState(0);
   const info = TABS.find((x) => x.k === tab) as (typeof TABS)[number];
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -187,13 +235,14 @@ export default function Documents() {
         ))}
       </View>
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder={'Search ' + info.n.toLowerCase()} /></View>
-      {list.length ? list.map((d) => <Row key={d.id} d={d} onPress={() => openEdit(d)} />) : (
+      {list.length ? list.map((d) => <Row key={d.id} d={d} onPress={() => setDet(d.id)} />) : (
         <View style={{ marginTop: 28, alignItems: 'center', paddingHorizontal: 20 }}>
           <Text style={{ fontSize: 40 }}>{q.trim() ? '🔍' : typeOf(DOC_TYPES.find((x) => x.tab === tab)!.key).e}</Text>
           <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 10 }}>{q.trim() ? 'Nothing found' : 'Nothing here yet'}</Text>
           <Text style={{ color: dim, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>{q.trim() ? 'Try another word.' : 'Tap + to add one. You can scan it with the camera.'}</Text>
         </View>
       )}
+      {det && !f && docs.find((x) => x.id === det) ? <Detail d={docs.find((x) => x.id === det) as Doc} onEdit={() => { const x = docs.find((y) => y.id === det) as Doc; setDet(0); openEdit(x); }} onClose={() => setDet(0)} /> : null}
       {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </RecordPage>
   );
