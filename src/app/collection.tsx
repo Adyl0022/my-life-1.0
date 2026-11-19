@@ -17,7 +17,7 @@ function Card({ icon, title, sub, c, wide, onPress }: { icon: ColIconName; title
         <LinearGradient colors={['rgba(255,255,255,.13)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <LinearGradient colors={[c + '59', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.7, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View style={wide ? { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 } : { flex: 1, padding: 14, justifyContent: 'space-between' }}>
-          <Tile icon={icon} c={c} size={46} />
+          <Tile icon={icon} c={c} size={46} breathe />
           <View style={wide ? { flex: 1 } : undefined}><Text style={{ color: W, fontSize: 16.5, fontWeight: '800' }}>{title}</Text><Text numberOfLines={wide ? 2 : 1} style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{sub}</Text></View>
         </View>
       </View>
