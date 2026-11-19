@@ -248,6 +248,12 @@ export default function Hafazan() {
   const chooseSurah = (k: string) => { setSKey(k); setFrom('1'); setTo(String(SURAH[k].verses.length)); setPick(''); setShowPick(false); };
   const list = SURAH_LIST.filter((x) => { const t = pick.trim().toLowerCase(); return !t || x.title.toLowerCase().includes(t) || String(x.num) === t; }).slice(0, 8);
 
+  const markWord = (i: number, undo = false) => {
+    if (!res) return;
+    const words = res.words.map((x, k) => (k !== i ? x : undo ? { ...x, status: x.was || x.status, was: undefined } : { ...x, status: 'ok' as const, was: x.status }));
+    const skipped = words.filter((x) => x.status === 'missing').length;
+    setRes({ ...res, words, score: res.reached ? Math.round(((res.reached - skipped) / res.reached) * 100) : 0 });
+  };
   const cnt = (k: string) => (res ? res.words.filter((w) => w.status === k).length : 0);
   const cv = s ? s.verses.find((v) => v.n === cur) : undefined;
   const sInfo = SURAH_LIST.find((x) => x.key === sKey);
@@ -527,7 +533,7 @@ export default function Hafazan() {
                   </View>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-                  {[['ok', 'Heard', cnt('ok') + cnt('close')], ['wrong', 'To check', cnt('wrong')], ['missing', 'Skipped', cnt('missing')], ['pending', 'Not reached', cnt('pending')]].map(([k, t, n]) => (
+                  {[['ok', 'Heard', cnt('ok') + cnt('close')], ['wrong', 'Not sure', cnt('wrong')], ['missing', 'Skipped', cnt('missing')], ['pending', 'Not reached', cnt('pending')]].map(([k, t, n]) => (
                     <View key={String(k)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.08)' }}>
                       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: COL[String(k)] }} />
                       <Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{n + ' ' + t}</Text>
@@ -539,7 +545,7 @@ export default function Hafazan() {
                 ) : (
                   <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.12)' }}>
                     <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>How to read this result</Text>
-                    {[['ok', 'Green', 'The word was heard.'], ['wrong', 'Yellow', 'Another word was heard here. It still counts as read, but check that you said the right word.'], ['missing', 'Red', 'The word was not heard, so it was skipped. A line through it means skipped.'], ['pending', 'Grey', 'You stopped before this word, so it is not counted.']].map(([k, c, d]) => (
+                    {[['ok', 'Green', 'The word was heard.'], ['wrong', 'Yellow', 'The app is not sure about this word. It still counts as read. If you said it right, tap it and mark it as correct.'], ['missing', 'Red', 'The word was not heard, so it was skipped. A line through it means skipped. If you did say it, tap it and mark it as correct.'], ['pending', 'Grey', 'You stopped before this word, so it is not counted.']].map(([k, c, d]) => (
                       <View key={k} style={{ flexDirection: 'row', gap: 8, marginTop: 7, alignItems: 'flex-start' }}>
                         <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COL[k], marginTop: 5 }} />
                         <Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}><Text style={{ color: COL[k], fontWeight: '800' }}>{c + ': '}</Text>{d}</Text>
@@ -573,7 +579,7 @@ export default function Hafazan() {
                   const w = res.words[open]; const tips = tajwidTips(w.word);
                   return (
                     <View style={{ marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.08)' }}>
-                      <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{'Verse ' + w.verse + ' · ' + (w.status === 'ok' || w.status === 'close' ? 'Heard' : w.status === 'wrong' ? 'Another word was heard here' : w.status === 'missing' ? 'Skipped, not heard' : 'Not reached')}</Text>
+                      <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{'Verse ' + w.verse + ' · ' + (w.was ? 'You marked this word as correct' : w.status === 'ok' || w.status === 'close' ? 'Heard' : w.status === 'wrong' ? 'Not sure about this word' : w.status === 'missing' ? 'Skipped, not heard' : 'Not reached')}</Text>
                       {w.status !== 'ok' && w.status !== 'close' && w.status !== 'pending' ? (
                         <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
                           <View style={{ flex: 1, padding: 8, borderRadius: 12, backgroundColor: 'rgba(125,240,198,.1)', borderWidth: 1, borderColor: 'rgba(125,240,198,.3)', alignItems: 'center' }}>
@@ -586,9 +592,11 @@ export default function Hafazan() {
                           </View>
                         </View>
                       ) : null}
-                      {w.status === 'wrong' ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{'The model heard a different word here.'}</Text> : null}
+                      {w.status === 'wrong' ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{'The model heard a different word here. The model can be wrong, so listen to your recording first.'}</Text> : null}
                       {(w.status === 'wrong' || w.status === 'missing') && tips.length ? <Text style={{ color: '#ffd593', fontSize: 12, lineHeight: 18, marginTop: 6 }}>{'Tajwid reminder (from the text, not heard from your voice):\n' + tips.join('\n')}</Text> : null}
                       {w.status === 'wrong' || w.status === 'missing' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>Sometimes the model mishears, not you. Tap "Hear my recording" to check what was recorded.</Text> : null}
+                      {w.status === 'wrong' || w.status === 'missing' ? <Pressable onPress={() => markWord(open)} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.2)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>I said it right</Text></Pressable> : null}
+                      {w.was ? <Pressable onPress={() => markWord(open, true)} style={{ alignSelf: 'flex-start', marginTop: 10, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>Undo</Text></Pressable> : null}
                       {mode !== 'auto' && s && w.status !== 'pending' ? (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
                           <Pressable onPress={async () => { if (hearV) return; setHearV(true); try { stopQuranAudio(); } catch (e) { /* ignore */ } const ok = await playVerse(s.num, w.verse); setHearV(false); if (!ok) setMsg('Could not play the verse. Check your internet and try again.'); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(125,240,198,.18)', borderWidth: 1, borderColor: 'rgba(125,240,198,.5)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{hearV ? '🔊  Playing…' : '🎧  Hear this verse'}</Text></Pressable>

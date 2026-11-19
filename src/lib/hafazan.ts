@@ -37,10 +37,24 @@ function lev(a: string, b: string): number {
 }
 
 export type WStatus = 'ok' | 'close' | 'wrong' | 'missing' | 'pending';
-export type WResult = { word: string; status: WStatus; heard?: string; verse: number; hint?: string };
+export type WResult = { word: string; status: WStatus; heard?: string; verse: number; hint?: string; was?: WStatus };
+
+// Edit distance where swapping similar-sounding letters is cheap, and dropping or adding a long-vowel letter is half a mistake,
+// because those are the things the speech model gets wrong most often even when the recitation was right.
+const SOFT = 'اويءه';
+function softLev(a: string, b: string): number {
+  const m = a.length, n = b.length, gap = (c: string) => (SOFT.includes(c) ? 0.5 : 1);
+  let prev = [0]; for (let j = 1; j <= n; j++) prev[j] = prev[j - 1] + gap(b[j - 1]);
+  for (let i = 1; i <= m; i++) {
+    const cur = [prev[0] + gap(a[i - 1])];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + gap(a[i - 1]), cur[j - 1] + gap(b[j - 1]), prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : sim(a[i - 1], b[j - 1]) ? 0.3 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
 
 // How close two normalised words are: 0 equal, 1 near (one letter off / similar sounding), 2 different.
-function wordDist(a: string, b: string): number {
+export function wordDist(a: string, b: string): number {
   if (a === b) return 0;
   if (!a || !b) return 2;
   // the model sometimes joins or splits a word, or drops a long vowel: treat one-letter differences as near
@@ -48,6 +62,7 @@ function wordDist(a: string, b: string): number {
   if (d === 0) return 0;
   if (d === 1 && Math.max(a.length, b.length) >= 3) return 1;
   if (a.length === b.length && d <= 2 && [...a].every((c, i) => sim(c, b[i]) || c === b[i])) return 1;
+  if (Math.max(a.length, b.length) >= 3 && softLev(a, b) <= 1) return 1;
   if (d === 1) return 1.5;
   return 2;
 }
