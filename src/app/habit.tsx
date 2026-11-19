@@ -89,6 +89,7 @@ export default function Habit() {
   const hRef = useRef(h); hRef.current = h;
   const [autoMsg, setAutoMsg] = useState('');
   const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState<string | null>(null); const [wake, setWake] = useState<string | null>(null);
+  const [tErr, setTErr] = useState('');
   const goal = h.goal || 8000;
   const cg = cupsGoal(h); const kg = latestKg(h);
   const t = getDay(h, 0);
@@ -264,10 +265,11 @@ export default function Habit() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed ?? t.bed ?? ''} onChangeText={(x: string) => setBed(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 08:30" style={{ marginTop: 4 }} /></View>
-              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake ?? t.wake ?? ''} onChangeText={(x: string) => setWake(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 15:30" style={{ marginTop: 4 }} /></View>
-              <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
+              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed ?? t.bed ?? ''} onChangeText={(x: string) => { setBed(fmtTime(x)); setTErr(''); }} keyboardType="number-pad" maxLength={5} placeholder="e.g. 08:30" style={{ marginTop: 4 }} /></View>
+              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake ?? t.wake ?? ''} onChangeText={(x: string) => { setWake(fmtTime(x)); setTErr(''); }} keyboardType="number-pad" maxLength={5} placeholder="e.g. 15:30" style={{ marginTop: 4 }} /></View>
+              <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0 && hr <= 24) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); setTErr(''); } else setTErr('Not a valid time. Use 24-hour time from 00:00 to 23:59, for example 08:30. Sleep cannot be more than 24 hours.'); }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
             </View>
+            {tErr ? <Text style={{ color: '#ff8fa3', fontSize: 12, fontWeight: '700', marginTop: 6 }}>{tErr}</Text> : null}
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
             <SoftShow show={!!(t.sleep > 0 || t.bed || t.wake)}>
               <Pressable onPress={() => confirmDelete('last night\'s sleep', () => { put({ sleep: 0, bed: '', wake: '' }); setBed(null); setWake(null); }, { title: 'Clear last night\'s sleep?', yes: 'Clear' })} accessibilityLabel="Clear last night's sleep" style={{ alignSelf: 'flex-start', marginTop: 10,  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,143,171,.7)', backgroundColor: 'rgba(255,143,171,.14)' }}>

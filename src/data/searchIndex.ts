@@ -632,4 +632,28 @@ export const SEARCH_INDEX: SearchItem[] = [
   "h": "FamilyTrash.dc.html",
   "k": "recently deleted trash dipadam restore pulih sampah family"
  },
+ {
+  "t": "Sleep timer",
+  "s": "Tap Going to sleep and I'm awake, or use the Quick Settings tile",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "sleep timer tidur going to sleep i'm awake bangun quick settings tile jam tidur bedtime sleep schedule jadual tidur 30 days last night notification"
+ },
+ {
+  "t": "Vehicle score and maintenance jobs",
+  "s": "Health score, jobs you repeat and days since or left",
+  "m": "Record",
+  "c": "#ff8fab",
+  "h": "Record.dc.html",
+  "k": "vehicle score skor kenderaan motorcycle score maintenance tasks tugasan spray chain minyak rantai tyre pressure tekanan tayar engine oil minyak enjin coolant done today days left hari lagi overdue lewat parts alat ganti"
+ },
+ {
+  "t": "Event days left",
+  "s": "Each event shows days left in red, yellow or green",
+  "m": "Planner",
+  "c": "#8ea8ff",
+  "h": "Planner.dc.html",
+  "k": "event acara days left hari lagi overdue lewat today hari ini upcoming akan datang red yellow green merah kuning hijau tarikh date"
+ },
 ];
