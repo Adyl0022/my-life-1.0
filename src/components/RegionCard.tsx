@@ -107,7 +107,7 @@ export function RegionCard() {
         </View>
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{(typeof r.ws === 'number' && r.ws >= 0 ? 'Weekly charts start on ' + WS_NAME[r.ws] + '.' : 'Auto follows your country: ' + WS_NAME[autoWeekStart(r.cc)] + '.')}</Text>
       </View>
-      <Text style={{ color: dim, fontSize: 11.5, marginTop: 12, lineHeight: 16 }}>This only changes how amounts look. Your numbers are not converted.</Text>
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 12, lineHeight: 16 }}>Currency only changes how amounts look. Your numbers are not converted.</Text>
       {open === 'country' ? (
         <Sheet title="Choose country" ph="Search country" items={countries} sel={r.cc} onClose={() => setOpen('')}
           onPick={(id) => { const c = countryOf(id); setR({ ...r, cc: c.cc }); setOpen(''); }} />

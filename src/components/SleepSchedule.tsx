@@ -14,7 +14,7 @@ export function SleepSchedule({ h }: { h: HData }) {
   const [n, setN] = useState(7); const big = n > 7;
   // 7 = this week, Monday to Sunday, so last week never mixes in. 30 = the last 30 days.
   const back = weekBack(dateOf(0));
-  const days: { label: string; d: HDay; today: boolean; fut: boolean }[] = Array.from({ length: n }, (_, i) => { const o = big ? i - (n - 1) : i - back; const dt = dateOf(o); return { label: o === 0 ? 'Last night' : big ? dt.getDate() + ' ' + MON[dt.getMonth()] : WD[dt.getDay()], d: getDay(h, o), today: o === 0, fut: o > 0 }; });
+  const days: { label: string; d: HDay; today: boolean; fut: boolean }[] = Array.from({ length: n }, (_, i) => { const o = big ? i - (n - 1) : i - back; const dt = dateOf(o); return { label: o === 0 && big ? 'Last night' : big ? dt.getDate() + ' ' + MON[dt.getMonth()] : WD[dt.getDay()], d: getDay(h, o), today: o === 0, fut: o > 0 }; });
   const rows = days.map((x) => { const b = mins(x.d.bed), w = mins(x.d.wake); if (b == null || w == null) return { ...x, b: null as number | null, w: null as number | null, len: 0 }; let len = (w - b + 1440) % 1440; if (len === 0) len = 1440; return { ...x, b, w, len }; });
   const timed = rows.filter((r) => r.b != null);
   const today = rows.find((r) => r.today) || rows[rows.length - 1];
