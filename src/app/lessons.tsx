@@ -72,6 +72,7 @@ export default function Screen() {
           </View>
         </Pressable>
       )) : <Empty e={q.trim() || tag ? '🔍' : '💡'} t={q.trim() || tag ? 'Nothing found' : 'No lessons yet'} s={q.trim() || tag ? 'Try another word or tag.' : 'Tap + to write down something you learned.'} />}
+      {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </RecordPage>
   );
 }
