@@ -9,9 +9,12 @@ import { MemSave, MEM_EMPTY } from '../lib/memories';
 // Which pages may turn by themselves in the card at the bottom of Home. Quick log is always there.
 export const DASH_PAGES: { k: string; t: string; s: string; e: string; c: string }[] = [
   { k: 'prayer', t: 'Next prayer', s: 'The next prayer time and how long is left', e: '🕌', c: '#5ee7b5' },
+  { k: 'tasks', t: 'Tasks today', s: 'Tasks due today and any that are late', e: '✅', c: '#5ee7b5' },
   { k: 'event', t: 'Next event', s: 'The nearest event with days left', e: '📅', c: '#8ea8ff' },
   { k: 'job', t: 'Vehicle job', s: 'A maintenance job that is due soon or late', e: '🔧', c: '#7df0c6' },
+  { k: 'renew', t: 'Road tax, insurance, licence', s: 'Shows when one expires within 30 days', e: '🏍️', c: '#ffb3c6' },
   { k: 'money', t: 'Money this month', s: 'What is left to spend this month', e: '💰', c: '#ffd24a' },
+  { k: 'debt', t: 'Debt payment', s: 'A payment due within 7 days or late', e: '💳', c: '#ffc46b' },
   { k: 'streak', t: 'Streak', s: 'How many days in a row you logged', e: '🔥', c: '#ff9a8b' },
   { k: 'score', t: 'Life score', s: 'Your score for today', e: '🎯', c: '#b794ff' },
   { k: 'tip', t: 'Tip', s: 'A small tip from your own records', e: '💡', c: '#ffd9a8' },

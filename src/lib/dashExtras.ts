@@ -2,6 +2,7 @@ import { usePrayer } from './prayer';
 import { odoEstimate, taskState } from './maintTasks';
 import { calcLeft, commitFor, ymKey } from './moneyLeft';
 import { cs } from './region';
+import { isActive, amountDue, dueDay, ymOf } from './debts';
 import type { Core } from './insights';
 
 // Extra pages for the Dashboard card. Each one is null when there is nothing worth showing, so the card never turns through empty pages.
@@ -11,7 +12,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const ymd = (d: Date) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const dayN = (s: string) => { const p = s.split('-'); return Math.round(new Date(+p[0], +p[1] - 1, +p[2], 12).getTime() / 86400000); };
 
-export function useDashExtras(core: Core, on: { islamic: boolean; planner: boolean; record: boolean; finance: boolean }): { prayer: Extra | null; event: Extra | null; job: Extra | null; money: Extra | null } {
+export function useDashExtras(core: Core, on: { islamic: boolean; planner: boolean; record: boolean; finance: boolean }): { prayer: Extra | null; event: Extra | null; job: Extra | null; money: Extra | null; tasks: Extra | null; renew: Extra | null; debt: Extra | null } {
   const pr = usePrayer(true);
   const now = new Date(); const today = ymd(now);
   let prayer: Extra | null = null;
@@ -53,5 +54,45 @@ export function useDashExtras(core: Core, on: { islamic: boolean; planner: boole
         : { label: 'MONEY THIS MONTH', title: cs() + money(c.left) + ' left', sub: c.daysLeft + (c.daysLeft === 1 ? ' day' : ' days') + ' to go · about ' + cs() + money(c.allowance) + ' a day', tone: c.state === 'care' ? '#ffd24a' : '#5ee7b5', go: '/finance' };
     }
   }
-  return { prayer, event, job, money: moneyX };
+  // Tasks that are due today or already late.
+  let tasks: Extra | null = null;
+  if (on.planner) {
+    const tl = ((core.pl && (core.pl as any).tasks) || []).filter((x: any) => x && x.status !== 'done' && /^\d{4}-\d{2}-\d{2}$/.test(x.due || ''));
+    const td = tl.filter((x: any) => x.due === today); const lt = tl.filter((x: any) => x.due < today);
+    const all = [...lt, ...td];
+    if (all.length) {
+      tasks = { label: 'TASKS TODAY', title: all.length === 1 ? all[0].name : all.length + ' tasks need you', sub: [td.length ? td.length + ' due today' : '', lt.length ? lt.length + ' late' : ''].filter(Boolean).join(' · '), tone: lt.length ? '#ff6b81' : '#ffd24a', go: '/planner' };
+    }
+  }
+  // Road tax, insurance or licence that expires within 30 days (or expired in the last 60 days).
+  let renew: Extra | null = null;
+  if (on.record) {
+    let bw: { n: number; label: string; veh: string } | null = null; const vehs = Object.keys((core.rec && (core.rec as any).data) || {});
+    Object.entries((core.rec && (core.rec as any).data) || {}).forEach(([veh, v]: [string, any]) => {
+      const r = (v && v.renew) || {};
+      ([['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Licence']] as [string, string][]).forEach(([k, label]) => {
+        const d = r[k]; if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+        const n = dayN(d) - dayN(today); if (n > 30 || n < -60) return;
+        if (!bw || n < bw.n) bw = { n, label, veh };
+      });
+    });
+    const b: any = bw;
+    if (b) renew = { label: 'RENEWAL', title: b.label + (vehs.length > 1 ? ' · ' + b.veh : ''), sub: b.n < 0 ? 'Expired ' + -b.n + (b.n === -1 ? ' day ago' : ' days ago') : b.n === 0 ? 'Expires today' : b.n + (b.n === 1 ? ' day left' : ' days left'), tone: b.n <= 7 ? '#ff6b81' : '#ffd24a', go: '/record' };
+  }
+  // The next debt payment: due within 7 days, or this month's payment that is past its day and still unpaid.
+  let debt: Extra | null = null;
+  if (on.finance) {
+    const list = (((core.debts as any) && (core.debts as any).debts) || []) as any[];
+    const ym = ymOf(now); let pick: { n: number; name: string; amt: number } | null = null;
+    list.forEach((d) => {
+      if (!d || !isActive(d, ym)) return;
+      const paid = ((d.paid || {})[ym] || 0) > 0; if (paid) return;
+      const n = dayN(ymd(new Date(now.getFullYear(), now.getMonth(), dueDay(d, now.getFullYear(), now.getMonth())))) - dayN(today);
+      if (n > 7) return;
+      if (!pick || n < pick.n) pick = { n, name: d.name, amt: amountDue(d, ym) };
+    });
+    const b: any = pick;
+    if (b) debt = { label: 'DEBT PAYMENT', title: b.name + ' · ' + cs() + money(b.amt), sub: b.n < 0 ? 'Overdue ' + -b.n + (b.n === -1 ? ' day' : ' days') : b.n === 0 ? 'Due today' : 'Due in ' + b.n + (b.n === 1 ? ' day' : ' days'), tone: b.n < 0 ? '#ff6b81' : b.n <= 2 ? '#ffd24a' : '#5ee7b5', go: '/finance' };
+  }
+  return { prayer, event, job, money: moneyX, tasks, renew, debt };
 }

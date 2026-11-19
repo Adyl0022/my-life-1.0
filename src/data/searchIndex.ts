@@ -662,7 +662,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#8ea8ff",
   "h": "Settings.dc.html",
-  "k": "dashboard card kad capsule quick log pages halaman next prayer solat event vehicle job money streak score tip memories hide sembunyi pilih choose settings automatik auto turn"
+  "k": "dashboard card kad capsule quick log pages halaman next prayer solat event vehicle job tasks today tugasan hari ini road tax cukai jalan insurans lesen licence renewal tamat tempoh debt hutang bayaran money streak score tip memories hide sembunyi pilih choose settings automatik auto turn"
  },
  {
   "t": "Your Memories with My Life 1.0",

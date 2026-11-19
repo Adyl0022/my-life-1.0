@@ -23,8 +23,9 @@ import { HeadIcon, Face } from './HabitIcons';
 import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap to switch what it shows, long-press to open the full page.
-type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'memories' | 'prayer' | 'event' | 'job' | 'money';
-const ORDER: Kind[] = ['log', 'prayer', 'event', 'job', 'money', 'streak', 'score', 'tip', 'memories'];
+type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'memories' | 'prayer' | 'event' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
+const ORDER: Kind[] = ['log', 'prayer', 'tasks', 'event', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'memories'];
+const EXK = ['prayer', 'event', 'job', 'money', 'tasks', 'renew', 'debt'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -53,7 +54,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
   const ex = useDashExtras(core, { islamic: hid.on('islamic'), planner: hid.on('planner'), record: hid.on('record'), finance: hid.on('finance') });
-  const ok: Record<Kind, boolean> = { prayer: !!ex.prayer, event: !!ex.event, job: !!ex.job, money: !!ex.money, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, memories: !!sess && !(mem && mem.dash === false) };
+  const ok: Record<Kind, boolean> = { prayer: !!ex.prayer, event: !!ex.event, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, memories: !!sess && !(mem && mem.dash === false) };
   const dp = useDashPages(); ORDER.forEach((k) => { if (k !== 'log' && !dp.isOn(k)) ok[k] = false; });
   const avail = ORDER.filter((k) => ok[k]);
   const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
@@ -67,7 +68,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       Animated.parallel([Animated.timing(v, { toValue: 1, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: 0, duration: 160, useNativeDriver: true })]).start();
     });
   };
-  const open = () => router.push((kind === 'prayer' || kind === 'event' || kind === 'job' || kind === 'money' ? (ex[kind] as any).go : kind === 'memories' ? '/memories' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
+  const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'memories' ? '/memories' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   nextRef.current = next;
   // The card turns by itself every few seconds. It waits after a touch, and stays put while you are sleeping or typing something.
@@ -181,8 +182,8 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
         <Text style={{ color: dim, fontSize: 11 }}>This week · ring = today</Text>
       </View>
     </>);
-  } else if (kind === 'prayer' || kind === 'event' || kind === 'job' || kind === 'money') {
-    const e = ex[kind] as any;
+  } else if (EXK.indexOf(kind) >= 0) {
+    const e = (ex as any)[kind] as any;
     body = (<>
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{e.label}</Text>
