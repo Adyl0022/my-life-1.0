@@ -41,6 +41,7 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
   const ref = useRef<any>(null); const { width } = useWindowDimensions(); const w = Math.min(width - 40, 420); const h = w / 1.45;
   const uri = pages[Math.min(i, pages.length - 1)];
   const text = (note.trim() || 'FOR ONE PURPOSE ONLY').toUpperCase();
+  const chord = Math.hypot(0.4 * w, 0.55 * h); const bar = { cx: 0.2 * w, cy: 0.275 * h, len: chord * 1.1, deg: (Math.atan2(-0.55 * h, 0.4 * w) * 180) / Math.PI, fs: Math.max(7, Math.min(11, (chord * 0.9 - text.length) / (text.length * 0.66))) };
   const go = async () => {
     buzz(); setBusy(true); setMsg('');
     try {
@@ -73,11 +74,10 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
           <View ref={ref} collapsable={false} style={{ marginTop: 16, width: w, height: h, alignSelf: 'center', borderRadius: 14, overflow: 'hidden', backgroundColor: '#0d0a18' }}>
             <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="contain" />
             <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, overflow: 'hidden' }}>
-              {[0.34, 0.68].map((y) => (
-                <View key={y} style={{ position: 'absolute', left: -w * 0.2, width: w * 1.4, top: h * y - 14, height: 28, justifyContent: 'center', transform: [{ rotate: '-22deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.9)', backgroundColor: 'rgba(0,0,0,.2)' }}>
-                  <Text numberOfLines={1} style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 1.5, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.9)', textShadowRadius: 2, textShadowOffset: { width: 1, height: 1 } }}>{text}</Text>
-                </View>
-              ))}
+              {/* One bar across the top-left corner, like the tip from Jabatan Pendaftaran Negara: two straight lines with the purpose written between them. */}
+              <View style={{ position: 'absolute', left: bar.cx - bar.len, width: bar.len * 2, top: bar.cy - 13, height: 26, justifyContent: 'center', transform: [{ rotate: bar.deg + 'deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.92)', backgroundColor: 'rgba(0,0,0,.22)' }}>
+                <Text numberOfLines={1} style={{ color: '#fff', fontSize: bar.fs, fontWeight: '800', letterSpacing: 1, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.9)', textShadowRadius: 2, textShadowOffset: { width: 1, height: 1 } }}>{text}</Text>
+              </View>
             </View>
           </View>
           {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 12 }}>{msg}</Text> : null}
