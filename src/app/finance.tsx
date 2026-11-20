@@ -72,7 +72,7 @@ export default function Finance() {
   const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
   const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
   const [sbs, setSbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
-  const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY); const accTot = totals(accD, d.spends as any, commitTotal(dbt.debts));
+  const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY); const accTot = totals(accD, d.spends as any, commitTotal(dbt.debts), dbt.debts as any);
 
   const selY = parseInt(ym.slice(0, 4), 10), selM = parseInt(ym.slice(5, 7), 10) - 1;
   const sumOf = (o?: Record<string, number>) => DEFS.reduce((a, x) => a + ((o || {})[x[0]] || 0), 0);

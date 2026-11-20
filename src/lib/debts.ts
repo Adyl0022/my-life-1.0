@@ -3,7 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { setup } from './adhan';
 import { cs } from './region';
 
-export type Debt = { id: number; name: string; bal: number; monthly: number; due: number; since: string; paid: Record<string, number>; remind: boolean; fixed?: boolean; goal?: number };
+export type Debt = { id: number; name: string; bal: number; monthly: number; due: number; since: string; paid: Record<string, number>; remind: boolean; fixed?: boolean; goal?: number; acc?: number; accSince?: string };
 export type DebtData = { debts: Debt[]; nextId: number; notify: boolean; ahead: number; food?: number };
 export const DEBT_EMPTY: DebtData = { debts: [], nextId: 1, notify: true, ahead: 1 };
 const MONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Glass } from './Glass';
 import { Inp, W } from './Ui';
 import { useStored } from '../lib/store';
 import { SAV_EMPTY, SavData } from '../lib/savings';
+import { ACC_EMPTY, AccData, groupOf } from '../lib/accounts';
 import { DEBT_EMPTY, DebtData, Debt, remaining, monthsLeft, dueDay, isActive, amountDue, yearsMonths, payoffLabel, ymOf, syncDebtAlerts } from '../lib/debts';
 import { cs, cu } from '../lib/region';
 
@@ -25,7 +27,7 @@ const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label:
 
 export function Commitments({ income }: { income: number }) {
   const [d, setD] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
-  const [sav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [gl, setGl] = useState(0);
+  const [sav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [gl, setGl] = useState(0); const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const [pf, setPf] = useState(0);
   const [adding, setAdding] = useState(false); const [edit, setEdit] = useState(0);
   const [n, setN] = useState(''); const [bal, setBal] = useState(''); const [mo, setMo] = useState(''); const [day, setDay] = useState('');
   // The order is kept in its own small record. The bills themselves are never changed by sorting.
@@ -65,16 +67,16 @@ export function Commitments({ income }: { income: number }) {
   const after = income - commit - food;
   const free = income - commit - food;
   const save = (nd: DebtData) => setD(nd);
-  const reset = () => { setFixed(false); setAdding(false); setEdit(0); setN(''); setBal(''); setMo(''); setDay(''); setGl(0); };
-  const startEdit = (x: Debt) => { setEdit(x.id); setAdding(true); setN(x.name); setFixed(!!x.fixed); setBal(x.fixed ? '' : String(remaining(x) + (x.paid[ym] || 0))); setMo(String(x.monthly)); setDay(String(x.due)); setGl(x.goal || 0); };
+  const reset = () => { setFixed(false); setAdding(false); setEdit(0); setN(''); setBal(''); setMo(''); setDay(''); setGl(0); setPf(0); };
+  const startEdit = (x: Debt) => { setEdit(x.id); setAdding(true); setN(x.name); setFixed(!!x.fixed); setBal(x.fixed ? '' : String(remaining(x) + (x.paid[ym] || 0))); setMo(String(x.monthly)); setDay(String(x.due)); setGl(x.goal || 0); setPf(x.acc && accD.accs.some((a) => a.id === x.acc) ? x.acc : 0); };
   const submit = () => {
     const b = pn(bal), m = pn(mo), dd = Math.round(pn(day));
     if (!n.trim() || (!fixed && !(b > 0)) || !(m > 0) || !(dd >= 1 && dd <= 31)) { setMsg(fixed ? 'Fill in the name, the monthly amount and a due day from 1 to 31.' : 'Fill in the name, balance, monthly payment and a due day from 1 to 31.'); return; }
     setMsg('');
     if (edit) {
-      save({ ...d, debts: list.map((x) => (x.id === edit ? { ...x, name: n.trim(), monthly: m, due: dd, fixed, goal: gl || undefined, bal: fixed ? 0 : b + Object.keys(x.paid).filter((k) => k !== ym).reduce((a, k) => a + x.paid[k], 0) } : x)) });
+      save({ ...d, debts: list.map((x) => (x.id === edit ? { ...x, name: n.trim(), monthly: m, due: dd, fixed, goal: gl || undefined, acc: pf || undefined, accSince: pf ? (x.acc === pf && x.accSince ? x.accSince : ym) : undefined, bal: fixed ? 0 : b + Object.keys(x.paid).filter((k) => k !== ym).reduce((a, k) => a + x.paid[k], 0) } : x)) });
     } else {
-      save({ ...d, nextId: d.nextId + 1, debts: [...list, { id: d.nextId, name: n.trim(), monthly: m, due: dd, since: ym, paid: {}, remind: true, fixed, goal: gl || undefined, bal: fixed ? 0 : b }] });
+      save({ ...d, nextId: d.nextId + 1, debts: [...list, { id: d.nextId, name: n.trim(), monthly: m, due: dd, since: ym, paid: {}, remind: true, fixed, goal: gl || undefined, acc: pf || undefined, accSince: pf ? ym : undefined, bal: fixed ? 0 : b }] });
     }
     reset();
   };
@@ -141,6 +143,17 @@ export function Commitments({ income }: { income: number }) {
             <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={mo} onChangeText={setMo} placeholder={'Monthly (' + cu() + ')'} />
             <Inp min={1} max={31} style={{ flex: 1 }} keyboardType="number-pad" value={day} onChangeText={setDay} placeholder="Due day (1 to 31)" onSubmitEditing={submit} />
           </View>
+          {accD.accs.length ? (
+            <View>
+              <Text style={{ color: dim, fontSize: 11.5, fontWeight: '800', letterSpacing: 1, marginBottom: 6 }}>PAY FROM (OPTIONAL)</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {[{ id: 0, name: 'Not linked', c: '' }, ...accD.accs.map((a) => ({ id: a.id, name: a.name, c: groupOf(a.g).c }))].map((o) => (
+                  <Pressable key={o.id} onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setPf(o.id); }} accessibilityLabel={o.name} style={({ pressed }) => ({ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: pf === o.id ? (o.c || '#ffc46b') : 'rgba(255,255,255,.2)', backgroundColor: pf === o.id ? (o.c || '#ffc46b') + '40' : 'rgba(255,255,255,.08)', transform: [{ scale: pressed ? 0.95 : 1 }] })}><Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{o.name}</Text></Pressable>
+                ))}
+              </View>
+              <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>When you tick a month as paid, that amount comes off this account. Months you already ticked before are not counted.</Text>
+            </View>
+          ) : null}
           <Pressable onPress={submit}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 13, fontWeight: '800' }}>{edit ? 'Save changes' : fixed ? 'Add commitment' : 'Add debt'}</Text></LinearGradient></Pressable>
         </View>
       ) : null}

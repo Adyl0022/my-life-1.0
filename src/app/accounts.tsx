@@ -17,7 +17,7 @@ import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 import { cs, useRegion } from '../lib/region';
 import { DEBT_EMPTY, DebtData, remaining } from '../lib/debts';
-import { ACC_EMPTY, commitTotal, GROUPS, groupOf, isLiab, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
+import { ACC_EMPTY, type AccDebt, commitTotal, GROUPS, groupOf, isLiab, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -37,7 +37,7 @@ const Act = ({ t, onPress, c, basis }: { t: string; onPress: () => void; c?: str
 const Err = ({ t }: { t: string }) => <Text style={{ color: '#ff8fa3', fontSize: 12, fontWeight: '700', marginTop: 6 }}>{t}</Text>;
 
 type Spends = AccSpend[];
-type Ctx = { data: AccData; setData: (v: AccData) => void; spends: Spends };
+type Ctx = { data: AccData; setData: (v: AccData) => void; spends: Spends; debts: AccDebt[] };
 type MoveMode = { mode: 'transfer' | 'deposit' | 'adjust'; acc?: number };
 
 // ---------- Add or edit an account ----------
@@ -76,12 +76,12 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
 
 // ---------- Transfer, money in, or set the balance ----------
 function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () => void }) {
-  const { data, setData, spends } = ctx; const accs = data.accs;
+  const { data, setData, spends, debts } = ctx; const accs = data.accs;
   const first = accs.find((a) => a.id === mv.acc) || accs[0];
   const [from, setFrom] = useState<number>(mv.mode === 'transfer' ? (first && !isLiab(first) ? first.id : (accs.find((a) => !isLiab(a)) || first).id) : 0);
   const [to, setTo] = useState<number>(mv.mode === 'transfer' ? (first && isLiab(first) ? first.id : ((accs.find((a) => a.id !== (first || { id: 0 }).id) || first).id)) : mv.mode === 'deposit' ? (first && !isLiab(first) ? first.id : (accs.find((a) => !isLiab(a)) || first).id) : first.id);
   const [amt, setAmt] = useState(''); const [date, setDate] = useState(todayStr()); const [note, setNote] = useState(''); const [tried, setTried] = useState(false);
-  const target = accs.find((a) => a.id === to); const cur = target ? balanceOf(target, data, spends) : 0;
+  const target = accs.find((a) => a.id === to); const cur = target ? balanceOf(target, data, spends, debts) : 0;
   const n = pn(amt);
   const title = mv.mode === 'transfer' ? (target && isLiab(target) ? 'Pay off' : 'Transfer') : mv.mode === 'deposit' ? 'Money in' : 'Set balance';
   const pickChips = (sel: number, set: (id: number) => void, skip?: number, only?: (a: Acc) => boolean) => (
@@ -124,9 +124,9 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
 
 // ---------- One account ----------
 function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; onClose: () => void; onEdit: () => void; onMove: (m: MoveMode) => void }) {
-  const { data, setData, spends } = ctx; const a = data.accs.find((x) => x.id === id); const [all, setAll] = useState(false);
+  const { data, setData, spends, debts } = ctx; const a = data.accs.find((x) => x.id === id); const [all, setAll] = useState(false);
   if (!a) return null;
-  const grp = groupOf(a.g); const liab = grp.liab; const b = balanceOf(a, data, spends); const ls = linesOf(a, data, spends); const shown = all ? ls : ls.slice(0, 8);
+  const grp = groupOf(a.g); const liab = grp.liab; const b = balanceOf(a, data, spends, debts); const ls = linesOf(a, data, spends, debts); const shown = all ? ls : ls.slice(0, 8);
   return (
     <SheetFrame noNote title={a.name} sub={grp.t + ' · as of ' + nice(a.since)} onClose={onClose}>
       <View style={{ marginTop: 14, padding: 18, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', overflow: 'hidden' }}>
@@ -146,7 +146,7 @@ function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; on
         <View key={l.key} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Text numberOfLines={1} style={{ color: W, fontSize: 14, fontWeight: '700' }}>{l.text}</Text>
-            <Text style={{ color: dim, fontSize: 11.5, marginTop: 2 }}>{nice(l.date) + (l.kind === 'spend' ? ' · Spending Tracker' : '')}</Text>
+            <Text style={{ color: dim, fontSize: 11.5, marginTop: 2 }}>{nice(l.date) + (l.kind === 'spend' ? ' · Spending Tracker' : l.kind === 'debt' ? ' · Commitments' : '')}</Text>
           </View>
           <Text style={{ color: (liab ? l.delta > 0 : l.delta < 0) ? PINK : '#5ee7b5', fontSize: 14, fontWeight: '800' }}>{(l.delta > 0 ? '+' : '-') + cs() + money(Math.abs(l.delta))}</Text>
           {l.kind === 'move' ? <Pressable onPress={() => { buzz(); confirmDelete('this entry', () => setData({ ...data, moves: data.moves.filter((m) => m.id !== l.ref) })); }} hitSlop={8} accessibilityLabel="Delete entry"><Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 18, fontWeight: '800' }}>×</Text></Pressable> : null}
@@ -166,10 +166,12 @@ export default function Accounts() {
   const [data, setData] = useStored<AccData>('ml_accounts', ACC_EMPTY);
   const [fin] = useStored<{ spends?: Spends }>('ml_finance', {});
   const spends = (fin && fin.spends) || [];
-  const ctx: Ctx = { data, setData, spends };
+  const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
+  const debts = (((dbt && dbt.debts) || []) as unknown) as AccDebt[];
+  const ctx: Ctx = { data, setData, spends, debts };
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
-  const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY); const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
-  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || [])); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []);
+  const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
+  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), debts); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
     <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}>
       <Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: vc || W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{v}</Text>
@@ -223,7 +225,7 @@ export default function Accounts() {
                   <Text style={{ color: sec.liab ? PINK : '#9fb6ff', fontSize: 15, fontWeight: '800' }}>{cs() + money(sec.sum)}</Text>
                 </View>
                 {gs.map((g) => {
-                  const list = data.accs.filter((a) => a.g === g.k); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends), 0); const shut = fold.includes(g.k);
+                  const list = data.accs.filter((a) => a.g === g.k); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends, debts), 0); const shut = fold.includes(g.k);
                   return (
                     <View key={g.k} style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
                       <Tap onPress={() => setFold(shut ? fold.filter((x) => x !== g.k) : [...fold, g.k])} label={(shut ? 'Open ' : 'Close ') + g.plural} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: shut ? 2 : 4 }}>
@@ -233,7 +235,7 @@ export default function Accounts() {
                         <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 15, width: 14, textAlign: 'center' }}>{shut ? '▸' : '▾'}</Text>
                       </Tap>
                       {shut ? null : list.map((a) => {
-                        const b = balanceOf(a, data, spends);
+                        const b = balanceOf(a, data, spends, debts);
                         return (
                           <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
                             <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{a.name}</Text>
