@@ -254,7 +254,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Record",
   "c": "#7c9cff",
   "h": "Record.dc.html",
-  "k": "documents dokumen passport pasport mykad ic cidb permit bank card kad member warranty waranti insurance agreement certificate sijil scan imbas expiry tamat tempoh reminder peringatan renew renewing soon negara country another country luar negara issued in how to renew perbaharui lock kunci fingerprint cap jari biometric share kongsi watermark copy salin pdf pages halaman"
+  "k": "documents dokumen passport pasport mykad ic cidb permit bank card kad member warranty waranti insurance agreement certificate sijil scan imbas scanner straighten crop enhance camscanner luruskan expiry tamat tempoh reminder peringatan renew renewing soon negara country another country luar negara issued in how to renew perbaharui lock kunci fingerprint cap jari biometric share kongsi watermark copy salin pdf pages halaman"
  },
  {
   "t": "Road tax, insurance and licence",

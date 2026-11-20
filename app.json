@@ -94,6 +94,7 @@
         }
       ],
       "./plugins/withReleaseSigning",
+      "react-native-document-scanner-plugin",
       [
         "expo-splash-screen",
         {

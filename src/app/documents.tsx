@@ -13,7 +13,7 @@ import { PrivateNote, Sections, Lab } from '../components/ColUi';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm } from '../lib/num';
-import { takePhoto } from '../lib/photo';
+import { takePhoto, scanDocument } from '../lib/photo';
 import { LineIcon } from '../components/LineIcon';
 import { Toggle } from '../components/Toggle';
 import { EqPills } from '../components/TabSlide';
@@ -150,7 +150,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
   const pick = async (camera: boolean) => {
     setBusy(true); setMsg('');
     try {
-      const uri = await takePhoto(camera);
+      const uri = camera ? await scanDocument() : await takePhoto(false);
       if (uri) {
         const text = Platform.OS === 'web' ? null : await scanPhoto(uri);
         const fresh = !f.id && !f.title.trim() && !f.number.trim();
@@ -211,7 +211,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
                 ) : null}
                 {f.photos.length < 9 ? (
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                    {[['Add page: camera', true], ['Add page: gallery', false]].map(([n, cam]) => (<Pressable key={n as string} onPress={async () => { setPmsg(''); try { const u = await takePhoto(cam as boolean); if (u) set({ photos: [...f.photos, u] }); } catch (e: any) { setPmsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings, or choose a photo instead.' : 'Could not open the photo. Please try again.'); } }} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.96 : 1 }] })}><View style={{ height: 40, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{n as string}</Text></View></Pressable>))}
+                    {[['Add page: camera', true], ['Add page: gallery', false]].map(([n, cam]) => (<Pressable key={n as string} onPress={async () => { setPmsg(''); try { const u = cam ? await scanDocument() : await takePhoto(false); if (u) set({ photos: [...f.photos, u] }); } catch (e: any) { setPmsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings, or choose a photo instead.' : 'Could not open the photo. Please try again.'); } }} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.96 : 1 }] })}><View style={{ height: 40, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{n as string}</Text></View></Pressable>))}
                   </View>
                 ) : <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>That is the most pages for one paper (10).</Text>}
                 {pmsg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{pmsg}</Text> : null}
