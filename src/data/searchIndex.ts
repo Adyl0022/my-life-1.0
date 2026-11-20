@@ -322,11 +322,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Energy",
-  "s": "How energetic you feel today",
+  "s": "Energy score, tip and week or month trend",
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "energy tenaga tired penat letih exhausted energetic bertenaga"
+  "k": "energy tenaga tired penat letih exhausted energetic bertenaga score skor gauge trend graf weekly mingguan monthly bulanan"
  },
  {
   "t": "Sleep schedule",

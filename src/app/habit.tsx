@@ -12,7 +12,7 @@ import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
 import { HeartLog } from '../components/HeartLog';
 import { PatternsTab } from '../components/PatternsTab';
 import { energyEstimate, restSignal } from '../lib/patterns';
-import { EnergyBig } from '../components/EnergyUi';
+import { EnergyBig, PCT, type EnergyPoint } from '../components/EnergyUi';
 import { SleepSchedule } from '../components/SleepSchedule';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
@@ -105,6 +105,7 @@ export default function Habit() {
   const goal = h.goal || 8000;
   const cg = cupsGoal(h); const kg = latestKg(h);
   const t = getDay(h, 0);
+  const enSeries = (n: number): EnergyPoint[] => { const out: EnergyPoint[] = []; for (let o = -(n - 1); o <= 0; o++) { const d = getDay(h, o); const k = keyOfDate(dateOf(o)); const ow = d.en != null && d.en >= 0; const e = ow ? null : energyEstimate(d, cg, goal, restSignal(h, k)); const lv = ow ? (d.en as number) : e ? e.lvl : -1; out.push({ d: k, own: ow, v: lv >= 0 ? PCT[lv] : null }); } return out; };
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [keyOfDate(dateOf(0))]: { ...t, ...p } } });
   const meds = h.meds || []; const taken = t.med || [];
   const relaxToday = mins(t);
@@ -268,7 +269,7 @@ export default function Habit() {
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, padding: 16 }}>
             <Ttl nm k="energy" t="Energy" />
-            <EnergyBig en={t.en} est={energyEstimate(t, cg, goal, restSignal(h, keyOfDate(dateOf(0))))} onPick={(i) => put({ en: i })} />
+            <EnergyBig en={t.en} est={energyEstimate(t, cg, goal, restSignal(h, keyOfDate(dateOf(0))))} week={enSeries(7)} month={enSeries(30)} onPick={(i) => put({ en: i })} />
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl nm k="sleep" t="Sleep Tracker" />
