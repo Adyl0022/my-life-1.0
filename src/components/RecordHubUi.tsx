@@ -51,13 +51,13 @@ function Spin({ dur, children, style }: { dur: number; children: React.ReactNode
 }
 
 // The soft dark-pink page used by every My Record screen.
-export function RecordPage({ title, sub, children, art, right, bg }: { title: string; sub: string; children: React.ReactNode; art?: boolean; right?: React.ReactNode; bg?: React.ReactNode }) {
+export function RecordPage({ title, sub, children, art, right, bg, tone }: { title: string; sub: string; children: React.ReactNode; art?: boolean; right?: React.ReactNode; bg?: React.ReactNode; tone?: { base: string; grad: [string, string, string]; a: string; b: string } }) {
   const router = useRouter();
   return (
-    <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
-      <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      <Drift dx={-28} dy={26} dur={7000}><Blob size={320} color="rgba(255,143,171,.38)" style={{ right: -100, top: -40 }} /></Drift>
-      <Drift dx={30} dy={-24} dur={8500} delay={1200}><Blob size={340} color="rgba(124,156,255,.2)" style={{ left: -120, bottom: -150 }} /></Drift>
+    <View style={{ flex: 1, backgroundColor: tone ? tone.base : '#1b0f26' }}>
+      <LinearGradient colors={tone ? tone.grad : ['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+      <Drift dx={-28} dy={26} dur={7000}><Blob size={320} color={tone ? tone.a : "rgba(255,143,171,.38)"} style={{ right: -100, top: -40 }} /></Drift>
+      <Drift dx={30} dy={-24} dur={8500} delay={1200}><Blob size={340} color={tone ? tone.b : "rgba(124,156,255,.2)"} style={{ left: -120, bottom: -150 }} /></Drift>
       {art ? <PageArt /> : null}
       {bg}
       {art ? <Sky shooting={false} /> : null}
