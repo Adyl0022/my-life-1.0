@@ -6,6 +6,7 @@ import { RecordPage } from '../components/RecordHubUi';
 import { Glass } from '../components/Glass';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
+import { SubArt } from '../components/SubArt';
 import { LineIcon } from '../components/LineIcon';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
@@ -112,19 +113,19 @@ function Row({ s, today, onPress }: { s: Sub; today: string; onPress: () => void
   const span = s.cycle === 'week' ? 7 : s.cycle === 'year' ? 365 : 30; const fill = Math.max(0.04, Math.min(1, 1 - Math.max(0, d.days) / span));
   const per = s.cycle === 'week' ? '/wk' : s.cycle === 'year' ? '/yr' : '/mo';
   return (
-    <Pressable onPress={onPress} accessibilityLabel={'Open ' + s.name} style={({ pressed }) => ({ marginTop: 10, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: hot ? d.col + 'b3' : 'rgba(255,255,255,.2)', borderTopColor: hot ? d.col : 'rgba(255,255,255,.38)', backgroundColor: 'rgba(255,255,255,.06)' }}>
+    <Pressable onPress={onPress} accessibilityLabel={'Open ' + s.name} style={({ pressed }) => ({ marginTop: 8, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+      <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: hot ? d.col + 'b3' : 'rgba(255,255,255,.2)', borderTopColor: hot ? d.col : 'rgba(255,255,255,.38)', backgroundColor: 'rgba(255,255,255,.06)' }}>
         <LinearGradient colors={hot ? [d.col + '45', d.col + '0a'] : [c.c + '30', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 11 }}>
-          <Tile name={s.name} cat={s.cat} photo={s.photo} size={50} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 8 }}>
+          <Tile name={s.name} cat={s.cat} photo={s.photo} size={40} />
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text numberOfLines={1} style={{ color: W, fontSize: 16.5, fontWeight: '800' }}>{s.name}</Text>
+            <Text numberOfLines={1} style={{ color: W, fontSize: 15.5, fontWeight: '800' }}>{s.name}</Text>
             <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, marginTop: 3 }}>{CYCLES.find((x) => x.k === s.cycle)!.per}{s.note ? ' · ' + s.note : ''}</Text>
           </View>
-          <Text style={{ color: W, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 }}>{rm(num(s.price))}<Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '600' }}>{per}</Text></Text>
+          <Text style={{ color: W, fontSize: 15.5, fontWeight: '800', letterSpacing: -0.3 }}>{rm(num(s.price))}<Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '600' }}>{per}</Text></Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingBottom: 14 }}>
-          <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1, borderColor: d.col + '99', backgroundColor: d.hot ? 'rgba(255,107,129,.85)' : d.col + '26' }}><Text style={{ color: d.hot ? '#fff' : d.col, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.5 }}>{d.pill}</Text></View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingBottom: 11 }}>
+          <View style={{ paddingVertical: 2, paddingHorizontal: 9, borderRadius: 999, borderWidth: 1, borderColor: d.col + '99', backgroundColor: d.hot ? 'rgba(255,107,129,.85)' : d.col + '26' }}><Text style={{ color: d.hot ? '#fff' : d.col, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.5 }}>{d.pill}</Text></View>
           <View style={{ flex: 1, height: 4, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.1)', overflow: 'hidden' }}><View style={{ width: (fill * 100) + '%', height: 4, borderRadius: 4, backgroundColor: hot ? d.col : c.c }} /></View>
           <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11 }}>{shortD(d.date)}</Text>
         </View>
@@ -153,37 +154,37 @@ export default function Screen() {
   const notThis = (x: ReturnType<typeof detect>[number]) => confirmDelete(x.name, () => setSt({ ...st, no: [...no, x.key] }), { title: 'Not a subscription?', message: x.name + ' will not be suggested again.', yes: 'Hide it' });
   const plus = <Pressable onPress={() => setF(blank())} accessibilityLabel="Add subscription"><LinearGradient colors={[BL, GR]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#07243a', fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
   return (
-    <RecordPage title="Subscriptions" sub={subs.length ? rm(total) + ' a month' : 'Track what you pay'} right={plus}>
-      <View style={{ marginTop: 6, borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.42)' }}>
-        <LinearGradient colors={['rgba(124,156,255,.5)', 'rgba(183,148,255,.34)', 'rgba(255,180,94,.24)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18 }}>
-          <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 10, fontWeight: '800', letterSpacing: 1.8 }}>YOU PAY EVERY MONTH</Text>
-          <Text style={{ color: W, fontSize: 38, fontWeight: '800', marginTop: 4, letterSpacing: -1 }}>{rm(total)}</Text>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.16)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{rm(total * 12)} a year</Text></View>
-            <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.16)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{subs.length} active</Text></View>
-            {nextUp ? <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.22)', borderWidth: 1, borderColor: 'rgba(94,231,181,.5)' }}><Text numberOfLines={1} style={{ color: '#8fe9d0', fontSize: 11.5, fontWeight: '800' }}>Next: {nextUp.name} · {nextUp.d.pill.toLowerCase()}</Text></View> : null}
+    <RecordPage title="Subscriptions" sub={subs.length ? rm(total) + ' a month' : 'Track what you pay'} right={plus} bg={<SubArt />}>
+      <View style={{ marginTop: 6, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.42)' }}>
+        <LinearGradient colors={['rgba(124,156,255,.5)', 'rgba(183,148,255,.34)', 'rgba(255,180,94,.24)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14 }}>
+          <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}>YOU PAY EVERY MONTH</Text>
+          <Text style={{ color: W, fontSize: 30, fontWeight: '800', marginTop: 2, letterSpacing: -0.8 }}>{rm(total)}</Text>
+          <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+            <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.16)' }}><Text style={{ color: W, fontSize: 11, fontWeight: '700' }}>{rm(total * 12)} a year</Text></View>
+            <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.16)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{subs.length} active</Text></View>
+            {nextUp ? <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.22)', borderWidth: 1, borderColor: 'rgba(94,231,181,.5)' }}><Text numberOfLines={1} style={{ color: '#8fe9d0', fontSize: 11.5, fontWeight: '800' }}>Next: {nextUp.name} · {nextUp.d.pill.toLowerCase()}</Text></View> : null}
           </View>
-          {shares.length ? <View style={{ marginTop: 16 }}>
-            <View style={{ flexDirection: 'row', height: 8, borderRadius: 8, overflow: 'hidden', gap: 2 }}>{shares.map((x) => <View key={x.k} style={{ flex: x.v, backgroundColor: x.c, borderRadius: 4 }} />)}</View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 9 }}>{shares.map((x) => <View key={x.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: x.c }} /><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 11.5, fontWeight: '600' }}>{x.n} {Math.round((x.v / (total || 1)) * 100)}%</Text></View>)}</View>
+          {shares.length ? <View style={{ marginTop: 12 }}>
+            <View style={{ flexDirection: 'row', height: 6, borderRadius: 8, overflow: 'hidden', gap: 2 }}>{shares.map((x) => <View key={x.k} style={{ flex: x.v, backgroundColor: x.c, borderRadius: 4 }} />)}</View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 7 }}>{shares.map((x) => <View key={x.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: x.c }} /><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 11.5, fontWeight: '600' }}>{x.n} {Math.round((x.v / (total || 1)) * 100)}%</Text></View>)}</View>
           </View> : null}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 }}><LineIcon name="bell" c="rgba(255,255,255,.75)" size={15} /><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, lineHeight: 16, flex: 1 }}>Charges still to come this month are taken off Money Left.</Text></View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}><LineIcon name="bell" c="rgba(255,255,255,.75)" size={15} /><Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, lineHeight: 16, flex: 1 }}>This month's coming charges come off Money Left.</Text></View>
         </LinearGradient>
       </View>
       {found.map((x) => (
-        <View key={x.key} style={{ marginTop: 12, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,181,.55)', borderTopColor: 'rgba(94,231,181,.85)' }}>
-          <LinearGradient colors={['rgba(94,231,181,.26)', 'rgba(94,231,181,.05)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14 }}>
+        <View key={x.key} style={{ marginTop: 10, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,181,.55)', borderTopColor: 'rgba(94,231,181,.85)' }}>
+          <LinearGradient colors={['rgba(94,231,181,.26)', 'rgba(94,231,181,.05)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 50, height: 50, borderRadius: 17, backgroundColor: 'rgba(94,231,181,.2)', borderWidth: 1, borderColor: 'rgba(94,231,181,.6)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="wand" c={GR} size={25} /></View>
+              <View style={{ width: 40, height: 34, borderRadius: 12, backgroundColor: 'rgba(94,231,181,.2)', borderWidth: 1, borderColor: 'rgba(94,231,181,.6)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="wand" c={GR} size={21} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: '#8fe9d0', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}>FOUND IN YOUR SPENDING</Text>
                 <Text numberOfLines={1} style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{x.name} · {rm(x.amt)}</Text>
                 <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 2 }}>Paid {x.months} months in a row, around the {x.day}{x.day % 10 === 1 && x.day !== 11 ? 'st' : x.day % 10 === 2 && x.day !== 12 ? 'nd' : x.day % 10 === 3 && x.day !== 13 ? 'rd' : 'th'}</Text>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-              <Pressable onPress={() => addFound(x)} accessibilityLabel={'Add ' + x.name} style={{ flex: 1 }}><View style={{ height: 40, borderRadius: 14, backgroundColor: GR, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06312a', fontSize: 13.5, fontWeight: '800' }}>Add subscription</Text></View></Pressable>
-              <Pressable onPress={() => notThis(x)} accessibilityLabel={'Not ' + x.name}><View style={{ width: 92, height: 40, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>Not this</Text></View></Pressable>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 9 }}>
+              <Pressable onPress={() => addFound(x)} accessibilityLabel={'Add ' + x.name} style={{ flex: 1 }}><View style={{ height: 34, borderRadius: 12, backgroundColor: GR, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06312a', fontSize: 13.5, fontWeight: '800' }}>Add subscription</Text></View></Pressable>
+              <Pressable onPress={() => notThis(x)} accessibilityLabel={'Not ' + x.name}><View style={{ width: 86, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>Not this</Text></View></Pressable>
             </View>
           </LinearGradient>
         </View>
