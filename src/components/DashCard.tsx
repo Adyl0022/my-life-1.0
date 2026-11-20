@@ -46,17 +46,18 @@ const pillOf = (k: string, val?: string) => {
   if (k === 'score') return val + ' / 100';
   return val.toUpperCase();
 };
-// every page uses this one layout so the sizes match: tile 48, label 9.5, title 16 (one line), sub 12.5 (two lines), pill on the right
+// every page uses this one layout so the sizes match: label 9.5, title 16 (one line), sub 12.5 (two lines), status pill top right, a big faded emoji as a watermark
 function Premium({ k, label, title, sub, tone, val }: { k: string; label: string; title: string; sub: string; tone?: string; val?: string }) {
   const g0 = PG[k] || { e: '✨', c: TEAL }; const hot = toneOf(tone); const c = hot || g0.c; const pill = pillOf(k, val);
+  const sh = { textShadowColor: 'rgba(10,10,50,.35)', textShadowRadius: 5, textShadowOffset: { width: 0, height: 1 } } as const;
   return (<>
-    <View style={{ width: 48, height: 48, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: c + '38', borderWidth: 1, borderColor: c + '99' }}><Text style={{ fontSize: 23 }}>{g0.e}</Text></View>
-    <View style={{ flex: 1, minWidth: 0 }}>
-      <Text numberOfLines={1} style={{ color: hot || '#d6faf3', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>{label}</Text>
-      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3, textShadowColor: 'rgba(10,10,50,.35)', textShadowRadius: 5, textShadowOffset: { width: 0, height: 1 } }}>{title}</Text>
-      <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.92)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2, textShadowColor: 'rgba(10,10,50,.3)', textShadowRadius: 4, textShadowOffset: { width: 0, height: 1 } }}>{sub}</Text>
+    <Text pointerEvents="none" style={{ position: 'absolute', right: -6, bottom: -20, fontSize: 90, lineHeight: 104, opacity: 0.3, transform: [{ rotate: '-12deg' }] }}>{g0.e}</Text>
+    <View style={{ flex: 1, minWidth: 0, paddingRight: pill ? 78 : 56 }}>
+      <Text numberOfLines={1} style={{ color: hot === RED ? '#ffd5db' : hot || '#d6faf3', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>{label}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3, ...sh }}>{title}</Text>
+      <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2, ...sh }}>{sub}</Text>
     </View>
-    {pill ? <View style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: c + '88', backgroundColor: hot === RED ? 'rgba(255,107,129,.88)' : c + '2b' }}><Text numberOfLines={1} style={{ color: hot === RED ? '#fff' : c, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 }}>{pill}</Text></View> : null}
+    {pill ? <View style={{ position: 'absolute', right: 14, top: 12, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: c + 'b3', backgroundColor: hot === RED ? 'rgba(255,107,129,.92)' : c + '40' }}><Text numberOfLines={1} style={{ color: hot === RED ? '#fff' : c, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>{pill}</Text></View> : null}
   </>);
 }
 
@@ -226,10 +227,10 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { prog.setValue(0); const a = Animated.timing(prog, { toValue: 1, duration: 5000, useNativeDriver: false }); a.start(); return () => a.stop(); }, [kind]);
   return (
     <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={logOpen ? (cur0 === 'heart' || (cur0 === undefined && unw) ? undefined : next) : open} onLongPress={logOpen ? open : next} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <Glass style={{ minHeight: 100, justifyContent: 'center', borderRadius: 26, ...(hotC ? { borderColor: hotC + 'aa', borderWidth: 1.2, shadowColor: hotC, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
-        {kind !== 'log' ? <LinearGradient colors={[(hotC || TEAL) + (hotC ? '55' : '2a'), 'rgba(255,255,255,0)']} start={{ x: 1, y: 0 }} end={{ x: 0.35, y: 0.9 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : null}
+      <Glass style={{ minHeight: 100, justifyContent: 'center', borderRadius: 26, ...(hotC ? { borderColor: hotC + 'b3', borderWidth: 1.2, shadowColor: hotC, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
+        {kind !== 'log' ? <><LinearGradient colors={[(hotC || (PG[kind] && PG[kind].c) || TEAL) + (hotC ? '99' : '66'), 'rgba(255,255,255,0)']} start={{ x: 1, y: 1 }} end={{ x: 0.3, y: 0.15 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /><LinearGradient colors={['rgba(255,255,255,.26)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 0.7 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /></> : null}
         <View pointerEvents="none" style={{ position: 'absolute', left: 22, right: 22, top: 0, height: 1, backgroundColor: 'rgba(255,255,255,.5)' }} />
-        <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: barOn ? 12 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
+        <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, minHeight: 100, paddingBottom: barOn ? 12 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {barOn ? (
           <View style={{ position: 'absolute', left: 18, right: 18, bottom: 6, flexDirection: 'row', gap: 4 }}>
             {avail.map((k, i) => (
