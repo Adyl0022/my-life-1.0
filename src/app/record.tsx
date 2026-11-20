@@ -12,7 +12,7 @@ export default function RecordHub() {
       <Intro title="Keep what matters" text="Papers, vehicle and belongings, all saved" />
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
         <HalfCard e="📄" title="Documents" sub="Passport and cards" colors={['rgba(142,168,255,.62)', 'rgba(90,100,220,.4)']} pat="dots" sheen={0} onPress={() => router.push('/documents' as any)} />
-        <HalfCard e="🗂️" title="Personal Collection" sub="Gadgets and loans" colors={['rgba(183,148,255,.6)', 'rgba(94,231,223,.32)']} pat="grid" sheen={2400} onPress={() => router.push('/collection' as any)} />
+        <HalfCard e="🗂️" title="Personal Collection" sub="Gadgets and belongings" colors={['rgba(183,148,255,.6)', 'rgba(94,231,223,.32)']} pat="grid" sheen={2400} onPress={() => router.push('/collection' as any)} />
       </View>
       <VehicleCard sheen={1200} onPress={() => router.push('/vehicle' as any)} />
       <View style={{ marginTop: 14 }}><RecordCarousel /></View>
