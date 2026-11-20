@@ -7,7 +7,7 @@ const hrs = (n: number) => (Math.round(n * 10) / 10) + ' h';
 // An estimate from what is already logged. It is a guess, not the person's own rating.
 /** The lowest pulse your watch read in the night (before 7 am) on a day, from the readings saved in the Heart log. */
 export function nightLow(h: HData, key: string): number | null {
-  const v = (h.heart || []).filter((x) => x.id.startsWith('w') && x.d === key && x.bpm != null && x.at < '07:00').map((x) => x.bpm as number);
+  const v = (h.heart || []).filter((x) => x.d === key && x.bpm != null && x.at < '07:00').map((x) => x.bpm as number);
   return v.length ? Math.min(...v) : null;
 }
 /** Today's night pulse against your own usual (the middle value of the last 14 nights). Needs at least 4 earlier nights. */

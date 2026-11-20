@@ -297,6 +297,10 @@ export default function Habit() {
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={wk.findIndex((x) => x.o === 0)} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
           </Glass>
+          <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+            <Ttl k="rheart" t="Heart log" /><Lbl t="Your own pulse and blood pressure notes" />
+            <HeartLog h={h} setH={setH} />
+          </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="water" t="Drink Water" /><Text style={{ color: t.cups >= cg ? '#7df0c6' : 'rgba(255,255,255,.7)', fontSize: 13, fontWeight: '800' }}>{t.cups} of {cg} glasses</Text></View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
@@ -483,10 +487,6 @@ export default function Habit() {
           </Glass>
           </>)}
           {tab === 'body' && (<>
-          <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-            <Ttl k="rheart" t="Heart log" /><Lbl t="Your own pulse and blood pressure notes" />
-            <HeartLog h={h} setH={setH} />
-          </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl k="weight" t="Weight & BMI" /><Lbl t={kg > 0 ? 'Your water goal follows your weight' : 'Add your weight to personalise your water goal'} />
             {kg > 0 && (
