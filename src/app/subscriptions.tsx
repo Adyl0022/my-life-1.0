@@ -6,6 +6,8 @@ import { BlurView } from 'expo-blur';
 import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
+import { useTabPill } from '../components/TabSlide';
+import * as Haptics from 'expo-haptics';
 import { SubArt } from '../components/SubArt';
 import { RecordPage } from '../components/RecordHubUi';
 import Svg, { Circle as SCircle } from 'react-native-svg';
@@ -43,6 +45,7 @@ function Tile({ name, cat, photo, size = 46 }: { name: string; cat: string; phot
 function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
   const [tried, setTried] = useState(false); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [raw, setRaw] = useState(''); const [on] = useOnlineAi();
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
+  const cyc = useTabPill(Math.max(0, CYCLES.findIndex((c) => c.k === f.cycle)), CYCLES.length, ['#7c5cff', '#5b3fe0'], 4);
   const price = pn(f.price); const badPrice = !!numberError(f.price) || !(price > 0); const badDate = !validDate(f.next);
   const save = () => { setTried(true); tryForm('sub'); if (!f.name.trim() || badPrice || badDate) return; onSave(); };
   const apply = (b: Billed, base: Form = f): Form => ({ ...base, name: b.name || base.name, cat: b.cat || base.cat, price: b.price || base.price, cycle: b.cycle || base.cycle, next: b.next || base.next, trial: b.trial != null ? b.trial : base.trial });
@@ -93,7 +96,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
         {(f.status || 'active') !== 'active' ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{f.status === 'cancelled' ? 'Cancelled' : 'Paused'} subscriptions stay in your list but are left out of your totals, reminders and Money Left.</Text> : null}
       </Sec> : null}
       <Sec><L2 t="HOW OFTEN" />
-      <View style={{ flexDirection: 'row', height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', padding: 4 }}>{CYCLES.map((c) => <Pressable key={c.k} onPress={() => set({ cycle: c.k })} accessibilityLabel={c.n} style={{ flex: 1 }}><View style={{ flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: f.cycle === c.k ? '#6a47e8' : 'transparent' }}><Text style={{ color: W, fontSize: 12, fontWeight: f.cycle === c.k ? '800' : '600' }} numberOfLines={1} adjustsFontSizeToFit>{c.lab}</Text></View></Pressable>)}</View>
+      <View onLayout={cyc.onLayout} style={{ flexDirection: 'row', height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', padding: 4 }}>{cyc.indicator}{CYCLES.map((c) => <Pressable key={c.k} onPress={() => { if (f.cycle !== c.k && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); set({ cycle: c.k }); }} accessibilityLabel={c.n} style={{ flex: 1 }}><View style={{ flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: f.cycle === c.k ? '800' : '600' }} numberOfLines={1} adjustsFontSizeToFit>{c.lab}</Text></View></Pressable>)}</View>
       </Sec>
       <Sec><L2 t={f.trial ? 'FIRST CHARGE (WHEN THE TRIAL ENDS)' : 'NEXT CHARGE'} />
       <DateField value={f.next} onChange={(v: string) => set({ next: v })} />
