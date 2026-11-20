@@ -226,12 +226,12 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { prog.setValue(0); const a = Animated.timing(prog, { toValue: 1, duration: 5000, useNativeDriver: false }); a.start(); return () => a.stop(); }, [kind]);
   return (
     <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={logOpen ? (cur0 === 'heart' || (cur0 === undefined && unw) ? undefined : next) : open} onLongPress={logOpen ? open : next} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <Glass style={{ minHeight: 104, justifyContent: 'center', borderRadius: 26, ...(hotC ? { borderColor: hotC + 'aa', borderWidth: 1.2, shadowColor: hotC, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
+      <Glass style={{ minHeight: 108, justifyContent: 'center', borderRadius: 26, ...(hotC ? { borderColor: hotC + 'aa', borderWidth: 1.2, shadowColor: hotC, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
         {kind !== 'log' ? <LinearGradient colors={[(hotC || TEAL) + (hotC ? '55' : '2a'), 'rgba(255,255,255,0)']} start={{ x: 1, y: 0 }} end={{ x: 0.35, y: 0.9 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : null}
         <View pointerEvents="none" style={{ position: 'absolute', left: 22, right: 22, top: 0, height: 1, backgroundColor: 'rgba(255,255,255,.5)' }} />
-        <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: barOn ? 8 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
+        <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: barOn ? 14 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {barOn ? (
-          <View style={{ position: 'absolute', left: 18, right: 18, bottom: 8, flexDirection: 'row', gap: 4 }}>
+          <View style={{ position: 'absolute', left: 18, right: 18, bottom: 6, flexDirection: 'row', gap: 4 }}>
             {avail.map((k, i) => (
               <Pressable key={k} onPress={() => goTo(k)} hitSlop={{ top: 8, bottom: 8 }} accessibilityLabel={'Show page ' + (i + 1)} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.18)', overflow: 'hidden' }}>
                 {i === idx ? <Animated.View style={{ height: 3, backgroundColor: '#8fe9e2', width: prog.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} /> : i < idx ? <View style={{ height: 3, backgroundColor: 'rgba(143,233,226,.45)' }} /> : null}
