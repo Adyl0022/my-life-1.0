@@ -8,7 +8,7 @@ export const to12 = (s: string) => { const m = /^(\d{1,2}):(\d{2})$/.exec(s); if
 export const medRepeat = (m: { days?: number[] }) => { const d = m.days || []; if (d.length === 0 || d.length >= 7) return 'Everyday'; const k = [...d].sort().join(''); if (k === '12345') return 'Weekdays'; return [...d].sort().map((x) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][x]).join(' '); };
 export type Exp = { id: string; tpl: string; start: string };
 export type HeartRead = { id: string; d: string; at: string; bpm?: number; sys?: number; dia?: number };
-export type HData = { heart?: HeartRead[]; cyOn?: boolean; cyRem?: boolean; px?: string[]; rlGoal?: number; rlRem?: string; rlBell?: boolean; meds?: Med[]; exps?: Exp[]; goal: number; days: Record<string, HDay>; kg?: { d: string; v: number }[]; cm?: number; goalKg?: number; age?: number; sex?: 'm' | 'f'; auto?: boolean };
+export type HData = { heart?: HeartRead[]; hrAuto?: boolean; hrDel?: string[]; cyOn?: boolean; cyRem?: boolean; px?: string[]; rlGoal?: number; rlRem?: string; rlBell?: boolean; meds?: Med[]; exps?: Exp[]; goal: number; days: Record<string, HDay>; kg?: { d: string; v: number }[]; cm?: number; goalKg?: number; age?: number; sex?: 'm' | 'f'; auto?: boolean };
 export const HEMPTY: HData = { goal: 8000, days: {}, kg: [] };
 export const BLANK: HDay = { mood: -1, cups: 0, sleep: 0, steps: 0 };
 export const GLASS = 250;

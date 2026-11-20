@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Platform } from 'react-native';
 import { Text } from './Txt';
 import { Inp, W } from './Ui';
 import { HData, HeartRead, dateOf, keyOfDate } from '../lib/habit';
 
 import { confirmDelete } from '../lib/dialog';
+import { Toggle } from './Toggle';
+import { readWatchHeart, type WatchHeart } from '../lib/watchHeart';
 // A notebook for pulse and blood pressure. The person types the numbers; the app only keeps them and shows them back. It never judges a reading.
 const DIM = 'rgba(255,255,255,.7)'; const T = '#ff8fab';
 const num = (s: string) => { const n = parseInt(s.replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? n : undefined; };
@@ -43,6 +45,23 @@ function Chart({ title, series, pts }: { title: string; series: { c: string; l: 
 
 export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => void; off?: number }) {
   const [bpm, setBpm] = useState(''); const [sys, setSys] = useState(''); const [dia, setDia] = useState(''); const [err, setErr] = useState(''); const [all, setAll] = useState(false);
+  // Pulse from a smart watch, through Health Connect. Read on this phone, about once a minute while this page is open.
+  const hRef = useRef(h); hRef.current = h; const [wh, setWh] = useState<WatchHeart | null>(null); const [retry, setRetry] = useState(0);
+  const watchOn = Platform.OS !== 'web' && off === 0 && !!h.hrAuto;
+  useEffect(() => {
+    if (!watchOn) { setWh(null); return; }
+    let alive = true;
+    const run = async (ask: boolean) => {
+      const r = await readWatchHeart(ask); if (!alive) return; setWh(r);
+      if (r.ok) {
+        const cur = hRef.current; const del = cur.hrDel || []; const have = new Set((cur.heart || []).map((x) => x.id));
+        const fresh = r.samples.filter((x) => !have.has(x.id) && !del.includes(x.id)).map((x) => ({ id: x.id, d: x.d, at: x.at, bpm: x.bpm }) as HeartRead);
+        if (fresh.length) setH({ ...cur, heart: [...(cur.heart || []), ...fresh].slice(-400) });
+      }
+    };
+    run(retry > 0); const t = setInterval(() => run(false), 60000);
+    return () => { alive = false; clearInterval(t); };
+  }, [watchOn, retry]);
   const list = (h.heart || []).slice().sort((a, b) => (a.d + a.at < b.d + b.at ? 1 : -1));
   const asc = list.slice().reverse(); const pu = asc.filter((x) => x.bpm != null).slice(-20); const bp = asc.filter((x) => x.sys != null && x.dia != null).slice(-20);
   const save = () => {
@@ -56,9 +75,34 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
     setH({ ...h, heart: [...(h.heart || []), r].slice(-400) });
     setBpm(''); setSys(''); setDia(''); setErr('');
   };
-  const drop = (id: string) => setH({ ...h, heart: (h.heart || []).filter((x) => x.id !== id) });
+  const drop = (id: string) => setH({ ...h, heart: (h.heart || []).filter((x) => x.id !== id), ...(id.startsWith('w') ? { hrDel: [...(h.hrDel || []), id].slice(-300) } : {}) });
   return (
     <View>
+      {Platform.OS !== 'web' && off === 0 ? (
+        <View style={{ marginTop: 6, marginBottom: 10, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', backgroundColor: 'rgba(255,255,255,.05)' }}>
+          <Pressable onPress={() => { setRetry(h.hrAuto ? 0 : 1); setH({ ...h, hrAuto: !h.hrAuto }); }} accessibilityLabel="Pulse from my watch" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Toggle on={!!h.hrAuto} colors={T} w={46} />
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Pulse from my smart watch</Text><Text style={{ color: DIM, fontSize: 11.5, marginTop: 3, lineHeight: 16 }}>Works with any watch or band whose app can share to Health Connect.</Text></View>
+          </Pressable>
+          {watchOn && wh && wh.ok ? (
+            <View style={{ marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}><Text style={{ color: W, fontSize: 30, fontWeight: '800' }}>{wh.latest.bpm}</Text><Text style={{ color: DIM, fontSize: 12.5 }}>bpm · latest at {wh.latest.at}</Text></View>
+              <Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Last 24 hours: average {wh.avg} · lowest {wh.min} · highest {wh.max} bpm</Text>
+              <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 6, lineHeight: 15 }}>One reading every 3 hours is added to your notebook below. The numbers come from your watch and are only a guide, not medical advice.</Text>
+            </View>
+          ) : null}
+          {watchOn && wh && !wh.ok ? (
+            <View style={{ marginTop: 10 }}>
+              <Text style={{ color: '#ffc46b', fontSize: 11.5, lineHeight: 16 }}>{wh.msg}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>1. Open your watch app (Honor Health, Samsung Health, Mi Fitness, Zepp, Fitbit and so on), then Settings and Health Connect, and allow it to share Heart rate.{'\n'}2. Let the watch sync, then open Health Connect and check that pulse shows there.{'\n'}3. Come back here and tap Check again.</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                <Pressable onPress={() => { try { require('react-native-health-connect').openHealthConnectSettings(); } catch (e) {} }} style={{ flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>Open Health Connect</Text></Pressable>
+                <Pressable onPress={() => setRetry(retry + 1)} style={{ flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: T, alignItems: 'center' }}><Text style={{ color: '#2a0a14', fontSize: 12.5, fontWeight: '800' }}>{wh.needsAllow ? 'Allow' : 'Check again'}</Text></Pressable>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
       <Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>{off < 0 ? 'Add a reading for this day' : 'Add a reading'}</Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
         <Inp min={30} max={220} value={bpm} onChangeText={setBpm} keyboardType="number-pad" placeholder="Pulse" maxLength={3} style={{ flex: 1 }} />
@@ -76,7 +120,7 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
           <Text style={{ color: DIM, fontSize: 11.5, fontWeight: '700', marginBottom: 2 }}>RECENT READINGS</Text>
           {(all ? list : list.slice(0, 6)).map((x) => (
             <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)' }}>
-              <Text style={{ color: DIM, fontSize: 12, width: 86 }}>{dlabel(x.d) + ' ' + x.at}</Text>
+              <Text style={{ color: DIM, fontSize: 12, width: 86 }}>{dlabel(x.d) + ' ' + x.at}</Text>{x.id.startsWith('w') ? <Text style={{ color: DIM, fontSize: 10.5, marginRight: 6 }}>Watch</Text> : null}
               <Text style={{ color: W, fontSize: 13, fontWeight: '800', flex: 1 }}>{[x.bpm != null ? x.bpm + ' bpm' : '', x.sys != null ? x.sys + '/' + x.dia + ' mmHg' : ''].filter(Boolean).join('   ')}</Text>
               <Pressable onPress={() => confirmDelete('this reading', () => drop(x.id))} hitSlop={10} accessibilityLabel="Delete this reading"><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 18, paddingHorizontal: 6 }}>×</Text></Pressable>
             </View>
