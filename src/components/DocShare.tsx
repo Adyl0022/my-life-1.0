@@ -47,7 +47,7 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
   useEffect(() => { let on = true; Image.getSize(uri, (iw, ih) => { if (on && iw > 0 && ih > 0) setRatio(Math.max(0.5, Math.min(2.4, iw / ih))); }, () => {}); return () => { on = false; }; }, [uri]);
   let w = maxW; let h = w / ratio; if (h > 460) { h = 460; w = h * ratio; }
   const text = (note.trim() || 'FOR PURPOSE ONLY').toUpperCase();
-  const chord = Math.hypot(0.4 * w, 0.55 * h); const bar = { cx: 0.2 * w, cy: 0.275 * h, len: chord * 1.1, deg: (Math.atan2(-0.55 * h, 0.4 * w) * 180) / Math.PI, fs: Math.max(7, Math.min(11, (chord * 0.9 - text.length) / (text.length * 0.66))) };
+  const chord = Math.hypot(0.63 * w, 0.435 * h); const bar = { cx: 0.315 * w, cy: 0.2175 * h, len: chord * 1.1, deg: (Math.atan2(-0.435 * h, 0.63 * w) * 180) / Math.PI, fs: Math.max(8, Math.min(13, (chord * 0.9 - text.length) / (text.length * 0.66))) };
   const go = async () => {
     buzz(); setBusy(true); setMsg('');
     try {
@@ -92,7 +92,7 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
             <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="cover" />
             <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, overflow: 'hidden' }}>
               {mark ? <>{/* One bar across the top-left corner, like the tip from Jabatan Pendaftaran Negara: two straight lines with the purpose written between them. */}
-              <View style={{ position: 'absolute', left: bar.cx - bar.len, width: bar.len * 2, top: bar.cy - 13, height: 26, justifyContent: 'center', transform: [{ rotate: bar.deg + 'deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.92)', backgroundColor: 'rgba(0,0,0,.22)' }}>
+              <View style={{ position: 'absolute', left: bar.cx - bar.len, width: bar.len * 2, top: bar.cy - 15, height: 30, justifyContent: 'center', transform: [{ rotate: bar.deg + 'deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.92)', backgroundColor: 'rgba(0,0,0,.22)' }}>
                 <Text numberOfLines={1} style={{ color: '#fff', fontSize: bar.fs, fontWeight: '800', letterSpacing: 1, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.9)', textShadowRadius: 2, textShadowOffset: { width: 1, height: 1 } }}>{text}</Text>
               </View></> : null}
             </View>
