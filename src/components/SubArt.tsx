@@ -18,7 +18,7 @@ function traces(s: Spot): Tr[] {
     const l1 = s.L * (0.3 + r() * 0.3); x += l1 * Math.cos(a); y += l1 * Math.sin(a); d.push([x, y]);
     const a2 = a + ((r() < 0.5 ? -1 : 1) * Math.PI) / 4, l2 = 20 + r() * 40; x += l2 * Math.cos(a2); y += l2 * Math.sin(a2); d.push([x, y]);
     const l3 = s.L * (0.3 + r() * 0.4); x += l3 * Math.cos(a); y += l3 * Math.sin(a); d.push([x, y]);
-    out.push({ pts: d.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '), x, y, col: s.col, op: s.op * 0.9 });
+    out.push({ pts: d.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '), x, y, col: s.col, op: s.op * 0.6 });
   }
   return out;
 }

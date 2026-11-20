@@ -115,7 +115,8 @@ const INK = '#ffffff', INK2 = 'rgba(255,255,255,.66)', VIO = '#b9a6ff', LINE = '
 const deep = (hex: string) => hex;
 const short = (d: ReturnType<typeof dueOf>) => { const tr = d.pill.startsWith('TRIAL'); if (tr) return d.days <= 0 ? 'Trial ends today' : d.days === 1 ? 'Ends tomorrow' : 'Trial · ' + d.days + ' days'; return d.days <= 0 ? 'Today' : d.days === 1 ? 'Tomorrow' : d.days <= 3 ? d.days + ' days' : 'Active'; };
 const tone = (d: ReturnType<typeof dueOf>) => (d.hot ? { c: '#ff8fa3', bg: 'rgba(255,107,129,.2)', t: short(d) } : d.warn ? { c: '#ffd24a', bg: 'rgba(255,210,74,.18)', t: short(d) } : { c: '#5ee7b5', bg: 'rgba(94,231,181,.16)', t: short(d) });
-const card = { borderRadius: 22, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)', borderTopColor: 'rgba(255,255,255,.3)' } as const;
+// Cards are a little more solid than plain glass, so the art behind them does not show through the text, and they lift off the page.
+const card = { borderRadius: 22, backgroundColor: 'rgba(38,24,64,.84)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', borderTopColor: 'rgba(255,255,255,.34)', borderBottomColor: 'rgba(0,0,0,.25)', shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } } as const;
 
 function Row({ s, today, onPress }: { s: Sub; today: string; onPress: () => void }) {
   const d = dueOf(s, today); const t = tone(d);
