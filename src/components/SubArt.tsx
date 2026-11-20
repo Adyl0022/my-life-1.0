@@ -1,64 +1,58 @@
 import React from 'react';
 import { View, Animated, useWindowDimensions } from 'react-native';
-import Svg, { Circle, G, Polyline } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Path, Polyline, Stop } from 'react-native-svg';
 import { useSpin, useSway } from './artMotion';
 
-// Background art for Subscriptions. Top: ribbons that cross in an infinity loop (always coming round again), in gold, rose and blue.
-// Bottom: a fine lattice of small overlapping circles that turns very slowly. Lines only, so the cards on top stay easy to read.
-const GD = '#ffd592', RS = '#ffb0cf', IB = '#a9bcff';
-// centres of a hexagonal lattice of circles of radius r, up to `rings` steps from the middle
-const lattice = (r: number, rings: number) => {
-  const out: { x: number; y: number; d: number }[] = [];
-  for (let i = -rings; i <= rings; i++) for (let j = -rings; j <= rings; j++) {
-    if (Math.abs(i + j) > rings) continue;
-    const x = r * (i + j / 2), y = r * j * 0.866; out.push({ x, y, d: Math.max(Math.abs(i), Math.abs(j), Math.abs(i + j)) });
-  }
-  return out;
+// Background art for Subscriptions, on deep purple.
+// Top right: a spirograph rosette, curves that wind round and close up again, which is what a subscription does every month.
+// Bottom: layers of soft silk waves in violet and orchid that drift slowly. Fine lines and gentle fills, so the cards stay easy to read.
+const LI = '#e4d4ff', OR = '#e08bff', RG = '#ffc9d9', VI = '#9d8bff';
+const hypo = (R: number, r: number, d: number, turns: number) => {
+  const pts: string[] = [];
+  for (let t = 0; t <= turns * 2 * Math.PI; t += 0.03) pts.push(((R - r) * Math.cos(t) + d * Math.cos(((R - r) / r) * t)).toFixed(1) + ',' + ((R - r) * Math.sin(t) - d * Math.sin(((R - r) / r) * t)).toFixed(1));
+  return pts.join(' ');
 };
-function Flower({ r, rings, size, col, op }: { r: number; rings: number; size: number; col: string; op: number }) {
-  const pts = lattice(r, rings); const V = (rings + 1) * r + 4;
-  return (
-    <Svg width={size} height={size} viewBox={`${-V} ${-V} ${V * 2} ${V * 2}`}>
-      <G fill="none" stroke={col} strokeWidth={0.8}>
-        {pts.map((p, i) => <Circle key={i} cx={p.x} cy={p.y} r={r} strokeOpacity={op * (1 - (p.d / (rings + 1)) * 0.75)} />)}
-      </G>
-      <Circle r={(rings + 1) * r} fill="none" stroke={col} strokeOpacity={op * 0.9} strokeWidth={1.1} />
-      <Circle r={(rings + 1) * r + 5} fill="none" stroke={col} strokeOpacity={op * 0.4} strokeWidth={0.6} strokeDasharray="2 5" />
-    </Svg>
-  );
-}
-// infinity (lemniscate) ribbons, one inside the next
-const RIBBON = Array.from({ length: 34 }, (_, k) => {
-  const sc = 60 + k * 6.5, pts: string[] = [];
-  for (let i = 0; i <= 360; i += 4) { const t = (i * Math.PI) / 180, d = 1 + Math.sin(t) ** 2; pts.push((sc * 1.5 * Math.cos(t) / d).toFixed(1) + ',' + (sc * 1.5 * Math.sin(t) * Math.cos(t) / d * 1.6).toFixed(1)); }
-  return { pts: pts.join(' '), col: [GD, RS, IB][k % 3], op: 0.1 + 0.24 * (1 - k / 34) };
-});
+const CURVES = { a: hypo(96, 36, 62, 3), b: hypo(96, 36, 40, 3), c: hypo(60, 22, 36, 3), d: hypo(120, 45, 70, 3) };
+const wave = (w: number, base: number, amp: number, len: number, ph: number) => {
+  let d = 'M-20,' + (base + amp * Math.sin(ph)).toFixed(1);
+  for (let x = -20; x <= w + 40; x += 12) d += ' L' + x + ',' + (base + amp * Math.sin((x / len) * 2 * Math.PI + ph) + (amp / 2) * Math.sin((x / (len * 0.6)) * 2 * Math.PI + ph * 1.7)).toFixed(1);
+  return d;
+};
 function Layer({ left, top, R, rot, scale, children }: { left: number; top: number; R: number; rot?: any; scale?: any; children: React.ReactNode }) {
   return <Animated.View style={{ position: 'absolute', left: left - R, top: top - R, width: R * 2, height: R * 2, transform: [...(rot ? [{ rotate: rot }] : []), ...(scale ? [{ scale }] : [])] }}>{children}</Animated.View>;
 }
 function Dust({ x, y, r, v, c }: { x: number; y: number; r: number; v: Animated.Value; c: string }) {
-  return <Animated.View style={{ position: 'absolute', left: x, top: y, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: c, opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.85] }) }} />;
+  return <Animated.View style={{ position: 'absolute', left: x, top: y, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: c, opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.9] }) }} />;
 }
 export function SubArt() {
   const { width: W, height: H } = useWindowDimensions(); const s = Math.max(W / 390, 1);
-  const a = useSpin(220, 1), b = useSpin(160, -1), sway = useSway(14), shimmer = useSway(6), t1 = useSway(4), t2 = useSway(5.5, 1), t3 = useSway(7, 2);
-  const rs = sway.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1.05] }); const rr = sway.interpolate({ inputRange: [0, 1], outputRange: ['-2deg', '2deg'] });
-  const sh = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
-  const RB = 195 * s;
-  const rw = W; const rh = 330 * s;
+  const a = useSpin(120, 1), b = useSpin(90, -1), c = useSpin(60, 1), d = useSpin(160, -1), glow = useSway(6), w1 = useSway(15), w2 = useSway(19, 2), w3 = useSway(23, 4), t1 = useSway(4), t2 = useSway(5.5, 1), t3 = useSway(7, 2);
+  const gs = glow.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.2] }); const go = glow.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
+  const x1 = w1.interpolate({ inputRange: [0, 1], outputRange: [-26, 26] }), x2 = w2.interpolate({ inputRange: [0, 1], outputRange: [30, -30] }), x3 = w3.interpolate({ inputRange: [0, 1], outputRange: [-20, 20] });
+  const cx = W - 46 * s, cy = 128 * s; const R = 150 * s; const box = { width: R * 2, height: R * 2 };
+  const WH = 340 * s; const wv = (x: Animated.AnimatedInterpolation<number>, base: number, amp: number, len: number, ph: number, c1: string, c2: string, op: number, bottom: number) => (
+    <Animated.View style={{ position: 'absolute', left: -30, bottom, width: W + 60, height: WH, transform: [{ translateX: x }] }}>
+      <Svg width={W + 60} height={WH} viewBox={`0 0 ${W + 60} ${WH}`}>
+        <Defs><LinearGradient id={'g' + ph} x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={c1} stopOpacity={op} /><Stop offset="1" stopColor={c2} stopOpacity={0} /></LinearGradient></Defs>
+        <Path d={wave(W + 60, base, amp, len, ph) + ` L${W + 60},${WH} L0,${WH} Z`} fill={`url(#g${ph})`} />
+        <Path d={wave(W + 60, base, amp, len, ph)} fill="none" stroke={c1} strokeOpacity={0.45} strokeWidth={1} />
+      </Svg>
+    </Animated.View>
+  );
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
-      {/* infinity ribbons */}
-      <Animated.View style={{ position: 'absolute', left: 0, top: 70 * s, width: rw, height: rh, opacity: sh, transform: [{ scale: rs }, { rotate: rr }] }}>
-        <Svg width={rw} height={rh} viewBox="-195 -165 390 330" preserveAspectRatio="xMidYMid slice">
-          {RIBBON.map((r, i) => <Polyline key={i} points={r.pts} fill="none" stroke={r.col} strokeOpacity={r.op} strokeWidth={1} />)}
-        </Svg>
-      </Animated.View>
-      {/* fine lattices at the bottom */}
-      <Layer left={0.28 * W} top={H - 20 * s} R={190 * s} rot={a}><Flower r={13} rings={8} size={190 * s * 2} col={GD} op={0.34} /></Layer>
-      <Layer left={0.86 * W} top={H - 6 * s} R={130 * s} rot={b}><Flower r={11} rings={7} size={130 * s * 2} col={IB} op={0.3} /></Layer>
-      <Dust x={0.1 * W} y={0.2 * H} r={1.6} v={t1} c={GD} /><Dust x={0.5 * W} y={0.28 * H} r={1.2} v={t2} c={RS} /><Dust x={0.86 * W} y={0.5 * H} r={1.8} v={t3} c={GD} />
-      <Dust x={0.32 * W} y={0.5 * H} r={1.3} v={t2} c={IB} /><Dust x={0.92 * W} y={0.72 * H} r={1.3} v={t1} c={RS} /><Dust x={0.6 * W} y={0.8 * H} r={1.7} v={t3} c={GD} />
+      {/* silk waves */}
+      {wv(x1, 215 * s, 18 * s, 220 * s, 0.4, OR, '#5b2bd6', 0.3, 0)}
+      {wv(x2, 248 * s, 16 * s, 180 * s, 2.0, VI, '#3a1a9a', 0.26, 0)}
+      {wv(x3, 280 * s, 12 * s, 260 * s, 3.6, RG, '#8a3aa8', 0.2, 0)}
+      {/* spirograph rosette */}
+      <Layer left={cx} top={cy} R={R} rot={d}><Svg {...box} viewBox="-150 -150 300 300"><Polyline points={CURVES.d} fill="none" stroke={VI} strokeOpacity={0.3} strokeWidth={0.7} /></Svg></Layer>
+      <Layer left={cx} top={cy} R={R} rot={a}><Svg {...box} viewBox="-150 -150 300 300"><Polyline points={CURVES.a} fill="none" stroke={LI} strokeOpacity={0.5} strokeWidth={0.8} strokeLinejoin="round" /></Svg></Layer>
+      <Layer left={cx} top={cy} R={R} rot={b}><Svg {...box} viewBox="-150 -150 300 300"><Polyline points={CURVES.b} fill="none" stroke={OR} strokeOpacity={0.5} strokeWidth={0.8} strokeLinejoin="round" /></Svg></Layer>
+      <Layer left={cx} top={cy} R={R} rot={c}><Svg {...box} viewBox="-150 -150 300 300"><Polyline points={CURVES.c} fill="none" stroke={RG} strokeOpacity={0.55} strokeWidth={0.8} strokeLinejoin="round" /><Circle r={132} fill="none" stroke={LI} strokeOpacity={0.14} strokeWidth={0.6} strokeDasharray="2 6" /></Svg></Layer>
+      <Layer left={cx} top={cy} R={22 * s} scale={gs}><Animated.View style={{ opacity: go }}><Svg width={44 * s} height={44 * s} viewBox="-22 -22 44 44"><Circle r={14} fill={OR} fillOpacity={0.22} /><Circle r={6} fill={LI} fillOpacity={0.35} /><Circle r={2.4} fill="#fff" /></Svg></Animated.View></Layer>
+      <Dust x={0.08 * W} y={0.2 * H} r={1.6} v={t1} c={LI} /><Dust x={0.46 * W} y={0.3 * H} r={1.2} v={t2} c={RG} /><Dust x={0.88 * W} y={0.52 * H} r={1.8} v={t3} c={LI} />
+      <Dust x={0.3 * W} y={0.48 * H} r={1.3} v={t2} c={OR} /><Dust x={0.94 * W} y={0.72 * H} r={1.3} v={t1} c={RG} /><Dust x={0.62 * W} y={0.5 * H} r={1.7} v={t3} c={LI} />
     </View>
   );
 }

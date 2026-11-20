@@ -154,7 +154,7 @@ export default function Screen() {
   const notThis = (x: ReturnType<typeof detect>[number]) => confirmDelete(x.name, () => setSt({ ...st, no: [...no, x.key] }), { title: 'Not a subscription?', message: x.name + ' will not be suggested again.', yes: 'Hide it' });
   const plus = <Pressable onPress={() => setF(blank())} accessibilityLabel="Add subscription"><LinearGradient colors={[BL, GR]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#07243a', fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
   return (
-    <RecordPage title="Subscriptions" sub={subs.length ? rm(total) + ' a month' : 'Track what you pay'} right={plus} bg={<SubArt />} tone={{ base: '#080a1e', grad: ['#080a1e', '#111646', '#1f1452'], a: 'rgba(255,200,110,.30)', b: 'rgba(255,120,170,.2)' }}>
+    <RecordPage title="Subscriptions" sub={subs.length ? rm(total) + ' a month' : 'Track what you pay'} right={plus} bg={<SubArt />} tone={{ base: '#140826', grad: ['#150827', '#2b1052', '#3d1768'], a: 'rgba(214,90,255,.34)', b: 'rgba(120,90,255,.3)' }}>
       <View style={{ marginTop: 6, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.42)' }}>
         <LinearGradient colors={['rgba(124,156,255,.5)', 'rgba(183,148,255,.34)', 'rgba(255,180,94,.24)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14 }}>
           <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}>YOU PAY EVERY MONTH</Text>
