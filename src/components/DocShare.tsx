@@ -1,3 +1,4 @@
+import { Toggle } from './Toggle';
 import { fileStamp } from '../lib/exporter';
 import React, { useRef, useState } from 'react';
 import { View, Pressable, Modal, Image, Platform, ScrollView, useWindowDimensions } from 'react-native';
@@ -37,7 +38,7 @@ export function CopyRow({ number, name }: { number?: string; name?: string }) {
 
 /** A picture with a note printed across it, so a copy sent to someone cannot be used for something else. */
 export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: string; onClose: () => void }) {
-  const [note, setNote] = useState(''); const [i, setI] = useState(0); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('');
+  const [note, setNote] = useState(''); const [mark, setMark] = useState(true); const [i, setI] = useState(0); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('');
   const ref = useRef<any>(null); const { width } = useWindowDimensions(); const w = Math.min(width - 40, 420); const h = w / 1.45;
   const uri = pages[Math.min(i, pages.length - 1)];
   const text = (note.trim() || 'FOR PURPOSE ONLY').toUpperCase();
@@ -63,9 +64,20 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
             <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 22 }}>‹</Text></View></Pressable>
             <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>Share safely</Text><Text numberOfLines={1} style={{ color: dim, fontSize: 12 }}>{title}</Text></View>
           </View>
-          <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginTop: 20, marginBottom: 8 }}>WHY ARE YOU SHARING IT?</Text>
-          <Inp value={note} onChangeText={setNote} placeholder="e.g. For hotel booking only" maxLength={40} />
-          <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>This note is printed across the picture. Nothing is uploaded: the picture is made on this phone and then you pick the app to send it with.</Text>
+          <View style={{ marginTop: 20, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', backgroundColor: 'rgba(255,255,255,.045)' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Write the purpose on the picture</Text>
+                <Text style={{ color: dim, fontSize: 11.5, marginTop: 3, lineHeight: 16 }}>{mark ? 'A bar with your note is printed on the picture, so it cannot be used for something else.' : 'The picture is shared as it is, with nothing written on it.'}</Text>
+              </View>
+              <Toggle on={mark} onPress={() => setMark(!mark)} label="Write the purpose on the picture" />
+            </View>
+            {mark ? (<>
+              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginTop: 16, marginBottom: 8 }}>WHY ARE YOU SHARING IT?</Text>
+              <Inp value={note} onChangeText={setNote} placeholder="e.g. For hotel booking only" maxLength={40} />
+            </>) : null}
+            <Text style={{ color: dim, fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>Nothing is uploaded: the picture is made on this phone and then you pick the app to send it with.</Text>
+          </View>
           {pages.length > 1 ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
               {pages.map((p, k) => (<Pressable key={k} onPress={() => { buzz(); setI(k); }} accessibilityLabel={'Page ' + (k + 1)}><Image source={{ uri: p }} style={{ width: 52, height: 52, borderRadius: 10, borderWidth: 2, borderColor: k === i ? '#8ea8ff' : 'rgba(255,255,255,.2)' }} /></Pressable>))}
@@ -74,10 +86,10 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
           <View ref={ref} collapsable={false} style={{ marginTop: 16, width: w, height: h, alignSelf: 'center', borderRadius: 14, overflow: 'hidden', backgroundColor: '#0d0a18' }}>
             <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="contain" />
             <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, overflow: 'hidden' }}>
-              {/* One bar across the top-left corner, like the tip from Jabatan Pendaftaran Negara: two straight lines with the purpose written between them. */}
+              {mark ? <>{/* One bar across the top-left corner, like the tip from Jabatan Pendaftaran Negara: two straight lines with the purpose written between them. */}
               <View style={{ position: 'absolute', left: bar.cx - bar.len, width: bar.len * 2, top: bar.cy - 13, height: 26, justifyContent: 'center', transform: [{ rotate: bar.deg + 'deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.92)', backgroundColor: 'rgba(0,0,0,.22)' }}>
                 <Text numberOfLines={1} style={{ color: '#fff', fontSize: bar.fs, fontWeight: '800', letterSpacing: 1, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.9)', textShadowRadius: 2, textShadowOffset: { width: 1, height: 1 } }}>{text}</Text>
-              </View>
+              </View></> : null}
             </View>
           </View>
           {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 12 }}>{msg}</Text> : null}
