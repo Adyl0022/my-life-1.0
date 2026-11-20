@@ -59,3 +59,18 @@ export function SlidePills({ tabs, index, onChange, colors, textOn = '#fff', tex
     </View>
   );
 }
+
+/** Equal-width tabs that fill the row, with one pill that glides to the tab you press, and a light vibration. */
+export function EqPills({ tabs, index, onChange, colors, textOn = '#fff', fontSize = 12.5, width }: { tabs: string[]; index: number; onChange: (i: number) => void; colors: [string, string]; textOn?: string; fontSize?: number; width?: number }) {
+  const pill = useTabPill(index, tabs.length, colors, 3);
+  return (
+    <View onLayout={pill.onLayout} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', width: width || undefined }}>
+      {pill.indicator}
+      {tabs.map((t, i) => (
+        <Pressable key={t} onPress={() => { if (i === index) return; if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); onChange(i); }} accessibilityLabel={t} style={{ flex: 1 }}>
+          <View style={{ paddingVertical: 9, alignItems: 'center', justifyContent: 'center' }}><Text numberOfLines={1} style={{ color: i === index ? textOn : 'rgba(255,255,255,.85)', fontSize, fontWeight: i === index ? '800' : '600', textAlign: 'center' }}>{t}</Text></View>
+        </Pressable>
+      ))}
+    </View>
+  );
+}

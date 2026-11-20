@@ -38,7 +38,7 @@ export const Tile = ({ icon, c, size = 54, breathe }: { icon: ColIconName; c: st
 export function ItemRow({ tile, label, title, sub, status, statusCol, hot, photo, onPress, a11y }: { tile: React.ReactNode; label: string; title: string; sub?: string; status?: string; statusCol?: string; hot?: boolean; photo?: string; onPress: () => void; a11y: string }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={a11y} style={({ pressed }) => ({ marginTop: 10, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: hot ? 'rgba(255,107,129,.6)' : 'rgba(255,255,255,.2)', borderTopColor: hot ? 'rgba(255,107,129,.7)' : 'rgba(255,255,255,.34)' }}>
+      <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: hot ? 'rgba(255,107,129,.6)' : 'rgba(255,255,255,.2)' }}>
         <LinearGradient colors={hot ? ['rgba(255,107,129,.3)', 'rgba(255,107,129,.08)'] : ['rgba(255,255,255,.12)', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13 }}>
           {photo ? <Image source={{ uri: photo }} style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : tile}
@@ -96,6 +96,37 @@ export function PrivateNote() {
   );
 }
 
+/** Puts a form into bordered boxes: every Lab starts a new box, and a BigBtn ends it. Works through fragments, so conditional parts still line up. */
+export function Sections({ children }: { children?: React.ReactNode }) {
+  const head: React.ReactNode[] = []; const groups: { t: any; k: string; items: React.ReactNode[] }[] = []; const tail: React.ReactNode[] = [];
+  let cur: { t: any; k: string; items: React.ReactNode[] } | null = null;
+  const walk = (ch: React.ReactNode, path: string) => {
+    React.Children.forEach(ch, (c, i) => {
+      const k = path + '.' + i; if (c == null || typeof c === 'boolean') return;
+      if (React.isValidElement(c)) {
+        if (c.type === React.Fragment) { walk((c.props as any).children, k); return; }
+        if (c.type === Lab) { cur = { t: (c.props as any).t, k, items: [] }; groups.push(cur); return; }
+        if (c.type === BigBtn) { cur = null; tail.push(<React.Fragment key={k}>{c}</React.Fragment>); return; }
+      }
+      const el = <React.Fragment key={k}>{c}</React.Fragment>;
+      if (cur) cur.items.push(el); else if (groups.length || tail.length) tail.push(el); else head.push(el);
+    });
+  };
+  walk(children, 'f');
+  return (
+    <>
+      {head}
+      {groups.map((g) => (
+        <View key={g.k} style={{ marginTop: 14, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', backgroundColor: 'rgba(255,255,255,.045)' }}>
+          <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 10 }}>{g.t}</Text>
+          {g.items}
+        </View>
+      ))}
+      {tail}
+    </>
+  );
+}
+
 export function SheetFrame({ title, sub, onClose, children }: { title: string; sub?: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
@@ -107,7 +138,7 @@ export function SheetFrame({ title, sub, onClose, children }: { title: string; s
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{title}</Text>{sub ? <Text style={{ color: dim, fontSize: 12 }}>{sub}</Text> : null}</View>
             </View>
             <PrivateNote />
-            {children}
+            <Sections>{children}</Sections>
         </KbScroll>
       </View>
     </Modal>
@@ -182,7 +213,7 @@ export function PhotoStrip({ photos }: { photos: string[] }) {
 export function GridCard({ tile, photo, label, title, sub, status, statusCol, onPress, a11y }: { tile: React.ReactNode; photo?: string; label: string; title: string; sub?: string; status?: string; statusCol?: string; onPress: () => void; a11y?: string }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={a11y} style={({ pressed }) => ({ width: '48.5%', marginTop: 10, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-      <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.34)', backgroundColor: 'rgba(255,255,255,.06)' }}>
+      <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' }}>
         {photo ? <Image source={{ uri: photo }} style={{ width: '100%', height: 110, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : <View style={{ height: 110, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.05)' }}>{tile}</View>}
         <View style={{ padding: 11 }}>
           <Text style={{ color: '#8fe9e2', fontSize: 9, fontWeight: '800', letterSpacing: 1 }}>{label}</Text>

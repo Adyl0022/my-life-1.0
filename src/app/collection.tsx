@@ -18,7 +18,7 @@ import { useName } from '../lib/store';
 function Card({ icon, title, sub, c, wide, onPress }: { icon: ColIconName; title: string; sub: string; c: string; wide?: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ height: wide ? 92 : 126, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.34)', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 7, shadowOffset: { width: 0, height: 5 } }}>
+      <View style={{ height: wide ? 92 : 126, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 7, shadowOffset: { width: 0, height: 5 } }}>
         <LinearGradient colors={['rgba(255,255,255,.13)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <LinearGradient colors={[c + '59', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.7, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View style={wide ? { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 } : { flex: 1, padding: 14, justifyContent: 'space-between' }}>
@@ -52,9 +52,11 @@ export default function Screen() {
         </View>
       </View>
       {items.length ? (
-        <Pressable onPress={pdf} accessibilityLabel="Export my things as PDF" style={({ pressed }) => ({ marginTop: 16, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', padding: 14, transform: [{ scale: pressed ? 0.98 : 1 }] })}>
-          <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'My things as a PDF'}</Text>
-          <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 3, lineHeight: 17 }}>A list of everything you own with price, date and a photo. Handy for an insurance claim. It is made on this phone and nothing is uploaded.</Text>
+        <Pressable onPress={pdf} accessibilityLabel="Export my things as PDF" style={({ pressed }) => ({ marginTop: 16, transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+          <LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ borderRadius: 20, padding: 16 }}>
+            <Text style={{ color: '#0b1030', fontSize: 16, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'My things as a PDF'}</Text>
+            <Text style={{ color: 'rgba(11,16,48,.8)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>A list of everything you own with price, date and a photo. Handy for an insurance claim. It is made on this phone and nothing is uploaded.</Text>
+          </LinearGradient>
         </Pressable>
       ) : null}
       <View style={{ height: 10 }} />

@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { PDF_CSS, pdfFooter, escHtml as esc, deliverPdf } from './exporter';
+import { PDF_CSS, pdfFooter, escHtml as esc, deliverPdf, fileStamp } from './exporter';
 import { CATS, photosOf, worthNow, worthMine, rm, num, dmy, today, type Item, type ItemCat } from './collection';
 
 // A list of everything you own, with price, date and a photo, as one PDF. Useful for an insurance claim or after a flood.
@@ -27,5 +27,5 @@ export async function itemsPdf(items: Item[], name?: string): Promise<boolean> {
   }
   const html = '<html><head><meta charset="utf-8"><style>' + PDF_CSS + '</style></head><body><div class="ban"><h1>My things</h1><div class="s">List of what I own, ' + esc(dmy(today())) + '</div><span class="pill">' + items.length + ' items</span><span class="pill">Paid ' + esc(rm(paid)) + '</span><span class="pill">Worth now ' + (guessed ? 'about ' : '') + esc(rm(worth)) + '</span></div>'
     + body + (guessed ? '<div class="m" style="margin-top:14px">Worth now is a guess for items where no value was typed. It is not a market price.</div>' : '') + pdfFooter(name) + '</body></html>';
-  return deliverPdf(html, 'my-things-' + today() + '.pdf');
+  return deliverPdf(html, 'Collection-my-life-export-' + fileStamp() + '.pdf');
 }

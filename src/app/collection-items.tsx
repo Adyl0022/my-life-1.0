@@ -8,7 +8,7 @@ import { RecordPage, Intro } from '../components/RecordHubUi';
 import { SearchField } from '../components/Shine';
 import { Inp, DateField, W } from '../components/Ui';
 import { ItemRow, Tile, Sums, Empty, BigBtn, SheetFrame, Detail, Lab, chip, dim, PhotoStrip, GridCard } from '../components/ColUi';
-import { SlidePills } from '../components/TabSlide';
+import { EqPills } from '../components/TabSlide';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm, numberError } from '../lib/num';
@@ -66,13 +66,14 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
       <Inp form="colitem" style={{ marginTop: 9 }} value={f.price} onChangeText={(x: string) => set({ price: x })} keyboardType="decimal-pad" placeholder="Price in RM (optional)" />
       {f.cat === 'gadget' ? (<>
         <Lab t="CONDITION NOW" />
-        <SlidePills tabs={CONDS.map((c) => c.n)} index={Math.max(0, CONDS.findIndex((c) => c.k === (f.cond || 'good')))} onChange={(i) => set({ cond: CONDS[i].k })} colors={['#7c9cff', '#b794ff']} fontSize={12} padX={12} padY={9} />
+        <EqPills tabs={CONDS.map((c) => c.n)} index={Math.max(0, CONDS.findIndex((c) => c.k === (f.cond || 'good')))} onChange={(i) => set({ cond: CONDS[i].k })} colors={['#7c9cff', '#b794ff']} fontSize={12} />
         <Inp form="colitem" noCheck={false} zeroOk style={{ marginTop: 9 }} value={f.worth || ''} onChangeText={(x: string) => set({ worth: x })} keyboardType="decimal-pad" placeholder="What it is worth now in RM (optional)" />
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Know the price it sells for now? Type it. If you leave it empty, My Life 1.0 makes a guess from the price, age, kind, brand and condition.</Text>
       </>) : null}
       <Lab t="DATE BOUGHT" />
       {check(f.noBought, "I do not remember the date", () => set({ noBought: !f.noBought }))}
       {!f.noBought ? <DateField value={f.bought} onChange={(v: string) => set({ bought: v })} past /> : null}
+      {f.cat === 'gadget' && f.noBought ? <Text style={{ color: '#ffd593', fontSize: 11.5, marginTop: 4, lineHeight: 16 }}>Without the date bought, My Life 1.0 cannot guess what it is worth now. Untick the box above and pick the date to get a guess.</Text> : null}
       {tried && bad ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please pick a valid date.</Text> : null}
       {C.warranty ? (<>
         <Lab t="WARRANTY ENDS" />
@@ -110,6 +111,7 @@ export default function Screen() {
   const total = mine.reduce((t, x) => t + num(x.price), 0);
   const worth = C.warranty ? mine.reduce((t, x) => t + (worthNow(x) != null ? (worthNow(x) as number) : num(x.price)), 0) : 0;
   const guessed = C.warranty && mine.some((x) => worthNow(x) != null);
+  const missing = C.warranty ? mine.filter((x) => worthNow(x) == null).length : 0;
   const inW = mine.filter((x) => { const s = wStatus(x); return s && s.n != null && s.n >= 0; }).length;
   const openNew = () => setF(blank(cat));
   const openEdit = (x: Item) => setF({ ...x, cond: x.cond || 'good', worth: x.worth || '', photos: photosOf(x), docIds: (x.docIds || []).filter((i) => docs.some((d) => d.id === i)), noBought: !x.bought, noW: !x.warranty, bought: x.bought || ymd(new Date()), warranty: x.warranty || ymd(new Date(Date.now() + 365 * 86400000)) });
@@ -129,9 +131,9 @@ export default function Screen() {
     <RecordPage title={C.title} sub={mine.length + (mine.length === 1 ? ' item' : ' items')} right={plus} bg={<ColArt />}>
       <Intro plain title={C.title} text={C.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder={'Search ' + C.title.toLowerCase()} /></View>
-      {mine.length ? <Sums a={[C.warranty ? 'YOU PAID' : 'VALUE', rm(total)]} b={C.warranty ? ['WORTH NOW', guessed ? '~ ' + rm(worth) : rm(total)] : undefined} /> : null}
-      {mine.length && C.warranty ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{inW + ' of ' + mine.length + ' still in warranty. '}{guessed ? 'Worth now uses the number you typed, or a guess from the price, age, kind, brand and condition. A guess can be different from real prices.' : 'Add the price and the date bought to see a guess of what it is worth now.'}</Text> : null}
-      {mine.length ? <View style={{ marginTop: 12 }}><SlidePills tabs={['List', 'Grid']} index={grid ? 1 : 0} onChange={(i) => setViews({ ...(views || {}), [cat]: i ? 'grid' : 'list' })} colors={['#7c9cff', '#b794ff']} fontSize={13} padX={26} padY={8} /></View> : null}
+      {mine.length ? <Sums a={[C.warranty ? 'YOU PAID' : 'VALUE', rm(total)]} b={C.warranty ? ['WORTH NOW', guessed ? '~ ' + rm(worth) : '—'] : undefined} /> : null}
+      {mine.length && C.warranty ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{inW + ' of ' + mine.length + ' still in warranty. '}{guessed ? 'Worth now uses the number you typed, or a guess from the price, age, kind, brand and condition.' + (missing ? ' ' + missing + (missing === 1 ? ' item has' : ' items have') + ' no date bought, so ' + (missing === 1 ? 'it is' : 'they are') + ' counted at the price you paid.' : ' A guess can be different from real prices.') : 'To see what your gadgets are worth now, add the price and the date bought to each one, or type the worth yourself.'}</Text> : null}
+      {mine.length ? <View style={{ marginTop: 12 }}><EqPills tabs={['List', 'Grid']} index={grid ? 1 : 0} onChange={(i) => setViews({ ...(views || {}), [cat]: i ? 'grid' : 'list' })} colors={['#7c9cff', '#b794ff']} fontSize={13} width={190} /></View> : null}
       {list.length ? (grid ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
           {list.map((x) => { const s = wStatus(x); return <GridCard key={x.id} a11y={'Open ' + x.name} tile={<Tile icon={kindIcon(cat, x.kind)} c={ac} />} photo={photosOf(x)[0]} label={x.kind.toUpperCase()} title={x.name} sub={x.price ? rm(num(x.price)) : undefined}

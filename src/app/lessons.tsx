@@ -63,7 +63,7 @@ export default function Screen() {
       </ScrollView>
       {list.length ? list.map((l) => (
         <Pressable key={l.id} onPress={() => setF({ ...l })} accessibilityLabel={'Open ' + l.title} style={({ pressed }) => ({ marginTop: 10, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-          <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.34)', padding: 14 }}>
+          <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', padding: 14 }}>
             <LinearGradient colors={['rgba(255,255,255,.12)', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
             <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: TAGC[l.tag] || ACC.lessons }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 6 }}><Text style={{ color: TAGC[l.tag] || ACC.lessons, fontSize: 10, fontWeight: '800', letterSpacing: 1.1 }}>{l.tag.toUpperCase()}</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>{dmy(l.date)}</Text></View>

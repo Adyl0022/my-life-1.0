@@ -1,3 +1,4 @@
+import { fileStamp } from '../lib/exporter';
 import React, { useRef, useState } from 'react';
 import { View, Pressable, Modal, Image, Platform, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -47,7 +48,8 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
       const VS = await import('react-native-view-shot'); const SH = await import('expo-sharing');
       const f = await VS.captureRef(ref.current, { format: 'jpg', quality: 0.92, result: 'tmpfile' });
       if (!(await SH.isAvailableAsync())) { setMsg('Sharing is not available on this phone.'); setBusy(false); return; }
-      await SH.shareAsync(f, { mimeType: 'image/jpeg', dialogTitle: 'Share ' + title });
+      let out = f; try { const FS = await import('expo-file-system/legacy'); const to = (FS.cacheDirectory || '') + 'Document-my-life-share-' + fileStamp() + '.jpg'; await FS.deleteAsync(to, { idempotent: true }); await FS.copyAsync({ from: f, to }); out = to; } catch (e) { /* keep the original file */ }
+      await SH.shareAsync(out, { mimeType: 'image/jpeg', dialogTitle: 'Share ' + title });
     } catch (e) { setMsg('Could not share the picture. Please try again.'); }
     setBusy(false);
   };
@@ -71,7 +73,7 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
           <View ref={ref} collapsable={false} style={{ marginTop: 16, width: w, height: h, alignSelf: 'center', borderRadius: 14, overflow: 'hidden', backgroundColor: '#0d0a18' }}>
             <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="contain" />
             <View pointerEvents="none" style={{ position: 'absolute', left: -w * 0.3, right: -w * 0.3, top: -h * 0.3, bottom: -h * 0.3, justifyContent: 'space-around', transform: [{ rotate: '-24deg' }] }}>
-              {[0, 1, 2, 3, 4, 5].map((r) => (<Text key={r} numberOfLines={1} style={{ color: 'rgba(255,255,255,.62)', fontSize: 22, fontWeight: '900', letterSpacing: 2, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.85)', textShadowRadius: 3, textShadowOffset: { width: 1, height: 1 } }}>{(text + '   ').repeat(4)}</Text>))}
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((r) => (<Text key={r} numberOfLines={1} style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.85)', textShadowRadius: 2, textShadowOffset: { width: 1, height: 1 } }}>{(text + '     ').repeat(8)}</Text>))}
             </View>
           </View>
           {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 12 }}>{msg}</Text> : null}
@@ -93,7 +95,8 @@ export async function exportPdf(pages: string[], title: string): Promise<'ok' | 
     for (const p of pages) { const b64 = await FS.readAsStringAsync(p, { encoding: 'base64' as any }); imgs.push('<div style="page-break-after:always;text-align:center"><img style="max-width:100%;max-height:96vh" src="data:image/jpeg;base64,' + b64 + '"/></div>'); }
     const html = '<html><body style="margin:0;padding:12px">' + imgs.join('') + '</body></html>';
     const r = await PR.printToFileAsync({ html });
-    if (await SH.isAvailableAsync()) await SH.shareAsync(r.uri, { mimeType: 'application/pdf', dialogTitle: title, UTI: 'com.adobe.pdf' });
+    let uri = r.uri; try { const to = (FS.cacheDirectory || '') + 'Document-my-life-export-' + fileStamp() + '.pdf'; await FS.deleteAsync(to, { idempotent: true }); await FS.copyAsync({ from: r.uri, to }); uri = to; } catch (e) { /* keep the original file */ }
+    if (await SH.isAvailableAsync()) await SH.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: title, UTI: 'com.adobe.pdf' });
     return 'ok';
   } catch (e) { return 'fail'; }
 }

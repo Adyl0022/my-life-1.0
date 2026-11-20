@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { View, Pressable, Platform, ScrollView, Image } from 'react-native';
 import { curCode, useRegion } from '../lib/region';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
@@ -15,7 +14,7 @@ import Svg, { Circle as SCircle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { LineIcon } from '../components/LineIcon';
 import { useStored } from '../lib/store';
-import { confirmDelete } from '../lib/dialog';
+import { confirmDelete, showAlert } from '../lib/dialog';
 import { tryForm, pn, numberError } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { scanPhoto } from '../lib/documents';
@@ -43,7 +42,7 @@ function Tile({ name, cat, photo, size = 46 }: { name: string; cat: string; phot
   </View>;
 }
 
-function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
+function Sheet({ f, setF, onSave, onSaveNow, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onSaveNow: (x: Form) => void; onDelete?: () => void; onClose: () => void }) {
   const [guide, setGuide] = useState(false);
   const [tried, setTried] = useState(false); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [raw, setRaw] = useState(''); const [on] = useOnlineAi();
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
@@ -71,7 +70,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
     setBusy(false);
   };
   const svcs = SERVICES.filter((s, i, a) => a.findIndex((x) => x.n === s.n) === i);
-  if (guide) return <CancelGuideSheet name={f.name.trim()} matched={(matchService(f.name) || { n: '' }).n || null} onClose={() => setGuide(false)} onMark={() => { setF({ ...f, status: 'cancelled' }); setGuide(false); }} />;
+  if (guide) return <CancelGuideSheet name={f.name.trim()} matched={(matchService(f.name) || { n: '' }).n || null} onClose={() => setGuide(false)} onMark={() => { setGuide(false); onSaveNow({ ...f, status: 'cancelled' }); }} />;
   return (
     <SheetFrame title={f.id ? 'Edit subscription' : 'Add subscription'} sub="Pick, scan or type it in" onClose={onClose}>
       <Sec><L2 t="PICK A SERVICE" />
@@ -100,7 +99,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
         {(f.status || 'active') !== 'active' ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{f.status === 'cancelled' ? 'Cancelled' : 'Paused'} subscriptions stay in your list but are left out of your totals, reminders and Money Left. Tap Save to keep this change.</Text> : null}
       </Sec> : null}
       <Sec><L2 t="HOW OFTEN" />
-      <View onLayout={cyc.onLayout} style={{ flexDirection: 'row', height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', padding: 4 }}>{cyc.indicator}{CYCLES.map((c) => <Pressable key={c.k} onPress={() => { if (f.cycle !== c.k && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); set({ cycle: c.k }); }} accessibilityLabel={c.n} style={{ flex: 1 }}><View style={{ flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: f.cycle === c.k ? '800' : '600' }} numberOfLines={1} adjustsFontSizeToFit>{c.lab}</Text></View></Pressable>)}</View>
+      <View onLayout={cyc.onLayout} style={{ flexDirection: 'row', height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', padding: 4 }}>{cyc.indicator}{CYCLES.map((c) => <Pressable key={c.k} onPress={() => { if (f.cycle !== c.k && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); set({ cycle: c.k }); }} accessibilityLabel={c.n} style={{ flex: 1 }}><View style={{ flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: f.cycle === c.k ? '800' : '600', textAlign: 'center' }} numberOfLines={1}>{c.lab}</Text></View></Pressable>)}</View>
       </Sec>
       <Sec><L2 t={f.trial ? 'FIRST CHARGE (WHEN THE TRIAL ENDS)' : 'NEXT CHARGE'} />
       <DateField value={f.next} onChange={(v: string) => set({ next: v })} />
@@ -115,7 +114,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>Only the type is kept. Never type a card number here.</Text>
       </Sec>
       <Sec><L2 t="CATEGORY" />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>{SUB_CATS.map((c) => { const on = f.cat === c.k; return <Pressable key={c.k} onPress={() => set({ cat: c.k })} accessibilityLabel={c.n} style={{ width: '31.4%' }}><View style={{ height: 78, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: on ? c.c : 'rgba(255,255,255,.16)', backgroundColor: on ? c.c + '33' : 'rgba(255,255,255,.07)' }}><LineIcon name={c.icon} c={on ? '#fff' : c.c} size={24} /><Text style={{ color: W, fontSize: 12.5, fontWeight: on ? '800' : '600' }}>{c.n}</Text></View></Pressable>; })}</View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 9 }}>{SUB_CATS.map((c) => { const on = f.cat === c.k; return <Pressable key={c.k} onPress={() => set({ cat: c.k })} accessibilityLabel={c.n} style={{ width: '31.5%' }}><View style={{ height: 78, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: on ? c.c : 'rgba(255,255,255,.16)', backgroundColor: on ? c.c + '33' : 'rgba(255,255,255,.07)' }}><LineIcon name={c.icon} c={on ? '#fff' : c.c} size={24} /><Text style={{ color: W, fontSize: 12.5, fontWeight: on ? '800' : '600' }}>{c.n}</Text></View></Pressable>; })}</View>
       </Sec>
       <Sec><L2 t="REMIND ME BEFORE" />
       <View style={{ flexDirection: 'row', gap: 8 }}>{REM.map((r) => <Pressable key={r.d} onPress={() => set({ remind: r.d })} accessibilityLabel={r.n} style={{ flex: 1 }}><View style={chip(f.remind === r.d, BL)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{r.n}</Text></View></Pressable>)}</View>
@@ -134,7 +133,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Sec><L2 t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. Shared plan" maxLength={120} />
       </Sec>
-      {f.id ? <Pressable onPress={() => setGuide(true)} accessibilityLabel="How to cancel" style={({ pressed }) => ({ marginTop: 14, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
+      {f.id ? <Pressable onPress={() => setGuide(true)} accessibilityLabel="How to cancel" style={({ pressed }) => ({ marginTop: 14, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' })}>
         <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="scan" c="#fff" size={20} w={1.7} /></View>
           <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '800' }}>How to cancel</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 2 }}>Step by step{f.name.trim() ? ' for ' + f.name.trim() : ''}</Text></View>
@@ -154,13 +153,12 @@ const short = (d: ReturnType<typeof dueOf>) => { const tr = d.pill.startsWith('T
 const stTone = (k?: string) => { const c = (STATUSES.find((x) => x.k === k) || STATUSES[0]).c; return { c, bg: c + '26', t: k === 'cancelled' ? 'Cancelled' : 'Paused' }; };
 const tone = (d: ReturnType<typeof dueOf>) => (d.hot ? { c: '#ff8fa3', bg: 'rgba(255,107,129,.2)', t: short(d) } : d.warn ? { c: '#ffd24a', bg: 'rgba(255,210,74,.18)', t: short(d) } : { c: '#5ee7b5', bg: 'rgba(94,231,181,.16)', t: short(d) });
 // The first look of the cards: light, thin glass. Used by the totals card and the "Found in your spending" card.
-const plain = { borderRadius: 22, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)', borderTopColor: 'rgba(255,255,255,.3)' } as const;
+const plain = { borderRadius: 22, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)' } as const;
 // Bold frosted glass: the art behind is blurred, the pane is brighter at the top and has a clear light edge, so it stands out and the text stays easy to read.
 function Pane({ style, children }: { style?: any; children?: React.ReactNode }) {
   return (
-    <View style={[{ borderRadius: 22, overflow: 'hidden', zIndex: 0, borderWidth: 1.2, borderColor: 'rgba(255,255,255,.32)', borderTopColor: 'rgba(255,255,255,.6)', borderBottomColor: 'rgba(255,255,255,.14)' }, style]}>
-      <BlurView intensity={70} tint="dark" pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
-      <LinearGradient colors={['rgba(255,255,255,.2)', 'rgba(255,255,255,.07)', 'rgba(255,255,255,.12)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+    <View style={[{ borderRadius: 22, overflow: 'hidden', zIndex: 0, borderWidth: 1, borderColor: 'rgba(255,255,255,.24)' }, style]}>
+      <LinearGradient colors={['rgba(190,170,255,.26)', 'rgba(120,150,255,.14)', 'rgba(255,255,255,.1)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
       {children}
     </View>
   );
@@ -228,8 +226,8 @@ export default function Screen() {
   const first = list.find(live); const fd = first ? dueOf(first, today) : null; const ft = fd ? tone(fd) : null;
   const shares = useMemo(() => { const m: Record<string, number> = {}; act.forEach((x) => { m[x.cat] = (m[x.cat] || 0) + monthly(x); }); return Object.keys(m).map((k) => ({ k, v: m[k], c: catOf(k).c, n: catOf(k).n })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); }, [st]);
   const months = useMemo(() => nextMonths(subs.filter(live), today), [st]); const top = Math.max(1, ...months.map((x) => x.v));
-  const save = () => {
-    if (!f) return; const s: Sub = { ...f, name: f.name.trim(), price: String(pn(f.price)), note: f.note.trim() };
+  const save = (g?: Form) => {
+    const f2 = g || f; if (!f2) return; const s: Sub = { ...f2, name: f2.name.trim(), price: String(pn(f2.price)), note: f2.note.trim() };
     if (s.id) setSt({ ...st, subs: subs.map((x) => (x.id === s.id ? s : x)) }); else setSt({ ...st, subs: [...subs, { ...s, id: st.next }], next: st.next + 1 });
     setF(null);
   };
@@ -245,7 +243,7 @@ export default function Screen() {
             {stat('check', String(act.length), 'Active')}{stat('cal', rm(total), 'Monthly total')}{stat('chart', rm(total * 12), 'Yearly total', true)}
           </View>
 
-          {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
+          {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' })}>
             <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="bell" c={fd.hot ? '#ff8fa3' : fd.warn ? '#ffd24a' : '#fff'} size={22} /></View>
               <View style={{ flex: 1 }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5 }}>Upcoming renewal</Text><Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '800', marginTop: 1 }}>{first.name}</Text><Text numberOfLines={1} style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', marginTop: 2 }}>{shortD(fd.date)} · {fd.txt.replace(/^Charges /, '')}</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 1 }}>{rm(num(first.price))} / {unitOf(first.cycle)}</Text></View>
@@ -298,7 +296,7 @@ export default function Screen() {
         <View pointerEvents="box-none" style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
           <Pressable onPress={() => setF(blank())} accessibilityLabel="Add subscription"><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, shadowColor: '#6a4bd8', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}><Text style={{ color: '#1a1040', fontSize: 22, marginTop: -2 }}>+</Text><Text style={{ color: '#1a1040', fontSize: 16, fontWeight: '800' }}>Add Subscription</Text></LinearGradient></Pressable>
         </View>
-      {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
+      {f ? <Sheet f={f} setF={setF} onSave={() => save()} onSaveNow={(x) => { save(x); showAlert('Marked as cancelled', x.name.trim() + ' is now marked as cancelled. It stays in your list, but it is left out of your totals, reminders and Money Left.'); }} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </View>
   );
 }

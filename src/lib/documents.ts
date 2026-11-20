@@ -29,7 +29,7 @@ export const TABS: { k: DocTab; n: string; title: string; text: string }[] = [
   { k: 'other', n: 'Other', title: 'Other papers', text: 'Certificates, insurance and agreements' },
 ];
 export const REMINDS: { k: Remind; n: string; days: number }[] = [
-  { k: 'off', n: 'None', days: 0 }, { k: '1w', n: '1 wk', days: 7 }, { k: '1m', n: '1 mo', days: 30 }, { k: '3m', n: '3 mo', days: 90 }, { k: '6m', n: '6 mo', days: 180 },
+  { k: 'off', n: 'None', days: 0 }, { k: '1w', n: '1 week', days: 7 }, { k: '1m', n: '1 month', days: 30 }, { k: '3m', n: '3 months', days: 90 }, { k: '6m', n: '6 months', days: 180 },
 ];
 
 const pad = (n: number) => String(n).padStart(2, '0');

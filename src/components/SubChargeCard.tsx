@@ -20,7 +20,7 @@ export function SubChargeCard({ subs, setSubs, spends, nextId, addSpend, today }
   const add = () => { buzz(); addSpend({ id: nextId, name: s.name, cat: 'Bills', amt: num(s.price), date: c, note: 'Subscription' }); mark(); };
   const skip = () => { buzz(); mark(); };
   return (
-    <View style={{ marginTop: 12, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,181,.5)', borderTopColor: 'rgba(94,231,181,.7)' }}>
+    <View style={{ marginTop: 12, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(94,231,181,.5)' }}>
       <LinearGradient colors={['rgba(94,231,181,.2)', 'rgba(124,156,255,.22)', 'rgba(183,148,255,.2)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="repeat" c="#fff" size={22} w={1.7} /></View>

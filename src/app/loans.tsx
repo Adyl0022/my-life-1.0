@@ -7,7 +7,7 @@ import { RecordPage, Intro } from '../components/RecordHubUi';
 import { SearchField } from '../components/Shine';
 import { Inp, DateField, W } from '../components/Ui';
 import { ItemRow, Tile, Sums, Empty, BigBtn, SheetFrame, Detail, Lab, chip, dim } from '../components/ColUi';
-import { useTabSlide, useTabPill, SlidePills } from '../components/TabSlide';
+import { useTabSlide, useTabPill, EqPills } from '../components/TabSlide';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm, pn, numberError } from '../lib/num';
@@ -56,7 +56,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       {tried && badDue ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please pick a valid date.</Text> : null}
       {!f.noDue ? (<>
         <Lab t="REMIND ME" />
-        <SlidePills tabs={['None', 'On the day', '3 days before']} index={f.remind === 'off' ? 0 : f.remind === '3d' ? 2 : 1} onChange={(i) => set({ remind: i === 0 ? 'off' : i === 2 ? '3d' : 'day' })} colors={['#ffe84d', '#ff9a3d']} textOn="#0b1030" fontSize={12.5} padX={14} padY={9} />
+        <EqPills tabs={['None', 'On the day', '3 days before']} index={f.remind === 'off' ? 0 : f.remind === '3d' ? 2 : 1} onChange={(i) => set({ remind: i === 0 ? 'off' : i === 2 ? '3d' : 'day' })} colors={['#ffe84d', '#ff9a3d']} textOn="#0b1030" fontSize={12} />
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{f.remind === 'off' ? 'No reminder for this one.' : 'You get a reminder at 9 am' + (f.remind === '3d' ? ', 3 days before the due date.' : ' on the due date.')}</Text>
       </>) : null}
       <Lab t="NOTE (OPTIONAL)" />

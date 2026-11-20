@@ -8,7 +8,7 @@ import { RecordPage, Intro } from '../components/RecordHubUi';
 import { DocArt } from '../components/DocArt';
 import { SearchField } from '../components/Shine';
 import { Inp, DateField, W } from '../components/Ui';
-import { PrivateNote } from '../components/ColUi';
+import { PrivateNote, Sections, Lab } from '../components/ColUi';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm } from '../lib/num';
@@ -102,7 +102,7 @@ function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; 
             </View>
           ) : null}
           <CopyRow number={d.number} name={d.title} />
-          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setRn(true); }} accessibilityLabel="How to renew" style={({ pressed }) => ({ marginTop: 16, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setRn(true); }} accessibilityLabel="How to renew" style={({ pressed }) => ({ marginTop: 16, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' })}>
             <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="repeat" c="#fff" size={20} w={1.7} /></View>
               <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '800' }}>How to renew</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 2 }}>Steps and what to bring</Text></View>
@@ -175,7 +175,8 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{f.id ? 'Edit document' : 'Add document'}</Text><Text style={{ color: dim, fontSize: 12 }}>Scan it or type it in</Text></View>
             </View>
             <PrivateNote />
-            {lab('TYPE')}
+            <Sections>
+            <Lab t={'TYPE'} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {allowed.map((x) => (
                 <Pressable key={x.key} onPress={() => set({ type: x.key })} style={{ flexGrow: 1, flexBasis: '30%' }} accessibilityLabel={x.label}>
@@ -183,7 +184,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
                 </Pressable>
               ))}
             </View>
-            {lab('FILL IT IN FOR YOU')}
+            <Lab t={'FILL IT IN FOR YOU'} />
             <Pressable onPress={() => pick(true)} disabled={busy}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>{busy ? null : <LineIcon name="camera" c="#fff" size={22} w={1.7} />}<Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{busy ? 'Reading…' : 'Scan with camera'}</Text></View></LinearGradient></Pressable>
             <Pressable onPress={() => pick(false)} disabled={busy} style={{ marginTop: 10, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><LineIcon name="photo" c="#fff" size={22} /><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Choose a photo</Text></View></Pressable>
             {msg ? <Text style={{ color: msg.startsWith('✓') ? '#5ee7b5' : '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10, lineHeight: 18 }}>{msg}</Text> : null}
@@ -195,8 +196,8 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
               </View>
             ) : null}
             {f.photo ? (
-              <View style={{ marginTop: 6 }}>
-                <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginTop: 18, marginBottom: 8 }}>MORE PAGES (OPTIONAL)</Text>
+              <>
+                <Lab t="MORE PAGES (OPTIONAL)" />
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9 }}>
                   {f.photos.map((u, k) => (<Pressable key={k} onPress={() => setPg(pg === k ? -1 : k)} accessibilityLabel={'Page ' + (k + 2)}><Image source={{ uri: u }} style={{ width: 64, height: 84, borderRadius: 10, borderWidth: 2, borderColor: pg === k ? '#8ea8ff' : 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }} /></Pressable>))}
                 </ScrollView>
@@ -213,24 +214,25 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
                 ) : <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>That is the most pages for one paper (10).</Text>}
                 {pmsg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{pmsg}</Text> : null}
                 <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>For papers with more than one side or page. Only the first page is read for details. All pages stay on this phone only.</Text>
-              </View>
+              </>
             ) : null}
-            {lab('DETAILS')}
+            <Lab t={'DETAILS'} />
             <Inp value={f.title} onChangeText={(x: string) => set({ title: x })} placeholder={t.label + ' name, e.g. ' + (f.type === 'passport' ? 'My passport' : f.type === 'bank' ? 'Maybank Visa' : f.type === 'warranty' ? 'Samsung TV' : 'My ' + t.label.toLowerCase())} maxLength={60} />
             {(tried || false) && !f.title.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
             <Inp style={{ marginTop: 9 }} value={f.number} onChangeText={(x: string) => set({ number: x })} placeholder={f.type === 'bank' ? 'Card number (optional, you can leave it empty)' : 'Number (optional)'} maxLength={40} autoCapitalize="characters" />
-            {lab(f.type === 'warranty' ? 'WARRANTY ENDS' : 'EXPIRY DATE')}
+            <Lab t={f.type === 'warranty' ? 'WARRANTY ENDS' : 'EXPIRY DATE'} />
             <Pressable onPress={() => set({ noExp: !f.noExp })} accessibilityLabel="No expiry" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: f.noExp ? '#8fe9e2' : 'rgba(255,255,255,.4)', backgroundColor: f.noExp ? 'rgba(143,233,226,.35)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{f.noExp ? <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>✓</Text> : null}</View>
               <Text style={{ color: W, fontSize: 14, fontWeight: '600' }}>No expiry</Text>
             </Pressable>
             {!f.noExp ? <DateField value={f.expiry} onChange={(x: string) => set({ expiry: x })} /> : null}
             {tried && badDate ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please pick a valid date.</Text> : null}
-            {lab('REMIND ME BEFORE')}
+            <Lab t={'REMIND ME BEFORE'} />
             <View style={{ flexDirection: 'row', gap: 6, opacity: f.noExp ? 0.4 : 1 }}>
-              {REMINDS.map((x) => (<Pressable key={x.k} disabled={f.noExp} onPress={() => set({ remind: x.k })} style={{ flex: 1 }}><View style={chip(f.remind === x.k && !f.noExp, '#8fe9e2')}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{x.n}</Text></View></Pressable>))}
+              {REMINDS.map((x) => (<Pressable key={x.k} disabled={f.noExp} onPress={() => set({ remind: x.k })} style={{ flex: 1 }}><View style={{ ...chip(f.remind === x.k && !f.noExp, '#8fe9e2'), paddingHorizontal: 2 }}><Text numberOfLines={1} style={{ color: W, fontSize: 11.5, fontWeight: '700', textAlign: 'center' }}>{x.n}</Text></View></Pressable>))}
             </View>
             {f.noExp ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>No reminder is needed when there is no expiry.</Text> : null}
+            </Sections>
             <Pressable onPress={save} style={{ marginTop: 26 }} accessibilityLabel="Save document"><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
             {onDelete ? <Pressable onPress={onDelete} style={{ marginTop: 12, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,107,129,.5)', alignItems: 'center', justifyContent: 'center' }} accessibilityLabel="Delete document"><Text style={{ color: '#ff9aa9', fontSize: 14, fontWeight: '700' }}>Delete document</Text></Pressable> : null}
         </KbScroll>

@@ -99,7 +99,7 @@ export function Pat({ kind }: { kind: 'dots' | 'lines' | 'rings' | 'grid' }) {
 export function ModCard({ e, title, sub, chip, colors, pat, onPress }: { e: string; title: string; sub: string; chip?: string; colors: [string, string]; pat: 'dots' | 'lines' | 'rings' | 'grid'; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ marginTop: 14, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)', borderTopColor: 'rgba(255,255,255,.45)' }}>
+      <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' }}>
         <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16, minHeight: 124, justifyContent: 'center' }}>
           <Pat kind={pat} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 2, elevation: 2 }}>
@@ -137,7 +137,7 @@ function PageArt() {
 export function Intro({ title, text, colors, plain }: { title: string; text: string; colors?: [string, string]; plain?: boolean }) {
   return (
     <View style={{ marginTop: 16, borderRadius: 26, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 }}>
-      <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.5)' }}>
+      <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}>
         <LinearGradient colors={colors || ['rgba(255,143,171,.5)', 'rgba(150,120,255,.42)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingHorizontal: 18, paddingVertical: 20 }}>
           {plain ? null : <Spin dur={40000} style={{ position: 'absolute', right: -34, top: -40, width: 150, height: 150 }}>
             <Svg width={150} height={150} viewBox="0 0 150 150">
@@ -158,7 +158,7 @@ export function Intro({ title, text, colors, plain }: { title: string; text: str
 export function GlassTile({ size = 56, radius = 19, tint = 'rgba(255,255,255,.14)', rim = 'rgba(255,255,255,.4)', children }: { size?: number; radius?: number; tint?: string; rim?: string; children: React.ReactNode }) {
   return (
     <View style={{ width: size, height: size, borderRadius: radius, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 9, elevation: 7 }}>
-      <View style={{ flex: 1, borderRadius: radius, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: tint, borderWidth: 1, borderColor: rim, borderTopColor: 'rgba(255,255,255,.7)' }}>
+      <View style={{ flex: 1, borderRadius: radius, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: tint, borderWidth: 1, borderColor: rim }}>
         <LinearGradient colors={['rgba(255,255,255,.36)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View pointerEvents="none" style={{ position: 'absolute', left: 4, right: 4, top: 2, height: size * 0.38, borderRadius: radius, backgroundColor: 'rgba(255,255,255,.12)' }} />
         {children}
@@ -176,7 +176,7 @@ export function PicCard({ e, title, sub, colors, pat, onPress, sheen = 0 }: { sh
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ marginTop: 12, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
-      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
+      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}>
         <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 94, paddingHorizontal: 16, justifyContent: 'center' }}>
           <Sheen delay={sheen} />
           <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
@@ -203,7 +203,7 @@ export function HalfCard({ e, title, sub, colors, pat, onPress, sheen = 0 }: { e
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + title} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 26, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
-        <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
+        <View style={{ borderRadius: 26, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}>
           <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 160, padding: 14, justifyContent: 'space-between' }}>
             <Sheen delay={sheen} />
             <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
@@ -231,7 +231,7 @@ export function VehicleCard({ onPress, sheen = 0 }: { onPress: () => void; sheen
   return (
     <Pressable onPress={onPress} accessibilityLabel="Open My Vehicle" style={({ pressed }) => ({ marginTop: 12, marginBottom: 2, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
       <View style={{ borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.26, shadowRadius: 8, elevation: 5 }}>
-      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', borderTopColor: 'rgba(255,255,255,.45)', borderBottomColor: 'rgba(0,0,0,.2)' }}>
+      <View style={{ borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}>
         <LinearGradient colors={['#8c5468', '#5b2d4e', '#2d1840']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 94, paddingHorizontal: 16, justifyContent: 'center' }}>
           <Sheen delay={sheen} />
           <LinearGradient colors={['rgba(255,255,255,.1)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 44 }} />
