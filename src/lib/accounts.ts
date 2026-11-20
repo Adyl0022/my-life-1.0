@@ -12,7 +12,7 @@ export const GROUPS: { k: AccGroup; t: string; plural: string; liab: boolean; c:
 ];
 export const groupOf = (k: AccGroup) => GROUPS.find((g) => g.k === k) || GROUPS[0];
 
-export type Acc = { id: number; name: string; g: AccGroup; start: number; since: string };
+export type Acc = { id: number; name: string; g: AccGroup; start: number; since: string; photo?: string };
 export type Move = { id: number; date: string; kind: 'transfer' | 'deposit' | 'adjust'; from?: number; to?: number; amt: number; note?: string };
 export type AccData = { accs: Acc[]; moves: Move[]; nextId: number };
 export const ACC_EMPTY: AccData = { accs: [], moves: [], nextId: 1 };

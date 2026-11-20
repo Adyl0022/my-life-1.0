@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Platform } from 'react-native';
+import { View, Platform, Image } from 'react-native';
 import { Pressable } from '../components/Press';
 import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +17,7 @@ import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 import { cs, useRegion } from '../lib/region';
+import { takePhoto } from '../lib/photo';
 import { DEBT_EMPTY, DebtData, remaining } from '../lib/debts';
 import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
 
@@ -42,15 +43,24 @@ type Ctx = { data: AccData; setData: (v: AccData) => void; spends: Spends; feeds
 type MoveMode = { mode: 'transfer' | 'deposit' | 'adjust'; acc?: number };
 
 // ---------- Add or edit an account ----------
+// The little picture of an account: your own image if you chose one, otherwise the first letter in the colour of its type.
+function AccTile({ a, size = 32 }: { a: { name: string; g: AccGroup; photo?: string }; size?: number }) {
+  const c = groupOf(a.g).c;
+  return <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: c + '26', borderWidth: 1, borderColor: c + '88', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    {a.photo ? <Image source={{ uri: a.photo }} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c, fontSize: size * 0.42, fontWeight: '800' }}>{(a.name.trim()[0] || '?').toUpperCase()}</Text>}
+  </View>;
+}
+
 function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: () => void }) {
   const { data, setData } = ctx;
   const [name, setName] = useState(edit ? edit.name : ''); const [g, setG] = useState<AccGroup>(edit ? edit.g : 'bank');
+  const [photo, setPhoto] = useState(edit && edit.photo ? edit.photo : ''); const [pmsg, setPmsg] = useState('');
   const [start, setStart] = useState(edit ? String(edit.start || '') : ''); const [since, setSince] = useState(edit ? edit.since : todayStr()); const [tried, setTried] = useState(false);
   const liab = groupOf(g).liab; const n = start.trim() === '' ? 0 : pn(start);
   const save = () => {
     setTried(true); if (!name.trim()) return; if (start.trim() !== '' && !(n >= 0)) { tryForm('acc'); return; }
-    if (edit) setData({ ...data, accs: data.accs.map((a) => a.id === edit.id ? { ...a, name: name.trim(), g, start: n, since } : a) });
-    else setData({ ...data, accs: [...data.accs, { id: data.nextId, name: name.trim(), g, start: n, since }], nextId: data.nextId + 1 });
+    if (edit) setData({ ...data, accs: data.accs.map((a) => a.id === edit.id ? { ...a, name: name.trim(), g, start: n, since, photo: photo || undefined } : a) });
+    else setData({ ...data, accs: [...data.accs, { id: data.nextId, name: name.trim(), g, start: n, since, photo: photo || undefined }], nextId: data.nextId + 1 });
     onClose();
   };
   return (
@@ -64,6 +74,16 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
         <Lab t="NAME" />
         <Inp value={name} onChangeText={setName} placeholder="e.g. Main bank, Wallet app, Card 1" maxLength={30} />
         {tried && !name.trim() ? <Err t="Please enter a name." /> : null}
+        <Lab t="LOGO (OPTIONAL)" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <AccTile a={{ name, g, photo }} size={54} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <Pressable onPress={async () => { setPmsg(''); try { const u = await takePhoto(false, { square: true }); if (u) setPhoto(u); } catch (e) { setPmsg('Could not open the photo. Please try again.'); } }} accessibilityLabel="Choose a logo from your gallery" style={{ height: 38, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{photo ? 'Change logo' : 'Choose from gallery'}</Text></Pressable>
+            {photo ? <Pressable onPress={() => setPhoto('')} accessibilityLabel="Use the first letter instead"><Text style={{ color: dim, fontSize: 12.5, textAlign: 'center' }}>Use the first letter instead</Text></Pressable> : null}
+          </View>
+        </View>
+        {pmsg ? <Err t={pmsg} /> : null}
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Pick a picture and cut out the square you want. The logo stays on this phone only and is not saved to your account. The rest of the account is.</Text>
         <Lab t={liab ? 'HOW MUCH YOU OWE' : 'HOW MUCH IS IN IT'} />
         <Inp form="acc" need="an amount" zeroOk value={start} onChangeText={setStart} keyboardType="decimal-pad" placeholder={liab ? 'Amount owed in ' + cs() + ' (0 if none)' : 'Balance in ' + cs() + ' (0 if empty)'} />
         <Lab t="AS OF" />
@@ -134,6 +154,7 @@ function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; on
         <LinearGradient colors={[grp.c + '55', 'rgba(255,255,255,.06)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{liab ? 'YOU OWE' : 'BALANCE'}</Text>
         <Text style={{ color: liab ? PINK : '#fff', fontSize: 32, fontWeight: '800', marginTop: 4 }}>{cs() + money(b)}</Text>
+        <View style={{ position: 'absolute', right: 16, top: 16 }}><AccTile a={a} size={46} /></View>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
         {liab ? <Act t="Pay off" c={PINK} onPress={() => { onClose(); onMove({ mode: 'transfer', acc: a.id }); }} /> : <Act t="Money in" c="#5ee7b5" onPress={() => { onClose(); onMove({ mode: 'deposit', acc: a.id }); }} />}
@@ -240,6 +261,7 @@ export default function Accounts() {
                         const b = balanceOf(a, data, spends, feeds);
                         return (
                           <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
+                            <AccTile a={a} size={30} />
                             <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{a.name}</Text>
                             <Text style={{ color: g.liab ? PINK : W, fontSize: 15, fontWeight: '800' }}>{cs() + money(b)}</Text>
                             <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>

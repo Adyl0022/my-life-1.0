@@ -1,13 +1,24 @@
 import { Platform } from 'react-native';
 // Picks or takes a photo and keeps a copy in the app's own storage. Camera permission is asked only when the camera is used.
-export async function takePhoto(camera: boolean): Promise<string | null> {
+// With square: true the phone's own crop screen opens so you pick the square part (for a logo or icon), and the result is made small (192 px) so it stays light.
+export async function takePhoto(camera: boolean, o: { square?: boolean } = {}): Promise<string | null> {
   const IP = await import('expo-image-picker');
   if (camera) { const p = await IP.requestCameraPermissionsAsync(); if (!p.granted) throw new Error('camera'); }
-  const r = camera ? await IP.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 }) : await IP.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: Platform.OS === 'web' });
+  const ed = o.square ? { allowsEditing: true, aspect: [1, 1] as [number, number] } : {};
+  const r = camera ? await IP.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7, ...ed }) : await IP.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: Platform.OS === 'web', ...ed });
   if (r.canceled || !r.assets || !r.assets[0]) return null;
   const a: any = r.assets[0];
   if (Platform.OS === 'web') return a.base64 ? 'data:' + (a.mimeType || 'image/jpeg') + ';base64,' + a.base64 : a.uri;
-  return keepCopy(a.uri);
+  return keepCopy(o.square ? await toIcon(a.uri) : a.uri);
+}
+// Makes a picture a small square icon. If that is not possible the picture is used as it is.
+async function toIcon(uri: string): Promise<string> {
+  try {
+    const M = await import('expo-image-manipulator');
+    const ref = await M.ImageManipulator.manipulate(uri).resize({ width: 192 }).renderAsync();
+    const out = await ref.saveAsync({ format: M.SaveFormat.JPEG, compress: 0.85 });
+    return out.uri;
+  } catch (e) { return uri; }
 }
 // Keeps a copy of a picture in the app's own storage, so it is still there after the camera clears its cache.
 async function keepCopy(uri: string): Promise<string> {

@@ -550,7 +550,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#7c9cff",
   "h": "Finance.dc.html",
-  "k": "accounts akaun baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
+  "k": "accounts akaun logo icon ikon gambar gallery baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
  },
  {
   "t": "Savings Goals",

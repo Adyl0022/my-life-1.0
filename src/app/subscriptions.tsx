@@ -136,11 +136,11 @@ function Sheet({ f, setF, onSave, onSaveNow, onDelete, onClose }: { f: Form; set
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Tile name={f.name} cat={f.cat} photo={f.photo} size={54} />
         <View style={{ flex: 1, gap: 8 }}>
-          <Pressable onPress={async () => { try { const u = await takePhoto(false); if (u) set({ photo: u }); } catch (e) { setMsg('Could not open the photo. Please try again.'); } }} accessibilityLabel="Choose your own logo image" style={{ height: 38, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{f.photo ? 'Change image' : 'Use my own image'}</Text></Pressable>
+          <Pressable onPress={async () => { try { const u = await takePhoto(false, { square: true }); if (u) set({ photo: u }); } catch (e) { setMsg('Could not open the photo. Please try again.'); } }} accessibilityLabel="Choose your own logo image" style={{ height: 38, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{f.photo ? 'Change image' : 'Use my own image'}</Text></Pressable>
           {f.photo ? <Pressable onPress={() => set({ photo: '' })} accessibilityLabel="Use letters instead"><Text style={{ color: dim, fontSize: 12.5, textAlign: 'center' }}>Use letters instead</Text></Pressable> : null}
         </View>
       </View>
-      <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Your image stays on this phone only. It is not saved to your account. Everything else about the subscription is.</Text>
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Pick a picture and cut out the square you want. Your image stays on this phone only. It is not saved to your account. Everything else about the subscription is.</Text>
       </Sec>
       <Sec><L2 t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. Shared plan" maxLength={120} />
