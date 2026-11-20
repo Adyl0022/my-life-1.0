@@ -193,11 +193,13 @@ export default function Screen() {
             {stat('check', String(subs.length), 'Active')}{stat('cal', rm(total), 'Monthly total')}{stat('chart', rm(total * 12), 'Yearly total', true)}
           </View>
 
-          {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal"><View style={{ ...card, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: fd.hot ? 'rgba(255,107,129,.2)' : fd.warn ? 'rgba(255,210,74,.18)' : 'rgba(185,166,255,.18)', borderColor: fd.hot ? 'rgba(255,107,129,.6)' : fd.warn ? 'rgba(255,210,74,.55)' : 'rgba(185,166,255,.5)' }}>
-            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="bell" c={fd.hot ? '#ff8fa3' : fd.warn ? '#ffd24a' : VIO} size={23} /></View>
-            <View style={{ flex: 1 }}><Text style={{ color: INK2, fontSize: 11.5 }}>Upcoming renewal</Text><Text numberOfLines={1} style={{ color: INK, fontSize: 15.5, fontWeight: '800', marginTop: 1 }}>{first.name}</Text><Text numberOfLines={1} style={{ color: INK2, fontSize: 11.5, marginTop: 1 }}>{shortD(fd.date)} · {rm(num(first.price))} / {first.cycle === 'week' ? 'week' : first.cycle === 'year' ? 'year' : 'month'}</Text></View>
-            <Text style={{ color: INK, fontSize: 22 }}>›</Text>
-          </View></Pressable> : null}
+          {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
+            <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="bell" c={fd.hot ? '#ff8fa3' : fd.warn ? '#ffd24a' : '#fff'} size={22} /></View>
+              <View style={{ flex: 1 }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5 }}>Upcoming renewal</Text><Text numberOfLines={1} style={{ color: '#fff', fontSize: 15, fontWeight: '800', marginTop: 1 }}>{first.name}</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 2 }}>{shortD(fd.date)} · {rm(num(first.price))} / {first.cycle === 'week' ? 'week' : first.cycle === 'year' ? 'year' : 'month'}</Text></View>
+              <Text style={{ color: '#fff', fontSize: 22 }}>›</Text>
+            </LinearGradient>
+          </Pressable> : null}
 
           {found.map((x) => (
             <View key={x.key} style={{ ...card, marginTop: 12, padding: 12, borderColor: 'rgba(94,231,181,.55)' }}>
