@@ -127,7 +127,7 @@ export function Sections({ children }: { children?: React.ReactNode }) {
   );
 }
 
-export function SheetFrame({ title, sub, onClose, children }: { title: string; sub?: string; onClose: () => void; children: React.ReactNode }) {
+export function SheetFrame({ title, sub, onClose, children, noNote }: { title: string; sub?: string; onClose: () => void; children: React.ReactNode; noNote?: boolean }) {
   return (
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
@@ -137,7 +137,7 @@ export function SheetFrame({ title, sub, onClose, children }: { title: string; s
               <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 22 }}>‹</Text></View></Pressable>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{title}</Text>{sub ? <Text style={{ color: dim, fontSize: 12 }}>{sub}</Text> : null}</View>
             </View>
-            <PrivateNote />
+            {noNote ? null : <PrivateNote />}
             <Sections>{children}</Sections>
         </KbScroll>
       </View>

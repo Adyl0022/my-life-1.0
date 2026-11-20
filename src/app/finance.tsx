@@ -3,6 +3,7 @@ import { LineIcon } from '../components/LineIcon';
 import { SubChargeCard } from '../components/SubChargeCard';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
+import { ACC_EMPTY, AccData, groupOf, totals } from '../lib/accounts';
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '../components/Txt';
@@ -23,7 +24,7 @@ import { cs, cu, cw, useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
-type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string };
+type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string; acc?: number };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -73,7 +74,8 @@ export default function Finance() {
   const [editKey, setEditKey] = useState(''); const [editUnit, setEditUnit] = useState<'rm' | 'cnt'>('rm'); const [editVal, setEditVal] = useState('');
   const [limKey, setLimKey] = useState(''); const [limVal, setLimVal] = useState('');
   const [fDate, setFDate] = useState(todayStr()); const [fName, setFName] = useState(''); const [fAmt, setFAmt] = useState(''); const [fCat, setFCat] = useState('Food'); const [fGoal, setFGoal] = useState(0); const [fPre, setFPre] = useState('');
-  const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remF, setRemF] = useState({ name: '', amt: '', date: '', cat: 'Food', note: '' });
+  const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remF, setRemF] = useState({ name: '', amt: '', date: '', cat: 'Food', note: '', acc: 0 });
+  const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const [fAcc, setFAcc] = useState(0); const accTot = totals(accD, d.spends as any);
   const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
   const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
   const [sbs, setSbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
@@ -120,7 +122,7 @@ export default function Finance() {
       const k = fPre.slice(1); const g = { id: sav.nextId, name: kindOf(k).name || 'Other', kind: k, target: 0, place: '', due: '', start: 0, out: [], made: todayStr() } as any;
       setSav({ goals: [...sav.goals, g], nextId: sav.nextId + 1 }); fGoal2 = g.id;
     }
-    setD({ ...d, spends: [{ id: d.nextId, name: fName.trim() || (fCat === 'Savings' ? (fPre ? (kindOf(fPre.slice(1)).name || 'Other') : ((sav.goals.find((g) => g.id === fGoal) || { name: fCat }).name)) : fCat), cat: fCat, amt: n, date: fDate || todayStr(), ...(fNote.trim() ? { note: fNote.trim() } : {}), ...(fCat === 'Savings' && fGoal2 ? { goal: fGoal2 } : {}) }, ...d.spends], nextId: d.nextId + 1 });
+    setD({ ...d, spends: [{ id: d.nextId, name: fName.trim() || (fCat === 'Savings' ? (fPre ? (kindOf(fPre.slice(1)).name || 'Other') : ((sav.goals.find((g) => g.id === fGoal) || { name: fCat }).name)) : fCat), cat: fCat, amt: n, date: fDate || todayStr(), ...(fNote.trim() ? { note: fNote.trim() } : {}), ...(fAcc && accD.accs.some((a) => a.id === fAcc) ? { acc: fAcc } : {}), ...(fCat === 'Savings' && fGoal2 ? { goal: fGoal2 } : {}) }, ...d.spends], nextId: d.nextId + 1 });
     setFName(''); setFAmt(''); setFGoal(0); setFPre(''); setFNote('');
   };
   const dateText = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MON[parseInt(p[1], 10) - 1] : ''; };
@@ -141,6 +143,24 @@ export default function Finance() {
             <Text style={{ flex: 1, color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>My Finance</Text>
             <Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 14 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{MON[now.getMonth()] + ' ' + curY}</Text></Glass>
           </View>
+
+          <Pressable onPress={() => router.push('/accounts' as any)} accessibilityLabel="Open My Accounts" style={({ pressed }) => ({ marginTop: 14, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+            <View style={{ borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', padding: 16 }}>
+              <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>MY ACCOUNTS</Text>
+                <Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '800' }}>{accD.accs.length ? 'Manage ›' : 'Add ›'}</Text>
+              </View>
+              {accD.accs.length ? (<>
+                <Text style={{ color: accTot.total < 0 ? '#ff8fab' : W, fontSize: 28, fontWeight: '800', marginTop: 4 }}>{(accTot.total < 0 ? '-' : '') + cs()}{money(Math.abs(accTot.total))}</Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                  <Stat l="Assets" v={cs() + money(accTot.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(accTot.liab)} vc="#ff8fab" />
+                </View>
+              </>) : (
+                <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>Add your cash, bank, wallet, cards and loans to see your total money. Balances go up and down when you log spending.</Text>
+              )}
+            </View>
+          </Pressable>
 
           <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
@@ -289,6 +309,13 @@ export default function Finance() {
                 <Pressable key={t} onPress={() => quickNote(t)} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: on ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '600' }}>{t}</Text></Pressable>
               ); })}
             </View>
+            {accD.accs.length ? (<>
+              <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1, marginTop: 12 }}>PAID FROM</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                <Chip t="Not linked" on={!fAcc} onPress={() => setFAcc(0)} />
+                {accD.accs.filter((a) => a.g !== 'loan').map((a) => <Chip key={a.id} t={a.name} on={fAcc === a.id} c={groupOf(a.g).c} onPress={() => setFAcc(fAcc === a.id ? 0 : a.id)} />)}
+              </View>
+            </>) : null}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
               <Inp form="spend" need="an amount" style={{ flex: 1 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
               <Pressable onPress={addSpend}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>+ Add</Text></LinearGradient></Pressable>
@@ -322,7 +349,7 @@ export default function Finance() {
                 <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
-                    <Pressable disabled={p.src === 'record'} style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '' }); } }}>
+                    <Pressable disabled={p.src === 'record'} style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '', acc: p.acc || 0 }); } }}>
                       <Text style={{ color: W, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{p.name}</Text>
                       <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{p.cat + ' · ' + dateText(p.date)}</Text>
                       {p.note ? <Text style={{ color: '#ffd593', fontSize: 12, marginTop: 1 }} numberOfLines={2}>{p.note}</Text> : null}
@@ -340,13 +367,19 @@ export default function Finance() {
                           {CATS.filter((x) => x[0] !== 'Savings').map(([n, c]) => <Chip key={n} t={n} on={remF.cat === n} c={c} onPress={() => setRemF({ ...remF, cat: n })} />)}
                         </View>
                       ) : null}
+                      {accD.accs.length ? (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                          <Chip t="Not linked" on={!remF.acc} onPress={() => setRemF({ ...remF, acc: 0 })} />
+                          {accD.accs.filter((a) => a.g !== 'loan').map((a) => <Chip key={a.id} t={a.name} on={remF.acc === a.id} c={groupOf(a.g).c} onPress={() => setRemF({ ...remF, acc: remF.acc === a.id ? 0 : a.id })} />)}
+                        </View>
+                      ) : null}
                       <Inp style={{ marginTop: 8 }} value={remF.note} onChangeText={(v: string) => setRemF({ ...remF, note: v })} placeholder="Remark (optional)" />
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                         <Pressable onPress={() => setRemId(0)} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>Cancel</Text></Pressable>
                         <Pressable onPress={() => {
                           const n = pn(remF.amt); if (!(n > 0)) { tryForm('spendEdit'); return; }
                           const v = remF.note.trim();
-                          setD({ ...d, spends: d.spends.map((x) => x.id === p.id ? { ...x, name: remF.name.trim() || x.name, amt: n, date: remF.date || x.date, cat: p.cat === 'Savings' ? 'Savings' : remF.cat, note: v || undefined } : x) });
+                          setD({ ...d, spends: d.spends.map((x) => x.id === p.id ? { ...x, name: remF.name.trim() || x.name, amt: n, date: remF.date || x.date, cat: p.cat === 'Savings' ? 'Savings' : remF.cat, note: v || undefined, acc: remF.acc && accD.accs.some((a) => a.id === remF.acc) ? remF.acc : undefined } : x) });
                           setRemId(0);
                         }} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: '#ffc46b', alignItems: 'center' }}><Text style={{ color: '#0b1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
                       </View>

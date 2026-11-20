@@ -5,7 +5,7 @@ import { getSession } from './auth';
 import { getText, applyRemote, clearMine, readPlain } from './store';
 
 // Data that follows the account. Lock/PIN, keys, caches and per-phone switches stay on the phone.
-export const SYNC_KEYS = ['ml_planner', 'ml_notes', 'ml_islamic', 'ml_tasbih', 'ml_puasa', 'ml_finance', 'ml_debts', 'ml_savings', 'ml_record', 'ml_habit', 'ml_name', 'ml_budget', 'ml_mean', 'ml_region', 'ml_toggles', 'ml_prayer_alerts', 'ml_prayer_lead', 'ml_backup_rem', 'ml_commit_order', 'ml_size', 'ml_tips_off', 'ml_read', 'ml_read_z', 'ml_hidden', 'ml_morder', 'ml_dcard', 'ml_memories', 'ml_dashpages', 'ml_documents', 'ml_collection', 'ml_subs'];
+export const SYNC_KEYS = ['ml_planner', 'ml_notes', 'ml_islamic', 'ml_tasbih', 'ml_puasa', 'ml_finance', 'ml_debts', 'ml_savings', 'ml_accounts', 'ml_record', 'ml_habit', 'ml_name', 'ml_budget', 'ml_mean', 'ml_region', 'ml_toggles', 'ml_prayer_alerts', 'ml_prayer_lead', 'ml_backup_rem', 'ml_commit_order', 'ml_size', 'ml_tips_off', 'ml_read', 'ml_read_z', 'ml_hidden', 'ml_morder', 'ml_dcard', 'ml_memories', 'ml_dashpages', 'ml_documents', 'ml_collection', 'ml_subs'];
 // Written details sync, but photos never go online (they would fill the cloud storage). Photos are cut out before saving to the cloud and a phone keeps its own photos when the cloud copy arrives.
 const NO_PHOTO_KEYS = ['ml_documents', 'ml_collection', 'ml_subs'];
 const noPhotos = (v: any): any => Array.isArray(v) ? v.map(noPhotos) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, k === 'photo' ? '' : k === 'photos' ? [] : noPhotos(x)])) : v;

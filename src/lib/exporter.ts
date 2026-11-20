@@ -22,7 +22,7 @@ const dm = (k: string) => { const p = String(k).split('-'); return p.length === 
 export const MODS = [
   { k: 'planner', name: 'Planner and Notes', sub: 'Events, tasks and notes', keys: ['ml_planner', 'ml_notes'] },
   { k: 'islamic', name: 'Islamic Hub', sub: 'Fasting log, Tasbih counts, bookmarks and reading progress', keys: ['ml_islamic', 'ml_tasbih', 'ml_puasa'] },
-  { k: 'finance', name: 'My Finance', sub: 'Income, spending, savings goals and commitments', keys: ['ml_finance', 'ml_debts', 'ml_savings', 'ml_subs'] },
+  { k: 'finance', name: 'My Finance', sub: 'Income, spending, savings goals and commitments', keys: ['ml_finance', 'ml_debts', 'ml_savings', 'ml_subs', 'ml_accounts'] },
   { k: 'record', name: 'My Record', sub: 'Vehicle mileage, fuel and services', keys: ['ml_record'] },
   { k: 'docs', name: 'Documents', sub: 'Passport, cards, warranty and other papers', keys: ['ml_documents'] },
   { k: 'collection', name: 'Personal Collection', sub: 'Gadgets, lifestyle, property, lent and borrowed, life lessons', keys: ['ml_collection'] },

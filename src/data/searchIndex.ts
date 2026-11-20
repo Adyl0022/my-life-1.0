@@ -537,6 +537,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "subscriptions subscription langganan summary ringkasan costliest paling mahal per day sehari by payment cara bayar save jimat income pendapatan next 5 months lima bulan akan datang auto automatic netflix youtube spotify claude pro chatgpt disney icloud google one free trial percubaan percuma renew bayar bulanan monthly scan bill resit receipt auto detect charged add to spending record charge how to cancel unsubscribe stop paying berhenti langgan cara batal pause paused cancel cancelled batal jeda status payment method bayar guna kad debit credit e-wallet every 3 months 6 months suku tahun"
  },
  {
+  "t": "My Accounts",
+  "s": "Cash, banks, wallets, cards and loans with balances",
+  "m": "Finance",
+  "c": "#7c9cff",
+  "h": "Finance.dc.html",
+  "k": "accounts akaun baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
+ },
+ {
   "t": "Savings Goals",
   "s": "Save for a motorcycle, car, house, wedding, travel and more",
   "m": "Finance",
