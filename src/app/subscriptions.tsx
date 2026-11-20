@@ -24,6 +24,9 @@ const BL = '#7c9cff', GR = '#5ee7b5';
 type Form = Omit<Sub, 'id'> & { id: number };
 const blank = (): Form => ({ id: 0, name: '', cat: 'other', price: '', cycle: 'month', next: ymd(addDay(new Date(), 30)), remind: 3, trial: false, note: '', status: 'active', pay: '' });
 function addDay(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+// One bordered block for each part of the form, so the parts are easy to tell apart.
+const Sec = ({ children }: { children?: React.ReactNode }) => <View style={{ marginTop: 14, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', backgroundColor: 'rgba(255,255,255,.045)' }}>{children}</View>;
+const L2 = ({ t }: { t: string }) => <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 10 }}>{t}</Text>;
 const Err = ({ t }: { t: string }) => <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>{t}</Text>;
 
 const MN3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -65,45 +68,53 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
   const svcs = SERVICES.filter((s, i, a) => a.findIndex((x) => x.n === s.n) === i);
   return (
     <SheetFrame title={f.id ? 'Edit subscription' : 'Add subscription'} sub="Pick, scan or type it in" onClose={onClose}>
-      <Lab t="PICK A SERVICE" />
+      <Sec><L2 t="PICK A SERVICE" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
         {svcs.map((s) => { const c = catOf(s.cat); return <Pressable key={s.n} onPress={() => set({ name: s.n, cat: s.cat })} accessibilityLabel={s.n}><View style={{ ...chip(f.name === s.n, c.c), flexDirection: 'row', alignItems: 'center', gap: 7 }}><LineIcon name={c.icon} c={f.name === s.n ? c.c : '#e8e8f6'} size={16} /><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{s.n}</Text></View></Pressable>; })}
         {(() => { const mine = f.cat === 'other' && !svcs.some((s) => s.n === f.name); const c = catOf('other'); return <Pressable key="__other" onPress={() => set({ cat: 'other', name: svcs.some((s) => s.n === f.name) ? '' : f.name })} accessibilityLabel="Other service"><View style={{ ...chip(mine, c.c), flexDirection: 'row', alignItems: 'center', gap: 7 }}><LineIcon name={c.icon} c={mine ? c.c : '#e8e8f6'} size={16} /><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>Other</Text></View></Pressable>; })()}
       </ScrollView>
-      <Lab t="OR LET ME FILL IT IN" />
+      </Sec>
+      <Sec><L2 t="OR LET ME FILL IT IN" />
       <Pressable onPress={() => pick(true)} disabled={busy}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 52, borderRadius: 18, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><LineIcon name="scan" c="#fff" size={22} w={1.7} /><Text style={{ color: W, fontSize: 15.5, fontWeight: '800' }}>{busy ? 'Reading…' : 'Scan a bill or receipt'}</Text></View></LinearGradient></Pressable>
       <Pressable onPress={() => pick(false)} disabled={busy} style={{ marginTop: 10, height: 44, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><LineIcon name="photo" c="#fff" size={20} /><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Choose a photo of a bill</Text></View></Pressable>
       {raw && on ? <Pressable onPress={ai} disabled={busy} accessibilityLabel="Read with AI" style={{ marginTop: 10, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(94,231,181,.6)', backgroundColor: 'rgba(94,231,181,.12)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><LineIcon name="wand" c={GR} size={18} /><Text style={{ color: GR, fontSize: 13, fontWeight: '800' }}>Read with AI (sends the words only)</Text></View></Pressable> : null}
       {msg ? <Text style={{ color: msg.startsWith('Read') || msg.startsWith('The online AI read') ? GR : '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10, lineHeight: 18 }}>{msg}</Text> : null}
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>The words are read on this phone and the photo is not kept.</Text>
-      <Lab t="DETAILS" />
+      </Sec>
+      <Sec><L2 t="DETAILS" />
       <Inp value={f.name} onChangeText={(x: string) => set({ name: x })} placeholder="Name, e.g. Streaming" maxLength={40} />
       {tried && !f.name.trim() ? <Err t="Please enter a name." /> : null}
       <Inp form="sub" need="a price" style={{ marginTop: 9 }} value={f.price} onChangeText={(x: string) => set({ price: x })} keyboardType="decimal-pad" placeholder={'Price in ' + curCode()} />
       {tried && f.price.trim() && !numberError(f.price) && !(price > 0) ? <Err t="Please enter a price above 0." /> : null}
-      {f.id ? <>
-        <Lab t="STATUS" />
+      </Sec>
+      {f.id ? <Sec>
+        <L2 t="STATUS" />
         <View style={{ flexDirection: 'row', gap: 8 }}>{STATUSES.map((x) => { const on = (f.status || 'active') === x.k; return <Pressable key={x.k} onPress={() => set({ status: x.k })} accessibilityLabel={x.n} style={{ flex: 1 }}><View style={{ height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, borderWidth: 1, borderColor: on ? x.c : 'rgba(255,255,255,.16)', backgroundColor: on ? x.c + '26' : 'rgba(255,255,255,.06)' }}><View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: x.c }} /><Text style={{ color: W, fontSize: 13, fontWeight: on ? '800' : '600' }}>{x.n}</Text></View></Pressable>; })}</View>
         {(f.status || 'active') !== 'active' ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{f.status === 'cancelled' ? 'Cancelled' : 'Paused'} subscriptions stay in your list but are left out of your totals, reminders and Money Left.</Text> : null}
-      </> : null}
-      <Lab t="HOW OFTEN" />
+      </Sec> : null}
+      <Sec><L2 t="HOW OFTEN" />
       <View style={{ flexDirection: 'row', height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', padding: 4 }}>{CYCLES.map((c) => <Pressable key={c.k} onPress={() => set({ cycle: c.k })} accessibilityLabel={c.n} style={{ flex: 1 }}><View style={{ flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: f.cycle === c.k ? '#6a47e8' : 'transparent' }}><Text style={{ color: W, fontSize: 12, fontWeight: f.cycle === c.k ? '800' : '600' }} numberOfLines={1} adjustsFontSizeToFit>{c.lab}</Text></View></Pressable>)}</View>
-      <Lab t={f.trial ? 'FIRST CHARGE (WHEN THE TRIAL ENDS)' : 'NEXT CHARGE'} />
+      </Sec>
+      <Sec><L2 t={f.trial ? 'FIRST CHARGE (WHEN THE TRIAL ENDS)' : 'NEXT CHARGE'} />
       <DateField value={f.next} onChange={(v: string) => set({ next: v })} />
       {tried && badDate ? <Err t="Please pick a valid date." /> : null}
       <Pressable onPress={() => set({ trial: !f.trial })} accessibilityLabel="Free trial" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
         <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: 'rgba(255,255,255,.5)', backgroundColor: f.trial ? 'rgba(94,231,223,.5)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{f.trial ? <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>✓</Text> : null}</View>
         <Text style={{ color: W, fontSize: 14 }}>This is a free trial</Text>
       </Pressable>
-      <Lab t="PAID WITH (OPTIONAL)" />
+      </Sec>
+      <Sec><L2 t="PAID WITH (OPTIONAL)" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{PAYS.map((x) => { const on = f.pay === x.k; return <Pressable key={x.k} onPress={() => set({ pay: on ? '' : x.k })} accessibilityLabel={x.n}><View style={chip(on, BL)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{x.n}</Text></View></Pressable>; })}</View>
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>Only the type is kept. Never type a card number here.</Text>
-      <Lab t="CATEGORY" />
+      </Sec>
+      <Sec><L2 t="CATEGORY" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 9 }}>{SUB_CATS.map((c) => { const on = f.cat === c.k; return <Pressable key={c.k} onPress={() => set({ cat: c.k })} accessibilityLabel={c.n} style={{ width: '31.4%' }}><View style={{ height: 78, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: on ? c.c : 'rgba(255,255,255,.16)', backgroundColor: on ? c.c + '33' : 'rgba(255,255,255,.07)' }}><LineIcon name={c.icon} c={on ? '#fff' : c.c} size={24} /><Text style={{ color: W, fontSize: 12.5, fontWeight: on ? '800' : '600' }}>{c.n}</Text></View></Pressable>; })}</View>
-      <Lab t="REMIND ME BEFORE" />
+      </Sec>
+      <Sec><L2 t="REMIND ME BEFORE" />
       <View style={{ flexDirection: 'row', gap: 8 }}>{REM.map((r) => <Pressable key={r.d} onPress={() => set({ remind: r.d })} accessibilityLabel={r.n} style={{ flex: 1 }}><View style={chip(f.remind === r.d, BL)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{r.n}</Text></View></Pressable>)}</View>
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>You get a reminder at 9 am{f.remind ? ', and another on the day' : ' on the day'}.</Text>
-      <Lab t="LOGO" />
+      </Sec>
+      <Sec><L2 t="LOGO" />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Tile name={f.name} cat={f.cat} photo={f.photo} size={54} />
         <View style={{ flex: 1, gap: 8 }}>
@@ -112,8 +123,10 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
         </View>
       </View>
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Your image stays on this phone only. It is not saved to your account. Everything else about the subscription is.</Text>
-      <Lab t="NOTE (OPTIONAL)" />
+      </Sec>
+      <Sec><L2 t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. Shared plan" maxLength={120} />
+      </Sec>
       <BigBtn t="Save" onPress={save} a11y="Save subscription" />
       {onDelete ? <BigBtn t="Delete" outline="#ff8da1" onPress={onDelete} a11y="Delete subscription" /> : null}
     </SheetFrame>
