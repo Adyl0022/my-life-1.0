@@ -1,5 +1,6 @@
 import { SUB_EMPTY, detect as detectSubs, monthlyTotal, rm as rmSub, type SubStore } from '../lib/subs';
 import { LineIcon } from '../components/LineIcon';
+import { SubChargeCard } from '../components/SubChargeCard';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import React, { useState } from 'react';
@@ -75,7 +76,7 @@ export default function Finance() {
   const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remF, setRemF] = useState({ name: '', amt: '', date: '', cat: 'Food', note: '' });
   const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
   const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
-  const [sbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
+  const [sbs, setSbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
   const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
 
   const selY = parseInt(ym.slice(0, 4), 10), selM = parseInt(ym.slice(5, 7), 10) - 1;
@@ -147,6 +148,7 @@ export default function Finance() {
             <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Income and spending at a glance</Text></View>
           </Glass>
 
+          <SubChargeCard subs={sbs} setSubs={setSbs} spends={d.spends} nextId={d.nextId} addSpend={(sp) => setD({ ...d, spends: [sp, ...d.spends], nextId: d.nextId + 1 })} today={ymdNow()} />
           <MoneyLeft ym={ym} income={total} spends={all} />
           <TodaySpend spends={d.spends} />
 
@@ -161,6 +163,7 @@ export default function Finance() {
               <Text style={{ color: W, fontSize: 22 }}>›</Text>
             </Glass>
           </Pressable>
+
 
           {(() => {
             const list = (sbs && sbs.subs) || []; const n = list.filter((x: any) => !x.status || x.status === 'active').length; const fd = detectSubs(all as any, list, (sbs && sbs.no) || [], ymdNow()).length;

@@ -5,7 +5,7 @@ import { useStored } from './store';
 import { cs, cu, curCode } from './region';
 export type Cycle = 'week' | 'month' | 'quarter' | 'half' | 'year';
 export type Status = 'active' | 'paused' | 'cancelled';
-export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string; status?: Status; pay?: string };
+export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string; status?: Status; pay?: string; rec?: string };
 /** A subscription that still charges you. Paused and cancelled ones stay in the list but are left out of totals, reminders and Money Left. */
 export const live = (s: { status?: string }) => !s.status || s.status === 'active';
 export type SubStore = { subs: Sub[]; next: number; no: string[] };
@@ -78,10 +78,18 @@ export function dueOf(sub: Sub, today: string): Due {
 // ---- Money Left: charges still to come this month ----
 let SUBS_G: SubStore = SUB_EMPTY;
 export const setSubsG = (s: SubStore | null | undefined) => { SUBS_G = s && Array.isArray(s.subs) ? s : SUB_EMPTY; };
+/** The latest charge on or before today that has not been dealt with yet (recorded as spending, or skipped). Only the last 10 days count, so an old list never floods you. */
+export function pendingCharge(s: Sub, today: string): string {
+  if (!live(s) || !(num(s.price) > 0) || !validDate(s.next) || s.next > today) return '';
+  let d = s.next, i = 0; while (i++ < 600) { const n = addCycle(d, s.cycle); if (n > today) break; d = n; }
+  if (d <= (s.rec || '')) return '';
+  if (dayN(today) - dayN(d) > 10) return '';
+  return d;
+}
 /** What your subscriptions will still charge between today and the end of this month. Only the current month is counted. */
 export function subsStillToCome(ym: string, now: Date): number {
   if (ymd(now).slice(0, 7) !== ym) return 0; const today = ymd(now); let sum = 0;
-  SUBS_G.subs.forEach((s) => { const p = num(s.price); if (!live(s) || !(p > 0) || !validDate(s.next)) return; let d = nextCharge(s, today), i = 0; while (d && d.slice(0, 7) === ym && i++ < 6) { sum += p; d = addCycle(d, s.cycle); } });
+  SUBS_G.subs.forEach((s) => { const p = num(s.price); if (!live(s) || !(p > 0) || !validDate(s.next)) return; let d = nextCharge(s, today), i = 0; while (d && d.slice(0, 7) === ym && i++ < 6) { if (d !== s.rec) sum += p; d = addCycle(d, s.cycle); } });
   return sum;
 }
 export function useSubsG(): SubStore { const [s] = useStored<SubStore>('ml_subs', SUB_EMPTY); setSubsG(s); return s; }
