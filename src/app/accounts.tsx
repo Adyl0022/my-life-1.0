@@ -167,7 +167,7 @@ export default function Accounts() {
   const spends = (fin && fin.spends) || [];
   const ctx: Ctx = { data, setData, spends };
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
-  const t = totals(data, spends);
+  const t = totals(data, spends); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
     <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}>
       <Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: vc || W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{v}</Text>
@@ -211,33 +211,41 @@ export default function Accounts() {
             </Glass>
           ) : null}
 
-          {data.accs.length ? (
-            <Glass radius={24} style={{ marginTop: 12, paddingVertical: 8, paddingHorizontal: 16 }}>
-              <LinearGradient colors={['rgba(124,156,255,.2)', 'rgba(255,143,171,.12)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-              {GROUPS.filter((g) => data.accs.some((a) => a.g === g.k)).map((g, gi) => {
-                const list = data.accs.filter((a) => a.g === g.k);
-                const sub = list.reduce((s, a) => s + balanceOf(a, data, spends), 0);
-                return (
-                  <View key={g.k} style={{ paddingTop: gi === 0 ? 8 : 14, paddingBottom: 2, borderTopWidth: gi === 0 ? 0 : 1, borderTopColor: 'rgba(255,255,255,.12)', marginTop: gi === 0 ? 0 : 10 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} /><Text style={{ color: g.c, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{g.plural.toUpperCase()}</Text></View>
-                      {list.length > 1 ? <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.7)', fontSize: 12.5, fontWeight: '800' }}>{cs() + money(sub)}</Text> : null}
+          {[{ title: 'MONEY YOU HAVE', liab: false, tint: ['rgba(124,156,255,.22)', 'rgba(94,231,181,.1)'] as [string, string], sum: t.assets }, { title: 'WHAT YOU OWE', liab: true, tint: ['rgba(255,143,171,.22)', 'rgba(183,148,255,.12)'] as [string, string], sum: t.liab }].map((sec) => {
+            const gs = GROUPS.filter((g) => g.liab === sec.liab && data.accs.some((a) => a.g === g.k)); if (!gs.length) return null;
+            return (
+              <Glass key={sec.title} radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+                <LinearGradient colors={sec.tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.3 }}>{sec.title}</Text>
+                  <Text style={{ color: sec.liab ? PINK : '#9fb6ff', fontSize: 15, fontWeight: '800' }}>{cs() + money(sec.sum)}</Text>
+                </View>
+                {gs.map((g) => {
+                  const list = data.accs.filter((a) => a.g === g.k); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends), 0); const shut = fold.includes(g.k);
+                  return (
+                    <View key={g.k} style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
+                      <Tap onPress={() => setFold(shut ? fold.filter((x) => x !== g.k) : [...fold, g.k])} label={(shut ? 'Open ' : 'Close ') + g.plural} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: shut ? 2 : 4 }}>
+                        <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
+                        <Text style={{ flex: 1, color: g.c, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{g.plural.toUpperCase() + (shut ? '  ·  ' + list.length : '')}</Text>
+                        {list.length > 1 || shut ? <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.75)', fontSize: 12.5, fontWeight: '800' }}>{cs() + money(sub)}</Text> : null}
+                        <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 15, width: 14, textAlign: 'center' }}>{shut ? '▸' : '▾'}</Text>
+                      </Tap>
+                      {shut ? null : list.map((a) => {
+                        const b = balanceOf(a, data, spends);
+                        return (
+                          <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
+                            <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{a.name}</Text>
+                            <Text style={{ color: g.liab ? PINK : W, fontSize: 15, fontWeight: '800' }}>{cs() + money(b)}</Text>
+                            <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>
+                          </Tap>
+                        );
+                      })}
                     </View>
-                    {list.map((a) => {
-                      const b = balanceOf(a, data, spends);
-                      return (
-                        <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
-                          <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{a.name}</Text>
-                          <Text style={{ color: g.liab ? PINK : W, fontSize: 15, fontWeight: '800' }}>{cs() + money(b)}</Text>
-                          <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>
-                        </Tap>
-                      );
-                    })}
-                  </View>
-                );
-              })}
-            </Glass>
-          ) : null}
+                  );
+                })}
+              </Glass>
+            );
+          })}
           <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone from what you enter and from the spending you link to an account. They are saved with your My Life 1.0 data and synced to your account like your other finance entries. My Life 1.0 never connects to your bank.</Text>
         </ScrollView>
       </SafeAreaView>
