@@ -4,7 +4,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 export type LineName =
   | 'passport' | 'mykad' | 'cidb' | 'permit' | 'idother' | 'bank' | 'member' | 'warranty' | 'insurance' | 'agreement' | 'certificate' | 'property' | 'other'
   | 'camera' | 'photo' | 'search' | 'phone' | 'laptop' | 'watch' | 'audio' | 'plug' | 'shoes' | 'bag' | 'shirt' | 'perfume' | 'ring' | 'gift' | 'house' | 'land' | 'rent' | 'shop' | 'building'
-  | 'money' | 'tool' | 'swap' | 'bulb' | 'play' | 'music' | 'spark' | 'cloud' | 'game' | 'bolt' | 'repeat' | 'scan' | 'wand' | 'bell';
+  | 'money' | 'tool' | 'swap' | 'bulb' | 'play' | 'music' | 'spark' | 'cloud' | 'game' | 'bolt' | 'repeat' | 'scan' | 'wand' | 'bell' | 'check' | 'cal' | 'chart';
 
 /** One set of thin line icons for Documents and Personal Collection, so nothing there uses coloured emoji. */
 export function LineIcon({ name, c = '#fff', size = 24, w = 1.6 }: { name: string; c?: string; size?: number; w?: number }) {
@@ -53,6 +53,9 @@ export function LineIcon({ name, c = '#fff', size = 24, w = 1.6 }: { name: strin
     case 'cloud': g = <>{P('M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 8.4 4.1 4.1 0 0 1 17.5 18.5z')}</>; break;
     case 'game': g = <>{P('M7 8h10a4 4 0 0 1 3.9 4.9l-.7 3.2a2.5 2.5 0 0 1-4.2 1.2L14.2 15H9.8l-1.8 2.3a2.5 2.5 0 0 1-4.2-1.2l-.7-3.2A4 4 0 0 1 7 8z')}{P('M8.5 10.5v3M7 12h3')}</>; break;
     case 'bolt': g = <>{P('M13 3L5.5 13.5H11L10 21l7.5-10.5H12z')}</>; break;
+    case 'check': g = <><Circle cx={12} cy={12} r={9} {...p} />{P('M8 12.5l2.7 2.7L16 9.5')}</>; break;
+    case 'cal': g = <><Rect x={4} y={5} width={16} height={15} rx={3} {...p} />{P('M8 3v4M16 3v4M4 10h16')}</>; break;
+    case 'chart': g = <>{P('M4 19V5M4 19h16M8 15l3-4 3 2 4-6')}</>; break;
     case 'repeat': g = <>{P('M4 11V9.5A3.5 3.5 0 0 1 7.5 6H19M16 3l3 3-3 3M20 13v1.5A3.5 3.5 0 0 1 16.5 18H5M8 21l-3-3 3-3')}</>; break;
     case 'scan': g = <>{P('M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10')}</>; break;
     case 'wand': g = <>{P('M5 19L16 8M14.5 6.5l3 3M7 4v2.5M5.8 5.3h2.4M18 14v2.5M16.8 15.3h2.4')}</>; break;
