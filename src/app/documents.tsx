@@ -39,7 +39,7 @@ function Row({ d, onPress }: { d: Doc; onPress: () => void }) {
   const t = typeOf(d.type), s = statusOf(d);
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + d.title} style={({ pressed }) => ({ marginTop: 10, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: s.hot ? 'rgba(255,107,129,.6)' : 'rgba(255,255,255,.2)', borderTopColor: s.hot ? 'rgba(255,107,129,.7)' : 'rgba(255,255,255,.34)', backgroundColor: s.hot ? 'rgba(255,107,129,.16)' : 'rgba(255,255,255,.07)' }}>
+      <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: s.hot ? 'rgba(255,107,129,.6)' : 'rgba(255,255,255,.2)', backgroundColor: s.hot ? 'rgba(255,107,129,.16)' : 'rgba(255,255,255,.07)' }}>
         <LinearGradient colors={s.hot ? ['rgba(255,107,129,.3)', 'rgba(255,107,129,.08)'] : ['rgba(255,255,255,.12)', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 14 }}>
           <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: (s.hot ? '#ff6b81' : t.c) + '22', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: (s.hot ? '#ff6b81' : t.c) + '88' }}><LineIcon name={t.key} c={s.hot ? '#ff8a9b' : t.c} size={24} /></View>
