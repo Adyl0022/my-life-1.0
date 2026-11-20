@@ -14,6 +14,11 @@ import { confirmDelete } from '../lib/dialog';
 import { tryForm } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { LineIcon } from '../components/LineIcon';
+import { Toggle } from '../components/Toggle';
+import { CopyRow, ShareSheet, exportPdf } from '../components/DocShare';
+import { RenewGuideSheet } from '../components/RenewGuideSheet';
+import { useDocLock, setDocLock, askUnlock } from '../lib/docLock';
+import * as Haptics from 'expo-haptics';
 import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, guessType, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
 
 const dim = 'rgba(255,255,255,.62)';
@@ -50,8 +55,10 @@ function Row({ d, onPress }: { d: Doc; onPress: () => void }) {
   );
 }
 
-function Detail({ d, onEdit, onClose }: { d: Doc; onEdit: () => void; onClose: () => void }) {
-  const t = typeOf(d.type), s = statusOf(d); const [big, setBig] = useState(false);
+function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; onClose: () => void; onRemind: (r: Remind) => void }) {
+  const t = typeOf(d.type), s = statusOf(d); const [big, setBig] = useState(false); const [bi, setBi] = useState(0); const [rn, setRn] = useState(false); const [sh, setSh] = useState(false); const [pm, setPm] = useState('');
+  const pages = [d.photo, ...(d.photos || [])].filter(Boolean) as string[];
+  const sug = d.type === 'passport' ? '6m' : d.type === 'bank' || d.type === 'warranty' || d.type === 'insurance' ? '1m' : '3m'; const sugN = (REMINDS.find((x) => x.k === sug) as any).n;
   const rem = REMINDS.find((x) => x.k === d.remind);
   const line = (k: string, v: string) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 14, paddingVertical: 13, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
@@ -68,7 +75,7 @@ function Detail({ d, onEdit, onClose }: { d: Doc; onEdit: () => void; onClose: (
             <View style={{ flex: 1 }}><Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{t.lab}</Text><Text numberOfLines={2} style={{ color: W, fontSize: 22, fontWeight: '800' }}>{d.title}</Text></View>
           </View>
           {d.photo ? (
-            <Pressable onPress={() => setBig(true)} accessibilityLabel="View photo" style={{ marginTop: 20 }}>
+            <Pressable onPress={() => { setBi(0); setBig(true); }} accessibilityLabel="View photo" style={{ marginTop: 20 }}>
               <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.06)' }}>
                 <Image source={{ uri: d.photo }} style={{ width: '100%', aspectRatio: 1.58 }} resizeMode="contain" />
               </View>
@@ -86,23 +93,49 @@ function Detail({ d, onEdit, onClose }: { d: Doc; onEdit: () => void; onClose: (
             {d.expiry ? line('Reminder', rem && rem.k !== 'off' ? rem.n : 'None') : null}
             {d.note ? line('Note', d.note) : null}
           </View>
+          {pages.length > 1 ? (
+            <View style={{ marginTop: 14 }}>
+              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8 }}>PAGES · {pages.length}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9 }}>
+                {pages.map((u, k) => (<Pressable key={k} onPress={() => { setBi(k); setBig(true); }} accessibilityLabel={'Page ' + (k + 1)}><Image source={{ uri: u }} style={{ width: 64, height: 84, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }} /></Pressable>))}
+              </ScrollView>
+            </View>
+          ) : null}
+          <CopyRow number={d.number} name={d.title} />
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setRn(true); }} accessibilityLabel="How to renew" style={({ pressed }) => ({ marginTop: 16, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
+            <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="repeat" c="#fff" size={20} w={1.7} /></View>
+              <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '800' }}>How to renew</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 2 }}>Steps and what to bring</Text></View>
+              <Text style={{ color: '#fff', fontSize: 22 }}>›</Text>
+            </LinearGradient>
+          </Pressable>
+          {pages.length ? (
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+              <Pressable onPress={() => setSh(true)} accessibilityLabel="Share with a note" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}><View style={{ height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Share with a note</Text></View></Pressable>
+              {pages.length > 1 ? <Pressable onPress={async () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setPm('Making the PDF…'); const r = await exportPdf(pages, d.title); setPm(r === 'ok' ? '' : r === 'web' ? 'Making a PDF works in the Android app.' : 'Could not make the PDF. Please try again.'); }} accessibilityLabel="Export as one PDF" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}><View style={{ height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Export as one PDF</Text></View></Pressable> : null}
+            </View>
+          ) : null}
+          {pm ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10 }}>{pm}</Text> : null}
+          <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>Pictures stay on this phone only. Sharing and the PDF are made on the phone and nothing is uploaded.</Text>
           <Pressable onPress={onEdit} accessibilityLabel="Edit document" style={{ marginTop: 20 }}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Edit</Text></LinearGradient></Pressable>
         </ScrollView>
-        {big && d.photo ? (
+        {big && pages[bi] ? (
           <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setBig(false)}>
-            <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: d.photo }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
+            <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: pages[bi] }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
           </Modal>
         ) : null}
+        {rn ? <RenewGuideSheet type={d.type} title={d.title} onClose={() => setRn(false)} suggestLabel={d.expiry && d.remind !== sug ? 'Set my reminder for ' + sugN : undefined} onRemind={() => { onRemind(sug as Remind); setRn(false); }} /> : null}
+        {sh && pages.length ? <ShareSheet pages={pages} title={d.title} onClose={() => setSh(false)} /> : null}
       </View>
     </Modal>
   );
 }
 
-type Form = { id: number; type: string; title: string; number: string; expiry: string; noExp: boolean; remind: Remind; photo: string; note: string };
-const blank = (type: string): Form => ({ id: 0, type, title: '', number: '', expiry: ymd(new Date(Date.now() + 365 * 86400000)), noExp: false, remind: '3m', photo: '', note: '' });
+type Form = { id: number; type: string; title: string; number: string; expiry: string; noExp: boolean; remind: Remind; photo: string; photos: string[]; note: string };
+const blank = (type: string): Form => ({ id: 0, type, title: '', number: '', expiry: ymd(new Date(Date.now() + 365 * 86400000)), noExp: false, remind: '3m', photo: '', photos: [], note: '' });
 
 function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
-  const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [view, setView] = useState(false); const [tried, setTried] = useState(false);
+  const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [view, setView] = useState(false); const [tried, setTried] = useState(false); const [pg, setPg] = useState(-1); const [pmsg, setPmsg] = useState('');
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
   const t = typeOf(f.type);
   const [tab0] = useState(typeOf(f.type).tab);
@@ -161,6 +194,27 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
                 <Pressable onPress={() => confirmDelete('this photo', () => set({ photo: '' }), { title: 'Remove this photo?', yes: 'Remove' })} accessibilityLabel="Remove photo"><View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Remove photo</Text></View></Pressable>
               </View>
             ) : null}
+            {f.photo ? (
+              <View style={{ marginTop: 6 }}>
+                <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginTop: 18, marginBottom: 8 }}>MORE PAGES (OPTIONAL)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9 }}>
+                  {f.photos.map((u, k) => (<Pressable key={k} onPress={() => setPg(pg === k ? -1 : k)} accessibilityLabel={'Page ' + (k + 2)}><Image source={{ uri: u }} style={{ width: 64, height: 84, borderRadius: 10, borderWidth: 2, borderColor: pg === k ? '#8ea8ff' : 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }} /></Pressable>))}
+                </ScrollView>
+                {pg >= 0 && f.photos[pg] ? (
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    {[['‹ Earlier', -1], ['Later ›', 1]].map(([n, dd]) => (<Pressable key={n as string} onPress={() => { const j = pg + (dd as number); if (j < 0 || j >= f.photos.length) return; const a = f.photos.slice(); [a[pg], a[j]] = [a[j], a[pg]]; set({ photos: a }); setPg(j); }} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.96 : 1 }] })}><View style={{ height: 38, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{n as string}</Text></View></Pressable>))}
+                    <Pressable onPress={() => confirmDelete('this page', () => { set({ photos: f.photos.filter((_, k) => k !== pg) }); setPg(-1); }, { title: 'Remove this page?', yes: 'Remove' })} accessibilityLabel="Remove page" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.96 : 1 }] })}><View style={{ height: 38, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,107,129,.5)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '700' }}>Remove</Text></View></Pressable>
+                  </View>
+                ) : null}
+                {f.photos.length < 9 ? (
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    {[['Add page: camera', true], ['Add page: gallery', false]].map(([n, cam]) => (<Pressable key={n as string} onPress={async () => { setPmsg(''); try { const u = await takePhoto(cam as boolean); if (u) set({ photos: [...f.photos, u] }); } catch (e: any) { setPmsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings, or choose a photo instead.' : 'Could not open the photo. Please try again.'); } }} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.96 : 1 }] })}><View style={{ height: 40, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{n as string}</Text></View></Pressable>))}
+                  </View>
+                ) : <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>That is the most pages for one paper (10).</Text>}
+                {pmsg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{pmsg}</Text> : null}
+                <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>For papers with more than one side or page. Only the first page is read for details. All pages stay on this phone only.</Text>
+              </View>
+            ) : null}
             {lab('DETAILS')}
             <Inp value={f.title} onChangeText={(x: string) => set({ title: x })} placeholder={t.label + ' name, e.g. ' + (f.type === 'passport' ? 'My passport' : f.type === 'bank' ? 'Maybank Visa' : f.type === 'warranty' ? 'Samsung TV' : 'My ' + t.label.toLowerCase())} maxLength={60} />
             {(tried || false) && !f.title.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
@@ -193,6 +247,8 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
 export default function Documents() {
   const [st, setSt] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
   const docs = (st && st.docs) || [];
+  const lk = useDocLock(); const [lmsg, setLmsg] = useState('');
+  useEffect(() => { if (lk.loaded && lk.locked) askUnlock(); }, [lk.loaded, lk.locked]);
   const [tab, setTab] = useState<DocTab>('identity'); const [q, setQ] = useState(''); const [f, setF] = useState<Form | null>(null); const [det, setDet] = useState(0);
   const order = TABS.map((x) => x.k); const [pw, setPw] = useState(0);
   const pos = useRef(new Animated.Value(0)).current; const fx = useRef(new Animated.Value(1)).current; const dir = useRef(1);
@@ -209,10 +265,10 @@ export default function Documents() {
     return docs.filter((d) => typeOf(d.type).tab === tab && (!n || (d.title + ' ' + (d.number || '') + ' ' + typeOf(d.type).label).toLowerCase().includes(n))).sort(bySoon);
   }, [docs, tab, q]);
   const openNew = () => setF(blank(DOC_TYPES.find((x) => x.tab === tab)!.key));
-  const openEdit = (d: Doc) => setF({ id: d.id, type: d.type, title: d.title, number: d.number || '', expiry: d.expiry || ymd(new Date(Date.now() + 365 * 86400000)), noExp: !d.expiry, remind: d.remind, photo: d.photo || '', note: d.note || '' });
+  const openEdit = (d: Doc) => setF({ id: d.id, type: d.type, title: d.title, number: d.number || '', expiry: d.expiry || ymd(new Date(Date.now() + 365 * 86400000)), noExp: !d.expiry, remind: d.remind, photo: d.photo || '', photos: d.photos || [], note: d.note || '' });
   const save = () => {
     if (!f) return;
-    const doc: Doc = { id: f.id || (st && st.next) || 1, type: f.type, title: f.title.trim(), number: f.number.trim() || undefined, expiry: f.noExp ? undefined : f.expiry, remind: f.noExp ? 'off' : f.remind, photo: f.photo || undefined, note: f.note || undefined };
+    const doc: Doc = { id: f.id || (st && st.next) || 1, type: f.type, title: f.title.trim(), number: f.number.trim() || undefined, expiry: f.noExp ? undefined : f.expiry, remind: f.noExp ? 'off' : f.remind, photo: f.photo || undefined, photos: f.photos.length ? f.photos : undefined, note: f.note || undefined };
     const next = f.id ? docs.map((d) => (d.id === f.id ? doc : d)) : [doc, ...docs];
     setSt({ docs: next, next: Math.max((st && st.next) || 1, doc.id + 1) });
     setTab(typeOf(f.type).tab); setF(null);
@@ -221,9 +277,37 @@ export default function Documents() {
   const plus = (
     <Pressable onPress={openNew} accessibilityLabel="Add document"><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 26, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>
   );
+  if (lk.locked) {
+    return (
+      <RecordPage title="Documents" sub="Locked" bg={<DocArt />}>
+        <View style={{ marginTop: 26, padding: 26, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)', alignItems: 'center' }}>
+          <View style={{ width: 70, height: 70, borderRadius: 35, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="idother" c="#fff" size={34} w={1.6} /></View>
+          <Text style={{ color: W, fontSize: 17, fontWeight: '800', marginTop: 14 }}>Documents are locked</Text>
+          <Text style={{ color: dim, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>Use your fingerprint, face or phone lock to open them.</Text>
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); askUnlock(); }} accessibilityLabel="Unlock Documents" style={({ pressed }) => ({ marginTop: 18, alignSelf: 'stretch', transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+            <LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#1a1030', fontSize: 15, fontWeight: '800' }}>Unlock</Text></LinearGradient>
+          </Pressable>
+        </View>
+      </RecordPage>
+    );
+  }
+  const soon = docs.filter((d) => d.expiry && validDate(d.expiry)).map((d) => ({ d, s: statusOf(d) })).filter((x) => x.s.n != null && (x.s.n as number) <= 180 && (x.s.n as number) >= -90).sort((a, b) => (a.s.n as number) - (b.s.n as number)).slice(0, 3);
   return (
     <RecordPage title="Documents" sub={docs.length + ' saved'} right={plus} bg={<DocArt />}>
       <Animated.View style={slide}><Intro title={info.title} text={info.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} /></Animated.View>
+      {soon.length ? (
+        <View style={{ marginTop: 12, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: soon[0].s.hot ? 'rgba(255,107,129,.55)' : 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' }}>
+          <Text style={{ color: soon[0].s.hot ? '#ffb3c6' : '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4 }}>RENEWING SOON</Text>
+          {soon.map(({ d, s: st2 }, k) => (
+            <Pressable key={d.id} onPress={() => setDet(d.id)} accessibilityLabel={'Open ' + d.title} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: k ? 1 : 0, borderTopColor: 'rgba(255,255,255,.1)', opacity: pressed ? 0.7 : 1 })}>
+              <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: typeOf(d.type).c + '22', borderWidth: 1, borderColor: typeOf(d.type).c + '66', alignItems: 'center', justifyContent: 'center' }}><LineIcon name={d.type} c={typeOf(d.type).c} size={22} /></View>
+              <View style={{ flex: 1, minWidth: 0 }}><Text numberOfLines={1} style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>{d.title}</Text><Text numberOfLines={1} style={{ color: dim, fontSize: 12, marginTop: 1 }}>{TABS.find((x) => x.k === typeOf(d.type).tab)!.n} · {d.type === 'warranty' ? 'ends ' : 'ends '}{(d.expiry as string).split('-').reverse().join('/')}</Text></View>
+              <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, backgroundColor: st2.col + '33' }}><Text style={{ color: st2.col, fontSize: 11, fontWeight: '800' }}>{(st2.n as number) < 0 ? 'Expired' : st2.n === 0 ? 'Today' : st2.n + (st2.n === 1 ? ' day' : ' days')}</Text></View>
+            </Pressable>
+          ))}
+          <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>Tap one to see what to do next.</Text>
+        </View>
+      ) : null}
       <View onLayout={(e) => setPw(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
         {tw ? <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 3, top: 3, bottom: 3, width: tw, transform: [{ translateX: Animated.multiply(pos, tw) }] }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 999 }} /></Animated.View> : null}
         {TABS.map((x) => (
@@ -242,7 +326,16 @@ export default function Documents() {
         </View>
       )}
       </Animated.View>
-      {det && !f && docs.find((x) => x.id === det) ? <Detail d={docs.find((x) => x.id === det) as Doc} onEdit={() => { const x = docs.find((y) => y.id === det) as Doc; setDet(0); openEdit(x); }} onClose={() => setDet(0)} /> : null}
+      <View style={{ marginTop: 18, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', backgroundColor: 'rgba(255,255,255,.045)' }}>
+        <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 10 }}>LOCK (YOUR CHOICE)</Text>
+        <Pressable onPress={async () => { setLmsg(''); const ok = await setDocLock(!lk.on); if (!ok && !lk.on) setLmsg('Set a fingerprint, face or screen lock on your phone first, then try again.'); }} accessibilityLabel="Lock Documents" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Lock Documents</Text><Text style={{ color: dim, fontSize: 12, marginTop: 2, lineHeight: 17 }}>Ask for your fingerprint, face or phone lock each time you open them.</Text></View>
+          <Toggle on={lk.on} colors={['#7c9cff', '#b794ff']} />
+        </Pressable>
+        {lmsg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{lmsg}</Text> : null}
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>This uses your phone's own lock and stays on this phone only. It does not change your account.</Text>
+      </View>
+      {det && !f && docs.find((x) => x.id === det) ? <Detail d={docs.find((x) => x.id === det) as Doc} onEdit={() => { const x = docs.find((y) => y.id === det) as Doc; setDet(0); openEdit(x); }} onClose={() => setDet(0)} onRemind={(r) => setSt({ ...st, docs: docs.map((x) => (x.id === det ? { ...x, remind: r } : x)) })} /> : null}
       {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </RecordPage>
   );

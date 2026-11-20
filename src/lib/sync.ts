@@ -8,15 +8,15 @@ import { getText, applyRemote, clearMine, readPlain } from './store';
 export const SYNC_KEYS = ['ml_planner', 'ml_notes', 'ml_islamic', 'ml_tasbih', 'ml_puasa', 'ml_finance', 'ml_debts', 'ml_savings', 'ml_record', 'ml_habit', 'ml_name', 'ml_budget', 'ml_mean', 'ml_region', 'ml_toggles', 'ml_prayer_alerts', 'ml_prayer_lead', 'ml_backup_rem', 'ml_commit_order', 'ml_size', 'ml_tips_off', 'ml_read', 'ml_read_z', 'ml_hidden', 'ml_morder', 'ml_dcard', 'ml_memories', 'ml_dashpages', 'ml_documents', 'ml_collection', 'ml_subs'];
 // Written details sync, but photos never go online (they would fill the cloud storage). Photos are cut out before saving to the cloud and a phone keeps its own photos when the cloud copy arrives.
 const NO_PHOTO_KEYS = ['ml_documents', 'ml_collection', 'ml_subs'];
-const noPhotos = (v: any): any => Array.isArray(v) ? v.map(noPhotos) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, k === 'photo' ? '' : noPhotos(x)])) : v;
+const noPhotos = (v: any): any => Array.isArray(v) ? v.map(noPhotos) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, k === 'photo' ? '' : k === 'photos' ? [] : noPhotos(x)])) : v;
 async function keepMyPhotos(k: string, remote: any): Promise<any> {
   if (!NO_PHOTO_KEYS.includes(k) || !remote || typeof remote !== 'object') return remote;
   try {
     const t = await getText(k); if (!t) return remote; const mine = JSON.parse(t); const out: any = { ...remote };
     Object.keys(out).forEach((f) => {
       if (!Array.isArray(out[f]) || !Array.isArray(mine && mine[f])) return;
-      const ph = new Map<any, string>(); mine[f].forEach((x: any) => { if (x && x.photo) ph.set(x.id, x.photo); });
-      out[f] = out[f].map((x: any) => (x && !x.photo && ph.has(x.id) ? { ...x, photo: ph.get(x.id) } : x));
+      const ph = new Map<any, string>(); const pgs = new Map<any, string[]>(); mine[f].forEach((x: any) => { if (x && x.photo) ph.set(x.id, x.photo); if (x && Array.isArray(x.photos) && x.photos.length) pgs.set(x.id, x.photos); });
+      out[f] = out[f].map((x: any) => { if (!x) return x; let y = x; if (!y.photo && ph.has(y.id)) y = { ...y, photo: ph.get(y.id) }; if ((!y.photos || !y.photos.length) && pgs.has(y.id)) y = { ...y, photos: pgs.get(y.id) }; return y; });
     });
     return out;
   } catch (e) { return remote; }
