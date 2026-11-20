@@ -4,11 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
-import { SubHeadArt } from '../components/SubHeadArt';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SubArt, SubHero } from '../components/SubArt';
+import { RecordPage } from '../components/RecordHubUi';
 import Svg, { Circle as SCircle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
-import { TOP } from '../lib/layout';
 import { LineIcon } from '../components/LineIcon';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
@@ -111,11 +110,11 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
 }
 
 // colours for the light cards: the status colours from subs.ts are pastel, so these are the deeper versions for white backgrounds
-const INK = '#1d1248', INK2 = 'rgba(29,18,72,.62)', CARD = 'rgba(255,255,255,.8)', CARDB = 'rgba(255,255,255,.95)', VIO = '#5b3fd6';
-const deep = (hex: string) => { const m = /^#?([0-9a-f]{6})/i.exec(hex); if (!m) return INK; const n = parseInt(m[1], 16); const k = 0.5; const mix = (a: number, b: number) => Math.round(a * (1 - k) + b * k); return '#' + [mix(n >> 16, 0x2a), mix((n >> 8) & 255, 0x1a), mix(n & 255, 0x6e)].map((v) => v.toString(16).padStart(2, '0')).join(''); };
+const INK = '#ffffff', INK2 = 'rgba(255,255,255,.66)', VIO = '#b9a6ff', LINE = 'rgba(255,255,255,.12)';
+const deep = (hex: string) => hex;
 const short = (d: ReturnType<typeof dueOf>) => { const tr = d.pill.startsWith('TRIAL'); if (tr) return d.days <= 0 ? 'Trial ends today' : d.days === 1 ? 'Ends tomorrow' : 'Trial · ' + d.days + ' days'; return d.days <= 0 ? 'Today' : d.days === 1 ? 'Tomorrow' : d.days <= 3 ? d.days + ' days' : 'Active'; };
-const tone = (d: ReturnType<typeof dueOf>) => (d.hot ? { c: '#c8304d', bg: 'rgba(255,107,129,.22)', t: short(d) } : d.warn ? { c: '#9a5b06', bg: 'rgba(255,196,60,.32)', t: short(d) } : { c: '#12805a', bg: 'rgba(94,231,181,.3)', t: short(d) });
-const card = { borderRadius: 22, backgroundColor: CARD, borderWidth: 1, borderColor: 'rgba(255,255,255,.9)', shadowColor: '#2a1a6e', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3 } as const;
+const tone = (d: ReturnType<typeof dueOf>) => (d.hot ? { c: '#ff8fa3', bg: 'rgba(255,107,129,.2)', t: short(d) } : d.warn ? { c: '#ffd24a', bg: 'rgba(255,210,74,.18)', t: short(d) } : { c: '#5ee7b5', bg: 'rgba(94,231,181,.16)', t: short(d) });
+const card = { borderRadius: 22, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)', borderTopColor: 'rgba(255,255,255,.3)' } as const;
 
 function Row({ s, today, onPress }: { s: Sub; today: string; onPress: () => void }) {
   const d = dueOf(s, today); const t = tone(d);
@@ -158,7 +157,7 @@ function Donut({ parts, total }: { parts: { c: string; v: number }[]; total: num
   const r = 44, C = 2 * Math.PI * r; const sum = parts.reduce((a, b) => a + b.v, 0) || 1; let off = 0;
   return <View style={{ width: 118, height: 118, alignItems: 'center', justifyContent: 'center' }}>
     <Svg width={118} height={118} viewBox="0 0 118 118">
-      <SCircle cx={59} cy={59} r={r} stroke="rgba(29,18,72,.08)" strokeWidth={14} fill="none" />
+      <SCircle cx={59} cy={59} r={r} stroke="rgba(255,255,255,.1)" strokeWidth={14} fill="none" />
       {parts.map((p, i) => { const l = (C * p.v) / sum; const e = <SCircle key={i} cx={59} cy={59} r={r} stroke={p.c} strokeWidth={14} fill="none" strokeDasharray={Math.max(0, l - 3) + ' ' + C} strokeDashoffset={-off} rotation={-90} origin="59,59" strokeLinecap="round" />; off += l; return e; })}
     </Svg>
     <View style={{ position: 'absolute', alignItems: 'center' }}><Text style={{ color: INK, fontSize: 24, fontWeight: '800' }}>{total}</Text><Text style={{ color: INK2, fontSize: 10.5 }}>Total</Text></View>
@@ -185,46 +184,34 @@ export default function Screen() {
   const del = () => { if (!f || !f.id) return; confirmDelete(f.name || 'this subscription', () => { setSt({ ...st, subs: subs.filter((x) => x.id !== f.id) }); setF(null); }, { title: 'Delete this subscription?', message: 'It will be removed from your list. This cannot be undone.' }); };
   const addFound = (x: ReturnType<typeof detect>[number]) => setSt({ ...st, subs: [...subs, fromFound(x, today, st.next)], next: st.next + 1 });
   const notThis = (x: ReturnType<typeof detect>[number]) => confirmDelete(x.name, () => setSt({ ...st, no: [...no, x.key] }), { title: 'Not a subscription?', message: x.name + ' will not be suggested again.', yes: 'Hide it' });
-  const stat = (icon: string, v: string, l: string, last?: boolean) => <View style={{ flex: 1, alignItems: 'center', gap: 4, borderRightWidth: last ? 0 : 1, borderRightColor: 'rgba(29,18,72,.1)' }}><LineIcon name={icon} c={VIO} size={22} /><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: INK, fontSize: 14.5, fontWeight: '800' }}>{v}</Text><Text style={{ color: INK2, fontSize: 11 }}>{l}</Text></View>;
+  const stat = (icon: string, v: string, l: string, last?: boolean) => <View style={{ flex: 1, alignItems: 'center', gap: 4, borderRightWidth: last ? 0 : 1, borderRightColor: 'rgba(255,255,255,.12)' }}><LineIcon name={icon} c={VIO} size={22} /><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: INK, fontSize: 14.5, fontWeight: '800' }}>{v}</Text><Text style={{ color: INK2, fontSize: 11 }}>{l}</Text></View>;
   return (
-    <View style={{ flex: 1, backgroundColor: '#9684e6' }}>
-      <LinearGradient colors={['#c0b4f5', '#a392ec', '#8472dc']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-      <View pointerEvents="none" style={{ position: 'absolute', right: -90, top: -70, width: 320, height: 320, borderRadius: 160, backgroundColor: 'rgba(255,255,255,.28)' }} />
-      <View pointerEvents="none" style={{ position: 'absolute', left: -120, bottom: -140, width: 340, height: 340, borderRadius: 170, backgroundColor: 'rgba(255,255,255,.12)' }} />
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10 + TOP, paddingBottom: 110 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-            <View style={{ flex: 1 }}>
-              <Pressable onPress={() => router.back()} accessibilityLabel="Back"><View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.55)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 24, marginTop: -3 }}>‹</Text></View></Pressable>
-              <Text style={{ color: INK, fontSize: 27, fontWeight: '800', letterSpacing: -0.5, marginTop: 14 }}>Subscriptions</Text>
-              <Text style={{ color: INK2, fontSize: 13, lineHeight: 18, marginTop: 4 }}>Keep track of everything{'\n'}you subscribe to.</Text>
-            </View>
-            <View style={{ marginRight: -14, marginTop: -4 }}><SubHeadArt width={178} /></View>
-          </View>
-
+    <View style={{ flex: 1 }}>
+      <RecordPage title="Subscriptions" sub={subs.length ? rm(total) + ' a month' : 'Keep track of everything you subscribe to'} bg={<SubArt />}>
+          <View style={{ height: 132 }}><SubHero /></View>
           <View style={{ ...card, flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6, marginTop: 6 }}>
             {stat('check', String(subs.length), 'Active')}{stat('cal', rm(total), 'Monthly total')}{stat('chart', rm(total * 12), 'Yearly total', true)}
           </View>
 
-          {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal"><View style={{ ...card, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: fd.hot ? 'rgba(255,200,210,.9)' : fd.warn ? 'rgba(255,236,170,.92)' : 'rgba(228,220,255,.92)' }}>
-            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.75)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="bell" c={fd.hot ? '#c8304d' : fd.warn ? '#9a5b06' : VIO} size={23} /></View>
+          {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal"><View style={{ ...card, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: fd.hot ? 'rgba(255,107,129,.2)' : fd.warn ? 'rgba(255,210,74,.18)' : 'rgba(185,166,255,.18)', borderColor: fd.hot ? 'rgba(255,107,129,.6)' : fd.warn ? 'rgba(255,210,74,.55)' : 'rgba(185,166,255,.5)' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="bell" c={fd.hot ? '#ff8fa3' : fd.warn ? '#ffd24a' : VIO} size={23} /></View>
             <View style={{ flex: 1 }}><Text style={{ color: INK2, fontSize: 11.5 }}>Upcoming renewal</Text><Text numberOfLines={1} style={{ color: INK, fontSize: 15.5, fontWeight: '800', marginTop: 1 }}>{first.name}</Text><Text numberOfLines={1} style={{ color: INK2, fontSize: 11.5, marginTop: 1 }}>{shortD(fd.date)} · {rm(num(first.price))} / {first.cycle === 'week' ? 'week' : first.cycle === 'year' ? 'year' : 'month'}</Text></View>
             <Text style={{ color: INK, fontSize: 22 }}>›</Text>
           </View></Pressable> : null}
 
           {found.map((x) => (
-            <View key={x.key} style={{ ...card, marginTop: 12, padding: 12, borderColor: 'rgba(18,128,90,.5)' }}>
+            <View key={x.key} style={{ ...card, marginTop: 12, padding: 12, borderColor: 'rgba(94,231,181,.55)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(94,231,181,.3)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="wand" c="#12805a" size={23} /></View>
+                <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(94,231,181,.18)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="wand" c="#5ee7b5" size={23} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#12805a', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>FOUND IN YOUR SPENDING</Text>
+                  <Text style={{ color: '#8fe9d0', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>FOUND IN YOUR SPENDING</Text>
                   <Text numberOfLines={1} style={{ color: INK, fontSize: 15.5, fontWeight: '800', marginTop: 2 }}>{x.name} · {rm(x.amt)}</Text>
                   <Text style={{ color: INK2, fontSize: 12, marginTop: 2 }}>Paid {x.months} months in a row, around the {x.day}{x.day % 10 === 1 && x.day !== 11 ? 'st' : x.day % 10 === 2 && x.day !== 12 ? 'nd' : x.day % 10 === 3 && x.day !== 13 ? 'rd' : 'th'}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                <Pressable onPress={() => addFound(x)} accessibilityLabel={'Add ' + x.name} style={{ flex: 1 }}><View style={{ height: 36, borderRadius: 12, backgroundColor: VIO, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#fff', fontSize: 13.5, fontWeight: '800' }}>Add subscription</Text></View></Pressable>
-                <Pressable onPress={() => notThis(x)} accessibilityLabel={'Not ' + x.name}><View style={{ width: 86, height: 36, borderRadius: 12, backgroundColor: 'rgba(29,18,72,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 12.5, fontWeight: '700' }}>Not this</Text></View></Pressable>
+                <Pressable onPress={() => addFound(x)} accessibilityLabel={'Add ' + x.name} style={{ flex: 1 }}><View style={{ height: 36, borderRadius: 12, backgroundColor: '#5ee7b5', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06312a', fontSize: 13.5, fontWeight: '800' }}>Add subscription</Text></View></Pressable>
+                <Pressable onPress={() => notThis(x)} accessibilityLabel={'Not ' + x.name}><View style={{ width: 86, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 12.5, fontWeight: '700' }}>Not this</Text></View></Pressable>
               </View>
             </View>
           ))}
@@ -239,24 +226,24 @@ export default function Screen() {
               <Donut parts={shares.map((x) => ({ c: x.c, v: x.v }))} total={subs.length} />
               <View style={{ flex: 1 }}>
                 {shares.map((x) => <View key={x.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}><View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: x.c }} /><Text style={{ color: INK, fontSize: 13, flex: 1 }}>{x.n}</Text><Text style={{ color: INK2, fontSize: 12.5, fontWeight: '700' }}>{Math.round((x.v / (total || 1)) * 100)}%</Text></View>)}
-                <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(29,18,72,.1)', marginTop: 6, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: INK2, fontSize: 12 }}>Every month</Text><Text style={{ color: INK, fontSize: 13, fontWeight: '800' }}>{rm(total)}</Text></View>
+                <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)', marginTop: 6, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: INK2, fontSize: 12 }}>Every month</Text><Text style={{ color: INK, fontSize: 13, fontWeight: '800' }}>{rm(total)}</Text></View>
               </View>
             </View>
             <Text style={{ color: INK, fontSize: 14.5, fontWeight: '800', marginTop: 16, marginHorizontal: 2 }}>Next 5 months</Text>
             <View style={{ ...card, marginTop: 8, padding: 14, flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 150 }}>
               {months.map((m, i) => <View key={m.k} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 5 }}>
                 <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: INK2, fontSize: 9.5, fontWeight: '700' }}>{m.v ? Math.round(m.v) : ''}</Text>
-                <LinearGradient colors={i === 0 ? ['#7a56f0', '#4a2fc0'] : ['#a58bff', '#7a5cf0']} style={{ width: '100%', height: Math.max(6, (m.v / top) * 78), borderRadius: 8 }} />
+                <LinearGradient colors={i === 0 ? ['#b9a6ff', '#7a5cf0'] : ['#8fe9e2', '#5aa8c8']} style={{ width: '100%', height: Math.max(6, (m.v / top) * 78), borderRadius: 8 }} />
                 <Text style={{ color: INK2, fontSize: 10.5 }}>{m.n}</Text>
               </View>)}
             </View>
             <Text style={{ color: INK2, fontSize: 11.5, marginTop: 10, lineHeight: 16, marginHorizontal: 2 }}>This month's coming charges come off Money Left.</Text>
           </> : null}
-        </ScrollView>
+          <View style={{ height: 60 }} />
+      </RecordPage>
         <View pointerEvents="box-none" style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
-          <Pressable onPress={() => setF(blank())} accessibilityLabel="Add subscription"><LinearGradient colors={['#5a3fd4', '#8a5cf0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, shadowColor: '#3a22a8', shadowOpacity: 0.45, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}><Text style={{ color: '#fff', fontSize: 22, marginTop: -2 }}>+</Text><Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>Add Subscription</Text></LinearGradient></Pressable>
+          <Pressable onPress={() => setF(blank())} accessibilityLabel="Add subscription"><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, shadowColor: '#6a4bd8', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }}><Text style={{ color: '#1a1040', fontSize: 22, marginTop: -2 }}>+</Text><Text style={{ color: '#1a1040', fontSize: 16, fontWeight: '800' }}>Add Subscription</Text></LinearGradient></Pressable>
         </View>
-      </SafeAreaView>
       {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </View>
   );
