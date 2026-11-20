@@ -15,18 +15,18 @@ import { tryForm, numberError } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { statusOf, validDate, ymd, typeOf, EMPTY_DOCS, type DocStore } from '../lib/documents';
 import { ColArt } from '../components/ColArt';
-import { CATS, ACC, BTN, EMPTY_COL, kindIcon, num, rm, dmy, photosOf, worthNow, warrantyBar, type ColStore, type Item, type ItemCat } from '../lib/collection';
+import { CATS, ACC, BTN, EMPTY_COL, kindIcon, num, rm, dmy, photosOf, worthNow, worthMine, warrantyBar, CONDS, type ColStore, type Item, type ItemCat } from '../lib/collection';
 
 type Form = Omit<Item, 'id'> & { id: number; noBought: boolean; noW: boolean };
-const blank = (cat: ItemCat): Form => ({ id: 0, cat, kind: CATS[cat].kinds[0][0], name: '', price: '', bought: ymd(new Date()), warranty: ymd(new Date(Date.now() + 365 * 86400000)), photo: '', photos: [], docIds: [], note: '', noBought: true, noW: true });
+const blank = (cat: ItemCat): Form => ({ id: 0, cat, kind: CATS[cat].kinds[0][0], name: '', price: '', bought: ymd(new Date()), warranty: ymd(new Date(Date.now() + 365 * 86400000)), photo: '', photos: [], docIds: [], worth: '', cond: 'good', note: '', noBought: true, noW: true });
 const wStatus = (x: Item) => (x.warranty ? statusOf({ id: 0, type: '', title: '', expiry: x.warranty, remind: 'off' }) : null);
 
 function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['docs']; f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
   const C = CATS[f.cat]; const g = BTN; const ac = ACC[f.cat === 'gadget' ? 'gadget' : f.cat]; const [tried, setTried] = useState(false); const [msg, setMsg] = useState('');
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
   const pick = async (cam: boolean) => { setMsg(''); try { const cur = f.photos || []; if (cur.length >= 5) { setMsg('You can add up to 5 photos.'); return; } const u = await takePhoto(cam); if (u) set({ photos: [...cur, u] }); } catch (e: any) { setMsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings, or choose a photo instead.' : 'Could not open the photo. Please try again.'); } };
-  const bad = !f.noBought && !validDate(f.bought), badW = C.warranty && !f.noW && !validDate(f.warranty), badP = !!numberError(f.price);
-  const save = () => { setTried(true); tryForm('colitem'); if (!f.name.trim() || bad || badW || badP) return; onSave(); };
+  const bad = !f.noBought && !validDate(f.bought), badW = C.warranty && !f.noW && !validDate(f.warranty), badP = !!numberError(f.price), badWo = !!numberError(f.worth || '');
+  const save = () => { setTried(true); tryForm('colitem'); if (!f.name.trim() || bad || badW || badP || badWo) return; onSave(); };
   const check = (on: boolean, t: string, fn: () => void) => (
     <Pressable onPress={fn} accessibilityLabel={t} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
       <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: 'rgba(255,255,255,.5)', backgroundColor: on ? 'rgba(94,231,223,.5)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{on ? <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>✓</Text> : null}</View>
@@ -64,6 +64,12 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
       <Inp value={f.name} onChangeText={(x: string) => set({ name: x })} placeholder={'Name, e.g. ' + (f.cat === 'gadget' ? 'Samsung S24' : f.cat === 'lifestyle' ? 'Nike Air Max' : 'Terrace house')} maxLength={60} />
       {tried && !f.name.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
       <Inp form="colitem" style={{ marginTop: 9 }} value={f.price} onChangeText={(x: string) => set({ price: x })} keyboardType="decimal-pad" placeholder="Price in RM (optional)" />
+      {f.cat === 'gadget' ? (<>
+        <Lab t="CONDITION NOW" />
+        <SlidePills tabs={CONDS.map((c) => c.n)} index={Math.max(0, CONDS.findIndex((c) => c.k === (f.cond || 'good')))} onChange={(i) => set({ cond: CONDS[i].k })} colors={['#7c9cff', '#b794ff']} fontSize={12} padX={12} padY={9} />
+        <Inp form="colitem" noCheck={false} zeroOk style={{ marginTop: 9 }} value={f.worth || ''} onChangeText={(x: string) => set({ worth: x })} keyboardType="decimal-pad" placeholder="What it is worth now in RM (optional)" />
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Know the price it sells for now? Type it. If you leave it empty, My Life 1.0 makes a guess from the price, age, kind, brand and condition.</Text>
+      </>) : null}
       <Lab t="DATE BOUGHT" />
       {check(f.noBought, "I do not remember the date", () => set({ noBought: !f.noBought }))}
       {!f.noBought ? <DateField value={f.bought} onChange={(v: string) => set({ bought: v })} past /> : null}
@@ -106,9 +112,9 @@ export default function Screen() {
   const guessed = C.warranty && mine.some((x) => worthNow(x) != null);
   const inW = mine.filter((x) => { const s = wStatus(x); return s && s.n != null && s.n >= 0; }).length;
   const openNew = () => setF(blank(cat));
-  const openEdit = (x: Item) => setF({ ...x, photos: photosOf(x), docIds: (x.docIds || []).filter((i) => docs.some((d) => d.id === i)), noBought: !x.bought, noW: !x.warranty, bought: x.bought || ymd(new Date()), warranty: x.warranty || ymd(new Date(Date.now() + 365 * 86400000)) });
+  const openEdit = (x: Item) => setF({ ...x, cond: x.cond || 'good', worth: x.worth || '', photos: photosOf(x), docIds: (x.docIds || []).filter((i) => docs.some((d) => d.id === i)), noBought: !x.bought, noW: !x.warranty, bought: x.bought || ymd(new Date()), warranty: x.warranty || ymd(new Date(Date.now() + 365 * 86400000)) });
   const save = () => {
-    if (!f) return; const { noBought, noW, ...rest } = f; const it: Item = { ...rest, name: f.name.trim(), price: f.price.trim(), bought: noBought ? '' : f.bought, warranty: !C.warranty || noW ? '' : f.warranty, note: f.note.trim(), photos: (f.photos || []).slice(0, 5), photo: (f.photos || [])[0] || '', docIds: f.docIds || [] };
+    if (!f) return; const { noBought, noW, ...rest } = f; const it: Item = { ...rest, name: f.name.trim(), price: f.price.trim(), bought: noBought ? '' : f.bought, warranty: !C.warranty || noW ? '' : f.warranty, note: f.note.trim(), photos: (f.photos || []).slice(0, 5), photo: (f.photos || [])[0] || '', docIds: f.docIds || [], worth: C.warranty ? (f.worth || '').trim() : '', cond: C.warranty ? f.cond || 'good' : undefined };
     if (it.id) setSt({ ...st, items: all.map((x) => (x.id === it.id ? it : x)) });
     else setSt({ ...st, items: [...all, { ...it, id: st.next }], next: st.next + 1 });
     setF(null);
@@ -123,8 +129,8 @@ export default function Screen() {
     <RecordPage title={C.title} sub={mine.length + (mine.length === 1 ? ' item' : ' items')} right={plus} bg={<ColArt />}>
       <Intro plain title={C.title} text={C.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder={'Search ' + C.title.toLowerCase()} /></View>
-      {mine.length ? <Sums a={[C.warranty ? 'YOU PAID' : 'VALUE', rm(total)]} b={C.warranty ? ['WORTH NOW (ESTIMATE)', guessed ? '~ ' + rm(worth) : rm(total)] : undefined} /> : null}
-      {mine.length && C.warranty ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{inW + ' of ' + mine.length + ' still in warranty. '}{guessed ? 'Worth now is only a guess from the price, how old it is and the kind of gadget. Real prices can be different.' : 'Add the price and the date bought to see a guess of what it is worth now.'}</Text> : null}
+      {mine.length ? <Sums a={[C.warranty ? 'YOU PAID' : 'VALUE', rm(total)]} b={C.warranty ? ['WORTH NOW', guessed ? '~ ' + rm(worth) : rm(total)] : undefined} /> : null}
+      {mine.length && C.warranty ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{inW + ' of ' + mine.length + ' still in warranty. '}{guessed ? 'Worth now uses the number you typed, or a guess from the price, age, kind, brand and condition. A guess can be different from real prices.' : 'Add the price and the date bought to see a guess of what it is worth now.'}</Text> : null}
       {mine.length ? <View style={{ marginTop: 12 }}><SlidePills tabs={['List', 'Grid']} index={grid ? 1 : 0} onChange={(i) => setViews({ ...(views || {}), [cat]: i ? 'grid' : 'list' })} colors={['#7c9cff', '#b794ff']} fontSize={13} padX={26} padY={8} /></View> : null}
       {list.length ? (grid ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
@@ -149,7 +155,7 @@ export default function Screen() {
               <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>{wb.left >= 0 ? 'You get a reminder 30 days before it ends.' : 'The warranty has ended.'}</Text>
             </View>
           ) : null}
-          {cur.cat === 'gadget' && worthNow(cur) != null ? <Text style={{ color: dim, fontSize: 12, marginTop: 12, lineHeight: 17 }}>{'Worth now, a guess: about ' + rm(worthNow(cur) as number) + '. It is only an estimate from the price, its age and the kind of gadget.'}</Text> : null}
+          {cur.cat === 'gadget' && worthNow(cur) != null ? <Text style={{ color: dim, fontSize: 12, marginTop: 12, lineHeight: 17 }}>{worthMine(cur) > 0 ? 'Worth now: ' + rm(worthNow(cur) as number) + ', the number you typed.' : 'Worth now, a guess: about ' + rm(worthNow(cur) as number) + '. It is only an estimate from the price, age, kind, brand and condition.'}</Text> : null}
           {linked.length ? (
             <View style={{ marginTop: 16 }}>
               <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 6 }}>PAPERS</Text>

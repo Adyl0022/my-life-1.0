@@ -1,7 +1,9 @@
 import { validDate, ymd } from './documents';
 
+export type Cond = 'new' | 'good' | 'worn' | 'broken';
+export const CONDS: { k: Cond; n: string; f: number }[] = [{ k: 'new', n: 'Like new', f: 1.08 }, { k: 'good', n: 'Good', f: 1 }, { k: 'worn', n: 'Worn', f: 0.8 }, { k: 'broken', n: 'Broken', f: 0.4 }];
 export type ItemCat = 'gadget' | 'lifestyle' | 'property';
-export type Item = { id: number; cat: ItemCat; kind: string; name: string; price: string; bought: string; warranty: string; photo: string; photos?: string[]; docIds?: number[]; note: string };
+export type Item = { id: number; cat: ItemCat; kind: string; name: string; price: string; bought: string; warranty: string; photo: string; photos?: string[]; docIds?: number[]; worth?: string; cond?: Cond; note: string };
 export type Loan = { id: number; dir: 'lent' | 'borrowed'; what: 'money' | 'thing'; who: string; title: string; amount: string; date: string; due: string; done: boolean; doneAt: string; note: string; remind?: 'off' | 'day' | '3d' };
 export type Lesson = { id: number; title: string; text: string; date: string; tag: string };
 export type ColStore = { items: Item[]; loans: Loan[]; lessons: Lesson[]; next: number };
@@ -46,14 +48,21 @@ export const photosOf = (x: Item): string[] => (x.photos && x.photos.length ? x.
 
 const dayN = (s: string) => { const p = s.split('-'); return Math.round(new Date(+p[0], +p[1] - 1, +p[2], 12).getTime() / 86400000); };
 
-/** A rough guess of what a gadget is worth today. Only for gadgets, and only a guess. */
-const FALL: Record<string, number> = { Phone: 0.28, Laptop: 0.22, Tablet: 0.22, Audio: 0.2, Watch: 0.1 };
+/** What a gadget is worth today. The person's own number wins. Otherwise a guess: a big drop in the first year, a slower drop after, kinder for brands that keep their price, and adjusted for the condition. Only a guess, not a market price. */
+const DROP1: Record<string, number> = { Phone: 0.25, Laptop: 0.2, Tablet: 0.2, Audio: 0.2, Watch: 0.08 };
+const DROPN: Record<string, number> = { Phone: 0.15, Laptop: 0.15, Tablet: 0.15, Audio: 0.15, Watch: 0.06 };
+const KEEPERS = /iphone|ipad|macbook|apple|airpods|rolex|seiko|casio|g-shock|garmin/i;
+export const worthMine = (x: Item): number => (x.cat === 'gadget' ? num(x.worth || '') : 0);
 export function worthNow(x: Item, now = new Date()): number | null {
   if (x.cat !== 'gadget') return null;
+  const mine = worthMine(x); if (mine > 0) return Math.round(mine);
   const price = num(x.price); if (!(price > 0) || !x.bought || !validDate(x.bought)) return null;
   const yrs = Math.max(0, (dayN(ymd(now)) - dayN(x.bought)) / 365);
-  const rate = FALL[x.kind] != null ? FALL[x.kind] : 0.18;
-  return Math.round(price * Math.max(0.15, Math.pow(1 - rate, yrs)));
+  const k = KEEPERS.test(x.name) ? 0.75 : 1;
+  const d1 = (DROP1[x.kind] != null ? DROP1[x.kind] : 0.15) * k, dn = (DROPN[x.kind] != null ? DROPN[x.kind] : 0.12) * k;
+  const base = yrs <= 1 ? 1 - d1 * yrs : (1 - d1) * Math.pow(1 - dn, yrs - 1);
+  const cf = (CONDS.find((c) => c.k === (x.cond || 'good')) || CONDS[1]).f;
+  return Math.round(Math.min(price, price * Math.max(0.12, base) * cf));
 }
 
 /** Warranty progress: days left, and how much of the time is already used (0 to 1). */
