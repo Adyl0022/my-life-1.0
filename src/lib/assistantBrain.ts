@@ -524,7 +524,7 @@ export function think(A, q, lang) {
     const sl = (R.subs || []).slice().sort((a, b) => a.n - b.n);
     if (sl.length) {
       const nm = sl.find((x) => qn.includes(x.name.toLowerCase().split(' ')[0]));
-      const rmf = (v) => 'RM ' + v.toFixed(2);
+      const rmf = (v) => cs() + v.toFixed(2);
       const say = (x) => x.name + ' ' + (x.trial ? L('free trial ends ', 'percubaan percuma tamat ') : L('charges ', 'dicaj ')) + (x.n <= 0 ? L('today', 'hari ini') : x.n === 1 ? L('tomorrow', 'esok') : L('in ' + x.n + ' days', 'dalam ' + x.n + ' hari')) + ' (' + rmf(x.price) + ')';
       if (nm) return done(mk(say(nm) + '.', { label: L('Open Subscriptions', 'Buka Subscriptions'), href: 'Finance.dc.html' }));
       return done(mk(L('You pay about ' + rmf(R.subsMonth) + ' a month on ' + sl.length + ' subscriptions. Next: ', 'Awak bayar kira-kira ' + rmf(R.subsMonth) + ' sebulan untuk ' + sl.length + ' langganan. Seterusnya: ') + sl.slice(0, 3).map(say).join('; ') + '.', { label: L('Open Subscriptions', 'Buka Subscriptions'), href: 'Finance.dc.html' }));

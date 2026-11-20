@@ -159,7 +159,7 @@ export default function Finance() {
                   <Stat l="Assets" v={cs() + money(accTot.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(accTot.liab)} vc="#ff8fab" />
                 </View>
               </>) : (
-                <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>Add your cash, bank, wallet, cards and loans to see your total money. Balances go up and down when you log spending.</Text>
+                <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>Add your cash, bank, wallet and cards to see your total money. Balances go up and down when you log spending.</Text>
               )}
             </View>
           </Pressable>

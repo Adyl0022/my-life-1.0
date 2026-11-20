@@ -1,4 +1,5 @@
 import { LineIcon } from '../components/LineIcon';
+import { cu, cs, useRegion } from '../lib/region';
 import React, { useMemo, useState } from 'react';
 import { View, Image, Platform } from 'react-native';
 import { Pressable } from '../components/Press';
@@ -64,11 +65,11 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
       <Lab t="DETAILS" />
       <Inp value={f.name} onChangeText={(x: string) => set({ name: x })} placeholder={'Name, e.g. ' + (f.cat === 'gadget' ? 'Samsung S24' : f.cat === 'lifestyle' ? 'Nike Air Max' : 'Terrace house')} maxLength={60} />
       {tried && !f.name.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
-      <Inp form="colitem" style={{ marginTop: 9 }} value={f.price} onChangeText={(x: string) => set({ price: x })} keyboardType="decimal-pad" placeholder="Price in RM (optional)" />
+      <Inp form="colitem" style={{ marginTop: 9 }} value={f.price} onChangeText={(x: string) => set({ price: x })} keyboardType="decimal-pad" placeholder={'Price in ' + cu() + ' (optional)'} />
       {f.cat === 'gadget' ? (<>
         <Lab t="CONDITION NOW" />
         <EqPills tabs={CONDS.map((c) => c.n)} index={Math.max(0, CONDS.findIndex((c) => c.k === (f.cond || 'good')))} onChange={(i) => set({ cond: CONDS[i].k })} colors={['#7c9cff', '#b794ff']} fontSize={12} />
-        <Inp form="colitem" noCheck={false} zeroOk style={{ marginTop: 9 }} value={f.worth || ''} onChangeText={(x: string) => set({ worth: x })} keyboardType="decimal-pad" placeholder="What it is worth now in RM (optional)" />
+        <Inp form="colitem" noCheck={false} zeroOk style={{ marginTop: 9 }} value={f.worth || ''} onChangeText={(x: string) => set({ worth: x })} keyboardType="decimal-pad" placeholder={'What it is worth now in ' + cu() + ' (optional)'} />
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Know the price it sells for now? Type it. If you leave it empty, My Life 1.0 makes a guess from the price, age, kind, brand and condition.</Text>
       </>) : null}
       <Lab t="DATE BOUGHT" />
@@ -84,7 +85,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
         {!f.noW ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>You get a reminder 30 days before it ends.</Text> : null}
       </>) : null}
       <Lab t="NOTE (OPTIONAL)" />
-      <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder={f.cat === 'property' ? 'e.g. Rent RM 1,200 a month, agent phone, what to check' : 'e.g. Serial number, shop, how it was bought'} maxLength={500} multiline style={{ minHeight: 84, textAlignVertical: 'top' }} />
+      <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder={f.cat === 'property' ? 'e.g. Rent ' + cs() + '1,200 a month, agent phone, what to check' : 'e.g. Serial number, shop, how it was bought'} maxLength={500} multiline style={{ minHeight: 84, textAlignVertical: 'top' }} />
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 5, textAlign: 'right' }}>{f.note.length} / 500</Text>
       <Lab t="LINK PAPERS (OPTIONAL)" />
       {docs.length ? (<>
@@ -98,6 +99,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
 }
 
 export default function Screen() {
+  useRegion(); // follows the chosen currency
   const { c } = useLocalSearchParams<{ c?: string }>();
   const cat: ItemCat = c === 'lifestyle' || c === 'property' ? c : 'gadget';
   const C = CATS[cat]; const g = BTN; const ac = ACC[cat];

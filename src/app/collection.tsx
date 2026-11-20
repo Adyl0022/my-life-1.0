@@ -1,3 +1,4 @@
+import { useRegion } from '../lib/region';
 import React from 'react';
 import { View } from 'react-native';
 import { Pressable } from '../components/Press';
@@ -33,6 +34,7 @@ function Card({ icon, title, sub, c, wide, onPress }: { icon: ColIconName; title
 }
 
 export default function Screen() {
+  useRegion(); // follows the chosen currency
   const router = useRouter();
   const go = (p: string) => router.push(p as any);
   const [st] = useStored<ColStore>('ml_collection', EMPTY_COL); const items = (st && st.items) || []; const nm = useName(); const [busy, setBusy] = React.useState(false);

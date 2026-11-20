@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { cu, useRegion } from '../lib/region';
 import { View, Animated, Linking, Share } from 'react-native';
 import { Pressable } from '../components/Press';
 import * as Haptics from '../lib/haptics';
@@ -39,7 +40,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Inp value={f.who} onChangeText={(x: string) => set({ who: x })} placeholder={f.dir === 'lent' ? 'Lent to, e.g. a friend' : 'Borrowed from, e.g. a friend'} maxLength={50} />
       {tried && !f.who.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
       {money ? (<>
-        <Inp form="loan" need="an amount" style={{ marginTop: 9 }} value={f.amount} onChangeText={(x: string) => set({ amount: x })} keyboardType="decimal-pad" placeholder="Amount in RM" />
+        <Inp form="loan" need="an amount" style={{ marginTop: 9 }} value={f.amount} onChangeText={(x: string) => set({ amount: x })} keyboardType="decimal-pad" placeholder={'Amount in ' + cu()} />
         {tried && f.amount.trim() && !numberError(f.amount) && !(amt > 0) ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter an amount above 0.</Text> : null}
       </>) : (<>
         <Inp style={{ marginTop: 9 }} value={f.title} onChangeText={(x: string) => set({ title: x })} placeholder="What, e.g. Drill set" maxLength={60} />
@@ -75,7 +76,7 @@ function PaySheet({ loan, v, setV, onSave, onClose }: { loan: Loan; v: { a: stri
   return (
     <SheetFrame title="Add a payment" sub={loan.who + ' · still ' + rm(left)} onClose={onClose}>
       <Lab t="AMOUNT PAID BACK" />
-      <Inp form="pay" need="an amount" value={v.a} onChangeText={(x: string) => setV({ ...v, a: x })} keyboardType="decimal-pad" placeholder="Amount in RM" />
+      <Inp form="pay" need="an amount" value={v.a} onChangeText={(x: string) => setV({ ...v, a: x })} keyboardType="decimal-pad" placeholder={'Amount in ' + cu()} />
       {tried && v.a.trim() && !numberError(v.a) && a > left + 0.001 ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>{'That is more than the ' + rm(left) + ' still owed.'}</Text> : null}
       <Lab t="DATE" />
       <DateField value={v.d} onChange={(x: string) => setV({ ...v, d: x })} past />
@@ -87,6 +88,7 @@ function PaySheet({ loan, v, setV, onSave, onClose }: { loan: Loan; v: { a: stri
 }
 
 export default function Screen() {
+  useRegion(); // follows the chosen currency
   const [st, setSt] = useStored<ColStore>('ml_collection', EMPTY_COL);
   const all = (st && st.loans) || [];
   const [tab, setTab] = useState<'lent' | 'borrowed' | 'done'>('lent'); const [q, setQ] = useState(''); const [f, setF] = useState<Form | null>(null); const [det, setDet] = useState(0);

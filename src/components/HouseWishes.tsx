@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { cs, useRegion } from '../lib/region';
 import { View } from 'react-native';
 import { Pressable } from './Press';
 import { Text } from './Txt';
@@ -11,6 +12,7 @@ import { useFamWishes, useFamClaims, wishSave, wishDelete, wishClaim, peopleOf, 
 // Wish lists: everyone has their own, and the others can say "I'll get this" so a gift is never bought twice.
 // The person a list belongs to never sees who is getting what (the server does not send it to them), so gifts stay a surprise.
 export function HouseWishes({ info }: { info: FInfo | null }) {
+  useRegion(); // follows the chosen currency
   const w = useFamWishes(info?.id);
   const cl = useFamClaims(info?.id);
   useReloadOnFocus(w.reload, cl.reload);
@@ -67,7 +69,7 @@ export function HouseWishes({ info }: { info: FInfo | null }) {
         <Glass solid radius={22} style={{ padding: 14, marginBottom: 12 }}>
           <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{eid ? 'Edit wish' : 'New wish'}</Text>
           <Field label="What" value={title} onChange={setTitle} ph="Red bicycle" max={80} />
-          <Field label="About how much (optional)" value={price} onChange={setPrice} ph="RM 350" max={30} />
+          <Field label="About how much (optional)" value={price} onChange={setPrice} ph={cs() + '350'} max={30} />
           <Field label="Note (optional)" value={note} onChange={setNote} ph="Size 20 inch" max={200} />
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
             <Btn t="Save" kind="main" onPress={save} busy={busy} flex />

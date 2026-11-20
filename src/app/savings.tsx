@@ -129,7 +129,7 @@ export default function Savings() {
               </View>
               <Inp onFocus={reveal} style={{ marginTop: 10 }} value={name} onChangeText={setName} placeholder="Name your goal, for example Wedding fund" />
               <Inp form="goalNew" need="a target amount" onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={target} onChangeText={setTarget} placeholder={'Target (' + cu() + ')'} />
-              <Inp onFocus={reveal} style={{ marginTop: 8 }} value={place} onChangeText={setPlace} placeholder="Kept in, e.g. Maybank" />
+              <Inp onFocus={reveal} style={{ marginTop: 8 }} value={place} onChangeText={setPlace} placeholder="Kept in, e.g. Bank account" />
               <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={start} onChangeText={setStart} placeholder={'Already saved (' + cu() + '), optional'} />
               <Text style={{ color: dimC, fontSize: 11.5, marginTop: 10 }}>Target date (optional)</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
@@ -192,7 +192,7 @@ export default function Savings() {
                   <View style={{ marginTop: 12, gap: 8 }}>
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Edit goal</Text>
                     <Inp onFocus={reveal} value={eName} onChangeText={setEName} placeholder="Goal name" />
-                    <Inp onFocus={reveal} value={ePlace} onChangeText={setEPlace} placeholder="Kept in, e.g. Maybank" />
+                    <Inp onFocus={reveal} value={ePlace} onChangeText={setEPlace} placeholder="Kept in, e.g. Bank account" />
                     <Inp form="goalEdit" need="a target amount" onFocus={reveal} keyboardType="decimal-pad" value={eTarget} onChangeText={setETarget} placeholder={'Target (' + cu() + ')'} />
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ flex: 1 }}><DateField value={eDue || todayStr()} onChange={setEDue} /></View>
