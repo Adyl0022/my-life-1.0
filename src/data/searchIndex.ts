@@ -457,6 +457,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "settings tetapan setting"
  },
  {
+  "t": "Country, currency and week start",
+  "s": "Holidays, money symbol and the first day of the week",
+  "m": "System",
+  "c": "#5ee7df",
+  "h": "Settings.dc.html",
+  "k": "country negara currency mata wang ringgit dollar rupiah region location holidays cuti umum symbol simbol week starts minggu mula monday sunday saturday rm usd sgd idr"
+ },
+ {
   "t": "Reminders and notifications",
   "s": "Prayer times, Planner events, daily zikir, quiet hours",
   "m": "System",
