@@ -246,7 +246,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Record",
   "c": "#3df0ff",
   "h": "Record.dc.html",
-  "k": "life lesson pengajaran lesson of the day setiap hari dashboard card personal collection gadget gadgets phone laptop warranty waranti lifestyle shoes bag property house land rent lent borrowed pinjam hutang utang loan lessons life lesson pengajaran barang koleksi"
+  "k": "life lesson pengajaran lesson of the day setiap hari dashboard card personal collection gadget gadgets phone laptop warranty waranti lifestyle shoes bag property house land rent lent borrowed pinjam hutang utang loan lessons life lesson pengajaran barang koleksi worth value nilai estimate anggaran warranty days left baki hari waranti link papers receipt resit grid list view photos gambar whatsapp remind polite reminder history sejarah"
  },
  {
   "t": "Documents",

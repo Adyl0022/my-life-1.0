@@ -151,3 +151,46 @@ export function Detail({ label, title, tile, photo, lines, status, statusCol, ho
     </Modal>
   );
 }
+
+/** Small row of photos; tap one to see it full screen. */
+export function PhotoStrip({ photos }: { photos: string[] }) {
+  const [big, setBig] = useState(-1);
+  if (photos.length < 2) return null;
+  return (
+    <View style={{ marginTop: 14 }}>
+      <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8 }}>ALL PHOTOS ({photos.length})</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {photos.map((u, i) => (
+          <Pressable key={u + i} onPress={() => setBig(i)} accessibilityLabel={'View photo ' + (i + 1)} style={({ pressed }) => ({ marginRight: 8, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+            <Image source={{ uri: u }} style={{ width: 78, height: 78, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }} resizeMode="cover" />
+          </Pressable>
+        ))}
+      </ScrollView>
+      {big >= 0 ? (
+        <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setBig(-1)}>
+          <Pressable onPress={() => setBig(-1)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}>
+            <Image source={{ uri: photos[big] }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
+            <Text style={{ color: dim, fontSize: 12, textAlign: 'center', marginTop: 10 }}>{(big + 1) + ' of ' + photos.length + ' · tap to close'}</Text>
+          </Pressable>
+        </Modal>
+      ) : null}
+    </View>
+  );
+}
+
+/** Two-column card used by the grid view. */
+export function GridCard({ tile, photo, label, title, sub, status, statusCol, onPress, a11y }: { tile: React.ReactNode; photo?: string; label: string; title: string; sub?: string; status?: string; statusCol?: string; onPress: () => void; a11y?: string }) {
+  return (
+    <Pressable onPress={onPress} accessibilityLabel={a11y} style={({ pressed }) => ({ width: '48.5%', marginTop: 10, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+      <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.34)', backgroundColor: 'rgba(255,255,255,.06)' }}>
+        {photo ? <Image source={{ uri: photo }} style={{ width: '100%', height: 110, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : <View style={{ height: 110, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.05)' }}>{tile}</View>}
+        <View style={{ padding: 11 }}>
+          <Text style={{ color: '#8fe9e2', fontSize: 9, fontWeight: '800', letterSpacing: 1 }}>{label}</Text>
+          <Text numberOfLines={1} style={{ color: W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{title}</Text>
+          {sub ? <Text numberOfLines={1} style={{ color: dim, fontSize: 11.5, marginTop: 2 }}>{sub}</Text> : null}
+          {status ? <Text numberOfLines={1} style={{ color: statusCol || W, fontSize: 11.5, fontWeight: '800', marginTop: 3 }}>{status}</Text> : null}
+        </View>
+      </View>
+    </Pressable>
+  );
+}

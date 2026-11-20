@@ -174,9 +174,11 @@ export async function syncColAlerts(col: { items?: any[]; loans?: any[] }, tg: T
     const now = Date.now(); const todo: { id: string; at: Date; title: string; body: string }[] = [];
     const at9 = (s: string, back: number) => { const [y, m, d] = String(s || '').split('-').map(Number); if (!y || !m || !d) return null; const t = new Date(y, m - 1, d - back, 9, 0, 0); return t.getTime() <= now + 5000 || inQuiet(t, tg) ? null : t; };
     ((col && col.loans) || []).forEach((l) => {
-      if (l.done || !l.due) return; const t = at9(l.due, 0); if (!t) return;
+      if (l.done || !l.due || l.remind === 'off') return;
       const what = l.what === 'money' ? 'RM ' + l.amount : l.title;
-      todo.push({ id: 'col-loan-' + l.id, at: t, title: l.dir === 'lent' ? 'Due today: ' + l.who + ' should return ' + what : 'Due today: return ' + what + ' to ' + l.who, body: 'Open Lent & Borrowed to mark it returned.' });
+      const lead = l.remind === '3d' ? 3 : 0; const t = at9(l.due, lead); if (!t) return;
+      const when = lead ? 'Due in 3 days' : 'Due today';
+      todo.push({ id: 'col-loan-' + l.id, at: t, title: l.dir === 'lent' ? when + ': ' + l.who + ' should return ' + what : when + ': return ' + what + ' to ' + l.who, body: 'Open Lent & Borrowed to mark it returned.' });
     });
     ((col && col.items) || []).forEach((x) => {
       if (x.cat !== 'gadget' || !x.warranty) return; const t = at9(x.warranty, 30); if (!t) return;

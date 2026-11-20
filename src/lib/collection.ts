@@ -1,8 +1,8 @@
 import { validDate, ymd } from './documents';
 
 export type ItemCat = 'gadget' | 'lifestyle' | 'property';
-export type Item = { id: number; cat: ItemCat; kind: string; name: string; price: string; bought: string; warranty: string; photo: string; note: string };
-export type Loan = { id: number; dir: 'lent' | 'borrowed'; what: 'money' | 'thing'; who: string; title: string; amount: string; date: string; due: string; done: boolean; doneAt: string; note: string };
+export type Item = { id: number; cat: ItemCat; kind: string; name: string; price: string; bought: string; warranty: string; photo: string; photos?: string[]; docIds?: number[]; note: string };
+export type Loan = { id: number; dir: 'lent' | 'borrowed'; what: 'money' | 'thing'; who: string; title: string; amount: string; date: string; due: string; done: boolean; doneAt: string; note: string; remind?: 'off' | 'day' | '3d' };
 export type Lesson = { id: number; title: string; text: string; date: string; tag: string };
 export type ColStore = { items: Item[]; loans: Loan[]; lessons: Lesson[]; next: number };
 export const EMPTY_COL: ColStore = { items: [], loans: [], lessons: [], next: 1 };
@@ -39,4 +39,35 @@ export function dueOf(l: Loan, now = new Date()): { txt: string; col: string; ho
   if (n < 0) { const m = Math.round(-n / 30.4); return { txt: 'Overdue by ' + (-n < 60 ? -n + (n === -1 ? ' day' : ' days') : m + ' months'), col: '#ff9aa9', hot: true }; }
   if (n === 0) return { txt: 'Due today', col: '#ff9aa9', hot: true };
   return { txt: 'Due in ' + n + (n === 1 ? ' day' : ' days'), col: n <= 14 ? '#ffd593' : '#5ee7b5', hot: false };
+}
+
+/** All the photos of an item, oldest field first. */
+export const photosOf = (x: Item): string[] => (x.photos && x.photos.length ? x.photos : x.photo ? [x.photo] : []);
+
+const dayN = (s: string) => { const p = s.split('-'); return Math.round(new Date(+p[0], +p[1] - 1, +p[2], 12).getTime() / 86400000); };
+
+/** A rough guess of what a gadget is worth today. Only for gadgets, and only a guess. */
+const FALL: Record<string, number> = { Phone: 0.28, Laptop: 0.22, Tablet: 0.22, Audio: 0.2, Watch: 0.1 };
+export function worthNow(x: Item, now = new Date()): number | null {
+  if (x.cat !== 'gadget') return null;
+  const price = num(x.price); if (!(price > 0) || !x.bought || !validDate(x.bought)) return null;
+  const yrs = Math.max(0, (dayN(ymd(now)) - dayN(x.bought)) / 365);
+  const rate = FALL[x.kind] != null ? FALL[x.kind] : 0.18;
+  return Math.round(price * Math.max(0.15, Math.pow(1 - rate, yrs)));
+}
+
+/** Warranty progress: days left, and how much of the time is already used (0 to 1). */
+export function warrantyBar(x: Item, now = new Date()): { left: number; used: number } | null {
+  if (!x.warranty || !validDate(x.warranty)) return null;
+  const left = dayN(x.warranty) - dayN(ymd(now));
+  const start = x.bought && validDate(x.bought) ? dayN(x.bought) : dayN(x.warranty) - 365;
+  const total = Math.max(1, dayN(x.warranty) - start);
+  return { left, used: Math.min(1, Math.max(0, 1 - left / total)) };
+}
+
+/** A polite message the person sends themselves. */
+export function politeAsk(l: Loan): string {
+  const what = l.what === 'money' ? 'RM ' + num(l.amount).toLocaleString('en-MY', { maximumFractionDigits: 2 }) : l.title;
+  const due = l.due && validDate(l.due) ? ' (we agreed on ' + dmy(l.due) + ')' : '';
+  return 'Hi ' + l.who + ', hope you are well. Just a gentle reminder about the ' + what + ' I lent you' + due + '. No rush if you need a little more time, just let me know. Thank you!';
 }

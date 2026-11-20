@@ -1,23 +1,23 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, Animated } from 'react-native';
+import { View, Pressable, Animated, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { RecordPage, Intro } from '../components/RecordHubUi';
 import { SearchField } from '../components/Shine';
 import { Inp, DateField, W } from '../components/Ui';
 import { ItemRow, Tile, Sums, Empty, BigBtn, SheetFrame, Detail, Lab, chip, dim } from '../components/ColUi';
-import { useTabSlide, useTabPill } from '../components/TabSlide';
+import { useTabSlide, useTabPill, SlidePills } from '../components/TabSlide';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm, pn, numberError } from '../lib/num';
 import { validDate } from '../lib/documents';
 import { ColArt } from '../components/ColArt';
-import { ACC, BTN, EMPTY_COL, dueOf, dmy, num, rm, today, type ColStore, type Loan } from '../lib/collection';
+import { ACC, BTN, EMPTY_COL, dueOf, dmy, num, rm, today, politeAsk, type ColStore, type Loan } from '../lib/collection';
 
 const g = BTN;
 const TABS = [['lent', 'Lent'], ['borrowed', 'Borrowed'], ['done', 'Done']] as const;
 type Form = Omit<Loan, 'id'> & { id: number; noDue: boolean };
-const blank = (dir: 'lent' | 'borrowed'): Form => ({ id: 0, dir, what: 'money', who: '', title: '', amount: '', date: today(), due: today(), done: false, doneAt: '', note: '', noDue: true });
+const blank = (dir: 'lent' | 'borrowed'): Form => ({ id: 0, dir, what: 'money', who: '', title: '', amount: '', date: today(), due: today(), done: false, doneAt: '', note: '', remind: 'day', noDue: true });
 
 function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
   const [tried, setTried] = useState(false); const set = (p: Partial<Form>) => setF({ ...f, ...p });
@@ -53,7 +53,11 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       </Pressable>
       {!f.noDue ? <DateField value={f.due} onChange={(v: string) => set({ due: v })} /> : null}
       {tried && badDue ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please pick a valid date.</Text> : null}
-      {!f.noDue ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>You get a reminder at 9 am on the due date.</Text> : null}
+      {!f.noDue ? (<>
+        <Lab t="REMIND ME" />
+        <SlidePills tabs={['None', 'On the day', '3 days before']} index={f.remind === 'off' ? 0 : f.remind === '3d' ? 2 : 1} onChange={(i) => set({ remind: i === 0 ? 'off' : i === 2 ? '3d' : 'day' })} colors={['#ffe84d', '#ff9a3d']} textOn="#0b1030" fontSize={12.5} padX={14} padY={9} />
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{f.remind === 'off' ? 'No reminder for this one.' : 'You get a reminder at 9 am' + (f.remind === '3d' ? ', 3 days before the due date.' : ' on the due date.')}</Text>
+      </>) : null}
       <Lab t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. For his car repair" maxLength={200} />
       <BigBtn t="Save" onPress={save} a11y="Save loan" />
@@ -73,7 +77,7 @@ export default function Screen() {
   const sumMoney = (d: string) => open.filter((l) => l.dir === d && l.what === 'money').reduce((t, l) => t + num(l.amount), 0);
   const things = (d: string) => open.filter((l) => l.dir === d && l.what === 'thing').length;
   const openNew = () => setF(blank(tab === 'borrowed' ? 'borrowed' : 'lent'));
-  const openEdit = (l: Loan) => setF({ ...l, noDue: !l.due, due: l.due || today() });
+  const openEdit = (l: Loan) => setF({ ...l, remind: l.remind || 'day', noDue: !l.due, due: l.due || today() });
   const save = () => {
     if (!f) return; const { noDue, ...rest } = f; const l: Loan = { ...rest, who: f.who.trim(), title: f.what === 'thing' ? f.title.trim() : '', amount: f.what === 'money' ? String(pn(f.amount)) : '', due: noDue ? '' : f.due, note: f.note.trim() };
     if (l.id) setSt({ ...st, loans: all.map((x) => (x.id === l.id ? l : x)) });
@@ -84,6 +88,7 @@ export default function Screen() {
   const mark = (l: Loan, done: boolean) => { setSt({ ...st, loans: all.map((x) => (x.id === l.id ? { ...x, done, doneAt: done ? today() : '' } : x)) }); setDet(0); };
   const plus = <Pressable onPress={openNew} accessibilityLabel="Add record"><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
   const cur = all.find((x) => x.id === det);
+  const hist = cur ? all.filter((x) => x.id !== cur.id && x.who.trim().toLowerCase() === cur.who.trim().toLowerCase()).sort((a, b) => b.date.localeCompare(a.date)) : [];
   const what = (l: Loan) => (l.what === 'money' ? l.who : l.title);
   const sub = (l: Loan) => (l.what === 'money' ? rm(num(l.amount)) + ' · ' + (l.dir === 'lent' ? 'lent ' : 'borrowed ') + dmy(l.date) : (l.dir === 'lent' ? 'Lent to ' : 'Borrowed from ') + l.who + ' · ' + dmy(l.date));
   return (
@@ -103,6 +108,22 @@ export default function Screen() {
         <Detail label={(cur.what === 'money' ? 'MONEY' : 'THING') + (cur.dir === 'lent' ? ' · LENT' : ' · BORROWED')} title={what(cur)} tile={<Tile icon={cur.what === 'money' ? 'cash' : 'tool'} c={ACC.loans} size={84} />}
           lines={[[cur.dir === 'lent' ? 'Lent to' : 'Borrowed from', cur.who], ...(cur.what === 'money' ? [['Amount', rm(num(cur.amount))] as [string, string]] : []), [cur.dir === 'lent' ? 'Date lent' : 'Date borrowed', dmy(cur.date)], ['Due', cur.due ? dmy(cur.due) : 'No due date'], ...(cur.done ? [['Returned', dmy(cur.doneAt)] as [string, string]] : []), ...(cur.note ? [['Note', cur.note] as [string, string]] : [])]}
           status={dueOf(cur).txt} statusCol={dueOf(cur).col} hot={dueOf(cur).hot} onClose={() => setDet(0)}>
+          {hist.length ? (
+            <View style={{ marginTop: 16 }}>
+              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 6 }}>{'HISTORY WITH ' + cur.who.toUpperCase()}</Text>
+              <Text style={{ color: dim, fontSize: 12, marginBottom: 4 }}>{hist.length + (hist.length === 1 ? ' other record' : ' other records') + ' · returned ' + hist.filter((h) => h.done).length + ' of ' + hist.length}</Text>
+              {hist.slice(0, 8).map((h) => (
+                <View key={h.id} style={{ paddingVertical: 9, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)', flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                  <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 13 }}>{(h.dir === 'lent' ? 'Lent ' : 'Borrowed ') + (h.what === 'money' ? rm(num(h.amount)) : h.title) + ' · ' + dmy(h.date)}</Text>
+                  <Text style={{ color: h.done ? '#5ee7b5' : '#ffd593', fontSize: 12.5, fontWeight: '800' }}>{h.done ? 'Returned' : 'Open'}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          {!cur.done && cur.dir === 'lent' ? (<>
+            <BigBtn t="Remind them on WhatsApp" g={['#5ee7b5', '#3df0ff']} dark onPress={() => { Linking.openURL('https://wa.me/?text=' + encodeURIComponent(politeAsk(cur))).catch(() => {}); }} a11y="Remind on WhatsApp" />
+            <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Opens WhatsApp with a polite message ready. You choose who to send it to and press send yourself. My Life 1.0 sends nothing for you.</Text>
+          </>) : null}
           {cur.done ? <BigBtn t="Not returned after all" outline="#ffd593" onPress={() => mark(cur, false)} a11y="Mark not returned" /> : <BigBtn t="Mark as returned" onPress={() => mark(cur, true)} a11y="Mark as returned" />}
           <BigBtn t="Edit" outline="rgba(255,255,255,.6)" onPress={() => { setDet(0); openEdit(cur); }} a11y="Edit record" />
         </Detail>
