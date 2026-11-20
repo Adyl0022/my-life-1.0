@@ -1,4 +1,5 @@
 import { LineIcon } from '../components/LineIcon';
+import { photoSyncOn } from '../lib/sync';
 import { cu, cs, useRegion } from '../lib/region';
 import React, { useMemo, useState } from 'react';
 import { View, Image, Platform } from 'react-native';
@@ -60,7 +61,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
           <Pressable onPress={() => pick(false)} accessibilityLabel="Choose a photo" style={({ pressed }) => ({ flex: 1, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.97 : 1 }] })}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Choose a photo</Text></Pressable>
         </View>
       ) : <Text style={{ color: dim, fontSize: 12 }}>You have 5 photos. Remove one to add another.</Text>}
-      <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>Photos stay on this phone only and are not backed up online. The first photo is the cover.</Text>
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>{photoSyncOn() ? "Photos are saved to your account too." : "Photos stay on this phone only and are not backed up online."} The first photo is the cover.</Text>
       {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, marginTop: 8 }}>{msg}</Text> : null}
       <Lab t="DETAILS" />
       <Inp value={f.name} onChangeText={(x: string) => set({ name: x })} placeholder={'Name, e.g. ' + (f.cat === 'gadget' ? 'Samsung S24' : f.cat === 'lifestyle' ? 'Nike Air Max' : 'Terrace house')} maxLength={60} />

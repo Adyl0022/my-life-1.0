@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { photoSyncOn } from '../lib/sync';
 import { View, Platform, Image, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Pressable } from '../components/Press';
@@ -97,7 +98,7 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
           </View>
         </View>
         {pmsg ? <Err t={pmsg} /> : null}
-        <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Pick a picture and cut out the square you want. The logo stays on this phone only and is not saved to your account. The rest of the account is.</Text>
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Pick a picture and cut out the square you want, then tap CROP at the top right to finish (that button is your phone's own editor). {photoSyncOn() ? "The logo is saved to your account too." : "The logo stays on this phone only and is not saved to your account. The rest of the account is."}</Text>
         <Lab t={liab ? 'HOW MUCH YOU OWE' : 'HOW MUCH IS IN IT'} />
         <Inp form="acc" need="an amount" zeroOk value={start} onChangeText={setStart} keyboardType="decimal-pad" placeholder={liab ? 'Amount owed in ' + cs() + ' (0 if none)' : 'Balance in ' + cs() + ' (0 if empty)'} />
         <Lab t="AS OF" />

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { photoSyncOn } from '../lib/sync';
 import { View, Platform, ScrollView, Image } from 'react-native';
 import { Pressable } from '../components/Press';
 import { curCode, useRegion } from '../lib/region';
@@ -140,7 +141,7 @@ function Sheet({ f, setF, onSave, onSaveNow, onDelete, onClose }: { f: Form; set
           {f.photo ? <Pressable onPress={() => set({ photo: '' })} accessibilityLabel="Use letters instead"><Text style={{ color: dim, fontSize: 12.5, textAlign: 'center' }}>Use letters instead</Text></Pressable> : null}
         </View>
       </View>
-      <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Pick a picture and cut out the square you want. Your image stays on this phone only. It is not saved to your account. Everything else about the subscription is.</Text>
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Pick a picture and cut out the square you want, then tap CROP at the top right to finish (that button is your phone's own editor). {photoSyncOn() ? "Your image is saved to your account too." : "Your image stays on this phone only. It is not saved to your account. Everything else about the subscription is."}</Text>
       </Sec>
       <Sec><L2 t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. Shared plan" maxLength={120} />

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { photoSyncOn } from '../lib/sync';
 import { KbScroll } from '../components/KbScroll';
 import { View, Animated, Modal, ScrollView, Image, Platform, KeyboardAvoidingView } from 'react-native';
 import { Pressable } from '../components/Press';
@@ -118,7 +119,7 @@ function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; 
             </View>
           ) : null}
           {pm ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10 }}>{pm}</Text> : null}
-          <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>Pictures stay on this phone only. Sharing and the PDF are made on the phone and nothing is uploaded.</Text>
+          <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{photoSyncOn() ? "Pictures are saved to your account too." : "Pictures stay on this phone only."} Sharing and the PDF are made on the phone.</Text>
           <Pressable onPress={onEdit} accessibilityLabel="Edit document" style={{ marginTop: 20 }}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Edit</Text></LinearGradient></Pressable>
         </ScrollView>
         {big && pages[bi] ? (
@@ -215,7 +216,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
                   </View>
                 ) : <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>That is the most pages for one paper (10).</Text>}
                 {pmsg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{pmsg}</Text> : null}
-                <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>For papers with more than one side or page. Only the first page is read for details. All pages stay on this phone only.</Text>
+                <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>For papers with more than one side or page. Only the first page is read for details. {photoSyncOn() ? "All pages are saved to your account too." : "All pages stay on this phone only."}</Text>
               </>
             ) : null}
             <Lab t={'DETAILS'} />

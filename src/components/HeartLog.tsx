@@ -89,7 +89,7 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
             <View style={{ marginTop: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}><Text style={{ color: W, fontSize: 30, fontWeight: '800' }}>{wh.latest.bpm}</Text><Text style={{ color: DIM, fontSize: 12.5 }}>bpm · latest at {wh.latest.at}</Text></View>
               <Text style={{ color: DIM, fontSize: 12, marginTop: 4 }}>Last 24 hours: average {wh.avg} · lowest {wh.min} · highest {wh.max} bpm</Text>
-              <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 6, lineHeight: 15 }}>One reading every 3 hours is added to your notebook below. The numbers come from your watch and are only a guide, not medical advice.</Text>
+              <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 6, lineHeight: 15 }}>One reading every 6 hours is added to your notebook below. The numbers come from your watch and are only a guide, not medical advice.</Text>
             </View>
           ) : null}
           {watchOn && wh && !wh.ok ? (
