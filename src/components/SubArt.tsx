@@ -1,43 +1,29 @@
 import React from 'react';
-import { View, Animated, Image, useWindowDimensions } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
-import { useSpin, useSway } from './artMotion';
-import { TOP } from '../lib/layout';
+import { View, Animated, useWindowDimensions } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
+import { useSway } from './artMotion';
 
-// Background for Subscriptions, in the same palette as Documents and Personal Collection (teal, lavender, gold on the dark purple page):
-// slow rings with small points riding on them behind the picture, and a few twinkling specks. The picture is a rendered pair of headphones with a premium card.
-const T = '#8fe9e2', L = '#b9a6ff', Gd = '#ffd9a8';
-function Layer({ left, top, R, rot, children }: { left: number; top: number; R: number; rot: any; children: React.ReactNode }) {
-  return <Animated.View style={{ position: 'absolute', left: left - R, top: top - R, width: R * 2, height: R * 2, transform: [{ rotate: rot }] }}>{children}</Animated.View>;
+// Background for Subscriptions: hundreds of hairline rings from three centres that overlap, so a soft moiré ripples across the whole page.
+// Each set drifts a little on its own, so the ripple slowly moves. Gold, teal and lavender, the same palette as My Finance. Lines only.
+const T = '#8fe9e2', L = '#c3b0ff', Gd = '#ffd9a8';
+function Rings({ w, h, cx, cy, step, n, col, op }: { w: number; h: number; cx: number; cy: number; step: number; n: number; col: string; op: number }) {
+  return <Svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>{Array.from({ length: n }, (_, k) => <Circle key={k} cx={cx} cy={cy} r={(k + 1) * step} fill="none" stroke={col} strokeOpacity={op} strokeWidth={0.55} />)}</Svg>;
 }
 function Dust({ x, y, r, v, c }: { x: number; y: number; r: number; v: Animated.Value; c: string }) {
-  return <Animated.View style={{ position: 'absolute', left: x, top: y, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: c, opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.12, 0.9] }) }} />;
+  return <Animated.View style={{ position: 'absolute', left: x, top: y, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: c, opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.9] }) }} />;
 }
-// the picture and its rings; this scrolls with the page, so it sits inside the content and not in the fixed background
-export function SubHero() {
-  const a = useSpin(150, 1), b = useSpin(100, -1), c = useSpin(210, 1), fl = useSway(7);
-  const y = fl.interpolate({ inputRange: [0, 1], outputRange: [4, -5] });
-  const box = (R: number) => ({ width: R * 2, height: R * 2 });
-  const CX = 150, CY = 112;
-  return (
-    <View pointerEvents="none" style={{ position: 'absolute', right: -56, top: -(TOP + 36), width: 300, height: 300 }}>
-      <Layer left={CX} top={CY} R={140} rot={c}><Svg {...box(140)} viewBox="-140 -140 280 280"><Circle r={136} fill="none" stroke={L} strokeOpacity={0.26} strokeWidth={0.8} strokeDasharray="2 6" /><Circle cx={136} cy={0} r={3.4} fill={Gd} fillOpacity={0.9} /><Circle cx={-96} cy={96} r={2.4} fill={T} fillOpacity={0.8} /></Svg></Layer>
-      <Layer left={CX} top={CY} R={106} rot={a}><Svg {...box(106)} viewBox="-106 -106 212 212"><Circle r={102} fill="none" stroke={T} strokeOpacity={0.3} strokeWidth={0.9} /><Circle cx={0} cy={-102} r={4} fill={T} fillOpacity={0.9} /><Circle cx={72} cy={72} r={2.6} fill={L} fillOpacity={0.8} /></Svg></Layer>
-      <Layer left={CX} top={CY} R={74} rot={b}><Svg {...box(74)} viewBox="-74 -74 148 148"><Circle r={70} fill="none" stroke={Gd} strokeOpacity={0.34} strokeWidth={0.9} strokeDasharray="1.5 5" /><Circle cx={70} cy={0} r={3} fill={Gd} fillOpacity={0.9} /></Svg></Layer>
-      <Animated.View style={{ position: 'absolute', left: CX - 107 + 14, top: CY - 99 + 16, transform: [{ translateY: y }] }}><Image source={require('../../assets/sub-hero.png')} style={{ width: 214, height: 198 }} resizeMode="contain" /></Animated.View>
-    </View>
-  );
-}
-
-// fixed background: a few twinkling specks in the Documents palette
 export function SubArt() {
   const { width: W, height: H } = useWindowDimensions();
-  const t1 = useSway(4), t2 = useSway(5.5, 1), t3 = useSway(7, 2);
+  const d1 = useSway(22), d2 = useSway(28, 3), d3 = useSway(34, 6), t1 = useSway(4), t2 = useSway(5.5, 1), t3 = useSway(7, 2);
+  const M = 40; const w = W + M * 2, h = H + M * 2; const reach = Math.hypot(w, h);
+  const mv = (v: Animated.Value, ax: number, ay: number) => ({ position: 'absolute' as const, left: -M, top: -M, width: w, height: h, transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [-ax, ax] }) }, { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [ay, -ay] }) }] });
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
-      <Dust x={0.08 * W} y={0.2 * H} r={1.6} v={t1} c={Gd} /><Dust x={0.46 * W} y={0.34 * H} r={1.2} v={t2} c={T} /><Dust x={0.88 * W} y={0.52 * H} r={1.8} v={t3} c={L} />
-      <Dust x={0.3 * W} y={0.52 * H} r={1.3} v={t2} c={Gd} /><Dust x={0.94 * W} y={0.72 * H} r={1.3} v={t1} c={T} /><Dust x={0.62 * W} y={0.82 * H} r={1.7} v={t3} c={L} />
-      <Dust x={0.2 * W} y={0.7 * H} r={1.2} v={t3} c={T} /><Dust x={0.72 * W} y={0.14 * H} r={1.4} v={t2} c={Gd} />
+      <Animated.View style={mv(d1, 16, 12)}><Rings w={w} h={h} cx={w - M + 30} cy={M - 20} step={11} n={Math.ceil(reach / 11)} col={Gd} op={0.12} /></Animated.View>
+      <Animated.View style={mv(d2, 14, 16)}><Rings w={w} h={h} cx={M - 30} cy={h - M + 20} step={11} n={Math.ceil(reach / 11)} col={T} op={0.12} /></Animated.View>
+      <Animated.View style={mv(d3, 12, 12)}><Rings w={w} h={h} cx={w / 2} cy={h / 2} step={20} n={Math.ceil(reach / 40)} col={L} op={0.06} /></Animated.View>
+      <Dust x={0.1 * W} y={0.2 * H} r={1.6} v={t1} c={Gd} /><Dust x={0.5 * W} y={0.3 * H} r={1.2} v={t2} c={T} /><Dust x={0.88 * W} y={0.5 * H} r={1.8} v={t3} c={L} />
+      <Dust x={0.3 * W} y={0.55 * H} r={1.3} v={t2} c={Gd} /><Dust x={0.93 * W} y={0.74 * H} r={1.3} v={t1} c={T} /><Dust x={0.62 * W} y={0.84 * H} r={1.7} v={t3} c={L} />
     </View>
   );
 }

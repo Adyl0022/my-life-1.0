@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
-import { SubArt, SubHero } from '../components/SubArt';
+import { SubArt } from '../components/SubArt';
 import { RecordPage } from '../components/RecordHubUi';
 import Svg, { Circle as SCircle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -187,8 +187,8 @@ export default function Screen() {
   const stat = (icon: string, v: string, l: string, last?: boolean) => <View style={{ flex: 1, alignItems: 'center', gap: 4, borderRightWidth: last ? 0 : 1, borderRightColor: 'rgba(255,255,255,.12)' }}><LineIcon name={icon} c={VIO} size={22} /><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: INK, fontSize: 14.5, fontWeight: '800' }}>{v}</Text><Text style={{ color: INK2, fontSize: 11 }}>{l}</Text></View>;
   return (
     <View style={{ flex: 1 }}>
-      <RecordPage title="Subscriptions" sub={subs.length ? rm(total) + ' a month' : 'Keep track of everything you subscribe to'} bg={<SubArt />}>
-          <View style={{ height: 132 }}><SubHero /></View>
+      <RecordPage title="Subscriptions" sub={subs.length ? rm(total) + ' a month' : 'Keep track of everything you subscribe to'} bg={<SubArt />} tone={{ base: '#1a1030', grad: ['#1a1030', '#2a1747', '#3a1d3d'], a: 'rgba(255,196,107,.34)', b: 'rgba(183,148,255,.3)' }}>
+          <View style={{ height: 6 }} />
           <View style={{ ...card, flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6, marginTop: 6 }}>
             {stat('check', String(subs.length), 'Active')}{stat('cal', rm(total), 'Monthly total')}{stat('chart', rm(total * 12), 'Yearly total', true)}
           </View>
