@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, Animated, Linking } from 'react-native';
+import { View, Pressable, Animated, Linking, Share } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { RecordPage, Intro } from '../components/RecordHubUi';
@@ -152,8 +153,15 @@ export default function Screen() {
             </View>
           ) : null}
           {!cur.done && cur.dir === 'lent' ? (<>
-            <BigBtn t="Remind them on WhatsApp" g={['#5ee7b5', '#3df0ff']} dark onPress={() => { Linking.openURL('https://wa.me/?text=' + encodeURIComponent(politeAsk(cur))).catch(() => {}); }} a11y="Remind on WhatsApp" />
-            <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Opens WhatsApp with a polite message ready. You choose who to send it to and press send yourself. My Life 1.0 sends nothing for you.</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+              <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); Linking.openURL('https://wa.me/?text=' + encodeURIComponent(politeAsk(cur))).catch(() => {}); }} accessibilityLabel="Remind on WhatsApp" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+                <LinearGradient colors={['#5ee7b5', '#3df0ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0b1030', fontSize: 14.5, fontWeight: '800' }}>WhatsApp</Text></LinearGradient>
+              </Pressable>
+              <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); Share.share({ message: politeAsk(cur) }).catch(() => {}); }} accessibilityLabel="Send a reminder with another app" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+                <View style={{ height: 54, borderRadius: 18, borderWidth: 1, borderColor: '#5ee7b5', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#5ee7b5', fontSize: 14.5, fontWeight: '800' }}>Other apps</Text></View>
+              </Pressable>
+            </View>
+            <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Sends a polite message ready to go. WhatsApp opens straight away, or pick SMS, Telegram, e-mail or any other app. You choose who gets it and press send yourself. My Life 1.0 sends nothing for you.</Text>
           </>) : null}
           {cur.done ? <BigBtn t="Not returned after all" outline="#ffd593" onPress={() => mark(cur, false)} a11y="Mark not returned" /> : <BigBtn t="Mark as returned" onPress={() => mark(cur, true)} a11y="Mark as returned" />}
           <BigBtn t="Edit" outline="rgba(255,255,255,.6)" onPress={() => { setDet(0); openEdit(cur); }} a11y="Edit record" />
