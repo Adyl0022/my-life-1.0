@@ -1,7 +1,7 @@
 // My Record > Documents: the kinds of paper, how much time is left, and reading a photo of a passport, MyKad, card or letter.
 export type DocTab = 'identity' | 'cards' | 'warranty' | 'other';
 export type Remind = 'off' | '1w' | '1m' | '3m' | '6m';
-export type Doc = { id: number; type: string; title: string; number?: string; expiry?: string; remind: Remind; photo?: string; photos?: string[]; note?: string };
+export type Doc = { id: number; type: string; title: string; number?: string; expiry?: string; remind: Remind; photo?: string; photos?: string[]; note?: string; country?: 'MY' | 'other' };
 export type DocStore = { docs: Doc[]; next: number };
 export const EMPTY_DOCS: DocStore = { docs: [], next: 1 };
 

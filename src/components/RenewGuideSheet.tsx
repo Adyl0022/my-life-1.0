@@ -12,8 +12,8 @@ const Rich = ({ s }: { s: string }) => (
 );
 const box = { marginTop: 12, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', backgroundColor: 'rgba(255,255,255,.045)' } as const;
 
-export function RenewGuideSheet({ type, title, suggest, suggestLabel, onClose, onRemind }: { type: string; title: string; suggest?: string; suggestLabel?: string; onClose: () => void; onRemind?: () => void }) {
-  const g = renewFor(type, title); const [i, setI] = useState(0); const way = g.ways[Math.min(i, g.ways.length - 1)];
+export function RenewGuideSheet({ type, title, country, suggest, suggestLabel, onClose, onRemind }: { type: string; title: string; country?: 'MY' | 'other'; suggest?: string; suggestLabel?: string; onClose: () => void; onRemind?: () => void }) {
+  const g = renewFor(type, title, country); const [i, setI] = useState(0); const way = g.ways[Math.min(i, g.ways.length - 1)];
   return (
     <SheetFrame title="How to renew" sub={title || g.title} onClose={onClose}>
       {g.ways.length > 1 ? (

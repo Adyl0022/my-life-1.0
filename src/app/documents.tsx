@@ -15,6 +15,7 @@ import { tryForm } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { LineIcon } from '../components/LineIcon';
 import { Toggle } from '../components/Toggle';
+import { EqPills } from '../components/TabSlide';
 import { CopyRow, ShareSheet, exportPdf } from '../components/DocShare';
 import { RenewGuideSheet } from '../components/RenewGuideSheet';
 import { useDocLock, setDocLock, askUnlock } from '../lib/docLock';
@@ -124,15 +125,15 @@ function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; 
             <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: pages[bi] }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
           </Modal>
         ) : null}
-        {rn ? <RenewGuideSheet type={d.type} title={d.title} onClose={() => setRn(false)} suggestLabel={d.expiry && d.remind !== sug ? 'Set my reminder for ' + sugN : undefined} onRemind={() => { onRemind(sug as Remind); setRn(false); }} /> : null}
+        {rn ? <RenewGuideSheet type={d.type} title={d.title} country={d.country} onClose={() => setRn(false)} suggestLabel={d.expiry && d.remind !== sug ? 'Set my reminder for ' + sugN : undefined} onRemind={() => { onRemind(sug as Remind); setRn(false); }} /> : null}
         {sh && pages.length ? <ShareSheet pages={pages} title={d.title} onClose={() => setSh(false)} /> : null}
       </View>
     </Modal>
   );
 }
 
-type Form = { id: number; type: string; title: string; number: string; expiry: string; noExp: boolean; remind: Remind; photo: string; photos: string[]; note: string };
-const blank = (type: string): Form => ({ id: 0, type, title: '', number: '', expiry: ymd(new Date(Date.now() + 365 * 86400000)), noExp: false, remind: '3m', photo: '', photos: [], note: '' });
+type Form = { id: number; type: string; title: string; number: string; expiry: string; noExp: boolean; remind: Remind; photo: string; photos: string[]; note: string; country: 'MY' | 'other' };
+const blank = (type: string): Form => ({ id: 0, type, title: '', number: '', expiry: ymd(new Date(Date.now() + 365 * 86400000)), noExp: false, remind: '3m', photo: '', photos: [], note: '', country: 'MY' });
 
 function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
   const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [view, setView] = useState(false); const [tried, setTried] = useState(false); const [pg, setPg] = useState(-1); const [pmsg, setPmsg] = useState('');
@@ -220,6 +221,11 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
             <Inp value={f.title} onChangeText={(x: string) => set({ title: x })} placeholder={t.label + ' name, e.g. ' + (f.type === 'passport' ? 'My passport' : f.type === 'bank' ? 'Maybank Visa' : f.type === 'warranty' ? 'Samsung TV' : 'My ' + t.label.toLowerCase())} maxLength={60} />
             {(tried || false) && !f.title.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
             <Inp style={{ marginTop: 9 }} value={f.number} onChangeText={(x: string) => set({ number: x })} placeholder={f.type === 'bank' ? 'Card number (optional, you can leave it empty)' : 'Number (optional)'} maxLength={40} autoCapitalize="characters" />
+            {['passport', 'bank', 'idother', 'permit'].includes(f.type) ? (<>
+              <Text style={{ color: dim, fontSize: 11.5, marginTop: 12, marginBottom: 7 }}>Issued in</Text>
+              <EqPills tabs={['Malaysia', 'Another country']} index={f.country === 'other' ? 1 : 0} onChange={(i) => set({ country: i ? 'other' : 'MY' })} colors={['#7c9cff', '#b794ff']} fontSize={12.5} />
+              <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>The How to renew steps match the country, so you only see what fits your paper.</Text>
+            </>) : null}
             <Lab t={f.type === 'warranty' ? 'WARRANTY ENDS' : 'EXPIRY DATE'} />
             <Pressable onPress={() => set({ noExp: !f.noExp })} accessibilityLabel="No expiry" style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: f.noExp ? '#8fe9e2' : 'rgba(255,255,255,.4)', backgroundColor: f.noExp ? 'rgba(143,233,226,.35)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{f.noExp ? <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>✓</Text> : null}</View>
@@ -267,10 +273,10 @@ export default function Documents() {
     return docs.filter((d) => typeOf(d.type).tab === tab && (!n || (d.title + ' ' + (d.number || '') + ' ' + typeOf(d.type).label).toLowerCase().includes(n))).sort(bySoon);
   }, [docs, tab, q]);
   const openNew = () => setF(blank(DOC_TYPES.find((x) => x.tab === tab)!.key));
-  const openEdit = (d: Doc) => setF({ id: d.id, type: d.type, title: d.title, number: d.number || '', expiry: d.expiry || ymd(new Date(Date.now() + 365 * 86400000)), noExp: !d.expiry, remind: d.remind, photo: d.photo || '', photos: d.photos || [], note: d.note || '' });
+  const openEdit = (d: Doc) => setF({ id: d.id, type: d.type, title: d.title, number: d.number || '', expiry: d.expiry || ymd(new Date(Date.now() + 365 * 86400000)), noExp: !d.expiry, remind: d.remind, photo: d.photo || '', photos: d.photos || [], note: d.note || '', country: d.country === 'other' ? 'other' : 'MY' });
   const save = () => {
     if (!f) return;
-    const doc: Doc = { id: f.id || (st && st.next) || 1, type: f.type, title: f.title.trim(), number: f.number.trim() || undefined, expiry: f.noExp ? undefined : f.expiry, remind: f.noExp ? 'off' : f.remind, photo: f.photo || undefined, photos: f.photos.length ? f.photos : undefined, note: f.note || undefined };
+    const doc: Doc = { id: f.id || (st && st.next) || 1, type: f.type, title: f.title.trim(), number: f.number.trim() || undefined, expiry: f.noExp ? undefined : f.expiry, remind: f.noExp ? 'off' : f.remind, photo: f.photo || undefined, photos: f.photos.length ? f.photos : undefined, note: f.note || undefined, country: f.country === 'other' ? 'other' : undefined };
     const next = f.id ? docs.map((d) => (d.id === f.id ? doc : d)) : [doc, ...docs];
     setSt({ docs: next, next: Math.max((st && st.next) || 1, doc.id + 1) });
     setTab(typeOf(f.type).tab); setF(null);

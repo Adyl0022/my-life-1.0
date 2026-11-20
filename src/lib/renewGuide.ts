@@ -17,6 +17,20 @@ const PASSPORT: RGuide = { title: 'Passport', source: 'news', url: 'https://www.
   bring: ['Original MyKad', 'Old passport', 'Payment receipt (printed or on your phone)'],
   note: 'This is for renewing only. A lost or damaged passport is handled differently. Many countries want at least 6 months left on your passport, so start early.' };
 
+// Papers from another country: no Malaysian office or app is named, only steps that fit anywhere.
+const PASSPORT_ANY: RGuide = { title: 'Passport', source: 'general',
+  ways: [
+    { tab: 'In your country', steps: ['Find the **passport office** of the country that gave you the passport. Use its official website.', 'Check what it asks for: forms, photos, your old passport, an ID and the fee.', 'Book an appointment or apply online if your country allows it.', 'Renew, then **save the new passport here** in Documents.'] },
+    { tab: 'Abroad', steps: ['Contact the nearest **embassy or consulate** of the country that gave you the passport.', 'Ask which documents and forms they need for a renewal, and how long it takes.'] },
+  ],
+  bring: ['Your old passport', 'Your national ID, if your country asks for it', 'Passport photos and payment, if needed'],
+  note: 'These are general steps, because every country has its own rules. Many countries want at least 6 months left on your passport, so start early.' };
+
+const LICENCE_ANY: RGuide = { title: 'Driving licence', source: 'general',
+  ways: [{ tab: 'What to do', steps: ['Find the **office that gives driving licences** in the country that gave you yours.', 'Check on its official website whether you can renew online or must go to a counter.', 'Gather what it asks for, renew, then **save the new licence here** in Documents.'] }],
+  bring: ['Your current licence', 'Your ID'],
+  note: 'These are general steps, because every country has its own rules. Some countries ask for an eye test or a new photo.' };
+
 const MYKAD: RGuide = { title: 'MyKad', source: 'news', url: 'https://www.jpn.gov.my',
   ways: [
     { tab: 'MyGOV app', steps: ['Install the **MyGOV** app and set up your **MyDigital ID** (you need it to log in).', 'Log in, tap **Digital Identity**, then **Identity Card**.', 'Scroll down and tap **Penggantian MyKad**.', 'Read the terms, tick the box, then tap **Agree & Next**.', 'Fill in the form, pick a collection centre, check your details and pay.'] },
@@ -59,13 +73,14 @@ const GENERIC: RGuide = { title: 'This paper', source: 'general',
   ways: [{ tab: 'What to do', steps: ['Find out **who gave it** to you: the office or company.', 'Ask what is needed to renew and how long it takes. Do this early.', 'Gather what they ask for, renew, then **save the new one** here.'] }] };
 
 /** Pick the guide for a paper by its type and its name. */
-export function renewFor(type: string, title: string): RGuide {
+export function renewFor(type: string, title: string, country: 'MY' | 'other' = 'MY'): RGuide {
   const t = (title || '').toLowerCase();
-  if (/licen[cs]e|lesen|\bl[dc]\b|jpj|cdl|memandu|driving/.test(t)) return LICENCE;
-  if (type === 'passport') return PASSPORT;
+  const my = country !== 'other';
+  if (/licen[cs]e|lesen|\bl[dc]\b|jpj|cdl|memandu|driving/.test(t)) return my ? LICENCE : LICENCE_ANY;
+  if (type === 'passport') return my ? PASSPORT : PASSPORT_ANY;
   if (type === 'mykad') return MYKAD;
   if (type === 'cidb') return CIDB;
-  if (type === 'bank') return /cimb/.test(t) ? CIMB : BANK;
+  if (type === 'bank') return my && /cimb/.test(t) ? CIMB : BANK;
   if (type === 'warranty') return WARRANTY;
   if (type === 'insurance') return INSURANCE;
   return GENERIC;
