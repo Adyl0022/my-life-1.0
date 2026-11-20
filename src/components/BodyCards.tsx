@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
@@ -121,7 +122,7 @@ export function DailyNeeds({ h, setH }: { h: HData; setH: (v: HData) => void }) 
   useEffect(() => { if (h.age) setAge(String(h.age)); }, [h.age]);
   const ok = kg > 0 && cm > 0 && a > 0 && !!sx;
   const showEd = ed || !(a > 0 && sx);
-  const saveAge = (sex: 'm' | 'f' | undefined, ag: string) => { const n = parseInt(ag, 10); const okAge = n >= 12 && n <= 100; setH({ ...h, sex: sex || h.sex, age: okAge ? n : h.age }); if (okAge && (sex || h.sex)) setEd(false); };
+  const saveAge = (sex: 'm' | 'f' | undefined, ag: string) => { const n = parseInt(ag, 10); const okAge = n >= 12 && n <= 100; if (!okAge) tryForm('age'); setH({ ...h, sex: sex || h.sex, age: okAge ? n : h.age }); if (okAge && (sex || h.sex)) setEd(false); };
   const missing: string[] = []; if (!(kg > 0)) missing.push('weight'); if (!(cm > 0)) missing.push('height');
   let body: React.ReactNode = null;
   if (ok) {
@@ -188,7 +189,7 @@ export function DailyNeeds({ h, setH }: { h: HData; setH: (v: HData) => void }) 
             {([['m', 'Male'], ['f', 'Female']] as ['m' | 'f', string][]).map(([k, n]) => <Pressable key={k} onPress={() => saveAge(k, age)} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: sx === k ? '#b794ff' : 'transparent' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{n}</Text></Pressable>)}
           </View>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <Inp min={1} max={120} style={{ flex: 1 }} keyboardType="number-pad" value={age} onChangeText={setAge} placeholder="Age (years)" onSubmitEditing={() => saveAge(undefined, age)} />
+            <Inp form="age" need="your age" min={12} max={100} style={{ flex: 1 }} keyboardType="number-pad" value={age} onChangeText={setAge} placeholder="Age (years)" onSubmitEditing={() => saveAge(undefined, age)} />
             <Pressable onPress={() => saveAge(undefined, age)} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
           </View>
         </View>

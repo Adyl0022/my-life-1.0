@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, View, Easing } from 'react-native';
+import { Animated, Modal, View, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
 import { onDialog, DialogState, DialogButton } from '../lib/dialog';

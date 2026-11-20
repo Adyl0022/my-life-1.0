@@ -1,7 +1,8 @@
 import React from 'react';
 import { lessonOfDay } from '../lib/lessonOfDay';
 import { EMPTY_COL, type ColStore } from '../lib/collection';
-import { View, Pressable, Animated, ScrollView, Platform } from 'react-native';
+import { View, Animated, ScrollView, Platform } from 'react-native';
+import { Pressable } from './Press';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';

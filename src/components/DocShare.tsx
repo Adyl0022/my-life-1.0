@@ -1,9 +1,10 @@
 import { Toggle } from './Toggle';
 import { fileStamp } from '../lib/exporter';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Modal, Image, Platform, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Modal, Image, Platform, ScrollView, useWindowDimensions } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { Text } from './Txt';
 import { Inp, W } from './Ui';
 

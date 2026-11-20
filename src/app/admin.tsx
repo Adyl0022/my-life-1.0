@@ -1,5 +1,7 @@
+import { SlidePills } from '../components/TabSlide';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, Pressable, Share, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, ScrollView, Share, ActivityIndicator, RefreshControl } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -227,13 +229,7 @@ export default function Admin() {
               ))}
             </View>
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 26 }}>
-              {(['users', 'codes', 'inbox', 'log'] as const).map((t) => (
-                <Pressable key={t} onPress={() => setTab(t)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, backgroundColor: tab === t ? GOLD : CARD, borderWidth: 1, borderColor: 'rgba(255,255,255,.1)', ...RAISED }}>
-                  <Text style={{ color: tab === t ? '#0b1512' : W, fontWeight: '800', fontSize: 13 }}>{t === 'users' ? 'Users (' + users.length + ')' : t === 'codes' ? 'Codes (' + codes.length + ')' : t === 'inbox' ? 'Inbox (' + fb.length + ')' : 'Log (' + att.length + ')'}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <View style={{ marginTop: 26 }}><SlidePills tabs={[('Users (' + users.length + ')'), ('Codes (' + codes.length + ')'), ('Inbox (' + fb.length + ')'), ('Log (' + att.length + ')')]} index={['users', 'codes', 'inbox', 'log'].indexOf(tab)} onChange={(i) => setTab((['users', 'codes', 'inbox', 'log'] as const)[i])} colors={[GOLD, GOLD]} textOn="#0b1512" fontSize={13} padX={14} /></View>
             {tab === 'users' ? <View style={{ marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}><View style={{ flex: 1 }}><SearchField value={q} onChangeText={setQ} placeholder="Search by name or email" autoCapitalize="none" /></View><Pill t="Export" on={false} onPress={exportUsers} /></View> : null}
             {tab === 'codes' ? <View style={{ marginTop: 12, flexDirection: 'row' }}><Pill t="Export all codes" on={false} onPress={exportCodes} /></View> : null}
             {tab === 'users' ? [...users].sort((a, b) => (adm[b.id] ? 1 : 0) - (adm[a.id] ? 1 : 0)).filter((u) => !q.trim() || (u.email + ' ' + (u.name || '')).toLowerCase().includes(q.trim().toLowerCase())).map((u) => (

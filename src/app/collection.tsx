@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from '../components/Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
@@ -10,7 +11,7 @@ import { Tile } from '../components/ColUi';
 import { type ColIconName } from '../components/ColIcon';
 import { W } from '../components/Ui';
 import { CATS, ACC, EMPTY_COL, type ColStore } from '../lib/collection';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { useStored } from '../lib/store';
 import { itemsPdf } from '../lib/colPdf';
 import { showAlert } from '../lib/dialog';

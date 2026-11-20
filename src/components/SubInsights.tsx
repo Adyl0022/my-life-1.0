@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, Platform, Animated, Easing, PanResponder } from 'react-native';
+import { View, Platform, Animated, Easing, PanResponder } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { Text } from './Txt';
 import { catOf, monthly, rm, live, payName, PAYS, type Sub } from '../lib/subs';
 

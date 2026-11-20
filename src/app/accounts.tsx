@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Pressable, Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Platform } from 'react-native';
+import { Pressable } from '../components/Press';
+import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { Inp, DateField, todayStr, W } from '../components/Ui';

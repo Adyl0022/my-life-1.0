@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Modal, Animated, Easing } from 'react-native';
+import { View, Modal, Animated, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePathname } from 'expo-router';

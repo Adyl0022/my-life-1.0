@@ -1,6 +1,7 @@
 import React from 'react';
 import { PageIn } from '../../components/PageIn';
-import { View, Platform, ScrollView, Pressable, Animated, Easing } from 'react-native';
+import { View, Platform, ScrollView, Animated, Easing } from 'react-native';
+import { Pressable } from '../../components/Press';
 import { Text } from '../../components/Txt';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';

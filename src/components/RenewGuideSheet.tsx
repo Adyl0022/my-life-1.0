@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Pressable, ScrollView, Linking } from 'react-native';
+import { View, ScrollView, Linking } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
 import { W } from './Ui';

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Platform, Animated } from 'react-native';
+import { View, ScrollView, Platform, Animated } from 'react-native';
+import { Pressable } from '../components/Press';
 import * as Notifications from 'expo-notifications';
 import { Text } from '../components/Txt';
 import { useTabSlide, useTabPill } from '../components/TabSlide';

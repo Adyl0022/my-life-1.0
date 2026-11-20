@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KbScroll } from '../components/KbScroll';
-import { View, Pressable, Animated, Modal, ScrollView, Image, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Animated, Modal, ScrollView, Image, Platform, KeyboardAvoidingView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import { Text } from '../components/Txt';
@@ -19,7 +20,7 @@ import { EqPills } from '../components/TabSlide';
 import { CopyRow, ShareSheet, exportPdf } from '../components/DocShare';
 import { RenewGuideSheet } from '../components/RenewGuideSheet';
 import { useDocLock, setDocLock, askUnlock } from '../lib/docLock';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, guessType, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
 
 const dim = 'rgba(255,255,255,.62)';

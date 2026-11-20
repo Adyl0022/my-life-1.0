@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, Pressable, Modal, PanResponder } from 'react-native';
+import { View, ScrollView, Modal, PanResponder } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Text } from './Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';

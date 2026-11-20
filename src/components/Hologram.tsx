@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, Easing, Image, Pressable } from 'react-native';
+import { View, Animated, Easing, Image } from 'react-native';
+import { Pressable } from './Press';
 import Svg, { Ellipse } from 'react-native-svg';
 import { Region, REGIONS } from '../lib/twin';
 import { mark } from '../lib/tmTrace';

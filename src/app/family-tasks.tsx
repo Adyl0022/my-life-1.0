@@ -1,5 +1,6 @@
 import React, { Fragment, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';

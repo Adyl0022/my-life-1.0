@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { weekBack, weekStart, WS_NAME } from '../lib/region';
 import { HData, HDay, WD, MON, dateOf, getDay, to12 } from '../lib/habit';

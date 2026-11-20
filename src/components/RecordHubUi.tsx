@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, ScrollView, Animated, Easing } from 'react-native';
+import { View, ScrollView, Animated, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, G, Line, LinearGradient as SvgGrad, Path, Pattern, Rect, Stop } from 'react-native-svg';

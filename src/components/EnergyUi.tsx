@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Pressable, Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Platform } from 'react-native';
+import { Pressable } from './Press';
+import * as Haptics from '../lib/haptics';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import { SlidePills } from './TabSlide';
 import { Text } from './Txt';

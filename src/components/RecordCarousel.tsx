@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Animated, Easing, PanResponder, LayoutAnimation } from 'react-native';
+import { View, Animated, Easing, PanResponder, LayoutAnimation } from 'react-native';
+import { Pressable } from './Press';
 import { useRouter } from 'expo-router';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';

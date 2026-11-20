@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
-import { View, Pressable, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { Inp, W } from './Ui';
 import { HData, HeartRead, dateOf, keyOfDate } from '../lib/habit';

@@ -1,6 +1,7 @@
 import { useSubsG } from '../lib/subs';
 import React from 'react';
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';

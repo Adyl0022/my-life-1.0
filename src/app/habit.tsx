@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, Pressable, Platform, Keyboard, TextInput, Animated, Easing } from 'react-native';
+import { View, ScrollView, Platform, Keyboard, TextInput, Animated, Easing } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -499,7 +500,7 @@ export default function Habit() {
             {kl.length >= 2 && <Bars vals={kl.map((x) => x.v - Math.min(...kl.map((y) => y.v)) + 1)} labels={kl.map((x) => parseInt(x.d.slice(8), 10) + '/' + parseInt(x.d.slice(5, 7), 10))} max={Math.max(...kl.map((x) => x.v)) - Math.min(...kl.map((x) => x.v)) + 2} color="#b794ff" hi={kl.length - 1} />}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
               <Inp form="kg" need="your weight in kg" min={20} max={300} value={kgIn} onChangeText={setKgIn} keyboardType="decimal-pad" placeholder="Weight (kg)" style={{ flex: 1 }} />
-              <Inp min={100} max={250} value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
+              <Inp form="kg" need="your height" min={100} max={250} value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
               <Pressable onPress={logKg} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Log</Text></Pressable>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Weigh yourself once a week. Water goal is about 33 ml per kg. BMI is a rough guide only.</Text>

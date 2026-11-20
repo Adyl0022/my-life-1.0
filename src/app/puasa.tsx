@@ -1,6 +1,8 @@
+import { SlidePills, EqPills } from '../components/TabSlide';
 import { weekStart, weekBack } from '../lib/region';
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { IslamicBg, Header, Ic } from '../components/IslamicUi';
 import { Inp, W } from '../components/Ui';
+import { tryForm } from '../lib/num';
 import { FastMonths } from '../components/FastMonths';
 import { PuasaSky, RamadanHero, Crescent, Lantern, TipIcon, Bob } from '../components/PuasaArt';
 import { Rise, FillBar, GrowBar } from '../components/Anim';
@@ -85,7 +88,7 @@ export default function Puasa() {
   const at = (date: Date): FKind | undefined => { const k = keyD(date); return p.days[k] || (hd.days && hd.days[k] && hd.days[k].fast ? 's' : undefined); };
   const cycleRam = (date: Date) => { const v = p.days[keyD(date)]; mark(date, !v ? 'r' : v === 'r' ? 'x' : null); };
   const toggleLog = (date: Date) => { if (isHaram(date, off)) return; const v = p.days[keyD(date)]; mark(date, v === logAs ? null : logAs); };
-  const saveQ = () => { const n = parseInt(qIn, 10); if (n >= 0 && n <= 999) { const done = Object.keys(p.days).filter((k) => p.days[k] === 'q').length; const logged = owed + done - (p.qBase || 0); setP({ ...p, qBase: Math.max(0, n + done - logged) }); } setQEd(false); setQIn(''); };
+  const saveQ = () => { const n = parseInt(qIn, 10); if (!(n >= 0 && n <= 999)) tryForm('qdays'); if (n >= 0 && n <= 999) { const done = Object.keys(p.days).filter((k) => p.days[k] === 'q').length; const logged = owed + done - (p.qBase || 0); setP({ ...p, qBase: Math.max(0, n + done - logged) }); } setQEd(false); setQIn(''); };
   const setRam = (y: number, patch: { start?: string; len?: number }) => setP({ ...p, start: patch.start ? { ...p.start, [String(y)]: patch.start } : p.start, len: patch.len ? { ...p.len, [String(y)]: patch.len } : p.len });
 
   const sunToday = sunatToday(today, off);
@@ -124,14 +127,7 @@ export default function Puasa() {
       <PuasaSky />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Fasting" sub={hijriText(today, off)} />
-        <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginHorizontal: 20, marginTop: 14 }}>
-          {['Ramadan', 'Sunnah', 'Tips'].map((n, i) => (
-            <Pressable key={n} onPress={() => setTab(i)} style={{ flex: 1 }}>
-              {tab === i ? <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: '#06281c', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                : <View style={{ paddingVertical: 8, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{n}</Text></View>}
-            </Pressable>
-          ))}
-        </View>
+        <View style={{ marginHorizontal: 20, marginTop: 14 }}><EqPills tabs={['Ramadan', 'Sunnah', 'Tips']} index={tab} onChange={setTab} colors={['#34d399', '#5ee7df']} textOn="#06281c" fontSize={13} /></View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 50, gap: 12 }}>
           {tab === 0 && (<>
             {st.phase === 'during' ? (
@@ -208,7 +204,7 @@ export default function Puasa() {
               ) : <Text style={{ color: dim, fontSize: 12.5, marginTop: 8 }}>You have no missed fasts to make up. Alhamdulillah.</Text>}
               {qEd ? (
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                  <Inp max={999} style={{ flex: 1 }} keyboardType="number-pad" value={qIn} onChangeText={setQIn} placeholder="Days you owe now" onSubmitEditing={saveQ} />
+                  <Inp form="qdays" need="how many days you owe" zeroOk max={999} style={{ flex: 1 }} keyboardType="number-pad" value={qIn} onChangeText={setQIn} placeholder="Days you owe now" onSubmitEditing={saveQ} />
                   <Btn t="Save" on onPress={saveQ} />
                 </View>
               ) : <Pressable onPress={() => { setQEd(true); setQIn(String(owed)); }}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '700', marginTop: 10 }}>Set how many days you owe from before ✎</Text></Pressable>}

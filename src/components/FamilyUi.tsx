@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Pressable, TextInput, ActivityIndicator } from 'react-native';
+import { View, TextInput, ActivityIndicator } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Glass } from './Glass';

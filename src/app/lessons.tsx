@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { RecordPage, Intro } from '../components/RecordHubUi';

@@ -1,7 +1,8 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import React from 'react';
-import { View, TextInput, Pressable, Modal, Platform, Keyboard, Dimensions, ScrollView, StyleSheet, Animated } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, TextInput, Modal, Platform, Keyboard, Dimensions, ScrollView, StyleSheet, Animated } from 'react-native';
+import { Pressable } from './Press';
+import * as Haptics from '../lib/haptics';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';

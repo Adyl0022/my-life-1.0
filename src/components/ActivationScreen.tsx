@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Linking, Animated, Easing, useWindowDimensions } from 'react-native';
+import { View, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Linking, Animated, Easing, useWindowDimensions } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GP, W } from './Ui';

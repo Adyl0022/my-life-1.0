@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Keyboard, useWindowDimensions, Pressable, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image, Linking } from 'react-native';
+import { View, Keyboard, useWindowDimensions, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, TextInput, Animated, Easing, Image, Linking } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect, Defs, Pattern, Stop, RadialGradient as SRG } from 'react-native-svg';

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Pressable, ScrollView, Modal, TextInput } from 'react-native';
+import { View, ScrollView, Modal, TextInput } from 'react-native';
+import { Pressable } from './Press';
+import { SearchField } from './Shine';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
 import { Glass } from './Glass';
@@ -59,7 +61,7 @@ function Sheet({ title, ph, items, sel, onPick, onClose }: { title: string; ph: 
             <Text style={{ color: W, fontSize: 19, fontWeight: '800' }}>{title}</Text>
             <Pressable onPress={onClose} hitSlop={10} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 14 }}>✕</Text></Pressable>
           </View>
-          <TextInput value={q} onChangeText={setQ} placeholder={ph} placeholderTextColor="rgba(255,255,255,.45)" autoCorrect={false} style={{ marginTop: 12, color: W, fontSize: 14, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 16, backgroundColor: 'rgba(0,0,0,.3)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }} />
+          <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder={ph} /></View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
             {cur ? <><Hd t="Selected" /><Opt i={cur} /></> : null}
             {groups.map((g) => (

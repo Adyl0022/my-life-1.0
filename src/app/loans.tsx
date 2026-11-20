@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, Animated, Linking, Share } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Animated, Linking, Share } from 'react-native';
+import { Pressable } from '../components/Press';
+import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { RecordPage, Intro } from '../components/RecordHubUi';

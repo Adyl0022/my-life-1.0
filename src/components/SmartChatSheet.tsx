@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Modal, ScrollView } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { Text } from './Txt';

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, TextInput, ScrollView, Pressable } from 'react-native';
+import { View, TextInput, ScrollView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';

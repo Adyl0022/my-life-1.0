@@ -1,6 +1,7 @@
 import { weekStart } from '../lib/region';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Animated, Easing, PanResponder, LayoutAnimation } from 'react-native';
+import { View, ScrollView, TextInput, Animated, Easing, PanResponder, LayoutAnimation } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';

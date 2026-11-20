@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Share } from 'react-native';
+import { View, ScrollView, Share } from 'react-native';
+import { Pressable } from '../components/Press';
 import { showAlert } from '../lib/dialog';
 import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';

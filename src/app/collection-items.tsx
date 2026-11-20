@@ -1,6 +1,7 @@
 import { LineIcon } from '../components/LineIcon';
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, Image, Platform } from 'react-native';
+import { View, Image, Platform } from 'react-native';
+import { Pressable } from '../components/Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '../components/Txt';

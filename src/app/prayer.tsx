@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Pressable, Platform } from 'react-native';
+import { View, ScrollView, Platform } from 'react-native';
+import { Pressable } from '../components/Press';
 import * as Location from 'expo-location';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';

@@ -1,7 +1,9 @@
+import { SlidePills, EqPills } from '../../components/TabSlide';
 import React, { useState } from 'react';
 import { PageIn } from '../../components/PageIn';
 import { navScroll } from '../../lib/navbar';
-import { View, ScrollView, Pressable, TextInput, Modal, Animated, Easing, Linking, Platform, Keyboard } from 'react-native';
+import { View, ScrollView, TextInput, Modal, Animated, Easing, Linking, Platform, Keyboard } from 'react-native';
+import { Pressable } from '../../components/Press';
 import * as Notifications from 'expo-notifications';
 import { setup } from '../../lib/adhan';
 import { Text } from '../../components/Txt';
@@ -252,14 +254,7 @@ export default function Settings() {
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView ref={sref} onScroll={navScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 130 + kb }}>
           <Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Settings</Text>
-          <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 14 }}>
-            {['General', 'Security', 'About'].map((n, i) => (
-              <Pressable key={n} onPress={() => setTab(i)} style={{ flex: 1 }}>
-                {tab === i ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{n}</Text></LinearGradient>
-                  : <View style={{ paddingVertical: 8, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{n}</Text></View>}
-              </Pressable>
-            ))}
-          </View>
+          <View style={{ marginTop: 14 }}><EqPills tabs={['General', 'Security', 'About']} index={tab} onChange={setTab} colors={GP} fontSize={13} /></View>
 
           {tab === 0 && (
             <View style={{ gap: 12, marginTop: 14 }}>
@@ -347,8 +342,8 @@ export default function Settings() {
                 <Ttl t="Account and data" />
                 <Lbl t="Name shown on your Dashboard and in the assistant" style={{ marginBottom: 8 }} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Inp style={{ flex: 1 }} onFocus={() => setTimeout(() => sref.current?.scrollToEnd({ animated: true }), 350)} value={draft ?? name} onChangeText={(v: string) => { setDraft(v); setNameMsg(''); }} placeholder="Your name" maxLength={30} />
-                  <Btn t="Save" kind="primary" style={{ flex: 0, minWidth: 80 }} onPress={() => { const v = (draft ?? name).trim(); if (!v) return setNameMsg('Please enter a name.'); setName(v); setDraft(null); setNameMsg('Saved. It will show on your Dashboard and assistant.'); }} />
+                  <Inp style={{ flex: 1 }} onFocus={() => setTimeout(() => sref.current?.scrollToEnd({ animated: true }), 350)} bad={/^Please/.test(nameMsg) || undefined} value={draft ?? name} onChangeText={(v: string) => { setDraft(v); setNameMsg(''); }} placeholder="Your name" maxLength={30} />
+                  <Btn t="Save" kind="primary" style={{ flex: 0, minWidth: 80 }} onPress={() => { const v = (draft ?? name).trim(); if (!v) return setNameMsg('Please enter a name.'); if (!/[A-Za-z\u00C0-\u024F\u0400-\u04FF\u0600-\u06FF\u4E00-\u9FFF]/.test(v)) return setNameMsg('Please use letters in your name, not only numbers or symbols.'); setName(v); setDraft(null); setNameMsg('Saved. It will show on your Dashboard and assistant.'); }} />
                 </View>
                 {nameMsg ? <Text style={{ color: '#8fe9e2', fontSize: 12, marginTop: 6 }}>{nameMsg}</Text> : null}
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>

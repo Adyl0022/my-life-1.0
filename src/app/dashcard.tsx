@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, ScrollView, Pressable, Animated, Easing } from 'react-native';
+import { View, ScrollView, Animated, Easing } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';

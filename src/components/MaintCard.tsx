@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Pressable, Animated, Easing } from 'react-native';
+import { View, Animated, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SG, Stop } from 'react-native-svg';
 import { Glass } from './Glass';
@@ -166,7 +167,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
           </View>
           {fixOdo ? (
             <View style={{ marginTop: 10, gap: 6 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="Meter reading now (km)" onSubmitEditing={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /></View>
+              <View style={{ flexDirection: 'row', gap: 8 }}><Inp style={{ flex: 1 }} keyboardType="number-pad" bad={odErr || undefined} value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="Meter reading now (km)" onSubmitEditing={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /><Btn t="Save" h={42} w={16} onPress={() => { const n = saveOdo(od, toM, toY); if (n && n > 0) { setFixOdo(false); setOd(''); setToM(false); setToY(false); } }} /></View>
               <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 2 }}>Also add this reading to:</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}><Chip t="Monthly Mileage" on={toM} onPress={() => setToM(!toM)} /><Chip t="Yearly Mileage" on={toY} onPress={() => setToY(!toY)} /></View>
               {lastQ ? <Pressable onPress={() => confirmDelete('last reading', () => upd((x: any) => ({ ...x, oreadings: (x.oreadings || []).filter((r: any) => r.id !== lastQ.id) })), { title: 'Remove this reading?', message: lastQ.odo.toLocaleString('en-MY') + ' km from the estimate card is removed. Monthly and Yearly Mileage are not changed.', yes: 'Remove' })} accessibilityLabel="Remove last reading from the estimate" style={{ alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,143,171,.16)', borderWidth: 1, borderColor: 'rgba(255,143,171,.4)' }}><Text style={{ color: '#ffb3c6', fontSize: 12, fontWeight: '800' }}>{'Remove my last reading (' + lastQ.odo.toLocaleString('en-MY') + ' km)'}</Text></Pressable> : null}
@@ -219,7 +220,7 @@ export function MaintCard({ d, upd, latest, cat }: { d: Ext; upd: (fn: (x: any) 
                   <View style={{ marginTop: 10, gap: 8 }}>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
                       <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={cost} onChangeText={setCost} placeholder={'Cost (' + cu() + ')'} />
-                      <Inp style={{ flex: 1 }} keyboardType="number-pad" value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="Odometer km" onSubmitEditing={() => done(t)} />
+                      <Inp style={{ flex: 1 }} keyboardType="number-pad" bad={odErr || undefined} value={od} onChangeText={(v: string) => { setOd(v); setOdErr(''); }} placeholder="Odometer km" onSubmitEditing={() => done(t)} />
                     </View>
                     {odErr ? <Text style={{ color: '#ffb3c6', fontSize: 11.5 }}>{odErr}</Text> : <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11 }}>Cost and odometer are optional. Type the odometer to correct the km count.</Text>}
                     <View style={{ alignSelf: 'flex-start' }}><Btn t="Save" h={40} w={22} onPress={() => done(t)} /></View>

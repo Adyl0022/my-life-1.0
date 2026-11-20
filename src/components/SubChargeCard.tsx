@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Pressable, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { Text } from './Txt';
 import { LineIcon } from './LineIcon';
 import { pendingCharge, rm, num, type SubStore } from '../lib/subs';

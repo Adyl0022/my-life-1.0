@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, Pressable, View, TextInput, ViewStyle, StyleProp, LayoutChangeEvent } from 'react-native';
+import { Animated, Easing, Platform, View, TextInput, ViewStyle, StyleProp, LayoutChangeEvent } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SearchIcon, CloseIcon } from './AudioIcons';
 

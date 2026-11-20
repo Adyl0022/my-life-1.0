@@ -1,3 +1,4 @@
+import { EqPills } from '../../components/TabSlide';
 import { useMemo } from 'react';
 import { useMergedSpends } from '../../lib/vehicleSpend';
 import React, { useState } from 'react';
@@ -5,7 +6,8 @@ import { FastMonths } from '../../components/FastMonths';
 import { StatsBg } from '../../components/PageBg';
 import { PageIn } from '../../components/PageIn';
 import { navScroll } from '../../lib/navbar';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Pressable } from '../../components/Press';
 import { Text } from '../../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -123,15 +125,7 @@ export default function Stats() {
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView onScroll={navScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 130 }}>
           <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Stats</Text>
-          <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 14 }}>
-            {(([['use', 'App use'], ['health', 'Health'], ['money', 'Money']] as ['use' | 'health' | 'money', string][]).filter(([k]) => k === 'use' || (k === 'health' ? hid.on('habit') : hid.on('finance')))).map(([k, n]) => (
-              <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
-                {tab === k ? (
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                ) : (<View style={{ paddingVertical: 8, alignItems: 'center' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
-              </Pressable>
-            ))}
-          </View>
+          {(() => { const tl = ([['use', 'App use'], ['health', 'Health'], ['money', 'Money']] as ['use' | 'health' | 'money', string][]).filter(([k]) => k === 'use' || (k === 'health' ? hid.on('habit') : hid.on('finance'))); return <View style={{ marginTop: 14 }}><EqPills tabs={tl.map((x) => x[1])} index={Math.max(0, tl.findIndex((x) => x[0] === tab))} onChange={(i) => setTab(tl[i][0])} colors={['#7c9cff', '#b794ff']} fontSize={13} /></View>; })()}
 
           {tab === 'use' && (<>
           <Rise i={0}>

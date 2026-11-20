@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, View, ScrollView, Pressable, TextInput, Platform, Linking, AppState, PermissionsAndroid } from 'react-native';
+import { Animated, Easing, View, ScrollView, TextInput, Platform, Linking, AppState, PermissionsAndroid } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';

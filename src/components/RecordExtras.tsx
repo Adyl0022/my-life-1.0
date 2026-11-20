@@ -1,6 +1,7 @@
 import { fileStamp } from '../lib/exporter';
 import React, { useState } from 'react';
-import { View, Pressable, Image, Modal, Platform } from 'react-native';
+import { View, Image, Modal, Platform } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Glass } from './Glass';

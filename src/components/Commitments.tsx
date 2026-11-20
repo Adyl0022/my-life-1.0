@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Pressable, Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Platform } from 'react-native';
+import { Pressable } from './Press';
+import * as Haptics from '../lib/haptics';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Glass } from './Glass';
@@ -12,7 +13,7 @@ import { DEBT_EMPTY, DebtData, Debt, remaining, monthsLeft, dueDay, isActive, am
 import { cs, cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
-import { pn } from '../lib/num';
+import { pn, tryForm } from '../lib/num';
 import { Toggle } from './Toggle';
 const WARM = ['#ffc46b', '#ff8fab'] as [string, string];
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -71,7 +72,7 @@ export function Commitments({ income }: { income: number }) {
   const startEdit = (x: Debt) => { setEdit(x.id); setAdding(true); setN(x.name); setFixed(!!x.fixed); setBal(x.fixed ? '' : String(remaining(x) + (x.paid[ym] || 0))); setMo(String(x.monthly)); setDay(String(x.due)); setGl(x.goal || 0); setPf(x.acc && accD.accs.some((a) => a.id === x.acc) ? x.acc : 0); };
   const submit = () => {
     const b = pn(bal), m = pn(mo), dd = Math.round(pn(day));
-    if (!n.trim() || (!fixed && !(b > 0)) || !(m > 0) || !(dd >= 1 && dd <= 31)) { setMsg(fixed ? 'Fill in the name, the monthly amount and a due day from 1 to 31.' : 'Fill in the name, balance, monthly payment and a due day from 1 to 31.'); return; }
+    if (!n.trim() || (!fixed && !(b > 0)) || !(m > 0) || !(dd >= 1 && dd <= 31)) { tryForm('commit'); setMsg(fixed ? 'Fill in the name, the monthly amount and a due day from 1 to 31.' : 'Fill in the name, balance, monthly payment and a due day from 1 to 31.'); return; }
     setMsg('');
     if (edit) {
       save({ ...d, debts: list.map((x) => (x.id === edit ? { ...x, name: n.trim(), monthly: m, due: dd, fixed, goal: gl || undefined, acc: pf || undefined, accSince: pf ? (x.acc === pf && x.accSince ? x.accSince : ym) : undefined, bal: fixed ? 0 : b + Object.keys(x.paid).filter((k) => k !== ym).reduce((a, k) => a + x.paid[k], 0) } : x)) });
@@ -138,10 +139,10 @@ export function Commitments({ income }: { income: number }) {
             </View>
           ) : null}
           <Inp value={n} onChangeText={setN} placeholder="Name, for example Motor loan" />
-          {!fixed ? <Inp keyboardType="decimal-pad" value={bal} onChangeText={setBal} placeholder={'Balance left to pay (' + cu() + ')'} /> : null}
+          {!fixed ? <Inp form="commit" need="the balance left to pay" keyboardType="decimal-pad" value={bal} onChangeText={setBal} placeholder={'Balance left to pay (' + cu() + ')'} /> : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={mo} onChangeText={setMo} placeholder={'Monthly (' + cu() + ')'} />
-            <Inp min={1} max={31} style={{ flex: 1 }} keyboardType="number-pad" value={day} onChangeText={setDay} placeholder="Due day (1 to 31)" onSubmitEditing={submit} />
+            <Inp form="commit" need="the monthly amount" style={{ flex: 1 }} keyboardType="decimal-pad" value={mo} onChangeText={setMo} placeholder={'Monthly (' + cu() + ')'} />
+            <Inp form="commit" need="a due day" min={1} max={31} style={{ flex: 1 }} keyboardType="number-pad" value={day} onChangeText={setDay} placeholder="Due day (1 to 31)" onSubmitEditing={submit} />
           </View>
           {accD.accs.length ? (
             <View>

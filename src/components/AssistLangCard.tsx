@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Pressable, ActivityIndicator, Modal, ScrollView, Animated, Easing } from 'react-native';
+import { View, ActivityIndicator, Modal, ScrollView, Animated, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Text } from './Txt';

@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, Platform, ScrollView, Image } from 'react-native';
+import { View, Platform, ScrollView, Image } from 'react-native';
+import { Pressable } from '../components/Press';
 import { curCode, useRegion } from '../lib/region';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
 import { CancelGuideSheet } from '../components/CancelGuideSheet';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { SubArt } from '../components/SubArt';
 import { SubInsights } from '../components/SubInsights';
 import { RecordPage } from '../components/RecordHubUi';

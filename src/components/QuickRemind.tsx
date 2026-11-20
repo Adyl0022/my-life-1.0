@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Pressable, Modal } from 'react-native';
+import { View, Modal } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Inp, SBtn, Sheet, W } from './Ui';

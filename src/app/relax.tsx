@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, Animated, Easing, AccessibilityInfo, Vibration, Platform } from 'react-native';
+import { View, ScrollView, Animated, Easing, AccessibilityInfo, Vibration, Platform } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
