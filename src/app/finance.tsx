@@ -162,17 +162,23 @@ export default function Finance() {
             </Glass>
           </Pressable>
 
-          <Pressable onPress={() => router.push('/subscriptions' as any)} accessibilityLabel="Subscriptions">
-            <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <LinearGradient colors={['rgba(124,156,255,.36)', 'rgba(183,148,255,.2)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
-              <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(124,156,255,.28)', borderWidth: 1, borderColor: 'rgba(124,156,255,.6)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="repeat" c="#c9d6ff" size={24} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Subscriptions</Text>
-                <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>{(() => { const n = ((sbs && sbs.subs) || []).length; const fd = detectSubs(all as any, (sbs && sbs.subs) || [], (sbs && sbs.no) || [], ymdNow()).length; return n === 0 ? (fd ? fd + ' found in your spending' : 'Netflix, YouTube, Claude and more') : rmSub(monthlyTotal(sbs.subs)) + ' a month · ' + n + ' active' + (fd ? ' · ' + fd + ' found for you' : ''); })()}</Text>
-              </View>
-              <Text style={{ color: W, fontSize: 22 }}>›</Text>
-            </Glass>
-          </Pressable>
+          {(() => {
+            const list = (sbs && sbs.subs) || []; const n = list.length; const fd = detectSubs(all as any, list, (sbs && sbs.no) || [], ymdNow()).length;
+            const sub = n === 0 ? (fd ? fd + ' found in your spending' : 'Netflix, YouTube, Claude and more') : rmSub(monthlyTotal(list)) + ' a month · ' + n + ' active';
+            return (
+              <Pressable onPress={() => router.push('/subscriptions' as any)} accessibilityLabel="Subscriptions" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
+                <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="repeat" c="#fff" size={22} /></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Subscriptions</Text>
+                    <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 2, lineHeight: 16 }}>{sub}</Text>
+                  </View>
+                  {n > 0 && fd > 0 ? <View style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, backgroundColor: 'rgba(94,231,181,.22)', borderWidth: 1, borderColor: 'rgba(94,231,181,.6)' }}><Text style={{ color: '#5ee7b5', fontSize: 10.5, fontWeight: '800' }}>{fd + ' FOUND'}</Text></View> : null}
+                  <Text style={{ color: '#fff', fontSize: 22 }}>›</Text>
+                </LinearGradient>
+              </Pressable>
+            );
+          })()}
 
           <Commitments income={sumOf(d.inc[curKey])} />
 
