@@ -168,8 +168,8 @@ const plain = { borderRadius: 22, backgroundColor: 'rgba(255,255,255,.07)', bord
 // Bold frosted glass: the art behind is blurred, the pane is brighter at the top and has a clear light edge, so it stands out and the text stays easy to read.
 function Pane({ style, children }: { style?: any; children?: React.ReactNode }) {
   return (
-    <View style={[{ borderRadius: 22, overflow: 'hidden', zIndex: 0, borderWidth: 1, borderColor: 'rgba(255,255,255,.24)' }, style]}>
-      <LinearGradient colors={['rgba(190,170,255,.26)', 'rgba(120,150,255,.14)', 'rgba(255,255,255,.1)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+    <View style={[{ borderRadius: 22, overflow: 'hidden', zIndex: 0, borderWidth: 1, borderColor: 'rgba(255,200,235,.34)' }, style]}>
+      <LinearGradient colors={['rgba(196,98,196,.46)', 'rgba(140,84,200,.38)', 'rgba(112,48,128,.42)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
       {children}
     </View>
   );
