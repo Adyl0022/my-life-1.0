@@ -40,7 +40,7 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
   const [note, setNote] = useState(''); const [i, setI] = useState(0); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('');
   const ref = useRef<any>(null); const { width } = useWindowDimensions(); const w = Math.min(width - 40, 420); const h = w / 1.45;
   const uri = pages[Math.min(i, pages.length - 1)];
-  const text = (note.trim() || 'FOR ONE PURPOSE ONLY').toUpperCase();
+  const text = (note.trim() || 'FOR PURPOSE ONLY').toUpperCase();
   const chord = Math.hypot(0.4 * w, 0.55 * h); const bar = { cx: 0.2 * w, cy: 0.275 * h, len: chord * 1.1, deg: (Math.atan2(-0.55 * h, 0.4 * w) * 180) / Math.PI, fs: Math.max(7, Math.min(11, (chord * 0.9 - text.length) / (text.length * 0.66))) };
   const go = async () => {
     buzz(); setBusy(true); setMsg('');
