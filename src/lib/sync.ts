@@ -5,7 +5,22 @@ import { getSession } from './auth';
 import { getText, applyRemote, clearMine, readPlain } from './store';
 
 // Data that follows the account. Lock/PIN, keys, caches and per-phone switches stay on the phone.
-export const SYNC_KEYS = ['ml_planner', 'ml_notes', 'ml_islamic', 'ml_tasbih', 'ml_puasa', 'ml_finance', 'ml_debts', 'ml_savings', 'ml_record', 'ml_habit', 'ml_name', 'ml_budget', 'ml_mean', 'ml_region', 'ml_toggles', 'ml_prayer_alerts', 'ml_prayer_lead', 'ml_backup_rem', 'ml_commit_order', 'ml_size', 'ml_tips_off', 'ml_read', 'ml_read_z', 'ml_hidden', 'ml_morder', 'ml_dcard', 'ml_memories', 'ml_dashpages'];
+export const SYNC_KEYS = ['ml_planner', 'ml_notes', 'ml_islamic', 'ml_tasbih', 'ml_puasa', 'ml_finance', 'ml_debts', 'ml_savings', 'ml_record', 'ml_habit', 'ml_name', 'ml_budget', 'ml_mean', 'ml_region', 'ml_toggles', 'ml_prayer_alerts', 'ml_prayer_lead', 'ml_backup_rem', 'ml_commit_order', 'ml_size', 'ml_tips_off', 'ml_read', 'ml_read_z', 'ml_hidden', 'ml_morder', 'ml_dcard', 'ml_memories', 'ml_dashpages', 'ml_documents', 'ml_collection'];
+// Written details sync, but photos never go online (they would fill the cloud storage). Photos are cut out before saving to the cloud and a phone keeps its own photos when the cloud copy arrives.
+const NO_PHOTO_KEYS = ['ml_documents', 'ml_collection'];
+const noPhotos = (v: any): any => Array.isArray(v) ? v.map(noPhotos) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, k === 'photo' ? '' : noPhotos(x)])) : v;
+async function keepMyPhotos(k: string, remote: any): Promise<any> {
+  if (!NO_PHOTO_KEYS.includes(k) || !remote || typeof remote !== 'object') return remote;
+  try {
+    const t = await getText(k); if (!t) return remote; const mine = JSON.parse(t); const out: any = { ...remote };
+    Object.keys(out).forEach((f) => {
+      if (!Array.isArray(out[f]) || !Array.isArray(mine && mine[f])) return;
+      const ph = new Map<any, string>(); mine[f].forEach((x: any) => { if (x && x.photo) ph.set(x.id, x.photo); });
+      out[f] = out[f].map((x: any) => (x && !x.photo && ph.has(x.id) ? { ...x, photo: ph.get(x.id) } : x));
+    });
+    return out;
+  } catch (e) { return remote; }
+}
 const META = 'ml_sync_meta', UID = 'ml_sync_uid';
 type Meta = Record<string, number>;
 let meta: Meta | null = null; let dirty = new Set<string>(); let timer: any = null; let busy = false; let again = false;
@@ -39,6 +54,7 @@ async function pushKeys(uid: string, keys: string[]) {
   for (const k of keys) {
     const t = await getText(k); if (t == null) continue;
     let v: any; try { v = JSON.parse(t); } catch (e) { continue; }
+    if (NO_PHOTO_KEYS.includes(k)) v = noPhotos(v);
     rows.push({ user_id: uid, key: k, value: v, updated_at: new Date(m[k] || Date.now()).toISOString() });
   }
   if (!rows.length) return;
@@ -79,7 +95,7 @@ export async function syncNow(): Promise<boolean> {
     const toPush: string[] = [];
     for (const k of SYNC_KEYS) {
       const r = remote.get(k); const lt = m[k] || 0;
-      if (r && (r.t > lt || first)) { await applyRemote(k, r.v); m[k] = r.t; dirty.delete(k); }
+      if (r && (r.t > lt || first)) { await applyRemote(k, await keepMyPhotos(k, r.v)); m[k] = r.t; dirty.delete(k); }
       else if (r && lt > r.t) toPush.push(k);
       else if (!r && (dirty.has(k) || (await getText(k)) != null)) { if (!m[k]) m[k] = Date.now(); toPush.push(k); }
     }

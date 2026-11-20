@@ -47,7 +47,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
         <Pressable onPress={() => pick(false)} accessibilityLabel="Choose a photo" style={{ flex: 1, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><LineIcon name="photo" c="#fff" size={20} /><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Choose</Text></View></Pressable>
       </View>
       {f.photo ? <Pressable onPress={() => confirmDelete('this photo', () => set({ photo: '' }), { title: 'Remove this photo?', message: 'The photo will be removed from this phone.' })} accessibilityLabel="Remove photo" style={{ marginTop: 8 }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '700' }}>Remove photo</Text></Pressable> : null}
-      <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>Photos stay on this phone only.</Text>
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>Photos stay on this phone only and are not backed up online.</Text>
       {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, marginTop: 8 }}>{msg}</Text> : null}
       <Lab t="DETAILS" />
       <Inp value={f.name} onChangeText={(x: string) => set({ name: x })} placeholder={'Name, e.g. ' + (f.cat === 'gadget' ? 'Samsung S24' : f.cat === 'lifestyle' ? 'Nike Air Max' : 'Terrace house')} maxLength={60} />
