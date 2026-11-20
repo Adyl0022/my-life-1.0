@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Pressable, Platform, ScrollView, Image } from 'react-native';
 import { curCode, useRegion } from '../lib/region';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
@@ -115,15 +116,23 @@ const INK = '#ffffff', INK2 = 'rgba(255,255,255,.66)', VIO = '#b9a6ff', LINE = '
 const deep = (hex: string) => hex;
 const short = (d: ReturnType<typeof dueOf>) => { const tr = d.pill.startsWith('TRIAL'); if (tr) return d.days <= 0 ? 'Trial ends today' : d.days === 1 ? 'Ends tomorrow' : 'Trial · ' + d.days + ' days'; return d.days <= 0 ? 'Today' : d.days === 1 ? 'Tomorrow' : d.days <= 3 ? d.days + ' days' : 'Active'; };
 const tone = (d: ReturnType<typeof dueOf>) => (d.hot ? { c: '#ff8fa3', bg: 'rgba(255,107,129,.2)', t: short(d) } : d.warn ? { c: '#ffd24a', bg: 'rgba(255,210,74,.18)', t: short(d) } : { c: '#5ee7b5', bg: 'rgba(94,231,181,.16)', t: short(d) });
-// Cards are a little more solid than plain glass, so the art behind them does not show through the text, and they lift off the page.
-const card = { borderRadius: 22, backgroundColor: 'rgba(38,24,64,.84)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)', borderTopColor: 'rgba(255,255,255,.34)', borderBottomColor: 'rgba(0,0,0,.25)', shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } } as const;
+// Bold frosted glass: the art behind is blurred, the pane is brighter at the top and has a clear light edge, so it stands out and the text stays easy to read.
+function Pane({ style, children }: { style?: any; children?: React.ReactNode }) {
+  return (
+    <View style={[{ borderRadius: 22, overflow: 'hidden', zIndex: 0, borderWidth: 1.2, borderColor: 'rgba(255,255,255,.32)', borderTopColor: 'rgba(255,255,255,.6)', borderBottomColor: 'rgba(255,255,255,.14)' }, style]}>
+      <BlurView intensity={70} tint="dark" pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+      <LinearGradient colors={['rgba(255,255,255,.2)', 'rgba(255,255,255,.07)', 'rgba(255,255,255,.12)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+      {children}
+    </View>
+  );
+}
 
 function Row({ s, today, onPress }: { s: Sub; today: string; onPress: () => void }) {
   const d = dueOf(s, today); const t = tone(d);
   const per = s.cycle === 'week' ? 'week' : s.cycle === 'year' ? 'year' : 'month';
   return (
     <Pressable onPress={onPress} accessibilityLabel={'Open ' + s.name} style={({ pressed }) => ({ marginTop: 9, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <View style={{ ...card, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 13, paddingVertical: 12 }}>
+      <Pane style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 13, paddingVertical: 12 }}>
         <TileL name={s.name} cat={s.cat} photo={s.photo} size={44} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1} style={{ color: INK, fontSize: 15.5, fontWeight: '800' }}>{s.name}</Text>
@@ -133,7 +142,7 @@ function Row({ s, today, onPress }: { s: Sub; today: string; onPress: () => void
           <Text style={{ color: INK, fontSize: 14.5, fontWeight: '800' }}>{rm(num(s.price))}<Text style={{ color: INK2, fontSize: 11, fontWeight: '600' }}> / {per}</Text></Text>
           <View style={{ marginTop: 5, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 2.5, paddingHorizontal: 8, borderRadius: 999, backgroundColor: t.bg }}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: t.c }} /><Text style={{ color: t.c, fontSize: 10, fontWeight: '800' }}>{t.t}</Text></View>
         </View>
-      </View>
+      </Pane>
     </Pressable>
   );
 }
@@ -192,9 +201,9 @@ export default function Screen() {
     <View style={{ flex: 1 }}>
       <RecordPage title="Subscriptions" sub="Know what renews, before it does" bg={<SubArt />} tone={{ base: '#1a1030', grad: ['#1a1030', '#2a1747', '#3a1d3d'], a: 'rgba(255,196,107,.34)', b: 'rgba(183,148,255,.3)' }}>
           <View style={{ height: 6 }} />
-          <View style={{ ...card, flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6, marginTop: 6 }}>
+          <Pane style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6, marginTop: 6 }}>
             {stat('check', String(subs.length), 'Active')}{stat('cal', rm(total), 'Monthly total')}{stat('chart', rm(total * 12), 'Yearly total', true)}
-          </View>
+          </Pane>
 
           {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
             <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -205,7 +214,7 @@ export default function Screen() {
           </Pressable> : null}
 
           {found.map((x) => (
-            <View key={x.key} style={{ ...card, marginTop: 12, padding: 12, borderColor: 'rgba(94,231,181,.55)' }}>
+            <Pane key={x.key} style={{ marginTop: 12, padding: 12, borderColor: 'rgba(94,231,181,.55)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(94,231,181,.18)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="wand" c="#5ee7b5" size={23} /></View>
                 <View style={{ flex: 1 }}>
@@ -218,30 +227,30 @@ export default function Screen() {
                 <Pressable onPress={() => addFound(x)} accessibilityLabel={'Add ' + x.name} style={{ flex: 1 }}><View style={{ height: 36, borderRadius: 12, backgroundColor: '#5ee7b5', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06312a', fontSize: 13.5, fontWeight: '800' }}>Add subscription</Text></View></Pressable>
                 <Pressable onPress={() => notThis(x)} accessibilityLabel={'Not ' + x.name}><View style={{ width: 86, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 12.5, fontWeight: '700' }}>Not this</Text></View></Pressable>
               </View>
-            </View>
+            </Pane>
           ))}
 
           {list.length ? <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 20, marginHorizontal: 2 }}><Text style={{ color: INK, fontSize: 16, fontWeight: '800' }}>My Subscriptions</Text><Text style={{ color: VIO, fontSize: 12, fontWeight: '700' }}>{list.length} active</Text></View> : null}
           {list.map((s) => <Row key={s.id} s={s} today={today} onPress={() => setF({ ...s })} />)}
-          {!list.length && !found.length ? <View style={{ ...card, marginTop: 14, padding: 22, alignItems: 'center' }}><LineIcon name="repeat" c={VIO} size={34} /><Text style={{ color: INK, fontSize: 16, fontWeight: '800', marginTop: 10 }}>No subscriptions yet</Text><Text style={{ color: INK2, fontSize: 12.5, textAlign: 'center', lineHeight: 18, marginTop: 6 }}>Tap Add Subscription, or scan a bill. When the same payment shows up in your spending month after month, it will appear here for you to add.</Text></View> : null}
+          {!list.length && !found.length ? <Pane style={{ marginTop: 14, padding: 22, alignItems: 'center' }}><LineIcon name="repeat" c={VIO} size={34} /><Text style={{ color: INK, fontSize: 16, fontWeight: '800', marginTop: 10 }}>No subscriptions yet</Text><Text style={{ color: INK2, fontSize: 12.5, textAlign: 'center', lineHeight: 18, marginTop: 6 }}>Tap Add Subscription, or scan a bill. When the same payment shows up in your spending month after month, it will appear here for you to add.</Text></Pane> : null}
 
           {subs.length ? <>
             <Text style={{ color: INK, fontSize: 16, fontWeight: '800', marginTop: 22, marginHorizontal: 2 }}>Summary</Text>
-            <View style={{ ...card, marginTop: 9, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <Pane style={{ marginTop: 9, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <Donut parts={shares.map((x) => ({ c: x.c, v: x.v }))} total={subs.length} />
               <View style={{ flex: 1 }}>
                 {shares.map((x) => <View key={x.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}><View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: x.c }} /><Text style={{ color: INK, fontSize: 13, flex: 1 }}>{x.n}</Text><Text style={{ color: INK2, fontSize: 12.5, fontWeight: '700' }}>{Math.round((x.v / (total || 1)) * 100)}%</Text></View>)}
                 <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)', marginTop: 6, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: INK2, fontSize: 12 }}>Every month</Text><Text style={{ color: INK, fontSize: 13, fontWeight: '800' }}>{rm(total)}</Text></View>
               </View>
-            </View>
+            </Pane>
             <Text style={{ color: INK, fontSize: 14.5, fontWeight: '800', marginTop: 16, marginHorizontal: 2 }}>Next 5 months</Text>
-            <View style={{ ...card, marginTop: 8, padding: 14, flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 150 }}>
+            <Pane style={{ marginTop: 8, padding: 14, flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 150 }}>
               {months.map((m, i) => <View key={m.k} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 5 }}>
                 <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: INK2, fontSize: 9.5, fontWeight: '700' }}>{m.v ? Math.round(m.v) : ''}</Text>
                 <LinearGradient colors={i === 0 ? ['#b9a6ff', '#7a5cf0'] : ['#8fe9e2', '#5aa8c8']} style={{ width: '100%', height: Math.max(6, (m.v / top) * 78), borderRadius: 8 }} />
                 <Text style={{ color: INK2, fontSize: 10.5 }}>{m.n}</Text>
               </View>)}
-            </View>
+            </Pane>
             <Text style={{ color: INK2, fontSize: 11.5, marginTop: 10, lineHeight: 16, marginHorizontal: 2 }}>This month's coming charges come off Money Left.</Text>
           </> : null}
           <View style={{ height: 60 }} />
