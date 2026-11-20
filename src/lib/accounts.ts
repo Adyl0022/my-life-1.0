@@ -8,7 +8,7 @@ export const GROUPS: { k: AccGroup; t: string; plural: string; liab: boolean; c:
   { k: 'bank', t: 'Bank', plural: 'Bank accounts', liab: false, c: '#7c9cff', hint: 'Savings or current account' },
   { k: 'saving', t: 'Savings', plural: 'Savings', liab: false, c: '#5ee7b5', hint: 'Money you keep for later' },
   { k: 'card', t: 'Credit card', plural: 'Credit cards', liab: true, c: '#ff8fab', hint: 'What you owe on the card' },
-  { k: 'loan', t: 'Loan', plural: 'Loans', liab: true, c: '#b794ff', hint: 'What you still owe' },
+  { k: 'loan', t: 'Loan', plural: 'Loans', liab: true, c: '#b794ff', hint: 'What you still owe' }, // kept only for accounts made earlier; new loans go in Commitments
 ];
 export const groupOf = (k: AccGroup) => GROUPS.find((g) => g.k === k) || GROUPS[0];
 
@@ -38,8 +38,11 @@ export function linesOf(a: Acc, data: AccData, spends: AccSpend[]): Line[] {
 }
 export const balanceOf = (a: Acc, data: AccData, spends: AccSpend[]) => r2(a.start + linesOf(a, data, spends).reduce((s, l) => s + l.delta, 0));
 
-export function totals(data: AccData, spends: AccSpend[]) {
-  let assets = 0, liab = 0;
+/** What you still owe in Commitments (ansuran and other debts with a balance). Bills with no balance are left out. */
+export const commitTotal = (debts: { bal: number; paid?: Record<string, number>; fixed?: boolean }[]) => r2((debts || []).reduce((a, d) => a + (d.fixed ? 0 : Math.max(0, d.bal - Object.values(d.paid || {}).reduce((x, y) => x + y, 0))), 0));
+
+export function totals(data: AccData, spends: AccSpend[], commit = 0) {
+  let assets = 0, liab = commit;
   data.accs.forEach((a) => { const b = balanceOf(a, data, spends); if (isLiab(a)) liab += b; else assets += b; });
   return { assets: r2(assets), liab: r2(liab), total: r2(assets - liab) };
 }

@@ -16,7 +16,8 @@ import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 import { cs, useRegion } from '../lib/region';
-import { ACC_EMPTY, GROUPS, groupOf, isLiab, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
+import { DEBT_EMPTY, DebtData, remaining } from '../lib/debts';
+import { ACC_EMPTY, commitTotal, GROUPS, groupOf, isLiab, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -56,7 +57,7 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
       <Sections>
         <Lab t="TYPE" />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {GROUPS.map((x) => (<Pressable key={x.k} onPress={() => { buzz(); setG(x.k); }} accessibilityLabel={x.t}><View style={chip(g === x.k, x.c)}><Text style={{ color: W, fontSize: 13, fontWeight: g === x.k ? '800' : '600' }}>{x.t}</Text></View></Pressable>))}
+          {GROUPS.filter((x) => x.k !== 'loan' || (edit && edit.g === 'loan')).map((x) => (<Pressable key={x.k} onPress={() => { buzz(); setG(x.k); }} accessibilityLabel={x.t}><View style={chip(g === x.k, x.c)}><Text style={{ color: W, fontSize: 13, fontWeight: g === x.k ? '800' : '600' }}>{x.t}</Text></View></Pressable>))}
         </View>
         <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>{groupOf(g).hint}</Text>
         <Lab t="NAME" />
@@ -167,7 +168,8 @@ export default function Accounts() {
   const spends = (fin && fin.spends) || [];
   const ctx: Ctx = { data, setData, spends };
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
-  const t = totals(data, spends); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []);
+  const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY); const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
+  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || [])); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
     <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}>
       <Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: vc || W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{v}</Text>
@@ -212,7 +214,7 @@ export default function Accounts() {
           ) : null}
 
           {[{ title: 'MONEY YOU HAVE', liab: false, tint: ['rgba(124,156,255,.22)', 'rgba(94,231,181,.1)'] as [string, string], sum: t.assets }, { title: 'WHAT YOU OWE', liab: true, tint: ['rgba(255,143,171,.22)', 'rgba(183,148,255,.12)'] as [string, string], sum: t.liab }].map((sec) => {
-            const gs = GROUPS.filter((g) => g.liab === sec.liab && data.accs.some((a) => a.g === g.k)); if (!gs.length) return null;
+            const gs = GROUPS.filter((g) => g.liab === sec.liab && data.accs.some((a) => a.g === g.k)); const showCm = sec.liab && cms.length > 0; if (!gs.length && !showCm) return null;
             return (
               <Glass key={sec.title} radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
                 <LinearGradient colors={sec.tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
@@ -243,6 +245,26 @@ export default function Accounts() {
                     </View>
                   );
                 })}
+                {showCm ? (
+                  <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
+                    <Tap onPress={() => setFold(fold.includes('commit') ? fold.filter((x) => x !== 'commit') : [...fold, 'commit'])} label={(fold.includes('commit') ? 'Open ' : 'Close ') + 'Commitments'} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: 4 }}>
+                      <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: '#b794ff' }} />
+                      <Text style={{ flex: 1, color: '#b794ff', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{'COMMITMENTS' + (fold.includes('commit') ? '  ·  ' + cms.length : '')}</Text>
+                      {cms.length > 1 || fold.includes('commit') ? <Text style={{ color: PINK, fontSize: 12.5, fontWeight: '800' }}>{cs() + money(commitTotal(cms))}</Text> : null}
+                      <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 15, width: 14, textAlign: 'center' }}>{fold.includes('commit') ? '▸' : '▾'}</Text>
+                    </Tap>
+                    {fold.includes('commit') ? null : (<>
+                      {cms.map((x) => (
+                        <Tap key={x.id} onPress={() => router.push('/finance' as any)} label={'Open ' + x.name + ' in My Finance'} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
+                          <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{x.name}</Text>
+                          <Text style={{ color: PINK, fontSize: 15, fontWeight: '800' }}>{cs() + money(remaining(x))}</Text>
+                          <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>
+                        </Tap>
+                      ))}
+                      <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11.5, lineHeight: 16, paddingLeft: 17, paddingBottom: 4 }}>Taken from Commitments in My Finance. Pay them there and the balance goes down here.</Text>
+                    </>)}
+                  </View>
+                ) : null}
               </Glass>
             );
           })}

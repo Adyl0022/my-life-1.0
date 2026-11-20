@@ -3,7 +3,7 @@ import { LineIcon } from '../components/LineIcon';
 import { SubChargeCard } from '../components/SubChargeCard';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
-import { ACC_EMPTY, AccData, groupOf, totals } from '../lib/accounts';
+import { ACC_EMPTY, AccData, commitTotal, groupOf, totals } from '../lib/accounts';
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '../components/Txt';
@@ -68,11 +68,11 @@ export default function Finance() {
   const [limKey, setLimKey] = useState(''); const [limVal, setLimVal] = useState('');
   const [fDate, setFDate] = useState(todayStr()); const [fName, setFName] = useState(''); const [fAmt, setFAmt] = useState(''); const [fCat, setFCat] = useState('Food'); const [fGoal, setFGoal] = useState(0); const [fPre, setFPre] = useState('');
   const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remF, setRemF] = useState({ name: '', amt: '', date: '', cat: 'Food', note: '', acc: 0 });
-  const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const [fAcc, setFAcc] = useState(0); const accTot = totals(accD, d.spends as any);
+  const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const [fAcc, setFAcc] = useState(0);
   const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
   const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
   const [sbs, setSbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
-  const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
+  const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY); const accTot = totals(accD, d.spends as any, commitTotal(dbt.debts));
 
   const selY = parseInt(ym.slice(0, 4), 10), selM = parseInt(ym.slice(5, 7), 10) - 1;
   const sumOf = (o?: Record<string, number>) => DEFS.reduce((a, x) => a + ((o || {})[x[0]] || 0), 0);
