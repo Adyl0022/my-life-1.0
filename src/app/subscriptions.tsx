@@ -7,6 +7,7 @@ import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
 import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
 import { useTabPill } from '../components/TabSlide';
+import { CancelGuideSheet } from '../components/CancelGuideSheet';
 import * as Haptics from 'expo-haptics';
 import { SubArt } from '../components/SubArt';
 import { RecordPage } from '../components/RecordHubUi';
@@ -19,7 +20,7 @@ import { tryForm, pn, numberError } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { scanPhoto } from '../lib/documents';
 import { onlineAsk, useOnlineAi } from '../lib/onlineAi';
-import { SUB_EMPTY, SUB_CATS, CYCLES, REM, SERVICES, STATUSES, PAYS, payName, live, unitOf, catOf, dueOf, monthlyTotal, monthly, detect, fromFound, readBill, curWarn, readAi, aiPrompt, rm, num, validDate, ymd, addCycle, type Sub, type SubStore, type Cycle, type Billed } from '../lib/subs';
+import { SUB_EMPTY, SUB_CATS, CYCLES, REM, SERVICES, STATUSES, PAYS, payName, live, unitOf, catOf, dueOf, monthlyTotal, monthly, detect, matchService, fromFound, readBill, curWarn, readAi, aiPrompt, rm, num, validDate, ymd, addCycle, type Sub, type SubStore, type Cycle, type Billed } from '../lib/subs';
 import type { Sp } from '../lib/moneyLeft';
 
 const BL = '#7c9cff', GR = '#5ee7b5';
@@ -43,6 +44,7 @@ function Tile({ name, cat, photo, size = 46 }: { name: string; cat: string; phot
 }
 
 function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
+  const [guide, setGuide] = useState(false);
   const [tried, setTried] = useState(false); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [raw, setRaw] = useState(''); const [on] = useOnlineAi();
   const set = (p: Partial<Form>) => setF({ ...f, ...p });
   const cyc = useTabPill(Math.max(0, CYCLES.findIndex((c) => c.k === f.cycle)), CYCLES.length, ['#7c5cff', '#5b3fe0'], 4);
@@ -69,6 +71,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
     setBusy(false);
   };
   const svcs = SERVICES.filter((s, i, a) => a.findIndex((x) => x.n === s.n) === i);
+  if (guide) return <CancelGuideSheet name={f.name.trim()} matched={(matchService(f.name) || { n: '' }).n || null} onClose={() => setGuide(false)} onMark={() => { setF({ ...f, status: 'cancelled' }); setGuide(false); }} />;
   return (
     <SheetFrame title={f.id ? 'Edit subscription' : 'Add subscription'} sub="Pick, scan or type it in" onClose={onClose}>
       <Sec><L2 t="PICK A SERVICE" />
@@ -94,7 +97,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       {f.id ? <Sec>
         <L2 t="STATUS" />
         <View style={{ flexDirection: 'row', gap: 8 }}>{STATUSES.map((x) => { const on = (f.status || 'active') === x.k; return <Pressable key={x.k} onPress={() => set({ status: x.k })} accessibilityLabel={x.n} style={{ flex: 1 }}><View style={{ height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7, borderWidth: 1, borderColor: on ? x.c : 'rgba(255,255,255,.16)', backgroundColor: on ? x.c + '26' : 'rgba(255,255,255,.06)' }}><View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: x.c }} /><Text style={{ color: W, fontSize: 13, fontWeight: on ? '800' : '600' }}>{x.n}</Text></View></Pressable>; })}</View>
-        {(f.status || 'active') !== 'active' ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{f.status === 'cancelled' ? 'Cancelled' : 'Paused'} subscriptions stay in your list but are left out of your totals, reminders and Money Left.</Text> : null}
+        {(f.status || 'active') !== 'active' ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>{f.status === 'cancelled' ? 'Cancelled' : 'Paused'} subscriptions stay in your list but are left out of your totals, reminders and Money Left. Tap Save to keep this change.</Text> : null}
       </Sec> : null}
       <Sec><L2 t="HOW OFTEN" />
       <View onLayout={cyc.onLayout} style={{ flexDirection: 'row', height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', padding: 4 }}>{cyc.indicator}{CYCLES.map((c) => <Pressable key={c.k} onPress={() => { if (f.cycle !== c.k && Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); set({ cycle: c.k }); }} accessibilityLabel={c.n} style={{ flex: 1 }}><View style={{ flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: f.cycle === c.k ? '800' : '600' }} numberOfLines={1} adjustsFontSizeToFit>{c.lab}</Text></View></Pressable>)}</View>
@@ -131,6 +134,13 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Sec><L2 t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. Shared plan" maxLength={120} />
       </Sec>
+      {f.id ? <Pressable onPress={() => setGuide(true)} accessibilityLabel="How to cancel" style={({ pressed }) => ({ marginTop: 14, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
+        <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}><LineIcon name="scan" c="#fff" size={20} w={1.7} /></View>
+          <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 14.5, fontWeight: '800' }}>How to cancel</Text><Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 2 }}>Step by step{f.name.trim() ? ' for ' + f.name.trim() : ''}</Text></View>
+          <Text style={{ color: '#fff', fontSize: 22 }}>›</Text>
+        </LinearGradient>
+      </Pressable> : null}
       <BigBtn t="Save" onPress={save} a11y="Save subscription" />
       {onDelete ? <BigBtn t="Delete" outline="#ff8da1" onPress={onDelete} a11y="Delete subscription" /> : null}
     </SheetFrame>

@@ -503,6 +503,10 @@ export function think(A, q, lang) {
   let cat = null; CATK.forEach((c) => { if (!cat && c[1].some((w) => (' ' + qn + ' ').indexOf(' ' + w + ' ') >= 0)) cat = c[0]; });
   const intent = A.pick(qn);
   // A module that is turned off in Settings is not answered here.
+  // Subscriptions: how to cancel
+  if (modOn('finance') && has(['cancel', 'unsubscribe', 'unsubscription', 'batalkan', 'berhenti langgan', 'batal langganan', 'nak berhenti']) && has(['subscription', 'subscriptions', 'langganan', 'netflix', 'spotify', 'youtube', 'claude', 'chatgpt', 'disney', 'icloud', 'google one', 'dropbox', 'adobe', 'notion', 'xbox', 'playstation', 'canva', 'duolingo', 'linkedin'])) {
+    return done(mk(L('Open My Finance, then Subscriptions, tap the subscription, then tap How to cancel. It shows the steps one by one, with a link to the service\'s own page. My Life 1.0 cannot cancel for you, so cancel in the service first, then mark it as cancelled in the app.', 'Buka My Finance, kemudian Subscriptions, tekan langganan itu, lepas tu tekan How to cancel. Ia tunjuk langkah satu demi satu, dengan pautan ke laman rasmi servis. My Life 1.0 tak boleh batalkan untuk awak, jadi batalkan dalam servis itu dulu, kemudian tanda sebagai dibatalkan dalam app.'), { label: L('Open Subscriptions', 'Buka Subscriptions'), href: 'Finance.dc.html' }));
+  }
   // Subscriptions: what charges soon and the monthly total
   if (modOn('finance') && has(['subscription', 'subscriptions', 'langganan', 'netflix', 'spotify', 'youtube', 'claude pro', 'chatgpt', 'disney', 'icloud', 'google one'])) {
     const sl = (R.subs || []).slice().sort((a, b) => a.n - b.n);
