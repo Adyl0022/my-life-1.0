@@ -116,6 +116,8 @@ const INK = '#ffffff', INK2 = 'rgba(255,255,255,.66)', VIO = '#b9a6ff', LINE = '
 const deep = (hex: string) => hex;
 const short = (d: ReturnType<typeof dueOf>) => { const tr = d.pill.startsWith('TRIAL'); if (tr) return d.days <= 0 ? 'Trial ends today' : d.days === 1 ? 'Ends tomorrow' : 'Trial · ' + d.days + ' days'; return d.days <= 0 ? 'Today' : d.days === 1 ? 'Tomorrow' : d.days <= 3 ? d.days + ' days' : 'Active'; };
 const tone = (d: ReturnType<typeof dueOf>) => (d.hot ? { c: '#ff8fa3', bg: 'rgba(255,107,129,.2)', t: short(d) } : d.warn ? { c: '#ffd24a', bg: 'rgba(255,210,74,.18)', t: short(d) } : { c: '#5ee7b5', bg: 'rgba(94,231,181,.16)', t: short(d) });
+// The first look of the cards: light, thin glass. Used by the totals card and the "Found in your spending" card.
+const plain = { borderRadius: 22, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.17)', borderTopColor: 'rgba(255,255,255,.3)' } as const;
 // Bold frosted glass: the art behind is blurred, the pane is brighter at the top and has a clear light edge, so it stands out and the text stays easy to read.
 function Pane({ style, children }: { style?: any; children?: React.ReactNode }) {
   return (
@@ -201,9 +203,9 @@ export default function Screen() {
     <View style={{ flex: 1 }}>
       <RecordPage title="Subscriptions" sub="Know what renews, before it does" bg={<SubArt />} tone={{ base: '#1a1030', grad: ['#1a1030', '#2a1747', '#3a1d3d'], a: 'rgba(255,196,107,.34)', b: 'rgba(183,148,255,.3)' }}>
           <View style={{ height: 6 }} />
-          <Pane style={{ flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6, marginTop: 6 }}>
+          <View style={{ ...plain, flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 6, marginTop: 6 }}>
             {stat('check', String(subs.length), 'Active')}{stat('cal', rm(total), 'Monthly total')}{stat('chart', rm(total * 12), 'Yearly total', true)}
-          </Pane>
+          </View>
 
           {first && fd && ft ? <Pressable onPress={() => setF({ ...first })} accessibilityLabel="Upcoming renewal" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
             <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -214,7 +216,7 @@ export default function Screen() {
           </Pressable> : null}
 
           {found.map((x) => (
-            <Pane key={x.key} style={{ marginTop: 12, padding: 12, borderColor: 'rgba(94,231,181,.55)' }}>
+            <View key={x.key} style={{ ...plain, marginTop: 12, padding: 12, borderColor: 'rgba(94,231,181,.55)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: 'rgba(94,231,181,.18)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="wand" c="#5ee7b5" size={23} /></View>
                 <View style={{ flex: 1 }}>
@@ -227,7 +229,7 @@ export default function Screen() {
                 <Pressable onPress={() => addFound(x)} accessibilityLabel={'Add ' + x.name} style={{ flex: 1 }}><View style={{ height: 36, borderRadius: 12, backgroundColor: '#5ee7b5', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#06312a', fontSize: 13.5, fontWeight: '800' }}>Add subscription</Text></View></Pressable>
                 <Pressable onPress={() => notThis(x)} accessibilityLabel={'Not ' + x.name}><View style={{ width: 86, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: INK, fontSize: 12.5, fontWeight: '700' }}>Not this</Text></View></Pressable>
               </View>
-            </Pane>
+            </View>
           ))}
 
           {list.length ? <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 20, marginHorizontal: 2 }}><Text style={{ color: INK, fontSize: 16, fontWeight: '800' }}>My Subscriptions</Text><Text style={{ color: VIO, fontSize: 12, fontWeight: '700' }}>{list.length} active</Text></View> : null}
