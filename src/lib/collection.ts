@@ -17,9 +17,9 @@ export type KindIcon = 'gadget' | 'life' | 'prop' | 'laptop' | 'watch' | 'audio'
 export const kindIcon = (cat: ItemCat, kind: string): KindIcon => (cat === 'lifestyle' ? 'life' : cat === 'property' ? 'prop' : kind === 'Laptop' ? 'laptop' : kind === 'Watch' ? 'watch' : kind === 'Audio' ? 'audio' : 'gadget');
 
 export const CATS: Record<ItemCat, { title: string; one: string; e: string; sub: string; text: string; kinds: [string, string][]; warranty: boolean }> = {
-  gadget: { title: 'Gadgets', one: 'gadget', e: '📱', sub: 'Phone, laptop, watch', text: 'Your devices, with their price and warranty', warranty: true, kinds: [['Phone', '📱'], ['Laptop', '💻'], ['Watch', '⌚'], ['Audio', '🎧'], ['Camera', '📷'], ['Other', '🔌']] },
-  lifestyle: { title: 'Lifestyle', one: 'item', e: '👟', sub: 'Shoes, bags, perfume', text: 'The nice things you own and what they cost', warranty: false, kinds: [['Shoes', '👟'], ['Bag', '👜'], ['Clothes', '👕'], ['Perfume', '🧴'], ['Jewellery', '💍'], ['Other', '🎁']] },
-  property: { title: 'Property', one: 'property', e: '🏠', sub: 'House, land, rent', text: 'Houses, land and anything you rent', warranty: false, kinds: [['House', '🏠'], ['Land', '🌴'], ['Rent', '🔑'], ['Shop', '🏪'], ['Other', '🏢']] },
+  gadget: { title: 'Gadgets', one: 'gadget', e: 'phone', sub: 'Phone, laptop, watch', text: 'Your devices, with their price and warranty', warranty: true, kinds: [['Phone', 'phone'], ['Laptop', 'laptop'], ['Watch', 'watch'], ['Audio', 'audio'], ['Camera', 'camera'], ['Other', 'plug']] },
+  lifestyle: { title: 'Lifestyle', one: 'item', e: 'shoes', sub: 'Shoes, bags, perfume', text: 'The nice things you own and what they cost', warranty: false, kinds: [['Shoes', 'shoes'], ['Bag', 'bag'], ['Clothes', 'shirt'], ['Perfume', 'perfume'], ['Jewellery', 'ring'], ['Other', 'gift']] },
+  property: { title: 'Property', one: 'property', e: 'house', sub: 'House, land, rent', text: 'Houses, land and anything you rent', warranty: false, kinds: [['House', 'house'], ['Land', 'land'], ['Rent', 'rent'], ['Shop', 'shop'], ['Other', 'building']] },
 };
 export const kindEmoji = (cat: ItemCat, kind: string) => (CATS[cat].kinds.find((k) => k[0] === kind) || CATS[cat].kinds[CATS[cat].kinds.length - 1])[1];
 

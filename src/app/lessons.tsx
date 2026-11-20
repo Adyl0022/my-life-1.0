@@ -71,7 +71,7 @@ export default function Screen() {
             <Text numberOfLines={3} style={{ color: 'rgba(255,255,255,.75)', fontSize: 13, lineHeight: 19, marginTop: 4, paddingLeft: 6 }}>{l.text}</Text>
           </View>
         </Pressable>
-      )) : <Empty e={q.trim() || tag ? '🔍' : '💡'} t={q.trim() || tag ? 'Nothing found' : 'No lessons yet'} s={q.trim() || tag ? 'Try another word or tag.' : 'Tap + to write down something you learned.'} />}
+      )) : <Empty e={q.trim() || tag ? 'search' : 'bulb'} t={q.trim() || tag ? 'Nothing found' : 'No lessons yet'} s={q.trim() || tag ? 'Try another word or tag.' : 'Tap + to write down something you learned.'} />}
       {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </RecordPage>
   );

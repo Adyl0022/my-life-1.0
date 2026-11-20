@@ -1,3 +1,4 @@
+import { LineIcon } from './LineIcon';
 import React, { useState } from 'react';
 import { KbScroll } from './KbScroll';
 import { View, Pressable, Modal, ScrollView, Image, KeyboardAvoidingView, Platform, Animated, Easing } from 'react-native';
@@ -66,7 +67,7 @@ export const Sums = ({ a, b }: { a: [string, string]; b?: [string, string] }) =>
 
 export const Empty = ({ e, t, s }: { e: string; t: string; s: string }) => (
   <View style={{ marginTop: 28, alignItems: 'center', paddingHorizontal: 20 }}>
-    <Text style={{ fontSize: 40 }}>{e}</Text>
+    <LineIcon name={e} c="rgba(255,255,255,.85)" size={44} w={1.4} />
     <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 10 }}>{t}</Text>
     <Text style={{ color: dim, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>{s}</Text>
   </View>

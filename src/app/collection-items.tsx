@@ -1,3 +1,4 @@
+import { LineIcon } from '../components/LineIcon';
 import React, { useMemo, useState } from 'react';
 import { View, Pressable, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -36,14 +37,14 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Lab t="KIND" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {C.kinds.map(([k, e]) => (
-          <Pressable key={k} onPress={() => set({ kind: k })} accessibilityLabel={k} style={{ width: '31.5%' }}><View style={{ ...chip(f.kind === k, ac), paddingVertical: 12 }}><Text style={{ fontSize: 22 }}>{e}</Text><Text numberOfLines={1} style={{ color: W, fontSize: 11.5, fontWeight: '700', marginTop: 3 }}>{k}</Text></View></Pressable>
+          <Pressable key={k} onPress={() => set({ kind: k })} accessibilityLabel={k} style={{ width: '31.5%' }}><View style={{ ...chip(f.kind === k, ac), paddingVertical: 12 }}><LineIcon name={e} c={f.kind === k ? ac : '#e8e8f6'} size={26} /><Text numberOfLines={1} style={{ color: W, fontSize: 11.5, fontWeight: '700', marginTop: 6 }}>{k}</Text></View></Pressable>
         ))}
       </View>
       <Lab t="PHOTO (OPTIONAL)" />
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
         {f.photo ? <Image source={{ uri: f.photo }} style={{ width: 84, height: 64, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : null}
-        <Pressable onPress={() => pick(true)} accessibilityLabel="Take photo" style={{ flex: 1 }}><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>📷  Take photo</Text></LinearGradient></Pressable>
-        <Pressable onPress={() => pick(false)} accessibilityLabel="Choose a photo" style={{ flex: 1, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>🖼️  Choose</Text></Pressable>
+        <Pressable onPress={() => pick(true)} accessibilityLabel="Take photo" style={{ flex: 1 }}><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><LineIcon name="camera" c="#fff" size={20} w={1.7} /><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Take photo</Text></View></LinearGradient></Pressable>
+        <Pressable onPress={() => pick(false)} accessibilityLabel="Choose a photo" style={{ flex: 1, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><LineIcon name="photo" c="#fff" size={20} /><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Choose</Text></View></Pressable>
       </View>
       {f.photo ? <Pressable onPress={() => confirmDelete('this photo', () => set({ photo: '' }), { title: 'Remove this photo?', message: 'The photo will be removed from this phone.' })} accessibilityLabel="Remove photo" style={{ marginTop: 8 }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '700' }}>Remove photo</Text></Pressable> : null}
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 8 }}>Photos stay on this phone only.</Text>
@@ -103,7 +104,7 @@ export default function Screen() {
         const s = wStatus(x);
         return <ItemRow key={x.id} a11y={'Open ' + x.name} tile={<Tile icon={kindIcon(cat, x.kind)} c={ac} />} photo={x.photo} label={x.kind.toUpperCase()} title={x.name} sub={[x.bought ? 'Bought ' + dmy(x.bought) : '', x.price ? rm(num(x.price)) : ''].filter(Boolean).join(' · ') || undefined}
           status={C.warranty && s ? (s.n != null && s.n < 0 ? 'Warranty ended' : 'Warranty ' + s.txt) : undefined} statusCol={s ? s.col : undefined} onPress={() => setDet(x.id)} />;
-      }) : <Empty e={q.trim() ? '🔍' : C.e} t={q.trim() ? 'Nothing found' : 'Nothing here yet'} s={q.trim() ? 'Try another word.' : 'Tap + to add your first ' + C.one + '.'} />}
+      }) : <Empty e={q.trim() ? 'search' : C.e} t={q.trim() ? 'Nothing found' : 'Nothing here yet'} s={q.trim() ? 'Try another word.' : 'Tap + to add your first ' + C.one + '.'} />}
       {cur && !f ? (
         <Detail label={cur.kind.toUpperCase()} title={cur.name} tile={<Tile icon={kindIcon(cat, cur.kind)} c={ac} size={84} />} photo={cur.photo}
           lines={[...(cur.price ? [['Price', rm(num(cur.price))] as [string, string]] : []), ...(cur.bought ? [['Bought', dmy(cur.bought)] as [string, string]] : []), ...(C.warranty ? [['Warranty ends', cur.warranty ? dmy(cur.warranty) : 'No warranty'] as [string, string]] : []), ...(cur.note ? [['Note', cur.note] as [string, string]] : [])]}

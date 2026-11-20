@@ -32,7 +32,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Lab t="WHO HAS IT?" />
       {two(['lent', 'I lent it'], ['borrowed', 'I borrowed it'], f.dir, (v) => set({ dir: v as any }))}
       <Lab t="WHAT" />
-      {two(['money', '💵 Money'], ['thing', '🔧 A thing'], f.what, (v) => set({ what: v as any }))}
+      {two(['money', 'Money'], ['thing', 'A thing'], f.what, (v) => set({ what: v as any }))}
       <Lab t="DETAILS" />
       <Inp value={f.who} onChangeText={(x: string) => set({ who: x })} placeholder={f.dir === 'lent' ? 'Lent to, e.g. a friend' : 'Borrowed from, e.g. a friend'} maxLength={50} />
       {tried && !f.who.trim() ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please enter a name.</Text> : null}
@@ -97,7 +97,7 @@ export default function Screen() {
       {tab === 'lent' ? <Sums a={['OWED TO YOU', rm(sumMoney('lent'))]} b={['THINGS OUT', String(things('lent'))]} /> : tab === 'borrowed' ? <Sums a={['YOU OWE', rm(sumMoney('borrowed'))]} b={['THINGS YOU HAVE', String(things('borrowed'))]} /> : <Sums a={['RETURNED', String(all.filter((l) => l.done).length)]} />}
       <Animated.View style={slide}>
         {list.length ? list.map((l) => { const d = dueOf(l); return <ItemRow key={l.id} a11y={'Open ' + what(l)} tile={<Tile icon={l.what === 'money' ? 'cash' : 'tool'} c={l.what === 'money' ? ACC.loans : ACC.lifestyle} />} label={(l.what === 'money' ? 'MONEY' : 'THING') + (tab === 'done' ? (l.dir === 'lent' ? ' · LENT' : ' · BORROWED') : '')} title={what(l)} sub={sub(l)} status={d.txt} statusCol={d.col} hot={d.hot} onPress={() => setDet(l.id)} />; })
-          : <Empty e={q.trim() ? '🔍' : '🤝'} t={q.trim() ? 'Nothing found' : tab === 'done' ? 'Nothing returned yet' : 'Nothing here yet'} s={q.trim() ? 'Try another word.' : tab === 'done' ? 'Things you mark as returned appear here.' : 'Tap + to add money or a thing you ' + (tab === 'lent' ? 'lent.' : 'borrowed.')} />}
+          : <Empty e={q.trim() ? 'search' : 'swap'} t={q.trim() ? 'Nothing found' : tab === 'done' ? 'Nothing returned yet' : 'Nothing here yet'} s={q.trim() ? 'Try another word.' : tab === 'done' ? 'Things you mark as returned appear here.' : 'Tap + to add money or a thing you ' + (tab === 'lent' ? 'lent.' : 'borrowed.')} />}
       </Animated.View>
       {cur && !f ? (
         <Detail label={(cur.what === 'money' ? 'MONEY' : 'THING') + (cur.dir === 'lent' ? ' · LENT' : ' · BORROWED')} title={what(cur)} tile={<Tile icon={cur.what === 'money' ? 'cash' : 'tool'} c={ACC.loans} size={84} />}

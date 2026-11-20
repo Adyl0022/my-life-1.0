@@ -7,19 +7,19 @@ export const EMPTY_DOCS: DocStore = { docs: [], next: 1 };
 
 export type DocType = { key: string; label: string; e: string; tab: DocTab; c: string; lab: string };
 export const DOC_TYPES: DocType[] = [
-  { key: 'passport', label: 'Passport', e: '🛂', tab: 'identity', c: '#8ea8ff', lab: 'PASSPORT' },
-  { key: 'mykad', label: 'MyKad', e: '🪪', tab: 'identity', c: '#b794ff', lab: 'IDENTITY' },
-  { key: 'cidb', label: 'CIDB', e: '🏗️', tab: 'identity', c: '#ffd24a', lab: 'CIDB' },
-  { key: 'permit', label: 'Permit', e: '📄', tab: 'identity', c: '#7df0c6', lab: 'PERMIT' },
-  { key: 'idother', label: 'Other ID', e: '🆔', tab: 'identity', c: '#8ea8ff', lab: 'ID' },
-  { key: 'bank', label: 'Bank card', e: '💳', tab: 'cards', c: '#ffb3c6', lab: 'BANK CARD' },
-  { key: 'member', label: 'Member', e: '🛍️', tab: 'cards', c: '#ff8fab', lab: 'MEMBER CARD' },
-  { key: 'warranty', label: 'Warranty', e: '🧾', tab: 'warranty', c: '#7df0c6', lab: 'WARRANTY' },
-  { key: 'insurance', label: 'Insurance', e: '🛡️', tab: 'other', c: '#ffd24a', lab: 'INSURANCE' },
-  { key: 'agreement', label: 'Agreement', e: '🏠', tab: 'other', c: '#7df0c6', lab: 'AGREEMENT' },
-  { key: 'certificate', label: 'Certificate', e: '🎓', tab: 'other', c: '#ffb3c6', lab: 'CERTIFICATE' },
-  { key: 'property', label: 'Property', e: '🔑', tab: 'other', c: '#b794ff', lab: 'PROPERTY' },
-  { key: 'other', label: 'Other', e: '📁', tab: 'other', c: '#8ea8ff', lab: 'PAPER' },
+  { key: 'passport', label: 'Passport', e: 'passport', tab: 'identity', c: '#8ea8ff', lab: 'PASSPORT' },
+  { key: 'mykad', label: 'MyKad', e: 'mykad', tab: 'identity', c: '#b794ff', lab: 'IDENTITY' },
+  { key: 'cidb', label: 'CIDB', e: 'cidb', tab: 'identity', c: '#ffd24a', lab: 'CIDB' },
+  { key: 'permit', label: 'Permit', e: 'permit', tab: 'identity', c: '#7df0c6', lab: 'PERMIT' },
+  { key: 'idother', label: 'Other ID', e: 'idother', tab: 'identity', c: '#8ea8ff', lab: 'ID' },
+  { key: 'bank', label: 'Bank card', e: 'bank', tab: 'cards', c: '#ffb3c6', lab: 'BANK CARD' },
+  { key: 'member', label: 'Member', e: 'member', tab: 'cards', c: '#ff8fab', lab: 'MEMBER CARD' },
+  { key: 'warranty', label: 'Warranty', e: 'warranty', tab: 'warranty', c: '#7df0c6', lab: 'WARRANTY' },
+  { key: 'insurance', label: 'Insurance', e: 'insurance', tab: 'other', c: '#ffd24a', lab: 'INSURANCE' },
+  { key: 'agreement', label: 'Agreement', e: 'agreement', tab: 'other', c: '#7df0c6', lab: 'AGREEMENT' },
+  { key: 'certificate', label: 'Certificate', e: 'certificate', tab: 'other', c: '#ffb3c6', lab: 'CERTIFICATE' },
+  { key: 'property', label: 'Property', e: 'property', tab: 'other', c: '#b794ff', lab: 'PROPERTY' },
+  { key: 'other', label: 'Other', e: 'other', tab: 'other', c: '#8ea8ff', lab: 'PAPER' },
 ];
 export const typeOf = (k: string): DocType => DOC_TYPES.find((t) => t.key === k) || DOC_TYPES[DOC_TYPES.length - 1];
 export const TABS: { k: DocTab; n: string; title: string; text: string }[] = [

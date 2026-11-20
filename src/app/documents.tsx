@@ -13,6 +13,7 @@ import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { tryForm } from '../lib/num';
 import { takePhoto } from '../lib/photo';
+import { LineIcon } from '../components/LineIcon';
 import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, guessType, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
 
 const dim = 'rgba(255,255,255,.62)';
@@ -36,7 +37,7 @@ function Row({ d, onPress }: { d: Doc; onPress: () => void }) {
       <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: s.hot ? 'rgba(255,107,129,.6)' : 'rgba(255,255,255,.2)', borderTopColor: s.hot ? 'rgba(255,107,129,.7)' : 'rgba(255,255,255,.34)', backgroundColor: s.hot ? 'rgba(255,107,129,.16)' : 'rgba(255,255,255,.07)' }}>
         <LinearGradient colors={s.hot ? ['rgba(255,107,129,.3)', 'rgba(255,107,129,.08)'] : ['rgba(255,255,255,.12)', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: s.hot ? '#ff6b81' : t.c, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,.35)', borderTopColor: 'rgba(255,255,255,.6)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 4 }}><Text style={{ fontSize: 22 }}>{t.e}</Text></View>
+          <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: (s.hot ? '#ff6b81' : t.c) + '22', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: (s.hot ? '#ff6b81' : t.c) + '88' }}><LineIcon name={t.key} c={s.hot ? '#ff8a9b' : t.c} size={24} /></View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.1 }}>{t.lab}</Text>
             <Text numberOfLines={1} style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{d.title}</Text>
@@ -75,7 +76,7 @@ function Detail({ d, onEdit, onClose }: { d: Doc; onEdit: () => void; onClose: (
             </Pressable>
           ) : (
             <Pressable onPress={onEdit} style={{ marginTop: 20, height: 150, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.05)' }}>
-              <Text style={{ fontSize: 30 }}>{t.e}</Text><Text style={{ color: W, fontSize: 14, fontWeight: '700', marginTop: 6 }}>No photo yet</Text><Text style={{ color: dim, fontSize: 12, marginTop: 2 }}>Tap to add one</Text>
+              <LineIcon name="photo" c="rgba(255,255,255,.8)" size={32} /><Text style={{ color: W, fontSize: 14, fontWeight: '700', marginTop: 8 }}>No photo yet</Text><Text style={{ color: dim, fontSize: 12, marginTop: 2 }}>Tap to add one</Text>
             </Pressable>
           )}
           <View style={{ marginTop: 18, borderRadius: 20, borderWidth: 1, borderColor: s.hot ? 'rgba(255,107,129,.5)' : 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)', paddingHorizontal: 16, paddingVertical: 6 }}>
@@ -145,13 +146,13 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {allowed.map((x) => (
                 <Pressable key={x.key} onPress={() => set({ type: x.key })} style={{ flexGrow: 1, flexBasis: '30%' }} accessibilityLabel={x.label}>
-                  <View style={{ ...chip(f.type === x.key, x.c), paddingVertical: 12 }}><Text style={{ fontSize: 22 }}>{x.e}</Text><Text numberOfLines={1} style={{ color: W, fontSize: 11, fontWeight: '700', marginTop: 3 }}>{x.label}</Text></View>
+                  <View style={{ ...chip(f.type === x.key, x.c), paddingVertical: 12 }}><LineIcon name={x.key} c={f.type === x.key ? x.c : '#e8e8f6'} size={26} /><Text numberOfLines={1} style={{ color: W, fontSize: 11, fontWeight: '700', marginTop: 6 }}>{x.label}</Text></View>
                 </Pressable>
               ))}
             </View>
             {lab('FILL IT IN FOR YOU')}
-            <Pressable onPress={() => pick(true)} disabled={busy}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{busy ? 'Reading…' : '📷  Scan with camera'}</Text></LinearGradient></Pressable>
-            <Pressable onPress={() => pick(false)} disabled={busy} style={{ marginTop: 10, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>🖼️  Choose a photo</Text></Pressable>
+            <Pressable onPress={() => pick(true)} disabled={busy}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>{busy ? null : <LineIcon name="camera" c="#fff" size={22} w={1.7} />}<Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{busy ? 'Reading…' : 'Scan with camera'}</Text></View></LinearGradient></Pressable>
+            <Pressable onPress={() => pick(false)} disabled={busy} style={{ marginTop: 10, height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><LineIcon name="photo" c="#fff" size={22} /><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Choose a photo</Text></View></Pressable>
             {msg ? <Text style={{ color: msg.startsWith('✓') ? '#5ee7b5' : '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10, lineHeight: 18 }}>{msg}</Text> : null}
             <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>The words are read on this phone. The photo is not sent anywhere and stays on this phone only.</Text>
             {f.photo ? (
@@ -235,7 +236,7 @@ export default function Documents() {
       <Animated.View style={slide}>
       {list.length ? list.map((d) => <Row key={d.id} d={d} onPress={() => setDet(d.id)} />) : (
         <View style={{ marginTop: 28, alignItems: 'center', paddingHorizontal: 20 }}>
-          <Text style={{ fontSize: 40 }}>{q.trim() ? '🔍' : typeOf(DOC_TYPES.find((x) => x.tab === tab)!.key).e}</Text>
+          <LineIcon name={q.trim() ? 'search' : DOC_TYPES.find((x) => x.tab === tab)!.key} c="rgba(255,255,255,.85)" size={44} w={1.4} />
           <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 10 }}>{q.trim() ? 'Nothing found' : 'Nothing here yet'}</Text>
           <Text style={{ color: dim, fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19 }}>{q.trim() ? 'Try another word.' : 'Tap + to add one. You can scan it with the camera.'}</Text>
         </View>
