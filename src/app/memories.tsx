@@ -11,6 +11,7 @@ import { TOP } from '../lib/layout';
 import { confirmDelete } from '../lib/dialog';
 import { useMemories, nice, Mem } from '../lib/memories';
 import { MON } from '../lib/habit';
+import { Toggle } from '../components/Toggle';
 
 const DIM = 'rgba(255,255,255,.65)'; const nf = (n: number) => n.toLocaleString('en-GB');
 const RAISED = { backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' } as const;
@@ -31,11 +32,7 @@ const Head = ({ t, s }: { t: string; s?: string }) => (
 const Empty = ({ t }: { t: string }) => <View style={{ padding: 16, borderRadius: 18, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.25)' }}><Text style={{ color: DIM, fontSize: 13, lineHeight: 19 }}>{t}</Text></View>;
 const Bar = ({ p, c }: { p: number; c: string }) => <View style={{ height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden', marginTop: 8 }}><View style={{ width: Math.max(0, Math.min(1, p)) * 100 + '%', height: 5, borderRadius: 3, backgroundColor: c }} /></View>;
 const nextGoal = (n: number) => [5, 10, 25, 50, 100, 250, 500, 1000, 5000, 10000].find((g) => g > n) || n;
-const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => (
-  <Pressable accessibilityLabel={label} onPress={() => set(!on)} style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? '#5ee7b5' : 'rgba(255,255,255,.2)', alignItems: on ? 'flex-end' : 'flex-start' }}>
-    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: on ? '#0d3a2c' : '#fff' }} />
-  </Pressable>
-);
+const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => <Toggle on={on} onPress={() => set(!on)} label={label} colors="#5ee7b5" thumbOn="#0d3a2c" />;
 
 export default function Memories() {
   const router = useRouter(); const M = useMemories();

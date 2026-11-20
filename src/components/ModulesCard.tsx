@@ -5,6 +5,7 @@ import { Text } from './Txt';
 import { Glass } from './Glass';
 import { ChipIcon } from './dashArt';
 import { ALL_MODS, useHidden, useModOrder } from '../lib/hidden';
+import { Toggle } from './Toggle';
 
 const KEY: Record<string, string> = { planner: 'Planner', islamic: 'Islamic', finance: 'Finance', record: 'Record', habit: 'Habit', family: 'Family' };
 const G: [string, string] = ['#7c9cff', '#b794ff'];
@@ -39,9 +40,7 @@ export function ModulesCard() {
               ? <><Arrow up off={mo.habitTop} onPress={() => mo.setHabitTop(true)} /><Arrow up={false} off={!mo.habitTop} onPress={() => mo.setHabitTop(false)} /></>
               : <><Arrow up off={idx === 0} onPress={() => mo.move(k as any, -1)} /><Arrow up={false} off={idx === mo.order.length - 1} onPress={() => mo.move(k as any, 1)} /></>}
             <Pressable onPress={() => { const r = h.toggle(m.k); setMsg(r === true ? '' : r === 'last' ? 'At least one module has to stay on.' : 'Dashboard fits 5 modules. Turn one off first.'); }} hitSlop={6}>
-              <LinearGradient colors={on ? G : ['rgba(255,255,255,.22)', 'rgba(255,255,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 26, borderRadius: 13, padding: 3 }}>
-                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', marginLeft: on ? 18 : 0 }} />
-              </LinearGradient>
+              <Toggle on={on} colors={G} />
             </Pressable>
           </View>
         );

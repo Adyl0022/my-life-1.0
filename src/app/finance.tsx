@@ -164,7 +164,7 @@ export default function Finance() {
 
           {(() => {
             const list = (sbs && sbs.subs) || []; const n = list.length; const fd = detectSubs(all as any, list, (sbs && sbs.no) || [], ymdNow()).length;
-            const sub = n === 0 ? (fd ? fd + ' found in your spending' : 'Netflix, YouTube, Claude and more') : rmSub(monthlyTotal(list)) + ' a month · ' + n + ' active';
+            const sub = n === 0 ? (fd ? fd + ' found in your spending' : 'Netflix, YouTube, Spotify and more') : rmSub(monthlyTotal(list)) + ' a month · ' + n + ' active';
             return (
               <Pressable onPress={() => router.push('/subscriptions' as any)} accessibilityLabel="Subscriptions" style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }], borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' })}>
                 <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>

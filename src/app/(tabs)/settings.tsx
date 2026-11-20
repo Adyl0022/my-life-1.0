@@ -33,6 +33,7 @@ import { useLock, setPin, patchLock, disableLock, bioReady, AFTER } from '../../
 import { PinDialog } from '../../components/LockScreen';
 import { useKb } from '../../lib/keyboard';
 import { storageInfo, clearTemp, fmtBytes, pickText, parseBackup, applyBackup, Backup } from '../../lib/storage';
+import { Toggle } from '../../components/Toggle';
 
 const W = '#fff', DIM = 'rgba(255,255,255,.7)';
 const G = ['#34d399', '#5ee7df'] as [string, string];
@@ -83,11 +84,7 @@ function Devices() {
   );
 }
 const Chev = () => <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>;
-const Sw = ({ on }: { on: boolean }) => (
-  <LinearGradient colors={on ? G : ['rgba(255,255,255,.22)', 'rgba(255,255,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 26, borderRadius: 13, padding: 3 }}>
-    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', marginLeft: on ? 18 : 0 }} />
-  </LinearGradient>
-);
+const Sw = ({ on }: { on: boolean }) => <Toggle on={on} colors={G} />;
 function Row({ ic, k, t, sub, right, onPress, last }: { ic?: string; k?: string; t: string; sub?: string; right?: React.ReactNode; onPress?: () => void; last?: boolean }) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: last ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>

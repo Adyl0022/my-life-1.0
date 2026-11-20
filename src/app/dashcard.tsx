@@ -9,6 +9,7 @@ import { Blob } from '../components/Bg';
 import { W } from '../components/Ui';
 import { TOP } from '../lib/layout';
 import { DASH_PAGES, useDashPages } from '../components/DashCardPicks';
+import { Toggle } from '../components/Toggle';
 
 const DIM = 'rgba(255,255,255,.65)';
 const RAISED = { backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' } as const;
@@ -17,11 +18,7 @@ const Rise = ({ i, children }: { i: number; children: React.ReactNode }) => {
   useEffect(() => { Animated.timing(v, { toValue: 1, duration: 420, delay: Math.min(i, 8) * 55, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); }, []);
   return <Animated.View style={{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>{children}</Animated.View>;
 };
-const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => (
-  <Pressable accessibilityLabel={label} onPress={() => set(!on)} style={{ width: 46, height: 28, borderRadius: 14, padding: 3, backgroundColor: on ? '#5ee7b5' : 'rgba(255,255,255,.2)', alignItems: on ? 'flex-end' : 'flex-start' }}>
-    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: on ? '#0d3a2c' : '#fff' }} />
-  </Pressable>
-);
+const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => <Toggle on={on} onPress={() => set(!on)} label={label} colors="#5ee7b5" thumbOn="#0d3a2c" w={46} h={28} />;
 const Tile = ({ e, c }: { e: string; c: string }) => <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: c + '30', borderWidth: 1, borderColor: c + '66' }}><Text style={{ fontSize: 21 }}>{e}</Text></View>;
 
 export default function DashCardScreen() {

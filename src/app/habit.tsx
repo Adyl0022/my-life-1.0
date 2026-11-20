@@ -30,6 +30,7 @@ import { useRegion } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
+import { Toggle } from '../components/Toggle';
 const T = '#5ee7df';
 // Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
 function SoftShow({ show, children }: { show: boolean; children: React.ReactNode }) {
@@ -332,7 +333,7 @@ export default function Habit() {
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Add puts the number on top of today's steps. Set total replaces today's steps with the number.</Text>
             {Platform.OS !== 'web' && (
               <Pressable onPress={() => setH({ ...h, auto: !h.auto })} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: h.auto ? T : 'rgba(255,255,255,.2)', padding: 3, alignItems: h.auto ? 'flex-end' : 'flex-start' }}><View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: W }} /></View>
+                <Toggle on={!!h.auto} colors={T} w={46} />
                 <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 4 }}>All-day count from Health Connect or your phone's step sensor.</Text></View>
               </Pressable>
             )}

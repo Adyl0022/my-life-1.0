@@ -11,6 +11,7 @@ import { cs, cu } from '../lib/region';
 
 import { confirmDelete } from '../lib/dialog';
 import { pn } from '../lib/num';
+import { Toggle } from './Toggle';
 const WARM = ['#ffc46b', '#ff8fab'] as [string, string];
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const ord = (n: number) => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
@@ -20,11 +21,7 @@ const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (
     <Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: c || W, fontSize: 14, fontWeight: '800', marginTop: 2 }}>{v}</Text>
   </View>
 );
-const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => (
-  <Pressable accessibilityLabel={label} onPress={() => set(!on)} style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)', alignItems: on ? 'flex-end' : 'flex-start' }}>
-    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: on ? '#2a1030' : '#fff' }} />
-  </Pressable>
-);
+const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => <Toggle on={on} onPress={() => set(!on)} label={label} colors="#ffc46b" thumbOn="#2a1030" />;
 
 export function Commitments({ income }: { income: number }) {
   const [d, setD] = useStored<DebtData>('ml_debts', DEBT_EMPTY);

@@ -19,6 +19,7 @@ import { missedDoses } from '../lib/medMissed';
 import { weekOffs, HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
 
 import { confirmDelete } from '../lib/dialog';
+import { Toggle } from '../components/Toggle';
 const T = '#5ee7df';
 const DN = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const ICS: [string, string][] = [['medicine', 'Capsule'], ['tablet', 'Tablet'], ['syrup', 'Syrup'], ['needle', 'Injection'], ['drops', 'Drops'], ['inhaler', 'Inhaler'], ['cream', 'Cream'], ['vitamin', 'Vitamin']];
@@ -174,9 +175,7 @@ export default function Medicine() {
                       <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Never late</Text>
                       <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, lineHeight: 17, marginTop: 3 }}>{ring !== false ? 'Medicine reminders use an alarm-style timer so your phone cannot hold them back. A small alarm icon may show in the status bar.' : 'Off. Your phone may delay a reminder to save battery.'}</Text>
                     </View>
-                    <Pressable onPress={() => setRing(ring === false)} accessibilityLabel="Never late reminders" style={{ width: 52, height: 30, borderRadius: 15, backgroundColor: ring !== false ? '#ffc46b' : 'rgba(255,255,255,.18)', justifyContent: 'center', paddingHorizontal: 3 }}>
-                      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: ring !== false ? '#1b1038' : '#fff', alignSelf: ring !== false ? 'flex-end' : 'flex-start' }} />
-                    </Pressable>
+                    <Toggle on={ring !== false} onPress={() => setRing(ring === false)} label="Never late reminders" colors="#ffc46b" thumbOn="#1b1038" w={52} h={30} />
                   </View>
                 </Glass>
               ) : null}

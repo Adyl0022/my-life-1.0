@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Pressable, Modal, ScrollView, Switch } from 'react-native';
+import { View, Pressable, Modal, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { Text } from './Txt';
@@ -31,6 +31,7 @@ const sz = (mb: number) => (mb >= 1000 ? (Math.round(mb / 100) / 10) + ' GB' : m
 
 import { useOnlineAi } from '../lib/onlineAi';
 import { useSession } from '../lib/auth';
+import { Toggle } from './Toggle';
 
 const DIM = 'rgba(255,255,255,.7)';
 const Spark = ({ s = 24, c = '#06281c' }: { s?: number; c?: string }) => (
@@ -74,7 +75,7 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
                   </View>
                   <Text style={{ color: DIM, fontSize: 12, marginTop: 3 }}>Smarter answers, through our server</Text>
                 </View>
-                <Switch value={on} onValueChange={setOn} trackColor={{ false: 'rgba(255,255,255,.2)', true: '#34d399' }} thumbColor="#fff" />
+                <Toggle on={on} onPress={() => setOn(!on)} colors="#34d399" label="Smart chat" />
               </View>
               <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>When this is on, questions the Assistant cannot answer itself are sent over the internet to an AI service (through our server). When it is off, or the daily limit is used up, the AI on your phone answers instead.</Text>
               <View style={{ marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: 'rgba(255,190,90,.12)', borderWidth: 1, borderColor: 'rgba(255,190,90,.4)' }}>

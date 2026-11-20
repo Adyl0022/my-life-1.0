@@ -12,6 +12,7 @@ import { calcLeft, commitFor, monthSummary, MONTHS, Sp } from '../lib/moneyLeft'
 import { setup } from '../lib/adhan';
 import { BUDGET_EMPTY, BudgetCfg, checkBudget } from '../lib/budgetAlert';
 import { cs } from '../lib/region';
+import { Toggle } from './Toggle';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
@@ -34,11 +35,7 @@ const Tile = ({ l, v, sub, c }: { l: string; v: string; sub?: string; c?: string
     {sub ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10, marginTop: 1 }}>{sub}</Text> : null}
   </View>
 );
-const Sw = ({ on, set }: { on: boolean; set: (v: boolean) => void }) => (
-  <Pressable accessibilityLabel="Budget alerts" onPress={() => set(!on)} style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)', alignItems: on ? 'flex-end' : 'flex-start', justifyContent: 'center' }}>
-    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: on ? '#2a1030' : '#fff' }} />
-  </Pressable>
-);
+const Sw = ({ on, set }: { on: boolean; set: (v: boolean) => void }) => <Toggle on={on} onPress={() => set(!on)} label="Budget alerts" colors="#ffc46b" thumbOn="#2a1030" />;
 
 export function MoneyLeft({ ym, income, spends }: Props) {
   const narrow = useWindowDimensions().width < 360;

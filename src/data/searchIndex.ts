@@ -530,7 +530,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Subscriptions",
-  "s": "Netflix, YouTube, Spotify, Claude Pro and more: what charges when, found for you",
+  "s": "Netflix, YouTube, Spotify and more: what charges when, found for you",
   "m": "Finance",
   "c": "#7c9cff",
   "h": "Finance.dc.html",
