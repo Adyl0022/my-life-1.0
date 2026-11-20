@@ -12,7 +12,7 @@ import { confirmDelete } from '../lib/dialog';
 import { tryForm, pn, numberError } from '../lib/num';
 import { validDate } from '../lib/documents';
 import { ColArt } from '../components/ColArt';
-import { ACC, BTN, EMPTY_COL, dueOf, dmy, num, rm, today, politeAsk, type ColStore, type Loan } from '../lib/collection';
+import { ACC, BTN, EMPTY_COL, dueOf, dmy, num, rm, today, politeAsk, paidOf, leftOf, type ColStore, type Loan } from '../lib/collection';
 
 const g = BTN;
 const TABS = [['lent', 'Lent'], ['borrowed', 'Borrowed'], ['done', 'Done']] as const;
@@ -66,6 +66,24 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
   );
 }
 
+function PaySheet({ loan, v, setV, onSave, onClose }: { loan: Loan; v: { a: string; d: string }; setV: (x: { a: string; d: string }) => void; onSave: () => void; onClose: () => void }) {
+  const [tried, setTried] = useState(false); const a = pn(v.a); const left = leftOf(loan);
+  const bad = !!numberError(v.a) || !(a > 0) || a > left + 0.001; const badD = !validDate(v.d);
+  const go = () => { setTried(true); tryForm('pay'); if (bad || badD) return; onSave(); };
+  return (
+    <SheetFrame title="Add a payment" sub={loan.who + ' · still ' + rm(left)} onClose={onClose}>
+      <Lab t="AMOUNT PAID BACK" />
+      <Inp form="pay" need="an amount" value={v.a} onChangeText={(x: string) => setV({ ...v, a: x })} keyboardType="decimal-pad" placeholder="Amount in RM" />
+      {tried && v.a.trim() && !numberError(v.a) && a > left + 0.001 ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>{'That is more than the ' + rm(left) + ' still owed.'}</Text> : null}
+      <Lab t="DATE" />
+      <DateField value={v.d} onChange={(x: string) => setV({ ...v, d: x })} past />
+      {tried && badD ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please pick a valid date.</Text> : null}
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>When the full amount is paid back, this record moves to Done by itself.</Text>
+      <BigBtn t="Save payment" onPress={go} a11y="Save payment" />
+    </SheetFrame>
+  );
+}
+
 export default function Screen() {
   const [st, setSt] = useStored<ColStore>('ml_collection', EMPTY_COL);
   const all = (st && st.loans) || [];
@@ -74,7 +92,7 @@ export default function Screen() {
   const shown = all.filter((l) => (tab === 'done' ? l.done : !l.done && l.dir === tab));
   const list = useMemo(() => { const n = q.trim().toLowerCase(); return shown.filter((l) => !n || (l.who + ' ' + l.title + ' ' + l.note).toLowerCase().includes(n)).sort((a, b) => (a.done ? (b.doneAt || '').localeCompare(a.doneAt || '') : (a.due || '9999').localeCompare(b.due || '9999'))); }, [all, tab, q]);
   const open = all.filter((l) => !l.done);
-  const sumMoney = (d: string) => open.filter((l) => l.dir === d && l.what === 'money').reduce((t, l) => t + num(l.amount), 0);
+  const sumMoney = (d: string) => open.filter((l) => l.dir === d && l.what === 'money').reduce((t, l) => t + leftOf(l), 0);
   const things = (d: string) => open.filter((l) => l.dir === d && l.what === 'thing').length;
   const openNew = () => setF(blank(tab === 'borrowed' ? 'borrowed' : 'lent'));
   const openEdit = (l: Loan) => setF({ ...l, remind: l.remind || 'day', noDue: !l.due, due: l.due || today() });
@@ -89,8 +107,9 @@ export default function Screen() {
   const plus = <Pressable onPress={openNew} accessibilityLabel="Add record"><LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 28, fontWeight: '300', marginTop: -2 }}>+</Text></LinearGradient></Pressable>;
   const cur = all.find((x) => x.id === det);
   const hist = cur ? all.filter((x) => x.id !== cur.id && x.who.trim().toLowerCase() === cur.who.trim().toLowerCase()).sort((a, b) => b.date.localeCompare(a.date)) : [];
+  const [pay, setPay] = useState<{ a: string; d: string } | null>(null);
   const what = (l: Loan) => (l.what === 'money' ? l.who : l.title);
-  const sub = (l: Loan) => (l.what === 'money' ? rm(num(l.amount)) + ' · ' + (l.dir === 'lent' ? 'lent ' : 'borrowed ') + dmy(l.date) : (l.dir === 'lent' ? 'Lent to ' : 'Borrowed from ') + l.who + ' · ' + dmy(l.date));
+  const sub = (l: Loan) => (l.what === 'money' ? (paidOf(l) > 0 ? rm(leftOf(l)) + ' left of ' + rm(num(l.amount)) : rm(num(l.amount))) + ' · ' + (l.dir === 'lent' ? 'lent ' : 'borrowed ') + dmy(l.date) : (l.dir === 'lent' ? 'Lent to ' : 'Borrowed from ') + l.who + ' · ' + dmy(l.date));
   return (
     <RecordPage title="Lent & Borrowed" sub={open.length + ' open'} right={plus} bg={<ColArt />}>
       <Intro plain title="Never forget who has what" text="Money and things you lent or borrowed" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
@@ -106,8 +125,20 @@ export default function Screen() {
       </Animated.View>
       {cur && !f ? (
         <Detail label={(cur.what === 'money' ? 'MONEY' : 'THING') + (cur.dir === 'lent' ? ' · LENT' : ' · BORROWED')} title={what(cur)} tile={<Tile icon={cur.what === 'money' ? 'cash' : 'tool'} c={ACC.loans} size={84} />}
-          lines={[[cur.dir === 'lent' ? 'Lent to' : 'Borrowed from', cur.who], ...(cur.what === 'money' ? [['Amount', rm(num(cur.amount))] as [string, string]] : []), [cur.dir === 'lent' ? 'Date lent' : 'Date borrowed', dmy(cur.date)], ['Due', cur.due ? dmy(cur.due) : 'No due date'], ...(cur.done ? [['Returned', dmy(cur.doneAt)] as [string, string]] : []), ...(cur.note ? [['Note', cur.note] as [string, string]] : [])]}
+          lines={[[cur.dir === 'lent' ? 'Lent to' : 'Borrowed from', cur.who], ...(cur.what === 'money' ? [['Amount', rm(num(cur.amount))] as [string, string], ...(paidOf(cur) > 0 ? [['Paid back', rm(paidOf(cur))] as [string, string], ['Still owed', rm(leftOf(cur))] as [string, string]] : [])] : []), [cur.dir === 'lent' ? 'Date lent' : 'Date borrowed', dmy(cur.date)], ['Due', cur.due ? dmy(cur.due) : 'No due date'], ...(cur.done ? [['Returned', dmy(cur.doneAt)] as [string, string]] : []), ...(cur.note ? [['Note', cur.note] as [string, string]] : [])]}
           status={dueOf(cur).txt} statusCol={dueOf(cur).col} hot={dueOf(cur).hot} onClose={() => setDet(0)}>
+          {cur.what === 'money' && (cur.pays || []).length ? (
+            <View style={{ marginTop: 16 }}>
+              <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 6 }}>PAYMENTS</Text>
+              {(cur.pays || []).map((p, i) => (
+                <View key={p.d + i} style={{ paddingVertical: 9, borderTopWidth: i ? 1 : 0, borderTopColor: 'rgba(255,255,255,.1)', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={{ flex: 1, color: W, fontSize: 13 }}>{dmy(p.d) + ' · ' + rm(p.a)}</Text>
+                  <Pressable onPress={() => confirmDelete('this payment', () => setSt({ ...st, loans: all.map((x) => (x.id === cur.id ? { ...x, pays: (x.pays || []).filter((_, k) => k !== i) } : x)) }), { title: 'Remove this payment?', message: 'The amount will count as still owed again.' })} accessibilityLabel="Remove payment"><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '700' }}>Remove</Text></Pressable>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          {cur.what === 'money' && !cur.done ? <BigBtn t="Add a payment" g={['#ffe84d', '#ff9a3d']} dark onPress={() => { setPay({ a: '', d: today() }); }} a11y="Add a payment" /> : null}
           {hist.length ? (
             <View style={{ marginTop: 16 }}>
               <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 6 }}>{'HISTORY WITH ' + cur.who.toUpperCase()}</Text>
@@ -128,6 +159,10 @@ export default function Screen() {
           <BigBtn t="Edit" outline="rgba(255,255,255,.6)" onPress={() => { setDet(0); openEdit(cur); }} a11y="Edit record" />
         </Detail>
       ) : null}
+      {pay && cur ? <PaySheet loan={cur} v={pay} setV={setPay} onClose={() => setPay(null)} onSave={() => {
+        const a = pn(pay.a); const np = [...(cur.pays || []), { d: pay.d, a }]; const left = Math.max(0, num(cur.amount) - np.reduce((t, p) => t + p.a, 0));
+        setSt({ ...st, loans: all.map((x) => (x.id === cur.id ? { ...x, pays: np, done: left <= 0 ? true : x.done, doneAt: left <= 0 ? today() : x.doneAt } : x)) }); setPay(null);
+      }} /> : null}
       {f ? <Sheet f={f} setF={setF} onSave={save} onDelete={f.id ? del : undefined} onClose={() => setF(null)} /> : null}
     </RecordPage>
   );

@@ -8,7 +8,12 @@ import { ColArt } from '../components/ColArt';
 import { Tile } from '../components/ColUi';
 import { type ColIconName } from '../components/ColIcon';
 import { W } from '../components/Ui';
-import { CATS, ACC } from '../lib/collection';
+import { CATS, ACC, EMPTY_COL, type ColStore } from '../lib/collection';
+import * as Haptics from 'expo-haptics';
+import { useStored } from '../lib/store';
+import { itemsPdf } from '../lib/colPdf';
+import { showAlert } from '../lib/dialog';
+import { useName } from '../lib/store';
 
 function Card({ icon, title, sub, c, wide, onPress }: { icon: ColIconName; title: string; sub: string; c: string; wide?: boolean; onPress: () => void }) {
   return (
@@ -28,6 +33,8 @@ function Card({ icon, title, sub, c, wide, onPress }: { icon: ColIconName; title
 export default function Screen() {
   const router = useRouter();
   const go = (p: string) => router.push(p as any);
+  const [st] = useStored<ColStore>('ml_collection', EMPTY_COL); const items = (st && st.items) || []; const nm = useName(); const [busy, setBusy] = React.useState(false);
+  const pdf = async () => { if (busy) return; Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setBusy(true); try { const ok = await itemsPdf(items, nm); if (!ok) showAlert('Could not share', 'The PDF was made, but this phone has no way to share it.'); } catch (e) { showAlert('Could not make the PDF', 'Please try again.'); } setBusy(false); };
   return (
     <RecordPage title="Personal Collection" sub="Your things, your lessons" bg={<ColArt />}>
       <Intro plain title="Your things, your lessons" text="Gadgets, belongings, property, what you lent or borrowed, and what you learned" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
@@ -44,6 +51,12 @@ export default function Screen() {
           <Card wide icon="less" title="Life Lessons" sub="What you learned, so you do not forget" c={ACC.lessons} onPress={() => go('/lessons')} />
         </View>
       </View>
+      {items.length ? (
+        <Pressable onPress={pdf} accessibilityLabel="Export my things as PDF" style={({ pressed }) => ({ marginTop: 16, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', padding: 14, transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+          <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'My things as a PDF'}</Text>
+          <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12, marginTop: 3, lineHeight: 17 }}>A list of everything you own with price, date and a photo. Handy for an insurance claim. It is made on this phone and nothing is uploaded.</Text>
+        </Pressable>
+      ) : null}
       <View style={{ height: 10 }} />
     </RecordPage>
   );

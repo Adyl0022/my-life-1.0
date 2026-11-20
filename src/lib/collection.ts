@@ -4,7 +4,7 @@ export type Cond = 'new' | 'good' | 'worn' | 'broken';
 export const CONDS: { k: Cond; n: string; f: number }[] = [{ k: 'new', n: 'Like new', f: 1.08 }, { k: 'good', n: 'Good', f: 1 }, { k: 'worn', n: 'Worn', f: 0.8 }, { k: 'broken', n: 'Broken', f: 0.4 }];
 export type ItemCat = 'gadget' | 'lifestyle' | 'property';
 export type Item = { id: number; cat: ItemCat; kind: string; name: string; price: string; bought: string; warranty: string; photo: string; photos?: string[]; docIds?: number[]; worth?: string; cond?: Cond; note: string };
-export type Loan = { id: number; dir: 'lent' | 'borrowed'; what: 'money' | 'thing'; who: string; title: string; amount: string; date: string; due: string; done: boolean; doneAt: string; note: string; remind?: 'off' | 'day' | '3d' };
+export type Loan = { id: number; dir: 'lent' | 'borrowed'; what: 'money' | 'thing'; who: string; title: string; amount: string; date: string; due: string; done: boolean; doneAt: string; note: string; remind?: 'off' | 'day' | '3d'; pays?: { d: string; a: number }[] };
 export type Lesson = { id: number; title: string; text: string; date: string; tag: string };
 export type ColStore = { items: Item[]; loans: Loan[]; lessons: Lesson[]; next: number };
 export const EMPTY_COL: ColStore = { items: [], loans: [], lessons: [], next: 1 };
@@ -76,7 +76,11 @@ export function warrantyBar(x: Item, now = new Date()): { left: number; used: nu
 
 /** A polite message the person sends themselves. */
 export function politeAsk(l: Loan): string {
-  const what = l.what === 'money' ? 'RM ' + num(l.amount).toLocaleString('en-MY', { maximumFractionDigits: 2 }) : l.title;
+  const what = l.what === 'money' ? 'RM ' + leftOf(l).toLocaleString('en-MY', { maximumFractionDigits: 2 }) : l.title;
   const due = l.due && validDate(l.due) ? ' (we agreed on ' + dmy(l.due) + ')' : '';
   return 'Hi ' + l.who + ', hope you are well. Just a gentle reminder about the ' + what + ' I lent you' + due + '. No rush if you need a little more time, just let me know. Thank you!';
 }
+
+/** Money already paid back, and what is still owed. */
+export const paidOf = (l: Loan): number => (l.what === 'money' ? (l.pays || []).reduce((t, p) => t + (p.a > 0 ? p.a : 0), 0) : 0);
+export const leftOf = (l: Loan): number => (l.what === 'money' ? Math.max(0, num(l.amount) - paidOf(l)) : 0);
