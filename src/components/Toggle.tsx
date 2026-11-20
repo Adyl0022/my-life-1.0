@@ -11,11 +11,13 @@ export function Toggle({ on, onPress, colors = ['#5ee7b5', '#5ee7b5'], thumbOn, 
   const st = React.useRef(new Animated.Value(1)).current;
   const sc = React.useRef(new Animated.Value(1)).current;
   const first = React.useRef(true);
+  // A saved setting loads a moment after the screen opens and flips the switch by itself. That must not buzz: only a real press does.
+  const born = React.useRef(Date.now()); const tapped = React.useRef(0);
   React.useEffect(() => {
     Animated.spring(p, { toValue: on ? 1 : 0, friction: 7, tension: 140, useNativeDriver: true }).start();
     if (first.current) { first.current = false; return; }
     Animated.sequence([Animated.timing(st, { toValue: 1.28, duration: 90, useNativeDriver: true }), Animated.spring(st, { toValue: 1, friction: 5, useNativeDriver: true })]).start();
-    if (Platform.OS !== 'web') { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { /* no vibration on this phone */ } }
+    if (Platform.OS !== 'web' && (Date.now() - tapped.current < 900 || Date.now() - born.current > 1800)) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) { /* no vibration on this phone */ } }
   }, [on]);
   const d = h - 6; const cols: [string, string] = typeof colors === 'string' ? [colors, colors] : colors;
   const body = (
@@ -28,7 +30,7 @@ export function Toggle({ on, onPress, colors = ['#5ee7b5', '#5ee7b5'], thumbOn, 
   );
   if (!onPress) return <View pointerEvents="none">{body}</View>;
   return (
-    <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={label} onPress={onPress} hitSlop={6}
+    <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={label} onPress={() => { tapped.current = Date.now(); if (onPress) onPress(); }} hitSlop={6}
       onPressIn={() => Animated.spring(sc, { toValue: 0.9, useNativeDriver: true, friction: 6 }).start()} onPressOut={() => Animated.spring(sc, { toValue: 1, useNativeDriver: true, friction: 4 }).start()}>
       <Animated.View style={{ transform: [{ scale: sc }] }}>{body}</Animated.View>
     </Pressable>

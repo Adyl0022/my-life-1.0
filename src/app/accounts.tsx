@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Platform, Image } from 'react-native';
+import { View, Platform, Image, Animated } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Pressable } from '../components/Press';
 import * as Haptics from '../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -43,6 +44,19 @@ type Ctx = { data: AccData; setData: (v: AccData) => void; spends: Spends; feeds
 type MoveMode = { mode: 'transfer' | 'deposit' | 'adjust'; acc?: number };
 
 // ---------- Add or edit an account ----------
+// The round fold button at the end of a group header: a soft glass circle with a chevron that turns smoothly.
+function FoldBtn({ shut, c }: { shut: boolean; c: string }) {
+  const r = React.useRef(new Animated.Value(shut ? 1 : 0)).current;
+  React.useEffect(() => { Animated.spring(r, { toValue: shut ? 1 : 0, friction: 7, tension: 120, useNativeDriver: true }).start(); }, [shut]);
+  return (
+    <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: c + '66', alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={{ transform: [{ rotate: r.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-90deg'] }) }] }}>
+        <Svg width={16} height={16} viewBox="0 0 16 16"><Path d="M3.5 6l4.5 4.5L12.5 6" stroke="#fff" strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+      </Animated.View>
+    </View>
+  );
+}
+
 // The little picture of an account: your own image if you chose one, otherwise the first letter in the colour of its type.
 function AccTile({ a, size = 32 }: { a: { name: string; g: AccGroup; photo?: string }; size?: number }) {
   const c = groupOf(a.g).c;
@@ -255,7 +269,7 @@ export default function Accounts() {
                         <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
                         <Text numberOfLines={1} style={{ flex: 1, color: g.c, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{g.plural.toUpperCase() + (shut ? '  ·  ' + list.length : '')}</Text>
                         {list.length > 1 || shut ? <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.75)', fontSize: 12.5, fontWeight: '800', flexShrink: 0 }}>{cs() + money(sub)}</Text> : null}
-                        <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 24, lineHeight: 26, width: 32, textAlign: 'center' }}>{shut ? '▸' : '▾'}</Text>
+                        <FoldBtn shut={shut} c={g.c} />
                       </Tap>
                       {shut ? null : list.map((a) => {
                         const b = balanceOf(a, data, spends, feeds);
@@ -277,15 +291,14 @@ export default function Accounts() {
                       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: '#b794ff' }} />
                       <Text numberOfLines={1} style={{ flex: 1, color: '#b794ff', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{'COMMITMENTS' + (fold.includes('commit') ? '  ·  ' + cms.length : '')}</Text>
                       {cms.length > 1 || fold.includes('commit') ? <Text style={{ color: PINK, fontSize: 12.5, fontWeight: '800', flexShrink: 0 }}>{cs() + money(commitTotal(cms))}</Text> : null}
-                      <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 24, lineHeight: 26, width: 32, textAlign: 'center' }}>{fold.includes('commit') ? '▸' : '▾'}</Text>
+                      <FoldBtn shut={fold.includes('commit')} c="#b794ff" />
                     </Tap>
                     {fold.includes('commit') ? null : (<>
                       {cms.map((x) => (
-                        <Tap key={x.id} onPress={() => router.push('/finance' as any)} label={'Open ' + x.name + ' in My Finance'} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
+                        <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
                           <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{x.name}</Text>
                           <Text style={{ color: PINK, fontSize: 15, fontWeight: '800' }}>{cs() + money(remaining(x))}</Text>
-                          <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>
-                        </Tap>
+                        </View>
                       ))}
                       <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11.5, lineHeight: 16, paddingLeft: 17, paddingBottom: 4 }}>Taken from Commitments in My Finance. Pay them there and the balance goes down here.</Text>
                     </>)}
