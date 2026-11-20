@@ -62,10 +62,10 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
     setBusy(false);
   };
   const ai = async () => {
-    setBusy(true); setMsg('Asking the online AI. Only the words from the bill are sent, never the photo.');
+    setBusy(true); setMsg('Reading it again online. Only the words from the bill are sent, never the photo.');
     const r = await onlineAsk(aiPrompt(raw), 'en');
-    if ('text' in r) { const b = readAi(r.text); if (b) { setF(apply(b)); setMsg('The online AI read some details. It can be wrong, so please check each box.'); } else setMsg('The AI could not make sense of it. Please type it in.'); }
-    else setMsg(r.why === 'login' ? 'Sign in to use the online AI.' : r.why === 'offline' ? 'No internet. Please try again later.' : 'The online AI is busy or its limit is reached. Please type it in.');
+    if ('text' in r) { const b = readAi(r.text); if (b) { setF(apply(b)); setMsg('Read some details online. It can be wrong, so please check each box.'); } else setMsg('Could not make sense of it. Please type it in.'); }
+    else setMsg(r.why === 'login' ? 'Sign in to read it again online.' : r.why === 'offline' ? 'No internet. Please try again later.' : 'The online reading is busy or its limit is reached. Please type it in.');
     setBusy(false);
   };
   const svcs = SERVICES.filter((s, i, a) => a.findIndex((x) => x.n === s.n) === i);
@@ -81,8 +81,8 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Text style={{ color: dim, fontSize: 12.5, lineHeight: 18, marginBottom: 12 }}>Don't want to type everything? Just take a photo of the bill or receipt, or choose one from your gallery, and the details fill in for you. Please check them before you save, in case something was read wrong.</Text>
       <Pressable onPress={() => pick(true)} disabled={busy}><LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 52, borderRadius: 18, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.6 : 1 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><LineIcon name="scan" c="#fff" size={22} w={1.7} /><Text style={{ color: W, fontSize: 15.5, fontWeight: '800' }}>{busy ? 'Reading…' : 'Scan a bill or receipt'}</Text></View></LinearGradient></Pressable>
       <Pressable onPress={() => pick(false)} disabled={busy} style={{ marginTop: 10, height: 44, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><LineIcon name="photo" c="#fff" size={20} /><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Choose a photo of a bill</Text></View></Pressable>
-      {raw && on ? <Pressable onPress={ai} disabled={busy} accessibilityLabel="Read with AI" style={{ marginTop: 10, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(94,231,181,.6)', backgroundColor: 'rgba(94,231,181,.12)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><LineIcon name="wand" c={GR} size={18} /><Text style={{ color: GR, fontSize: 13, fontWeight: '800' }}>Read with AI (sends the words only)</Text></View></Pressable> : null}
-      {msg ? <Text style={{ color: msg.startsWith('Read') || msg.startsWith('The online AI read') ? GR : '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10, lineHeight: 18 }}>{msg}</Text> : null}
+      {raw && on ? <Pressable onPress={ai} disabled={busy} accessibilityLabel="Read again, more carefully" style={{ marginTop: 10, height: 42, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(94,231,181,.6)', backgroundColor: 'rgba(94,231,181,.12)', alignItems: 'center', justifyContent: 'center' }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><LineIcon name="wand" c={GR} size={18} /><Text style={{ color: GR, fontSize: 13, fontWeight: '800' }}>Read again, more carefully (sends the words only)</Text></View></Pressable> : null}
+      {msg ? <Text style={{ color: msg.startsWith('Read') ? GR : '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10, lineHeight: 18 }}>{msg}</Text> : null}
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>The words are read on this phone and the photo is not kept.</Text>
       </Sec>
       <Sec><L2 t="DETAILS" />
