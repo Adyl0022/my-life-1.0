@@ -5,7 +5,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { Inp, DateField, todayStr, W } from '../components/Ui';
 import { SheetFrame, Lab, Sections, BigBtn, chip, dim } from '../components/ColUi';
-import { RecordPage } from '../components/RecordHubUi';
+import { ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Glass } from '../components/Glass';
+import { Blob } from '../components/Bg';
+import { FinArt } from '../components/FinArt';
+import { TOP } from '../lib/layout';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
@@ -155,63 +161,84 @@ function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; on
 
 export default function Accounts() {
   useRegion();
+  const router = useRouter();
   const [data, setData] = useStored<AccData>('ml_accounts', ACC_EMPTY);
   const [fin] = useStored<{ spends?: Spends }>('ml_finance', {});
   const spends = (fin && fin.spends) || [];
   const ctx: Ctx = { data, setData, spends };
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
   const t = totals(data, spends);
+  const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
+    <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}>
+      <Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: vc || W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{v}</Text>
+    </View>
+  );
   return (
-    <RecordPage title="My Accounts" sub="Where your money is, and what you owe">
-      <View style={{ marginTop: 16, padding: 16, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', overflow: 'hidden' }}>
-        <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-        <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>TOTAL MONEY</Text>
-        <Text style={{ color: t.total < 0 ? PINK : '#fff', fontSize: 32, fontWeight: '800', marginTop: 4 }}>{(t.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total))}</Text>
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-          <View style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11 }}>Assets</Text><Text style={{ color: '#9fb6ff', fontSize: 16, fontWeight: '800', marginTop: 2 }}>{cs() + money(t.assets)}</Text></View>
-          <View style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11 }}>Liabilities</Text><Text style={{ color: PINK, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{cs() + money(t.liab)}</Text></View>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-        <Act basis="28%" t="+ Add account" c="#8ea8ff" onPress={() => setForm({})} />
-        {data.accs.length > 1 ? <Act basis="28%" t="Transfer" c={BLUE} onPress={() => setMv({ mode: 'transfer' })} /> : null}
-        {data.accs.some((a) => !isLiab(a)) ? <Act basis="28%" t="Money in" c="#5ee7b5" onPress={() => setMv({ mode: 'deposit' })} /> : null}
-      </View>
-      {data.accs.length === 0 ? (
-        <View style={{ marginTop: 22, padding: 18, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', backgroundColor: 'rgba(255,255,255,.05)' }}>
-          <Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>Add your first account</Text>
-          <Text style={{ color: dim, fontSize: 13, lineHeight: 19, marginTop: 6 }}>Add your cash, bank, wallet and savings, and any card or loan you owe on. Then choose an account when you log spending, and its balance goes up and down by itself.</Text>
-        </View>
-      ) : null}
-      {GROUPS.map((g) => {
-        const list = data.accs.filter((a) => a.g === g.k); if (!list.length) return null;
-        const sub = list.reduce((s, a) => s + balanceOf(a, data, spends), 0);
-        return (
-          <View key={g.k} style={{ marginTop: 20 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, marginBottom: 8 }}>
-              <Text style={{ color: g.c, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{g.plural.toUpperCase()}</Text>
-              <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.75)', fontSize: 12.5, fontWeight: '800' }}>{cs() + money(sub)}</Text>
-            </View>
-            {list.map((a) => {
-              const b = balanceOf(a, data, spends);
-              return (
-                <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ marginBottom: 8 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', overflow: 'hidden' }}>
-                    <LinearGradient colors={['rgba(255,255,255,.12)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-                    <View style={{ width: 8, alignSelf: 'stretch', borderRadius: 4, backgroundColor: g.c }} />
-                    <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '700' }}>{a.name}</Text>
-                    <Text style={{ color: g.liab ? PINK : '#9fb6ff', fontSize: 15, fontWeight: '800' }}>{cs() + money(b)}</Text>
-                  </View>
-                </Tap>
-              );
-            })}
+    <View style={{ flex: 1, backgroundColor: '#1a1030' }}>
+      <LinearGradient colors={['#1a1030', '#2a1747', '#3a1d3d']} locations={[0, 0.48, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+      <Blob size={320} color="rgba(255,196,107,.34)" style={{ right: -100, top: -40 }} />
+      <Blob size={340} color="rgba(183,148,255,.3)" style={{ left: -120, bottom: 0 }} />
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}><FinArt /></View>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 60 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Pressable onPress={() => router.back()} accessibilityLabel="Back"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: -2 }}>‹</Text></Glass></Pressable>
+            <Text style={{ flex: 1, color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>My Accounts</Text>
+            <Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 14 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{data.accs.length + (data.accs.length === 1 ? ' account' : ' accounts')}</Text></Glass>
           </View>
-        );
-      })}
-      <Text style={{ color: dim, fontSize: 11.5, lineHeight: 17, marginTop: 20 }}>Balances are worked out on your phone from what you enter and from the spending you link to an account. They are saved with your My Life 1.0 data and synced to your account like your other finance entries. My Life 1.0 never connects to your bank.</Text>
+
+          <Glass radius={24} style={{ marginTop: 14, padding: 16 }}>
+            <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+            <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>TOTAL MONEY</Text>
+            <Text style={{ color: t.total < 0 ? PINK : W, fontSize: 30, fontWeight: '800', marginTop: 4 }}>{(t.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total))}</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+              <Stat l="Assets" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} />
+            </View>
+          </Glass>
+
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+            <Tap onPress={() => setForm({})} label="Add account" style={{ flex: 1.2 }}>
+              <LinearGradient colors={['#ffc46b', '#ff8fab']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 14, fontWeight: '800' }}>+ Add account</Text></LinearGradient>
+            </Tap>
+            {data.accs.length > 1 ? <Tap onPress={() => setMv({ mode: 'transfer' })} label="Transfer" style={{ flex: 1, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Transfer</Text></Tap> : null}
+            {data.accs.some((a) => !isLiab(a)) ? <Tap onPress={() => setMv({ mode: 'deposit' })} label="Money in" style={{ flex: 1, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Money in</Text></Tap> : null}
+          </View>
+
+          {data.accs.length === 0 ? (
+            <Glass radius={24} style={{ marginTop: 12, padding: 16 }}>
+              <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Add your first account</Text>
+              <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>Add your cash, bank, wallet and savings, and any card or loan you owe on. Then choose an account when you log spending, and its balance goes up and down by itself.</Text>
+            </Glass>
+          ) : null}
+
+          {GROUPS.map((g) => {
+            const list = data.accs.filter((a) => a.g === g.k); if (!list.length) return null;
+            const sub = list.reduce((s, a) => s + balanceOf(a, data, spends), 0);
+            return (
+              <Glass key={g.k} radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: g.c }} /><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{g.plural}</Text></View>
+                  <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.8)', fontSize: 13.5, fontWeight: '800' }}>{cs() + money(sub)}</Text>
+                </View>
+                {list.map((a, i) => {
+                  const b = balanceOf(a, data, spends);
+                  return (
+                    <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ marginTop: i === 0 ? 10 : 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
+                      <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 14.5, fontWeight: '600' }}>{a.name}</Text>
+                      <Text style={{ color: g.liab ? PINK : '#9fb6ff', fontSize: 14.5, fontWeight: '800' }}>{cs() + money(b)}</Text>
+                      <Text style={{ color: 'rgba(255,255,255,.45)', fontSize: 18 }}>›</Text>
+                    </Tap>
+                  );
+                })}
+              </Glass>
+            );
+          })}
+          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone from what you enter and from the spending you link to an account. They are saved with your My Life 1.0 data and synced to your account like your other finance entries. My Life 1.0 never connects to your bank.</Text>
+        </ScrollView>
+      </SafeAreaView>
       {form ? <AccountForm ctx={ctx} edit={form.edit} onClose={() => setForm(null)} /> : null}
       {mv ? <MoveSheet ctx={ctx} mv={mv} onClose={() => setMv(null)} /> : null}
       {open ? <Detail ctx={ctx} id={open} onClose={() => setOpen(0)} onEdit={() => setForm({ edit: data.accs.find((a) => a.id === open) })} onMove={setMv} /> : null}
-    </RecordPage>
+    </View>
   );
 }

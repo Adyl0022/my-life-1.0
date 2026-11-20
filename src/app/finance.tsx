@@ -16,6 +16,7 @@ import { Blob } from '../components/Bg';
 import { Inp, DateField, todayStr, W } from '../components/Ui';
 import { useStored } from '../lib/store';
 import { Commitments } from '../components/Commitments';
+import { FinArt } from '../components/FinArt';
 import { MoneyLeft } from '../components/MoneyLeft';
 import { TodaySpend } from '../components/TodaySpend';
 import { useMergedSpends, useVehMode, VEH_CAT, VEH_COLOR } from '../lib/vehicleSpend';
@@ -38,14 +39,6 @@ const keyOf = (y: number, m: number) => y + '-' + String(m + 1).padStart(2, '0')
 const colorOf = (n: string) => n === VEH_CAT ? VEH_COLOR : (CATS.find((c) => c[0] === n) || CATS[CATS.length - 1])[1];
 const WARM = ['#ffc46b', '#ff8fab'] as [string, string];
 
-const FinArt = () => (
-  <Svg width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">
-    <Defs><Pattern id="fgrid" width="44" height="44" patternUnits="userSpaceOnUse"><Circle cx="22" cy="22" r="14" fill="none" stroke="#fff" strokeWidth=".8" opacity=".08" /><Circle cx="22" cy="22" r="8" fill="none" stroke="#fff" strokeWidth=".8" opacity=".08" /></Pattern></Defs>
-    <Rect width="390" height="844" fill="url(#fgrid)" />
-    <G fill="#ffc46b" opacity=".15"><Path d="M0 844V760l30-10 30 14 30-30 30 16 30-34 30 20 30-40 30 18 30-36 30 22 30-30 30 14 30-20V844z" /></G>
-    <G stroke="#fff" opacity=".35" strokeWidth="1.5" strokeLinecap="round"><Path d="M358 90v10M353 95h10M30 640v8M26 644h8" /></G>
-  </Svg>
-);
 const Coin = () => (
   <Svg width={44} height={44} viewBox="0 0 44 44">
     <Ellipse cx="22" cy="34" rx="15" ry="5" fill="#d98f1f" /><Rect x="7" y="26" width="30" height="8" fill="#f4b13d" /><Ellipse cx="22" cy="26" rx="15" ry="5" fill="#ffd27a" />
@@ -144,6 +137,12 @@ export default function Finance() {
             <Glass radius={999} style={{ paddingVertical: 9, paddingHorizontal: 14 }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{MON[now.getMonth()] + ' ' + curY}</Text></Glass>
           </View>
 
+          <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+            <Coin />
+            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Income and spending at a glance</Text></View>
+          </Glass>
+
           <Pressable onPress={() => router.push('/accounts' as any)} accessibilityLabel="Open My Accounts" style={({ pressed }) => ({ marginTop: 14, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
             <View style={{ borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', padding: 16 }}>
               <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
@@ -161,12 +160,6 @@ export default function Finance() {
               )}
             </View>
           </Pressable>
-
-          <Glass radius={24} style={{ marginTop: 14, paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
-            <Coin />
-            <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Track every {cw()}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Income and spending at a glance</Text></View>
-          </Glass>
 
           <SubChargeCard subs={sbs} setSubs={setSbs} spends={d.spends} nextId={d.nextId} addSpend={(sp) => setD({ ...d, spends: [sp, ...d.spends], nextId: d.nextId + 1 })} today={ymdNow()} />
           <MoneyLeft ym={ym} income={total} spends={all} />
