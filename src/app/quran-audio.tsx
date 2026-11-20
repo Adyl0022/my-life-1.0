@@ -10,6 +10,7 @@ import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize, QURAN_FONT } from '../l
 import { useStored } from '../lib/store';
 import { dlSupported, useDl, surahDone, juzDone, downloadSurah, downloadJuz, downloadAll, cancelDownload, deleteSurah, deleteAll, usage, fmtBytes, clearDlError, NET_KEY, NetPref } from '../lib/quranDl';
 import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio, getResume, resumeLast, Resume } from '../lib/quranAudio';
+import { SlidePills } from '../components/TabSlide';
 import { Shine, GlowField } from '../components/Shine';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon, DownloadIcon, CheckIcon, CloseIcon, SearchIcon } from '../components/AudioIcons';
 
@@ -152,13 +153,7 @@ export default function QuranAudio() {
               <Pressable onPress={clearDlError} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>OK</Text></Pressable>
             </Glass>
           ) : null}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-            {['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? ['Downloads'] : []).map((t, i) => (
-              <Pressable key={t} onPress={() => { setTab(i); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: tab === i ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: tab === i ? TEAL : 'rgba(255,255,255,.14)' }}>
-                <Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <SlidePills tabs={['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? ['Downloads'] : [])} index={tab} onChange={(i) => { setTab(i); setFind(''); }} colors={['rgba(94,231,181,.55)', 'rgba(94,231,223,.45)']} padX={16} padY={8} fontSize={12.5} style={{ marginTop: 6 }} />
 
           {tab < 2 ? (
             <GlowField focused={sf}>

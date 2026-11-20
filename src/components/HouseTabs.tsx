@@ -1,20 +1,7 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Text } from './Txt';
-import { DIM } from './FamilyUi';
+import { SlidePills } from './TabSlide';
 
-// The pill with the chosen tab in the app's pink-to-gold gradient (same look as Activities).
+// The pill with the chosen tab in the app's pink-to-gold gradient (same look as Activities). The colour glides to the tab you press.
 export function HouseTabs<K extends string>({ tabs, v, onChange }: { tabs: [K, string][]; v: K; onChange: (k: K) => void }) {
-  return (
-    <View style={{ flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,.3)', borderRadius: 999, padding: 3, borderWidth: 1, borderColor: 'rgba(255,255,255,.15)', marginBottom: 14 }}>
-      {tabs.map(([k, t]) => (
-        <Pressable key={k} onPress={() => onChange(k)} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
-          {v === k
-            ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999 }}><Text style={{ color: '#2a1740', fontSize: 13, fontWeight: '800' }}>{t}</Text></LinearGradient>
-            : <View style={{ paddingVertical: 7, paddingHorizontal: 16 }}><Text style={{ color: DIM, fontSize: 13 }}>{t}</Text></View>}
-        </Pressable>
-      ))}
-    </View>
-  );
+  return <SlidePills tabs={tabs.map((t) => t[1])} index={Math.max(0, tabs.findIndex((t) => t[0] === v))} onChange={(i) => onChange(tabs[i][0])} colors={['#ff8fab', '#ffc46b']} textOn="#2a1740" textOff="rgba(255,255,255,.7)" bar={{ marginBottom: 14 }} />;
 }
