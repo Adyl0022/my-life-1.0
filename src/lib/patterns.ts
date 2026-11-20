@@ -5,9 +5,13 @@ export const ENERGY: [string, string][] = [['Very energetic', '#7df0c6'], ['Norm
 const hrs = (n: number) => (Math.round(n * 10) / 10) + ' h';
 
 // An estimate from what is already logged. It is a guess, not the person's own rating.
-/** The lowest pulse your watch read in the night (before 7 am) on a day, from the readings saved in the Heart log. */
+/** The lowest pulse read while you slept on a day. It follows the sleep times you set (so a day sleep after a night shift counts too). With no times set it uses midnight to 7 am. */
 export function nightLow(h: HData, key: string): number | null {
-  const v = (h.heart || []).filter((x) => x.d === key && x.bpm != null && x.at < '07:00').map((x) => x.bpm as number);
+  const mins = (t?: string) => { const m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? +m[1] * 60 + +m[2] : -1; };
+  const dd = (h.days || {})[key]; const b = mins(dd && dd.bed), w = mins(dd && dd.wake);
+  const prev = new Date(key + 'T12:00:00'); prev.setDate(prev.getDate() - 1); const pk = keyOfDate(prev);
+  let s = 0, e = 420; if (b >= 0 && w >= 0 && b !== w) { if (b > w) { s = b - 1440; e = w; } else { s = b; e = w; } }
+  const v = (h.heart || []).filter((x) => x.bpm != null && (x.d === key || x.d === pk)).filter((x) => { const m = mins(x.at); if (m < 0) return false; const t = (x.d === key ? 0 : -1440) + m; return t >= s && t <= e; }).map((x) => x.bpm as number);
   return v.length ? Math.min(...v) : null;
 }
 /** Today's night pulse against your own usual (the middle value of the last 14 nights). Needs at least 4 earlier nights. */

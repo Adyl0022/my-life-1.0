@@ -30,10 +30,10 @@ export async function readWatchHeart(ask: boolean): Promise<WatchHeart> {
     if (!all.length) return { ok: false, msg: 'No pulse in Health Connect yet. In your watch app, turn on sharing to Health Connect for Heart rate, let the watch sync, then tap Check again.' };
     all.sort((a, b) => a.t.getTime() - b.t.getTime());
     const bpms = all.map((x) => x.bpm); const last = all[all.length - 1];
-    // Keep one reading for every 3 hours (the newest in that stretch), so the notebook does not fill up.
+    // Keep one reading for every 3 hours, so the notebook does not fill up.
     const keep: Record<string, WatchSample> = {};
-    // For the night (midnight to 6 am) keep the lowest reading instead, because that is closest to your resting pulse.
-    all.forEach((x) => { const d = keyOfDate(x.t); const blk = Math.floor(x.t.getHours() / 3); const id = 'w' + d + '-' + blk; const old = keep[id]; if (blk < 2 && old && old.bpm <= x.bpm) return; keep[id] = { id, d, at: pad(x.t.getHours()) + ':' + pad(x.t.getMinutes()), bpm: x.bpm }; });
+    // Keep the lowest reading in that stretch instead, because that is closest to your resting pulse (night or day sleep).
+    all.forEach((x) => { const d = keyOfDate(x.t); const blk = Math.floor(x.t.getHours() / 3); const id = 'w' + d + '-' + blk; const old = keep[id]; if (old && old.bpm <= x.bpm) return; keep[id] = { id, d, at: pad(x.t.getHours()) + ':' + pad(x.t.getMinutes()), bpm: x.bpm }; });
     const toS = (x: { t: Date; bpm: number }): WatchSample => ({ id: 'wl', d: keyOfDate(x.t), at: pad(x.t.getHours()) + ':' + pad(x.t.getMinutes()), bpm: x.bpm });
     return { ok: true, latest: toS(last), avg: Math.round(bpms.reduce((a, b) => a + b, 0) / bpms.length), min: Math.min(...bpms), max: Math.max(...bpms), count: all.length, samples: Object.keys(keep).map((k) => keep[k]) };
   } catch (e) { return { ok: false, msg: 'Pulse from Health Connect is not available on this phone.' }; }
