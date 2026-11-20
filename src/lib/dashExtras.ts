@@ -77,7 +77,7 @@ export function useDashExtras(core: Core, on: { islamic: boolean; planner: boole
       });
     });
     const b: any = bw;
-    if (b) renew = { label: 'RENEWAL', title: b.label + (vehs.length > 1 ? ' · ' + b.veh : ''), sub: b.n < 0 ? 'Expired ' + -b.n + (b.n === -1 ? ' day ago' : ' days ago') : b.n === 0 ? 'Expires today' : b.n + (b.n === 1 ? ' day left' : ' days left'), tone: b.n <= 7 ? '#ff6b81' : '#ffd24a', go: '/vehicle', val: b.n < 0 ? 'Late' : b.n === 0 ? 'Today' : b.n + 'd', ring: b.n < 0 ? 1 : 1 - Math.min(b.n, 30) / 30 };
+    if (b) renew = { label: 'RENEWAL', title: b.label + (vehs.length > 1 ? ' · ' + b.veh : ''), sub: b.n < 0 ? 'Expired ' + -b.n + (b.n === -1 ? ' day ago' : ' days ago') : b.n === 0 ? 'Expires today' : b.n + (b.n === 1 ? ' day left' : ' days left'), tone: b.n < 0 ? '#ff6b81' : b.n <= 30 ? '#ffd24a' : '#5ee7b5', go: '/vehicle', val: b.n < 0 ? 'Late' : b.n === 0 ? 'Today' : b.n + 'd', ring: b.n < 0 ? 1 : 1 - Math.min(b.n, 30) / 30 };
   }
   // The next debt payment: due within 7 days, or this month's payment that is past its day and still unpaid.
   let debt: Extra | null = null;

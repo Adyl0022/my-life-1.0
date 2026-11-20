@@ -32,28 +32,31 @@ const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const PG: Record<string, { e: string; c: string }> = {}; DASH_PAGES.forEach((p) => { PG[p.k] = { e: p.e, c: p.c }; });
-function Ring({ pct, val, col }: { pct: number; val: string; col: string }) {
-  const R = 24, C = 2 * Math.PI * R; const f = Math.max(0, Math.min(1, pct));
-  return (
-    <View style={{ width: 58, height: 58, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={58} height={58} style={{ position: 'absolute' }}>
-        <Circle cx={29} cy={29} r={R} stroke="rgba(255,255,255,.14)" strokeWidth={5} fill="none" />
-        <Circle cx={29} cy={29} r={R} stroke={col} strokeWidth={5} fill="none" strokeLinecap="round" strokeDasharray={C + ''} strokeDashoffset={C - C * f} transform="rotate(-90 29 29)" />
-      </Svg>
-      <Text numberOfLines={1} style={{ color: '#fff', fontSize: val.length > 4 ? 11 : 12.5, fontWeight: '800' }}>{val}</Text>
-    </View>
-  );
-}
-function Premium({ k, label, title, sub, tone, ring, val, one }: { k: string; label: string; title: string; sub: string; tone?: string; ring?: number; val?: string; one?: boolean }) {
-  const g0 = PG[k] || { e: '✨', c: '#8fe9e2' }; const col = tone || g0.c; const g = tone === '#ff6b81' ? { ...g0, c: '#ff6b81' } : g0;
+const RED = '#ff6b81', YEL = '#ffd24a', TEAL = '#8fe9e2';
+// one place decides the status colour: red = late, yellow = close to due, otherwise the page's own calm colour
+const toneOf = (t?: string) => (t === RED ? RED : t === YEL ? YEL : undefined);
+const pillOf = (k: string, val?: string) => {
+  if (!val) return '';
+  if (val === 'Late') return 'OVERDUE'; if (val === 'Today') return 'TODAY'; if (val === 'Soon') return 'SOON';
+  const d = /^(\d+)d$/.exec(val); if (d) return d[1] + (d[1] === '1' ? ' DAY' : ' DAYS');
+  if (k === 'prayer') return 'IN ' + val.toUpperCase();
+  if (k === 'money') return val + ' LEFT';
+  if (k === 'tasks') return val + (val === '1' ? ' TASK' : ' TASKS');
+  if (k === 'streak') return val + ' WEEK';
+  if (k === 'score') return val + ' / 100';
+  return val.toUpperCase();
+};
+// every page uses this one layout so the sizes match: tile 48, label 9.5, title 16 (one line), sub 12.5 (two lines), pill on the right
+function Premium({ k, label, title, sub, tone, val }: { k: string; label: string; title: string; sub: string; tone?: string; val?: string }) {
+  const g0 = PG[k] || { e: '✨', c: TEAL }; const hot = toneOf(tone); const c = hot || g0.c; const pill = pillOf(k, val);
   return (<>
-    <View style={{ width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: g.c + '30', borderWidth: 1, borderColor: g.c + '55' }}><Text style={{ fontSize: 25 }}>{g.e}</Text></View>
+    <View style={{ width: 48, height: 48, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: c + '38', borderWidth: 1, borderColor: c + '99' }}><Text style={{ fontSize: 23 }}>{g0.e}</Text></View>
     <View style={{ flex: 1, minWidth: 0 }}>
-      <Text numberOfLines={1} style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.9 }}>{label}</Text>
-      <Text numberOfLines={one ? 1 : 2} adjustsFontSizeToFit={!!one} minimumFontScale={0.72} style={{ color: '#fff', fontSize: 17, lineHeight: 21, fontWeight: '800', marginTop: 2 }}>{title}</Text>
-      <Text numberOfLines={3} style={{ color: col, fontSize: 12.5, lineHeight: 16, fontWeight: '700', marginTop: 2 }}>{sub}</Text>
+      <Text numberOfLines={1} style={{ color: hot || '#d6faf3', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>{label}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3, textShadowColor: 'rgba(10,10,50,.35)', textShadowRadius: 5, textShadowOffset: { width: 0, height: 1 } }}>{title}</Text>
+      <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.92)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2, textShadowColor: 'rgba(10,10,50,.3)', textShadowRadius: 4, textShadowOffset: { width: 0, height: 1 } }}>{sub}</Text>
     </View>
-    {ring != null && val ? <Ring pct={ring} val={val} col={col} /> : null}
+    {pill ? <View style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: c + '88', backgroundColor: hot === RED ? 'rgba(255,107,129,.88)' : c + '2b' }}><Text numberOfLines={1} style={{ color: hot === RED ? '#fff' : c, fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 }}>{pill}</Text></View> : null}
   </>);
 }
 
@@ -106,7 +109,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { const i = setInterval(() => { if (busy.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 5000); return () => clearInterval(i); }, []);
 
   const maxM = Math.max(...series.filter((x) => Number.isFinite(x)), 1);
-  let body: React.ReactNode = null; let cur0: string | undefined; let urgent = false;
+  let body: React.ReactNode = null; let cur0: string | undefined; let hotC: string | undefined;
   if (kind === 'log') {
     // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
     const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
@@ -198,19 +201,19 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     const hd = core.hd; const cg = cupsGoal(hd), g = hd.goal || 8000;
     const now = curStreak(hd), best = Math.max(bestStreakAll(hd), now);
     const wk = weekOffs().filter((o) => goalPctOf(getDay(hd, o), g, cg) >= 70).length;
-    body = <Premium k="streak" label="DAILY STREAK" title={now + (now === 1 ? ' day' : ' days')} sub={'Best ' + best + ' · ' + wk + ' of 7 this week'} ring={wk / 7} val={wk + '/7'} />;
+    body = <Premium k="streak" label="DAILY STREAK" title={now + (now === 1 ? ' day' : ' days')} sub={'Best ' + best + ' · ' + wk + ' of 7 this week'} val={wk + '/7'} />;
   } else if (EXK.indexOf(kind) >= 0) {
-    const e = (ex as any)[kind] as any; urgent = e.tone === '#ff6b81';
-    body = <Premium k={kind} label={e.label} title={e.title} sub={e.sub} tone={e.tone} ring={e.ring} val={e.val} />;
+    const e = (ex as any)[kind] as any; hotC = toneOf(e.tone);
+    body = <Premium k={kind} label={e.label} title={e.title} sub={e.sub} tone={e.tone} val={e.val} />;
   } else if (kind === 'lesson') {
     const ld = lessonOfDay(colS && colS.lessons);
-    body = <Premium k="lesson" label={(ld.mine ? 'YOUR LESSON' : 'LIFE LESSON') + ' · ' + ld.tag.toUpperCase()} title={ld.title} sub={ld.text} one />;
+    body = <Premium k="lesson" label={(ld.mine ? 'YOUR LESSON' : 'LIFE LESSON') + ' · ' + ld.tag.toUpperCase()} title={ld.title} sub={ld.text} />;
   } else if (kind === 'memories') {
     body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life' : 'Your Memories'} sub="Every moment matters" />;
   } else if (kind === 'score') {
     const sc = lifeScore(parts);
     const sorted = parts.slice().sort((a, b) => b.pct - a.pct); const warn = sorted.find(p => p.k === 'spend' && /(over budget|nearly used)$/.test(p.detail)); const top = warn ? [warn, ...sorted.filter(p => p !== warn).slice(0, 1)] : sorted.slice(0, 2);
-    body = <Premium k="score" label="LIFE SCORE · TODAY" title={sc + ' out of 100'} sub={top.map((p) => p.label + ' ' + p.pct + '%').join(' · ')} ring={sc / 100} val={String(sc)} />;
+    body = <Premium k="score" label="LIFE SCORE · TODAY" title={sc + ' out of 100'} sub={top.map((p) => p.label + ' ' + p.pct + '%').join(' · ')} val={String(sc)} />;
   } else {
     const t = tp[0];
     body = <Premium k="tip" label="TIP" title={t.title} sub={t.sub} />;
@@ -223,7 +226,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { prog.setValue(0); const a = Animated.timing(prog, { toValue: 1, duration: 5000, useNativeDriver: false }); a.start(); return () => a.stop(); }, [kind]);
   return (
     <Pressable onTouchStart={() => { last.current = Date.now(); }} onPress={logOpen ? (cur0 === 'heart' || (cur0 === undefined && unw) ? undefined : next) : open} onLongPress={logOpen ? open : next} delayLongPress={450} style={({ pressed }) => ({ marginTop: 12, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-      <Glass style={{ minHeight: 100, justifyContent: 'center', borderRadius: 26, ...(urgent ? { backgroundColor: 'rgba(255,107,129,.10)', borderWidth: 1.5, borderColor: 'rgba(255,107,129,.55)', shadowColor: '#ff6b81', shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
+      <Glass style={{ minHeight: 104, justifyContent: 'center', borderRadius: 26, ...(hotC ? { borderColor: hotC + 'aa', borderWidth: 1.2, shadowColor: hotC, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } } : {}) }}>
+        {kind !== 'log' ? <LinearGradient colors={[(hotC || TEAL) + (hotC ? '55' : '2a'), 'rgba(255,255,255,0)']} start={{ x: 1, y: 0 }} end={{ x: 0.35, y: 0.9 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : null}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 22, right: 22, top: 0, height: 1, backgroundColor: 'rgba(255,255,255,.5)' }} />
         <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingBottom: barOn ? 8 : 0, opacity: v, transform: [{ translateY: ty }] }}>{body}</Animated.View>
         {barOn ? (
           <View style={{ position: 'absolute', left: 18, right: 18, bottom: 8, flexDirection: 'row', gap: 4 }}>
