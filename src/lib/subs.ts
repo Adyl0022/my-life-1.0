@@ -3,7 +3,7 @@
 import type { Sp } from './moneyLeft';
 import { useStored } from './store';
 export type Cycle = 'week' | 'month' | 'year';
-export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string };
+export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string };
 export type SubStore = { subs: Sub[]; next: number; no: string[] };
 export const SUB_EMPTY: SubStore = { subs: [], next: 1, no: [] };
 

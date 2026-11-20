@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, Platform, ScrollView } from 'react-native';
+import { View, Pressable, Platform, ScrollView, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { RecordPage } from '../components/RecordHubUi';
@@ -21,6 +21,15 @@ type Form = Omit<Sub, 'id'> & { id: number };
 const blank = (): Form => ({ id: 0, name: '', cat: 'other', price: '', cycle: 'month', next: ymd(addDay(new Date(), 30)), remind: 3, trial: false, note: '' });
 function addDay(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 const Err = ({ t }: { t: string }) => <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>{t}</Text>;
+
+const initials = (n: string) => { const w = n.replace(/[^A-Za-z0-9+ ]/g, ' ').trim().split(/\s+/).filter(Boolean); return ((w[0] || '?')[0] + (w.length > 1 && /[A-Za-z]/.test(w[1][0]) ? w[1][0] : '')).toUpperCase(); };
+// The tile for a subscription: your own picture if you chose one, otherwise the first letters of the name in the category colour.
+function Tile({ name, cat, photo, size = 46 }: { name: string; cat: string; photo?: string; size?: number }) {
+  const c = catOf(cat);
+  return <View style={{ width: size, height: size, borderRadius: size * 0.33, backgroundColor: c.c + '22', borderWidth: 1, borderColor: c.c + '88', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+    {photo ? <Image source={{ uri: photo }} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c.c, fontSize: size * 0.4, fontWeight: '800', letterSpacing: 0.5 }}>{initials(name)}</Text>}
+  </View>;
+}
 
 function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form) => void; onSave: () => void; onDelete?: () => void; onClose: () => void }) {
   const [tried, setTried] = useState(false); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [raw, setRaw] = useState(''); const [on] = useOnlineAi();
@@ -79,6 +88,15 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Lab t="REMIND ME BEFORE" />
       <View style={{ flexDirection: 'row', gap: 8 }}>{REM.map((r) => <Pressable key={r.d} onPress={() => set({ remind: r.d })} accessibilityLabel={r.n} style={{ flex: 1 }}><View style={chip(f.remind === r.d, BL)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{r.n}</Text></View></Pressable>)}</View>
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>You get a reminder at 9 am{f.remind ? ', and another on the day' : ' on the day'}.</Text>
+      <Lab t="LOGO" />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Tile name={f.name} cat={f.cat} photo={f.photo} size={54} />
+        <View style={{ flex: 1, gap: 8 }}>
+          <Pressable onPress={async () => { try { const u = await takePhoto(false); if (u) set({ photo: u }); } catch (e) { setMsg('Could not open the photo. Please try again.'); } }} accessibilityLabel="Choose your own logo image" style={{ height: 38, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{f.photo ? 'Change image' : 'Use my own image'}</Text></Pressable>
+          {f.photo ? <Pressable onPress={() => set({ photo: '' })} accessibilityLabel="Use letters instead"><Text style={{ color: dim, fontSize: 12.5, textAlign: 'center' }}>Use letters instead</Text></Pressable> : null}
+        </View>
+      </View>
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Your image stays on this phone only. It is not saved to your account. Everything else about the subscription is.</Text>
       <Lab t="NOTE (OPTIONAL)" />
       <Inp value={f.note} onChangeText={(x: string) => set({ note: x })} placeholder="e.g. Shared plan" maxLength={120} />
       <BigBtn t="Save" onPress={save} a11y="Save subscription" />
@@ -94,7 +112,7 @@ function Row({ s, today, onPress }: { s: Sub; today: string; onPress: () => void
       <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: hot ? d.col + 'b3' : 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.07)' }}>
         <LinearGradient colors={hot ? [d.col + '40', d.col + '0d'] : ['rgba(255,255,255,.12)', 'rgba(255,255,255,.03)']} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 15, backgroundColor: c.c + '22', borderWidth: 1, borderColor: c.c + '88', alignItems: 'center', justifyContent: 'center' }}><LineIcon name={c.icon} c={c.c} size={24} /></View>
+          <Tile name={s.name} cat={s.cat} photo={s.photo} />
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text numberOfLines={1} style={{ color: W, fontSize: 16, fontWeight: '800' }}>{s.name}</Text>
             <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 2 }}>{CYCLES.find((x) => x.k === s.cycle)!.per}{s.note ? ' · ' + s.note : ''}</Text>
