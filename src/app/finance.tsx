@@ -52,6 +52,8 @@ const Chip = ({ t, on, c, onPress }: { t: string; on: boolean; c?: string; onPre
     <Text style={{ color: on ? '#2a1030' : W, fontSize: 12, fontWeight: '700' }}>{t}</Text>
   </Pressable>
 );
+const SEC = { marginTop: 12, padding: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' } as const;
+const SECL = { color: 'rgba(255,255,255,.65)', fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 8 } as const;
 const Stat = ({ l, v, bg, vc }: { l: string; v: string; bg?: string; vc?: string }) => (
   <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: bg || 'rgba(255,255,255,.08)' }}>
     <Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: vc || W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{v}</Text>
@@ -306,49 +308,71 @@ export default function Finance() {
               })}
             </View>
             <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 6 }}>Last 6 months, in {cu()}. Under each month: ▲ orange means you spent that much more than the month before, ▼ green means that much less.</Text>
-            <DateField value={fDate} onChange={setFDate} style={{ marginTop: 12 }} />
-            <Inp style={{ marginTop: 8 }} value={fName} onChangeText={setFName} placeholder="What did you buy?" />
-            <Inp style={{ marginTop: 8 }} value={fNote} onChangeText={setFNote} placeholder="Remark (optional)" />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-              {NOTE_QUICK.map((t) => { const on = fNote.split(',').map((x) => x.trim()).includes(t); return (
-                <Pressable key={t} onPress={() => quickNote(t)} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: on ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '600' }}>{t}</Text></Pressable>
-              ); })}
-            </View>
-            {accD.accs.length ? (<>
-              <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1, marginTop: 12 }}>PAID FROM</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                <Chip t="Not linked" on={!fAcc} onPress={() => setFAcc(0)} />
-                {accD.accs.filter((a) => a.g !== 'loan').map((a) => <Chip key={a.id} t={a.name} on={fAcc === a.id} c={groupOf(a.g).c} onPress={() => setFAcc(fAcc === a.id ? 0 : a.id)} />)}
+            </Glass>
+
+            {/* Add spending */}
+            <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+              <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Add Spending</Text>
+              <View style={SEC}>
+                <Text style={SECL}>WHAT AND HOW MUCH</Text>
+                <Inp value={fName} onChangeText={setFName} placeholder="What did you buy?" />
+                <Inp form="spend" need="an amount" style={{ marginTop: 8 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
               </View>
-            </>) : null}
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-              <Inp form="spend" need="an amount" style={{ flex: 1 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
-              <Pressable onPress={addSpend}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>+ Add</Text></LinearGradient></Pressable>
-            </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-              {CATS.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} />)}
-            </View>
-            {fCat === 'Savings' ? (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ color: dim, fontSize: 11.5 }}>Which savings goal is this for?</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                  {opts.map((o) => { const on = o.id ? fGoal === o.id && !fPre : fPre === o.key; return <Chip key={o.key} t={o.name} on={on} c="#5ee7b5" onPress={() => { if (on) { setFGoal(0); setFPre(''); } else if (o.id) { setFGoal(o.id); setFPre(''); } else { setFGoal(0); setFPre(o.key); } }} />; })}
+              <View style={SEC}>
+                <Text style={SECL}>CATEGORY</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  {CATS.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} />)}
+                </View>
+                {fCat === 'Savings' ? (
+                  <View style={{ marginTop: 10 }}>
+                    <Text style={{ color: dim, fontSize: 11.5 }}>Which savings goal is this for?</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                      {opts.map((o) => { const on = o.id ? fGoal === o.id && !fPre : fPre === o.key; return <Chip key={o.key} t={o.name} on={on} c="#5ee7b5" onPress={() => { if (on) { setFGoal(0); setFPre(''); } else if (o.id) { setFGoal(o.id); setFPre(''); } else { setFGoal(0); setFPre(o.key); } }} />; })}
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+              <View style={SEC}>
+                <Text style={SECL}>DATE AND REMARK (OPTIONAL)</Text>
+                <DateField value={fDate} onChange={setFDate} />
+                <Inp style={{ marginTop: 8 }} value={fNote} onChangeText={setFNote} placeholder="Remark (optional)" />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                  {NOTE_QUICK.map((t) => { const on = fNote.split(',').map((x) => x.trim()).includes(t); return (
+                    <Pressable key={t} onPress={() => quickNote(t)} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: on ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '600' }}>{t}</Text></Pressable>
+                  ); })}
                 </View>
               </View>
-            ) : null}
-            {all.length === 0 ? (
-              <View style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}><Text style={{ textAlign: 'center', color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18 }}>No spending yet. Type what you bought, the amount, pick a category and tap Add.</Text></View>
-            ) : null}
-            {all.length > 1 ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '700' }}>Sort by</Text>
-                {([['new', 'Newest'], ['old', 'Oldest'], ['add', 'Added']] as ['new' | 'old' | 'add', string][]).map(([k, t]) => (
-                  <Pressable key={k} onPress={() => setSortBy(k)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: sortBy === k ? '#ffc46b' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: sortBy === k ? '#ffc46b' : 'rgba(255,255,255,.22)' }}>
-                    <Text style={{ color: sortBy === k ? '#0b1030' : W, fontSize: 12, fontWeight: '700' }}>{t}</Text>
-                  </Pressable>
-                ))}
+              {accD.accs.length ? (
+                <View style={SEC}>
+                  <Text style={SECL}>PAID FROM (OPTIONAL)</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    <Chip t="Not linked" on={!fAcc} onPress={() => setFAcc(0)} />
+                    {accD.accs.filter((a) => a.g !== 'loan').map((a) => <Chip key={a.id} t={a.name} on={fAcc === a.id} c={groupOf(a.g).c} onPress={() => setFAcc(fAcc === a.id ? 0 : a.id)} />)}
+                  </View>
+                </View>
+              ) : null}
+              <Pressable onPress={addSpend} style={{ marginTop: 12 }}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 14, fontWeight: '800' }}>+ Add spending</Text></LinearGradient></Pressable>
+            </Glass>
+
+            {/* Spending history */}
+            <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending History</Text>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{all.length + (all.length === 1 ? ' item' : ' items')}</Text>
               </View>
-            ) : null}
+              {all.length === 0 ? (
+                <View style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}><Text style={{ textAlign: 'center', color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18 }}>No spending yet. Fill in Add Spending above and tap Add.</Text></View>
+              ) : null}
+              {all.length > 1 ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '700' }}>Sort by</Text>
+                  {([['new', 'Newest'], ['old', 'Oldest'], ['add', 'Added']] as ['new' | 'old' | 'add', string][]).map(([k, t]) => (
+                    <Pressable key={k} onPress={() => setSortBy(k)} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: sortBy === k ? '#ffc46b' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: sortBy === k ? '#ffc46b' : 'rgba(255,255,255,.22)' }}>
+                      <Text style={{ color: sortBy === k ? '#0b1030' : W, fontSize: 12, fontWeight: '700' }}>{t}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
             <View style={{ marginTop: 6 }}>
               {byDate.map((p, i) => (
                 <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
@@ -394,7 +418,7 @@ export default function Finance() {
               ))}
               {all.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
             </View>
-          </Glass>
+            </Glass>
 
           {/* By category */}
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
