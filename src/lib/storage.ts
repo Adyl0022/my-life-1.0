@@ -64,7 +64,7 @@ export type Backup = { created: string; parts: string[]; data: Record<string, Re
 
 // Receipt photos live as files on this phone. A backup can carry them (as text) so they come along to a new phone.
 // Limits keep the backup file at a size the phone can still open.
-export const RECEIPT_MAX_N = 40;
+export const RECEIPT_MAX_N = 80;
 export const RECEIPT_MAX_CHARS = 15000000;
 const isReceipt = (v: any) => typeof v === 'string' && (v.indexOf('/receipts/') >= 0 || v.indexOf('/docs/') >= 0) && v.indexOf('data:') !== 0;
 const walkStr = (v: any, f: (s: string) => void) => { if (typeof v === 'string') f(v); else if (Array.isArray(v)) v.forEach((x) => walkStr(x, f)); else if (v && typeof v === 'object') Object.keys(v).forEach((k) => walkStr(v[k], f)); };
