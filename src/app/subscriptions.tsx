@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Pressable, Platform, ScrollView, Image } from 'react-native';
+import { curCode, useRegion } from '../lib/region';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
 import { Inp, DateField, W } from '../components/Ui';
@@ -15,7 +16,7 @@ import { tryForm, pn, numberError } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { scanPhoto } from '../lib/documents';
 import { onlineAsk, useOnlineAi } from '../lib/onlineAi';
-import { SUB_EMPTY, SUB_CATS, CYCLES, REM, SERVICES, catOf, dueOf, monthlyTotal, monthly, detect, fromFound, readBill, readAi, aiPrompt, rm, num, validDate, ymd, addCycle, type Sub, type SubStore, type Cycle, type Billed } from '../lib/subs';
+import { SUB_EMPTY, SUB_CATS, CYCLES, REM, SERVICES, catOf, dueOf, monthlyTotal, monthly, detect, fromFound, readBill, curWarn, readAi, aiPrompt, rm, num, validDate, ymd, addCycle, type Sub, type SubStore, type Cycle, type Billed } from '../lib/subs';
 import type { Sp } from '../lib/moneyLeft';
 
 const BL = '#7c9cff', GR = '#5ee7b5';
@@ -48,7 +49,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       if (uri) {
         const text = Platform.OS === 'web' ? null : await scanPhoto(uri);
         if (text == null) setMsg(Platform.OS === 'web' ? 'Scanning works in the Android app. You can still type the details in.' : 'Scanning is not ready on this phone. You can still type the details in.');
-        else { setRaw(text); const b = readBill(text, ymd(new Date())); if (!b) setMsg('Could not find a bill in this photo. Try again in good light, or type it in.'); else { setF(apply(b)); setMsg((b.usd ? 'The price looks like US dollars. Please type it in ringgit. ' : '') + 'Read some details from the photo. Please check each box before you save. The photo itself is not kept.'); } }
+        else { setRaw(text); const b = readBill(text, ymd(new Date())); if (!b) setMsg('Could not find a bill in this photo. Try again in good light, or type it in.'); else { setF(apply(b)); setMsg(curWarn(b.cur) + 'Read some details from the photo. Please check each box before you save. The photo itself is not kept.'); } }
       }
     } catch (e: any) { setMsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings to scan, or choose a photo instead.' : 'Could not open the photo. Please try again.'); }
     setBusy(false);
@@ -76,7 +77,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
       <Lab t="DETAILS" />
       <Inp value={f.name} onChangeText={(x: string) => set({ name: x })} placeholder="Name, e.g. Streaming" maxLength={40} />
       {tried && !f.name.trim() ? <Err t="Please enter a name." /> : null}
-      <Inp form="sub" need="a price" style={{ marginTop: 9 }} value={f.price} onChangeText={(x: string) => set({ price: x })} keyboardType="decimal-pad" placeholder="Price in RM" />
+      <Inp form="sub" need="a price" style={{ marginTop: 9 }} value={f.price} onChangeText={(x: string) => set({ price: x })} keyboardType="decimal-pad" placeholder={'Price in ' + curCode()} />
       {tried && f.price.trim() && !numberError(f.price) && !(price > 0) ? <Err t="Please enter a price above 0." /> : null}
       <Lab t="HOW OFTEN" />
       <View style={{ flexDirection: 'row', height: 46, borderRadius: 15, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)', padding: 4 }}>{CYCLES.map((c) => <Pressable key={c.k} onPress={() => set({ cycle: c.k })} accessibilityLabel={c.n} style={{ flex: 1 }}><View style={{ flex: 1, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: f.cycle === c.k ? '#6a47e8' : 'transparent' }}><Text style={{ color: W, fontSize: 13.5, fontWeight: f.cycle === c.k ? '800' : '600' }}>{c.k === 'week' ? 'Weekly' : c.k === 'month' ? 'Monthly' : 'Yearly'}</Text></View></Pressable>)}</View>
@@ -165,6 +166,7 @@ function Donut({ parts, total }: { parts: { c: string; v: number }[]; total: num
 }
 
 export default function Screen() {
+  useRegion();
   const router = useRouter();
   const [st, setSt] = useStored<SubStore>('ml_subs', SUB_EMPTY);
   const [fin] = useStored<{ spends?: Sp[] }>('ml_finance', {});

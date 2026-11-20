@@ -2,6 +2,7 @@
 // that spots payments in your own spending that keep coming back. Everything here runs on the phone.
 import type { Sp } from './moneyLeft';
 import { useStored } from './store';
+import { cs, cu, curCode } from './region';
 export type Cycle = 'week' | 'month' | 'year';
 export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string };
 export type SubStore = { subs: Sub[]; next: number; no: string[] };
@@ -35,7 +36,8 @@ const parse = (s: string) => { const [y, m, d] = s.split('-').map(Number); retur
 export const dayN = (s: string) => Math.round(parse(s).getTime() / 86400000);
 export const validDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s || '') && ymd(parse(s)) === s;
 export const num = (s: string) => { const n = parseFloat(String(s || '').replace(',', '.')); return isFinite(n) ? n : 0; };
-export const rm = (n: number) => 'RM ' + n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Written in the currency the person picked in Settings. Amounts are never converted, only the symbol changes.
+export const rm = (n: number) => cs() + n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** One step forward by the cycle. A bill on the 31st lands on the last day of a shorter month. */
 export function addCycle(s: string, c: Cycle, n = 1): string {
@@ -108,14 +110,21 @@ export function fromFound(f: Found, today: string, id: number): Sub {
 
 // ---- Reading a bill or receipt (the words come from the phone's own text reader) ----
 const MON: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12, mac: 3, mei: 5, ogos: 8, okt: 10, dis: 12 };
-export type Billed = { name?: string; cat?: string; price?: string; cycle?: Cycle; next?: string; trial?: boolean; usd?: boolean };
+export type Billed = { name?: string; cat?: string; price?: string; cycle?: Cycle; next?: string; trial?: boolean; cur?: string };
+const CUR_OF: Record<string, string> = { RM: 'MYR', MYR: 'MYR', USD: 'USD', 'US$': 'USD', SGD: 'SGD', 'S$': 'SGD', EUR: 'EUR', '€': 'EUR', GBP: 'GBP', '£': 'GBP', AUD: 'AUD', 'A$': 'AUD', $: '$' };
+/** A line to show when the receipt is in a different currency from the one the person uses, or '' when they match. */
+export function curWarn(cur: string | undefined): string {
+  if (!cur) return '';
+  if (cur === '$') return /\$/.test(cu()) ? '' : 'The receipt shows a $ price. ';
+  return cur === curCode() ? '' : 'The receipt looks like ' + cur + ', but your currency is ' + curCode() + '. Please type the price in ' + curCode() + '. ';
+}
 export function readBill(text: string, today: string): Billed | null {
   const t = String(text || ''); if (t.trim().length < 6) return null;
   const out: Billed = {}; const svc = matchService(t); if (svc) { out.name = svc.n; out.cat = svc.cat; }
-  const am = [...t.matchAll(/(RM|MYR|USD|US\$|\$)\s*(\d{1,4}(?:[.,]\d{2})?)/gi)];
+  const am = [...t.matchAll(/(RM|MYR|USD|US\$|SGD|S\$|EUR|€|GBP|£|AUD|A\$|\$)\s*(\d{1,4}(?:[.,]\d{2})?)/gi)];
   if (am.length) {
     const tot = am.find((m) => /total|amount|jumlah|charged|dicaj|pay/i.test(t.slice(Math.max(0, (m.index || 0) - 40), m.index))) || am[0];
-    out.price = String(num(tot[2])); if (/usd|us\$|\$/i.test(tot[1]) && !/rm|myr/i.test(tot[1])) out.usd = true;
+    out.price = String(num(tot[2])); out.cur = CUR_OF[tot[1].toUpperCase()] || tot[1];
   }
   if (/annual|yearly|per year|\/\s*year|\/yr|tahunan|setahun/i.test(t)) out.cycle = 'year'; else if (/weekly|per week|\/\s*week|mingguan/i.test(t)) out.cycle = 'week'; else if (/monthly|per month|\/\s*month|bulanan|sebulan|every month/i.test(t)) out.cycle = 'month';
   if (/free trial|trial period|percubaan percuma/i.test(t)) out.trial = true;
