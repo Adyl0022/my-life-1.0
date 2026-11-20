@@ -168,8 +168,8 @@ const plain = { borderRadius: 22, backgroundColor: 'rgba(255,255,255,.07)', bord
 // Bold frosted glass: the art behind is blurred, the pane is brighter at the top and has a clear light edge, so it stands out and the text stays easy to read.
 function Pane({ style, children }: { style?: any; children?: React.ReactNode }) {
   return (
-    <View style={[{ borderRadius: 22, overflow: 'hidden', zIndex: 0, borderWidth: 1, borderColor: 'rgba(255,255,255,.45)' }, style]}>
-      <LinearGradient colors={['rgba(255,255,255,.30)', 'rgba(215,215,255,.20)', 'rgba(170,150,230,.24)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+    <View style={[{ borderRadius: 22, overflow: 'hidden', zIndex: 0, borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }, style]}>
+      <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
       {children}
     </View>
   );
@@ -225,7 +225,7 @@ export default function Screen() {
   const total = monthlyTotal(subs);
   const first = list.find(live); const fd = first ? dueOf(first, today) : null; const ft = fd ? tone(fd) : null;
   const incNow = (fin && (fin as any).inc && (fin as any).inc[today.slice(0, 7)]) || {}; const income = Object.keys(incNow).reduce((a, k) => a + (Number(incNow[k]) || 0), 0);
-  const months = useMemo(() => nextMonths(subs.filter(live), today), [st]); const top = Math.max(1, ...months.map((x) => x.v));
+  const months = useMemo(() => nextMonths(subs.filter(live), today), [st]);
   const save = (g?: Form) => {
     const f2 = g || f; if (!f2) return; const s: Sub = { ...f2, name: f2.name.trim(), price: String(pn(f2.price)), note: f2.note.trim() };
     if (s.id) setSt({ ...st, subs: subs.map((x) => (x.id === s.id ? s : x)) }); else setSt({ ...st, subs: [...subs, { ...s, id: st.next }], next: st.next + 1 });
@@ -274,16 +274,7 @@ export default function Screen() {
 
           {act.length ? <>
             <Text style={{ color: INK, fontSize: 16, fontWeight: '800', marginTop: 22, marginHorizontal: 2 }}>Summary</Text>
-            <Pane style={{ marginTop: 9, padding: 14 }}><SubInsights subs={subs} income={income} onOpen={(x) => setF({ ...x })} /></Pane>
-            <Text style={{ color: INK, fontSize: 14.5, fontWeight: '800', marginTop: 16, marginHorizontal: 2 }}>Next 5 months</Text>
-            <Pane style={{ marginTop: 8, padding: 14, flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 150 }}>
-              {months.map((m, i) => <View key={m.k} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 5 }}>
-                <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: INK2, fontSize: 9.5, fontWeight: '700' }}>{m.v ? Math.round(m.v) : ''}</Text>
-                <LinearGradient colors={i === 0 ? ['#b9a6ff', '#7a5cf0'] : ['#8fe9e2', '#5aa8c8']} style={{ width: '100%', height: Math.max(6, (m.v / top) * 78), borderRadius: 8 }} />
-                <Text style={{ color: INK2, fontSize: 10.5 }}>{m.n}</Text>
-              </View>)}
-            </Pane>
-            <Text style={{ color: INK2, fontSize: 11.5, marginTop: 10, lineHeight: 16, marginHorizontal: 2 }}>This month's coming charges come off Money Left.</Text>
+            <SubInsights subs={subs} income={income} months={months} onOpen={(x) => setF({ ...x })} />
           </> : null}
           <View style={{ height: 60 }} />
       </RecordPage>
