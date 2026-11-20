@@ -8,8 +8,8 @@ import { SheetFrame, Lab, chip, dim, BigBtn, Empty } from '../components/ColUi';
 import { CancelGuideSheet } from '../components/CancelGuideSheet';
 import * as Haptics from 'expo-haptics';
 import { SubArt } from '../components/SubArt';
+import { SubInsights } from '../components/SubInsights';
 import { RecordPage } from '../components/RecordHubUi';
-import Svg, { Circle as SCircle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { LineIcon } from '../components/LineIcon';
 import { useStored } from '../lib/store';
@@ -212,22 +212,11 @@ function nextMonths(subs: Sub[], today: string) {
 }
 const nextChargeFrom = (s: Sub, today: string) => dueOf(s, today).date;
 
-function Donut({ parts, total }: { parts: { c: string; v: number }[]; total: number }) {
-  const r = 44, C = 2 * Math.PI * r; const sum = parts.reduce((a, b) => a + b.v, 0) || 1; let off = 0;
-  return <View style={{ width: 118, height: 118, alignItems: 'center', justifyContent: 'center' }}>
-    <Svg width={118} height={118} viewBox="0 0 118 118">
-      <SCircle cx={59} cy={59} r={r} stroke="rgba(255,255,255,.1)" strokeWidth={14} fill="none" />
-      {parts.map((p, i) => { const l = (C * p.v) / sum; const e = <SCircle key={i} cx={59} cy={59} r={r} stroke={p.c} strokeWidth={14} fill="none" strokeDasharray={Math.max(0, l - 3) + ' ' + C} strokeDashoffset={-off} rotation={-90} origin="59,59" strokeLinecap="round" />; off += l; return e; })}
-    </Svg>
-    <View style={{ position: 'absolute', alignItems: 'center' }}><Text style={{ color: INK, fontSize: 24, fontWeight: '800' }}>{total}</Text><Text style={{ color: INK2, fontSize: 10.5 }}>Total</Text></View>
-  </View>;
-}
-
 export default function Screen() {
   useRegion();
   const router = useRouter();
   const [st, setSt] = useStored<SubStore>('ml_subs', SUB_EMPTY);
-  const [fin] = useStored<{ spends?: Sp[] }>('ml_finance', {});
+  const [fin] = useStored<{ spends?: Sp[]; inc?: Record<string, Record<string, number>> }>('ml_finance', {});
   const subs = (st && st.subs) || []; const no = (st && st.no) || [];
   const today = ymd(new Date()); const [f, setF] = useState<Form | null>(null);
   const found = useMemo(() => detect((fin && fin.spends) || [], subs, no, today), [fin, st]);
@@ -235,7 +224,7 @@ export default function Screen() {
   const act = subs.filter(live);
   const total = monthlyTotal(subs);
   const first = list.find(live); const fd = first ? dueOf(first, today) : null; const ft = fd ? tone(fd) : null;
-  const shares = useMemo(() => { const m: Record<string, number> = {}; act.forEach((x) => { m[x.cat] = (m[x.cat] || 0) + monthly(x); }); return Object.keys(m).map((k) => ({ k, v: m[k], c: catOf(k).c, n: catOf(k).n })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); }, [st]);
+  const incNow = (fin && (fin as any).inc && (fin as any).inc[today.slice(0, 7)]) || {}; const income = Object.keys(incNow).reduce((a, k) => a + (Number(incNow[k]) || 0), 0);
   const months = useMemo(() => nextMonths(subs.filter(live), today), [st]); const top = Math.max(1, ...months.map((x) => x.v));
   const save = (g?: Form) => {
     const f2 = g || f; if (!f2) return; const s: Sub = { ...f2, name: f2.name.trim(), price: String(pn(f2.price)), note: f2.note.trim() };
@@ -285,13 +274,7 @@ export default function Screen() {
 
           {act.length ? <>
             <Text style={{ color: INK, fontSize: 16, fontWeight: '800', marginTop: 22, marginHorizontal: 2 }}>Summary</Text>
-            <Pane style={{ marginTop: 9, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <Donut parts={shares.map((x) => ({ c: x.c, v: x.v }))} total={act.length} />
-              <View style={{ flex: 1 }}>
-                {shares.map((x) => <View key={x.k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}><View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: x.c }} /><Text style={{ color: INK, fontSize: 13, flex: 1 }}>{x.n}</Text><Text style={{ color: INK2, fontSize: 12.5, fontWeight: '700' }}>{Math.round((x.v / (total || 1)) * 100)}%</Text></View>)}
-                <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)', marginTop: 6, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: INK2, fontSize: 12 }}>Every month</Text><Text style={{ color: INK, fontSize: 13, fontWeight: '800' }}>{rm(total)}</Text></View>
-              </View>
-            </Pane>
+            <Pane style={{ marginTop: 9, padding: 14 }}><SubInsights subs={subs} income={income} onOpen={(x) => setF({ ...x })} /></Pane>
             <Text style={{ color: INK, fontSize: 14.5, fontWeight: '800', marginTop: 16, marginHorizontal: 2 }}>Next 5 months</Text>
             <Pane style={{ marginTop: 8, padding: 14, flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 150 }}>
               {months.map((m, i) => <View key={m.k} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 5 }}>

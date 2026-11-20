@@ -534,7 +534,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#7c9cff",
   "h": "Finance.dc.html",
-  "k": "subscriptions subscription langganan netflix youtube spotify claude pro chatgpt disney icloud google one free trial percubaan percuma renew bayar bulanan monthly scan bill resit receipt auto detect charged add to spending record charge how to cancel unsubscribe stop paying berhenti langgan cara batal pause paused cancel cancelled batal jeda status payment method bayar guna kad debit credit e-wallet every 3 months 6 months suku tahun"
+  "k": "subscriptions subscription langganan summary ringkasan costliest paling mahal per day sehari by payment cara bayar save jimat income pendapatan netflix youtube spotify claude pro chatgpt disney icloud google one free trial percubaan percuma renew bayar bulanan monthly scan bill resit receipt auto detect charged add to spending record charge how to cancel unsubscribe stop paying berhenti langgan cara batal pause paused cancel cancelled batal jeda status payment method bayar guna kad debit credit e-wallet every 3 months 6 months suku tahun"
  },
  {
   "t": "Savings Goals",
