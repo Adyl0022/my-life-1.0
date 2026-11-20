@@ -4,6 +4,10 @@ import { calcLeft, commitFor, ymKey } from './moneyLeft';
 import { cs } from './region';
 import { isActive, amountDue, dueDay, ymOf } from './debts';
 import type { Core } from './insights';
+import { useStored } from './store';
+import { useRegion } from './region';
+import { upcomingMy, EMPTY_CACHE, MyCache } from './myEvents';
+import { upcoming as islamicUp, useHijriSync } from './hijriSync';
 
 // Extra pages for the Dashboard card. Each one is null when there is nothing worth showing, so the card never turns through empty pages.
 export type Extra = { label: string; title: string; sub: string; tone?: string; go: string; ring?: number; val?: string };
@@ -12,7 +16,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const ymd = (d: Date) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const dayN = (s: string) => { const p = s.split('-'); return Math.round(new Date(+p[0], +p[1] - 1, +p[2], 12).getTime() / 86400000); };
 
-export function useDashExtras(core: Core, on: { islamic: boolean; planner: boolean; record: boolean; finance: boolean }): { prayer: Extra | null; event: Extra | null; job: Extra | null; money: Extra | null; tasks: Extra | null; renew: Extra | null; debt: Extra | null } {
+export function useDashExtras(core: Core, on: { islamic: boolean; planner: boolean; record: boolean; finance: boolean }): { prayer: Extra | null; event: Extra | null; calmix: Extra | null; calgen: Extra | null; job: Extra | null; money: Extra | null; tasks: Extra | null; renew: Extra | null; debt: Extra | null } {
   const pr = usePrayer(true);
   const now = new Date(); const today = ymd(now);
   let prayer: Extra | null = null;
@@ -29,6 +33,25 @@ export function useDashExtras(core: Core, on: { islamic: boolean; planner: boole
     const e = late || soon;
     if (e) { const dl = dayN(e.date) - t; event = { label: 'NEXT EVENT', title: e.name, sub: dl < 0 ? 'Overdue ' + -dl + (dl === -1 ? ' day' : ' days') : dl === 0 ? 'Today' : dl === 1 ? '1 day left' : dl + ' days left', tone: dl < 0 ? '#ff6b81' : dl <= 7 ? '#ffd24a' : '#5ee7b5', go: '/planner', val: dl === 0 ? 'Today' : dl + 'd', ring: dl < 0 ? 1 : 1 - Math.min(dl, 14) / 14 }; }
   }
+  // Upcoming calendar pages: your own events, public holidays and (for the mixed page) Islamic dates, nearest first
+  const [mc] = useStored<MyCache>('ml_myevents', EMPTY_CACHE); const [rg] = useRegion(); const hoff = useHijriSync();
+  const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const calPage = (withIslamic: boolean): Extra | null => {
+    type It = { date: string; name: string; src: 'mine' | 'islam' | 'holiday'; go: string };
+    const all: It[] = [];
+    if (on.planner) ((core.pl && (core.pl as any).events) || []).forEach((e: any) => { if (e && !e.done && /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') && e.date >= today) all.push({ date: e.date, name: e.name, src: 'mine', go: '/planner' }); });
+    let my: any[] = []; try { my = upcomingMy(today, 40, mc, rg.cc); } catch (e) { my = []; }
+    my.forEach((e) => { if (e.kind === 'islam') { if (withIslamic) all.push({ date: e.date, name: e.name, src: 'islam', go: '/islamic' }); } else all.push({ date: e.date, name: e.name, src: 'holiday', go: '/planner' }); });
+    if (withIslamic && on.islamic) { try { islamicUp(now, hoff, 12).forEach((u) => { const d = ymd(u.date); if (!all.some((a) => a.src === 'islam' && Math.abs(dayN(a.date) - dayN(d)) <= 2)) all.push({ date: d, name: u.n, src: 'islam', go: '/islamic' }); }); } catch (e) { /* none */ } }
+    const t = dayN(today); const list = all.filter((a) => dayN(a.date) - t <= 120).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    const n = list[0]; if (!n) return null;
+    const dl = dayN(n.date) - t; const dt = new Date(+n.date.slice(0, 4), +n.date.slice(5, 7) - 1, +n.date.slice(8, 10));
+    const nx = list[1]; const nd = nx ? dayN(nx.date) - t : 0;
+    const when = WD[dt.getDay()] + ' ' + dt.getDate() + ' ' + MN[dt.getMonth()];
+    const left = dl === 0 ? 'Today' : dl === 1 ? 'Tomorrow' : dl + ' days';
+    return { label: 'UPCOMING · ' + (n.src === 'mine' ? 'YOUR EVENT' : n.src === 'islam' ? 'ISLAMIC' : 'HOLIDAY'), title: n.name, sub: when + ' · ' + left + (nx ? ' · then ' + nx.name + (nd === dl ? ' same day' : '') : ''), tone: dl <= 7 ? '#ffd24a' : '#5ee7b5', go: n.go, val: dl === 0 ? 'Today' : dl + 'd', ring: 1 - Math.min(dl, 30) / 30 };
+  };
+  const calmix = calPage(true); let calgen = calPage(false); if (calgen && calmix && calgen.title === calmix.title) calgen = null; // never show the same date twice in a row
   let job: Extra | null = null;
   if (on.record) {
     let best: { lv: number; di: number; name: string; veh: string; text: string } | null = null;
@@ -94,5 +117,5 @@ export function useDashExtras(core: Core, on: { islamic: boolean; planner: boole
     const b: any = pick;
     if (b) debt = { label: 'DEBT PAYMENT', title: b.name + ' · ' + cs() + money(b.amt), sub: b.n < 0 ? 'Overdue ' + -b.n + (b.n === -1 ? ' day' : ' days') : b.n === 0 ? 'Due today' : 'Due in ' + b.n + (b.n === 1 ? ' day' : ' days'), tone: b.n < 0 ? '#ff6b81' : b.n <= 2 ? '#ffd24a' : '#5ee7b5', go: '/finance', val: b.n < 0 ? 'Late' : b.n === 0 ? 'Today' : b.n + 'd', ring: b.n < 0 ? 1 : 1 - Math.min(b.n, 7) / 7 };
   }
-  return { prayer, event, job, money: moneyX, tasks, renew, debt };
+  return { prayer, event, calmix, calgen, job, money: moneyX, tasks, renew, debt };
 }
