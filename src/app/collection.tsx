@@ -53,10 +53,13 @@ export default function Screen() {
       </View>
       {items.length ? (
         <Pressable onPress={pdf} accessibilityLabel="Export my things as PDF" style={({ pressed }) => ({ marginTop: 16, transform: [{ scale: pressed ? 0.98 : 1 }] })}>
-          <LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ borderRadius: 20, padding: 16 }}>
-            <Text style={{ color: '#0b1030', fontSize: 16, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'My things as a PDF'}</Text>
-            <Text style={{ color: 'rgba(11,16,48,.8)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>A list of everything you own with price, date and a photo. Handy for an insurance claim. It is made on this phone and nothing is uploaded.</Text>
-          </LinearGradient>
+          <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' }}>
+            <LinearGradient colors={['rgba(142,168,255,.32)', 'rgba(183,148,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+            <View style={{ padding: 16 }}>
+              <Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'My things as a PDF'}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>A list of everything you own with price, date and a photo. Handy for an insurance claim. It is made on this phone and nothing is uploaded.</Text>
+            </View>
+          </View>
         </Pressable>
       ) : null}
       <View style={{ height: 10 }} />

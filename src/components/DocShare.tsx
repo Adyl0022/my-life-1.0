@@ -72,8 +72,12 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
           ) : null}
           <View ref={ref} collapsable={false} style={{ marginTop: 16, width: w, height: h, alignSelf: 'center', borderRadius: 14, overflow: 'hidden', backgroundColor: '#0d0a18' }}>
             <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="contain" />
-            <View pointerEvents="none" style={{ position: 'absolute', left: -w * 0.3, right: -w * 0.3, top: -h * 0.3, bottom: -h * 0.3, justifyContent: 'space-around', transform: [{ rotate: '-24deg' }] }}>
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((r) => (<Text key={r} numberOfLines={1} style={{ color: 'rgba(255,255,255,.6)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.85)', textShadowRadius: 2, textShadowOffset: { width: 1, height: 1 } }}>{(text + '     ').repeat(8)}</Text>))}
+            <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, overflow: 'hidden' }}>
+              {[0.34, 0.68].map((y) => (
+                <View key={y} style={{ position: 'absolute', left: -w * 0.2, width: w * 1.4, top: h * y - 14, height: 28, justifyContent: 'center', transform: [{ rotate: '-22deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.9)', backgroundColor: 'rgba(0,0,0,.2)' }}>
+                  <Text numberOfLines={1} style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 1.5, textAlign: 'center', textShadowColor: 'rgba(0,0,0,.9)', textShadowRadius: 2, textShadowOffset: { width: 1, height: 1 } }}>{text}</Text>
+                </View>
+              ))}
             </View>
           </View>
           {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 12 }}>{msg}</Text> : null}
