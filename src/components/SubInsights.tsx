@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, Platform, Animated } from 'react-native';
+import { View, Pressable, Platform, Animated, Easing, PanResponder } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Text } from './Txt';
@@ -11,21 +11,31 @@ const TITLES = ['COSTLIEST', 'PER DAY', 'BY PAYMENT', 'SAVE', 'NEXT 5 MONTHS'];
 const PAY_COL: Record<string, string> = { debit: '#8ea8ff', credit: '#ff9ac4', ewallet: '#5ee7b5', bank: '#ffd24a', other: '#c9b6ff', none: 'rgba(255,255,255,.5)' };
 const BODY_H = 262;
 
-/** One card that turns by itself every few seconds, like the card on the Dashboard: Costliest, Per day, By payment, Save and the next five months.
- *  It waits 20 seconds after a touch. The dots at the top also let you jump to a page. It reads only what is already saved on this phone. */
+/** One card that turns by itself, built the same way as the card in Islamic Hub: a thin bar for each page at the bottom, the bar of the page you are on fills over 10 seconds and then the card turns.
+ *  Press and hold to pause, swipe left or right to turn it yourself. It reads only what is already saved on this phone. */
 export function SubInsights({ subs, income, months, onOpen }: { subs: Sub[]; income: number; months: { k: string; n: string; v: number }[]; onOpen: (s: Sub) => void }) {
-  const [i, setI] = useState(0);
-  const v = useRef(new Animated.Value(1)).current; const ty = useRef(new Animated.Value(0)).current;
-  const last = useRef(0); const iRef = useRef(0); iRef.current = i;
-  const goTo = (to: number) => {
-    if (to === iRef.current) return;
-    Animated.parallel([Animated.timing(v, { toValue: 0, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: -8, duration: 160, useNativeDriver: true })]).start(() => {
-      setI(to); ty.setValue(8);
-      Animated.parallel([Animated.timing(v, { toValue: 1, duration: 160, useNativeDriver: true }), Animated.timing(ty, { toValue: 0, duration: 160, useNativeDriver: true })]).start();
+  const [i, setI] = useState(0); const [held, setHeld] = useState(false);
+  const fade = useRef(new Animated.Value(1)).current; const tx = useRef(new Animated.Value(0)).current; const prog = useRef(new Animated.Value(0)).current;
+  const busy = useRef(false); const n = TITLES.length;
+  const swap = (dir: number) => {
+    if (busy.current) return; busy.current = true;
+    Animated.parallel([Animated.timing(tx, { toValue: -dir * 24, duration: 200, useNativeDriver: true }), Animated.timing(fade, { toValue: 0, duration: 200, useNativeDriver: true })]).start(() => {
+      setI((v) => (v + dir + n) % n); tx.setValue(dir * 24);
+      Animated.parallel([Animated.timing(tx, { toValue: 0, duration: 300, useNativeDriver: true }), Animated.timing(fade, { toValue: 1, duration: 300, useNativeDriver: true })]).start(() => { busy.current = false; });
     });
   };
-  const nextRef = useRef(() => {}); nextRef.current = () => goTo((iRef.current + 1) % TITLES.length);
-  useEffect(() => { const t = setInterval(() => { if (Date.now() - last.current < 20000) return; nextRef.current(); }, 5000); return () => clearInterval(t); }, []);
+  const swapRef = useRef(swap); swapRef.current = swap;
+  useEffect(() => {
+    prog.setValue(0);
+    if (held) return;
+    const a = Animated.timing(prog, { toValue: 1, duration: 10000, easing: Easing.linear, useNativeDriver: false });
+    a.start(({ finished }) => { if (finished) swapRef.current(1); });
+    return () => a.stop();
+  }, [held, i]);
+  const pan = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
+    onPanResponderRelease: (_e, g) => { if (g.dx < -40) { buzz(); swapRef.current(1); } else if (g.dx > 40) { buzz(); swapRef.current(-1); } },
+  })).current;
 
   const act = useMemo(() => subs.filter(live), [subs]);
   const ranked = useMemo(() => act.map((s) => ({ s, m: monthly(s) })).filter((x) => x.m > 0).sort((a, b) => b.m - a.m), [act]);
@@ -40,14 +50,10 @@ export function SubInsights({ subs, income, months, onOpen }: { subs: Sub[]; inc
 
   return (
     <View style={{ marginTop: 9, borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}>
-      <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14 }}>
-        <Pressable onPress={() => { last.current = Date.now(); buzz(); goTo((i + 1) % TITLES.length); }} accessibilityLabel="Next summary page" hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={{ color: '#8fe9e2', fontSize: 10, fontWeight: '800', letterSpacing: 1 }}>{TITLES[i]}</Text>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            {TITLES.map((t, k) => (<Pressable key={t} onPress={() => { last.current = Date.now(); buzz(); goTo(k); }} accessibilityLabel={'Show ' + t.toLowerCase()} hitSlop={8}><View style={{ width: k === i ? 18 : 7, height: 7, borderRadius: 4, backgroundColor: k === i ? '#fff' : 'rgba(255,255,255,.35)' }} /></Pressable>))}
-          </View>
-        </Pressable>
-        <Animated.View onTouchStart={() => { last.current = Date.now(); }} style={{ marginTop: 14, height: BODY_H, opacity: v, transform: [{ translateY: ty }] }}>
+      <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 14, paddingBottom: 26 }}>
+        <Animated.View {...pan.panHandlers} onTouchStart={() => setHeld(true)} onTouchEnd={() => setHeld(false)} onTouchCancel={() => setHeld(false)} style={{ opacity: fade, transform: [{ translateX: tx }] }}>
+          <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2 }}>{TITLES[i]}</Text>
+          <View style={{ marginTop: 12, height: BODY_H }}>
           {i === 0 ? (<>
             {ranked.slice(0, 4).map((x, k) => (
               <View key={x.s.id} style={{ marginBottom: 12 }}>
@@ -98,7 +104,7 @@ export function SubInsights({ subs, income, months, onOpen }: { subs: Sub[]; inc
           {i === 3 ? (<>
             <Text style={{ color: INK2, fontSize: 12.5, lineHeight: 18, marginBottom: 10 }}>Stopping one of these frees up the most money. Tap one to open it. How to cancel is inside.</Text>
             {ranked.slice(0, 3).map((x, k) => (
-              <Pressable key={x.s.id} onPress={() => { last.current = Date.now(); buzz(); onOpen(x.s); }} accessibilityLabel={'Open ' + x.s.name} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, paddingHorizontal: 12, marginBottom: k < Math.min(3, ranked.length) - 1 ? 8 : 0, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', backgroundColor: 'rgba(255,255,255,.1)', transform: [{ scale: pressed ? 0.98 : 1 }] })}>
+              <Pressable key={x.s.id} onPress={() => { buzz(); onOpen(x.s); }} accessibilityLabel={'Open ' + x.s.name} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, paddingHorizontal: 12, marginBottom: k < Math.min(3, ranked.length) - 1 ? 8 : 0, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', backgroundColor: 'rgba(255,255,255,.1)', transform: [{ scale: pressed ? 0.98 : 1 }] })}>
                 <View style={{ flex: 1 }}>
                   <Text numberOfLines={1} style={{ color: INK, fontSize: 14, fontWeight: '800' }}>{x.s.name}</Text>
                   <Text style={{ color: INK2, fontSize: 12, marginTop: 2 }}>Stop it and keep <Text style={{ color: '#8fe9e2', fontWeight: '800' }}>{rm(x.m * 12)}</Text> a year</Text>
@@ -121,8 +127,12 @@ export function SubInsights({ subs, income, months, onOpen }: { subs: Sub[]; inc
             <View style={{ flex: 1 }} />
             <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.18)', paddingTop: 9 }}><Text style={{ color: INK2, fontSize: 12, lineHeight: 17 }}>This month's coming charges come off Money Left.</Text></View>
           </>) : null}
+          </View>
         </Animated.View>
       </LinearGradient>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 10, flexDirection: 'row', gap: 6 }}>
+        {TITLES.map((_t, k) => (<View key={k} style={{ flex: 1, height: 3, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.2)' }}>{i === k ? <Animated.View style={{ height: 3, borderRadius: 2, backgroundColor: '#5ee7df', width: prog.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} /> : null}</View>))}
+      </View>
     </View>
   );
 }
