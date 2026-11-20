@@ -9,11 +9,13 @@ import { commitFor, calcLeft } from './moneyLeft';
 import { PUASA_EMPTY, PuasaData } from './fasting';
 import { Fin, Pl, scoreParts, lifeScore, incomeOf, Core } from './insights';
 import { TG_DEFAULT, Toggles } from './adhan';
+import { SUB_EMPTY, dueOf as subDue, monthlyTotal as subMonthly, type SubStore } from './subs';
 import { DocStore, EMPTY_DOCS, typeOf, daysLeft, validDate } from './documents';
 import { ColStore, EMPTY_COL } from './collection';
 import { LockCfg, LOCK_OFF, useLock, loadLock } from './lock';
 
 // Everything the Assistant knows comes from here: the same saved data the rest of the app uses.
+const ymdS = () => { const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
 export type Real = {
   ready: boolean;
   hd: HData; goal: number; cupGoal: number; steps: number; cups: number; sleep: number; mood: number; // mood 1 to 5, 0 = not logged
@@ -28,7 +30,7 @@ export type Real = {
   noteList: { t: string; s: string; rm?: number; rd?: boolean }[];
   plTasks: { id: number; name: string; due: string; prio: string; status: string }[]; plEvents: { id: number; name: string; date: string; done: boolean }[];
   parts: { k: string; label: string; pct: number; detail: string }[]; allow: number;
-  docs: { title: string; type: string; expiry: string; n: number | null }[]; loans: { dir: string; what: string; who: string; title: string; amount: number; due: string; done: boolean }[]; itemsN: number; lessons: { tag: string; title: string; text: string; id: number; date: string }[];
+  subs: { name: string; price: number; cycle: string; next: string; n: number; trial: boolean }[]; subsMonth: number; docs: { title: string; type: string; expiry: string; n: number | null }[]; loans: { dir: string; what: string; who: string; title: string; amount: number; due: string; done: boolean }[]; itemsN: number; lessons: { tag: string; title: string; text: string; id: number; date: string }[];
   incomeLast: number; commit: number; limits: Record<string, number>; goals: { id: number; name: string; target: number; place: string; due: string; saved: number }[];
 };
 
@@ -63,6 +65,7 @@ export function useReal(P: [string, number, number][]): Real {
   const [tgRaw, , o8] = useStored<Partial<Toggles>>('ml_toggles', {});
   const [dcs] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
   const [col] = useStored<ColStore>('ml_collection', EMPTY_COL);
+  const [sbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
   const { cfg: lockRaw } = useLock();
   useEffect(() => { loadLock(); }, []);
   const ready = o1 && o2 && o3 && o4 && o5 && o6 && o7 && o8 && o9;
@@ -101,6 +104,7 @@ export function useReal(P: [string, number, number][]): Real {
     docs: ((dcs && dcs.docs) || []).map((d) => ({ title: d.title || '', type: typeOf(d.type).label, expiry: d.expiry || '', n: d.expiry && validDate(d.expiry) ? daysLeft(d.expiry) : null })),
     loans: ((col && col.loans) || []).map((l) => ({ dir: l.dir, what: l.what, who: l.who || '', title: l.title || '', amount: parseFloat(String(l.amount || '0').replace(',', '.')) || 0, due: l.due || '', done: !!l.done })),
     itemsN: ((col && col.items) || []).length,
+    subs: ((sbs && sbs.subs) || []).map((s) => { const d = subDue(s, ymdS()); return { name: s.name, price: parseFloat(s.price) || 0, cycle: s.cycle, next: d.date, n: d.days, trial: !!s.trial }; }), subsMonth: subMonthly((sbs && sbs.subs) || []),
     lessons: ((col && col.lessons) || []) as any,
     incomeLast: incomeLastMonth(fin), commit: commitFor(debts, ym), limits: ((fin as any).limits || {}) as Record<string, number>,
   };

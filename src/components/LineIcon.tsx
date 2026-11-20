@@ -4,7 +4,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 export type LineName =
   | 'passport' | 'mykad' | 'cidb' | 'permit' | 'idother' | 'bank' | 'member' | 'warranty' | 'insurance' | 'agreement' | 'certificate' | 'property' | 'other'
   | 'camera' | 'photo' | 'search' | 'phone' | 'laptop' | 'watch' | 'audio' | 'plug' | 'shoes' | 'bag' | 'shirt' | 'perfume' | 'ring' | 'gift' | 'house' | 'land' | 'rent' | 'shop' | 'building'
-  | 'money' | 'tool' | 'swap' | 'bulb';
+  | 'money' | 'tool' | 'swap' | 'bulb' | 'play' | 'music' | 'spark' | 'cloud' | 'game' | 'bolt' | 'repeat' | 'scan' | 'wand' | 'bell';
 
 /** One set of thin line icons for Documents and Personal Collection, so nothing there uses coloured emoji. */
 export function LineIcon({ name, c = '#fff', size = 24, w = 1.6 }: { name: string; c?: string; size?: number; w?: number }) {
@@ -47,6 +47,16 @@ export function LineIcon({ name, c = '#fff', size = 24, w = 1.6 }: { name: strin
     case 'tool': g = <>{P('M14.5 6.5a4 4 0 0 0-5.2 5L3.8 17a1.8 1.8 0 0 0 2.6 2.6l5.5-5.5a4 4 0 0 0 5-5.2l-2.6 2.6-2.4-.6-.6-2.4z')}</>; break;
     case 'swap': g = <>{P('M4 8h14.5')}{P('m15 4.5 3.7 3.5L15 11.5')}{P('M20 16H5.5')}{P('m9 12.5-3.7 3.5L9 19.5')}</>; break;
     case 'bulb': g = <>{P('M9.2 17.2c0-1.6-2.7-2.6-2.7-6a5.5 5.5 0 0 1 11 0c0 3.4-2.7 4.4-2.7 6z')}{P('M9.5 20.2h5M10.4 22.2h3.2')}</>; break;
+    case 'play': g = <><Rect x={3} y={5} width={18} height={14} rx={3.2} {...p} />{P('M10.2 9.4l4.6 2.6-4.6 2.6z')}</>; break;
+    case 'music': g = <>{P('M9 17.5V6.2l10-2v11.3')}<Circle cx={6.8} cy={17.6} r={2.4} {...p} /><Circle cx={16.8} cy={15.6} r={2.4} {...p} /></>; break;
+    case 'spark': g = <>{P('M12 3.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2L5 10.5l5.2-1.8z')}{P('M18.5 16.5v3M17 18h3')}</>; break;
+    case 'cloud': g = <>{P('M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 8.4 4.1 4.1 0 0 1 17.5 18.5z')}</>; break;
+    case 'game': g = <>{P('M7 8h10a4 4 0 0 1 3.9 4.9l-.7 3.2a2.5 2.5 0 0 1-4.2 1.2L14.2 15H9.8l-1.8 2.3a2.5 2.5 0 0 1-4.2-1.2l-.7-3.2A4 4 0 0 1 7 8z')}{P('M8.5 10.5v3M7 12h3')}</>; break;
+    case 'bolt': g = <>{P('M13 3L5.5 13.5H11L10 21l7.5-10.5H12z')}</>; break;
+    case 'repeat': g = <>{P('M4 11V9.5A3.5 3.5 0 0 1 7.5 6H19M16 3l3 3-3 3M20 13v1.5A3.5 3.5 0 0 1 16.5 18H5M8 21l-3-3 3-3')}</>; break;
+    case 'scan': g = <>{P('M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10')}</>; break;
+    case 'wand': g = <>{P('M5 19L16 8M14.5 6.5l3 3M7 4v2.5M5.8 5.3h2.4M18 14v2.5M16.8 15.3h2.4')}</>; break;
+    case 'bell': g = <>{P('M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15zM10 20.5h4')}</>; break;
     default: g = <>{P('M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z')}</>;
   }
   return <Svg width={size} height={size} viewBox="0 0 24 24">{g}</Svg>;

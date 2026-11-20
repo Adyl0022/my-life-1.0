@@ -13,6 +13,7 @@ export const DASH_PAGES: { k: string; t: string; s: string; e: string; c: string
   { k: 'event', t: 'Next event', s: 'The nearest event with days left', e: '📅', c: '#8ea8ff' },
   { k: 'calmix', t: 'Upcoming calendar (all)', s: 'Your events, public holidays and Islamic dates, nearest first', e: '🗓️', c: '#8ea8ff' },
   { k: 'calgen', t: 'Upcoming calendar (general)', s: 'Your events and public holidays only, no Islamic dates', e: '📆', c: '#7dd3fc' },
+  { k: 'subs', t: 'Subscription due', s: 'A subscription that charges in the next 7 days, or a free trial about to end', e: '🔁', c: '#7c9cff' },
   { k: 'job', t: 'Vehicle job', s: 'A maintenance job that is due soon or late', e: '🔧', c: '#7df0c6' },
   { k: 'renew', t: 'Road tax, insurance, licence', s: 'Shows when one expires within 30 days', e: '🏍️', c: '#ffb3c6' },
   { k: 'money', t: 'Money this month', s: 'What is left to spend this month', e: '💰', c: '#ffd24a' },

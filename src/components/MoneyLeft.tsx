@@ -1,3 +1,4 @@
+import { useSubsG } from '../lib/subs';
 import React from 'react';
 import { View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from './Txt';
@@ -43,6 +44,7 @@ export function MoneyLeft({ ym, income, spends }: Props) {
   const narrow = useWindowDimensions().width < 360;
   const [debts] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
   const [bc, setBc] = useStored<BudgetCfg>('ml_budget', BUDGET_EMPTY);
+  useSubsG();
   const c = calcLeft({ ym, income, commit: commitFor(debts, ym), spends });
   const { isCur, dim: dimDays, dayNo, daysLeft, commit, spent, today, left, over, savings, used, allowance, projLeft, pace, oneOff, runOutDay, state } = c;
   const sc = state === 'over' ? COL.over : state === 'care' ? COL.spent : COL.left;

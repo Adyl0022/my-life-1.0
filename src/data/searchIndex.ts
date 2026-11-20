@@ -529,6 +529,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "money left baki tinggal duit left to spend gaji income belanja sehari per day month end projection akhir bulan"
  },
  {
+  "t": "Subscriptions",
+  "s": "Netflix, YouTube, Spotify, Claude Pro and more: what charges when, found for you",
+  "m": "Finance",
+  "c": "#7c9cff",
+  "h": "Finance.dc.html",
+  "k": "subscriptions subscription langganan netflix youtube spotify claude pro chatgpt disney icloud google one free trial percubaan percuma renew bayar bulanan monthly scan bill resit receipt auto detect"
+ },
+ {
   "t": "Savings Goals",
   "s": "Save for a motorcycle, car, house, wedding, travel and more",
   "m": "Finance",

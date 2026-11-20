@@ -503,6 +503,18 @@ export function think(A, q, lang) {
   let cat = null; CATK.forEach((c) => { if (!cat && c[1].some((w) => (' ' + qn + ' ').indexOf(' ' + w + ' ') >= 0)) cat = c[0]; });
   const intent = A.pick(qn);
   // A module that is turned off in Settings is not answered here.
+  // Subscriptions: what charges soon and the monthly total
+  if (modOn('finance') && has(['subscription', 'subscriptions', 'langganan', 'netflix', 'spotify', 'youtube', 'claude pro', 'chatgpt', 'disney', 'icloud', 'google one'])) {
+    const sl = (R.subs || []).slice().sort((a, b) => a.n - b.n);
+    if (sl.length) {
+      const nm = sl.find((x) => qn.includes(x.name.toLowerCase().split(' ')[0]));
+      const rmf = (v) => 'RM ' + v.toFixed(2);
+      const say = (x) => x.name + ' ' + (x.trial ? L('free trial ends ', 'percubaan percuma tamat ') : L('charges ', 'dicaj ')) + (x.n <= 0 ? L('today', 'hari ini') : x.n === 1 ? L('tomorrow', 'esok') : L('in ' + x.n + ' days', 'dalam ' + x.n + ' hari')) + ' (' + rmf(x.price) + ')';
+      if (nm) return done(mk(say(nm) + '.', { label: L('Open Subscriptions', 'Buka Subscriptions'), href: 'Finance.dc.html' }));
+      return done(mk(L('You pay about ' + rmf(R.subsMonth) + ' a month on ' + sl.length + ' subscriptions. Next: ', 'Awak bayar kira-kira ' + rmf(R.subsMonth) + ' sebulan untuk ' + sl.length + ' langganan. Seterusnya: ') + sl.slice(0, 3).map(say).join('; ') + '.', { label: L('Open Subscriptions', 'Buka Subscriptions'), href: 'Finance.dc.html' }));
+    }
+    return done(mk(L('You have no subscriptions yet. Open My Finance, then Subscriptions, tap + to add one or scan a bill. My Life also looks in your spending for payments that repeat every month and suggests them.', 'Belum ada langganan. Buka My Finance, kemudian Subscriptions, tekan + untuk tambah atau imbas bil. My Life juga mencari bayaran berulang dalam belanja awak dan mencadangkannya.'), { label: L('Open My Finance', 'Buka My Finance'), href: 'Finance.dc.html' }));
+  }
   // Documents data: what ends soon
   if (modOn('record') && has(['expire', 'expiry', 'expires', 'tamat', 'luput', 'renew', 'warranty', 'waranti', 'passport', 'pasport', 'mykad', 'cidb', 'permit', 'insurance', 'insurans']) && has(['when', 'bila', 'soon', 'tak lama', 'which', 'mana', 'expire', 'expires', 'tamat', 'luput', 'status', 'left', 'baki'])) {
     const dl = (R.docs || []).filter((x) => x.n != null).slice().sort((a, b) => a.n - b.n);

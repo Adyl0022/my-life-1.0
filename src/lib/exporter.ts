@@ -22,7 +22,7 @@ const dm = (k: string) => { const p = String(k).split('-'); return p.length === 
 export const MODS = [
   { k: 'planner', name: 'Planner and Notes', sub: 'Events, tasks and notes', keys: ['ml_planner', 'ml_notes'] },
   { k: 'islamic', name: 'Islamic Hub', sub: 'Fasting log, Tasbih counts, bookmarks and reading progress', keys: ['ml_islamic', 'ml_tasbih', 'ml_puasa'] },
-  { k: 'finance', name: 'My Finance', sub: 'Income, spending, savings goals and commitments', keys: ['ml_finance', 'ml_debts', 'ml_savings'] },
+  { k: 'finance', name: 'My Finance', sub: 'Income, spending, savings goals and commitments', keys: ['ml_finance', 'ml_debts', 'ml_savings', 'ml_subs'] },
   { k: 'record', name: 'My Record', sub: 'Vehicle mileage, fuel and services', keys: ['ml_record'] },
   { k: 'docs', name: 'Documents', sub: 'Passport, cards, warranty and other papers', keys: ['ml_documents'] },
   { k: 'collection', name: 'Personal Collection', sub: 'Gadgets, lifestyle, property, lent and borrowed, life lessons', keys: ['ml_collection'] },
@@ -146,6 +146,11 @@ export async function buildReport(sel: string[], per: number): Promise<Report> {
     if (rd.length > 1) charts.push({ title: 'Odometer (km), latest readings', kind: 'line', labels: rd.slice(-12).map((x: any) => dm(x.date)), values: rd.slice(-12).map((x: any) => num(x.odo)), color: '#e0518a' });
     if (rows.length) sheets.push({ name: 'Record', head: ['Vehicle', 'Type', 'Date', 'Detail', 'Amount (' + cu() + ')', 'Odometer (km)'], rows });
     totals.push(['Record entries', String(rows.length)]);
+  }
+  if (sel.includes('finance')) {
+    const ss = g('finance', 'ml_subs'); const rows: (string | number)[][] = [];
+    ((ss && ss.subs) || []).forEach((s: any) => { rows.push([s.name || '', s.cat || '', Number(String(s.price || '0').replace(',', '.')) || 0, s.cycle === 'year' ? 'Every year' : s.cycle === 'week' ? 'Every week' : 'Every month', s.next || '', s.trial ? 'Free trial' : '', s.note || '']); });
+    if (rows.length) sheets.push({ name: 'Subscriptions', head: ['Name', 'Category', 'Price', 'How often', 'Next charge', 'Trial', 'Note'], rows });
   }
   if (sel.includes('docs')) {
     const dd = g('docs', 'ml_documents'); const rows: (string | number)[][] = [];

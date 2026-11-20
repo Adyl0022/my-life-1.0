@@ -2,6 +2,7 @@
 // so all of them always show the same numbers.
 import { DebtData, isActive, amountDue } from './debts';
 import { cs } from './region';
+import { subsStillToCome } from './subs';
 
 export type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string; src?: string };
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -28,7 +29,7 @@ export function calcLeft(o: { ym: string; income: number; commit: number; spends
   const inM = all.filter((p) => p.cat !== 'Savings');
   const spent = inM.reduce((a, p) => a + p.amt, 0);
   const today = isCur ? inM.filter((p) => p.date === todayStr).reduce((a, p) => a + p.amt, 0) : 0;
-  const income = o.income, commit = o.commit;
+  const income = o.income, commit = o.commit + subsStillToCome(ym, now);
   const afterCommit = income - commit;
   const left = income - commit - spent - savings;
   const over = left < 0;

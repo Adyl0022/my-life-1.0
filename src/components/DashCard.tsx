@@ -25,9 +25,9 @@ import { HeadIcon, Face } from './HabitIcons';
 import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap opens the page, tap a bar segment to jump, long-press for the next one. Quick log keeps its own buttons.
-type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'lesson' | 'memories' | 'prayer' | 'event' | 'calmix' | 'calgen' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
-const ORDER: Kind[] = ['log', 'prayer', 'tasks', 'event', 'calmix', 'calgen', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'lesson', 'memories'];
-const EXK = ['prayer', 'event', 'calmix', 'calgen', 'job', 'money', 'tasks', 'renew', 'debt'];
+type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'lesson' | 'memories' | 'prayer' | 'event' | 'calmix' | 'calgen' | 'subs' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
+const ORDER: Kind[] = ['log', 'prayer', 'tasks', 'event', 'calmix', 'calgen', 'subs', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'lesson', 'memories'];
+const EXK = ['prayer', 'event', 'calmix', 'calgen', 'subs', 'job', 'money', 'tasks', 'renew', 'debt'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -87,7 +87,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
   const ex = useDashExtras(core, { islamic: hid.on('islamic'), planner: hid.on('planner'), record: hid.on('record'), finance: hid.on('finance') });
-  const ok: Record<Kind, boolean> = { prayer: !!ex.prayer, event: !!ex.event, calmix: !!ex.calmix, calgen: !!ex.calgen, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
+  const ok: Record<Kind, boolean> = { prayer: !!ex.prayer, event: !!ex.event, calmix: !!ex.calmix, calgen: !!ex.calgen, subs: !!ex.subs, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
   const dp = useDashPages(); ORDER.forEach((k) => { if (k !== 'log' && !dp.isOn(k)) ok[k] = false; });
   const avail = ORDER.filter((k) => ok[k]);
   const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');

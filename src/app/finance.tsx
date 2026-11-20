@@ -1,3 +1,5 @@
+import { SUB_EMPTY, detect as detectSubs, monthlyTotal, rm as rmSub, type SubStore } from '../lib/subs';
+import { LineIcon } from '../components/LineIcon';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import React, { useState } from 'react';
@@ -26,6 +28,7 @@ const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DEFS: [string, string, string][] = [['salary', 'Basic salary', '#7c9cff'], ['overtime', 'Overtime', '#ffc46b'], ['claim', 'Claim', '#8fe9e2'], ['sunday', 'Sunday work', '#b794ff'], ['holiday', 'Public holiday work', '#ff8fab'], ['other', 'Other', '#5ee7b5']];
 const UN: Record<string, [string, string, string]> = { sunday: ['Days', 'day', 'Number of days worked'], holiday: ['Days', 'day', 'Number of days worked'], overtime: ['Hours', 'hour', 'Number of overtime hours'] };
+const ymdNow = () => { const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
 const CATS: [string, string][] = [['Food', '#ffc46b'], ['Petrol', '#7c9cff'], ['Bills', '#ff8fab'], ['Shopping', '#b794ff'], ['Savings', '#5ee7b5'], ['Health', '#ff8fab'], ['Other', '#8fe9e2']];
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
@@ -72,6 +75,7 @@ export default function Finance() {
   const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remF, setRemF] = useState({ name: '', amt: '', date: '', cat: 'Food', note: '' });
   const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
   const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
+  const [sbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
   const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
 
   const selY = parseInt(ym.slice(0, 4), 10), selM = parseInt(ym.slice(5, 7), 10) - 1;
@@ -153,6 +157,18 @@ export default function Finance() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Savings Goals</Text>
                 <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>{sav.goals.length === 0 ? 'Save for a motorcycle, wedding, travel and more' : cs() + rnd(sav.goals.reduce((a, g) => a + goalSaved(g, d.spends, dbt), 0)) + ' saved across ' + sav.goals.length + (sav.goals.length === 1 ? ' goal' : ' goals')}</Text>
+              </View>
+              <Text style={{ color: W, fontSize: 22 }}>›</Text>
+            </Glass>
+          </Pressable>
+
+          <Pressable onPress={() => router.push('/subscriptions' as any)} accessibilityLabel="Subscriptions">
+            <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <LinearGradient colors={['rgba(124,156,255,.36)', 'rgba(183,148,255,.2)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, zIndex: -1 }} />
+              <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(124,156,255,.28)', borderWidth: 1, borderColor: 'rgba(124,156,255,.6)', alignItems: 'center', justifyContent: 'center' }}><LineIcon name="repeat" c="#c9d6ff" size={24} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Subscriptions</Text>
+                <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 1 }}>{(() => { const n = ((sbs && sbs.subs) || []).length; const fd = detectSubs(all as any, (sbs && sbs.subs) || [], (sbs && sbs.no) || [], ymdNow()).length; return n === 0 ? (fd ? fd + ' found in your spending' : 'Netflix, YouTube, Claude and more') : rmSub(monthlyTotal(sbs.subs)) + ' a month · ' + n + ' active' + (fd ? ' · ' + fd + ' found for you' : ''); })()}</Text>
               </View>
               <Text style={{ color: W, fontSize: 22 }}>›</Text>
             </Glass>

@@ -24,7 +24,8 @@ import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
 import { cycleInfo } from '../lib/cycle';
 import { syncTaskAlerts } from '../lib/maintTasks';
-import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncDocAlerts, syncColAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
+import { useSubsG } from '../lib/subs';
+import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncDocAlerts, syncSubAlerts, syncColAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
 import { TG_DEFAULT, Toggles, allowPermissionPrompts, openPrompts, usePromptsOpen } from '../lib/adhan';
 import { useFamily } from '../lib/family';
 import { useFamTasks, useFamEvents } from '../lib/familyData';
@@ -72,6 +73,8 @@ function AlertSync() {
   useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncRenewAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify((rc && rc.data) || {}), tg.ev, t.qh]);
   const [dcs, , okd] = useStored<{ docs?: any[] }>('ml_documents', { docs: [] });
   useEffect(() => { if (okd && ok2 && hid.ready && Platform.OS !== 'web') syncDocAlerts(dcs, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okd, ok2, hid.ready, JSON.stringify(((dcs && dcs.docs) || []).map((x: any) => [x.id, x.title, x.expiry, x.remind])), tg.ev, t.qh]);
+  const [sbs, , oksb] = useStored<{ subs?: any[] }>('ml_subs', { subs: [] }); useSubsG();
+  useEffect(() => { if (oksb && ok2 && hid.ready && Platform.OS !== 'web') syncSubAlerts(sbs, { ...t, ev: tg.ev !== false }, hid.on('finance')); }, [oksb, ok2, hid.ready, JSON.stringify(((sbs && sbs.subs) || []).map((x: any) => [x.id, x.name, x.price, x.cycle, x.next, x.remind, x.trial])), tg.ev, t.qh, new Date().toDateString()]);
   const [col, , okcol] = useStored<{ items?: any[]; loans?: any[] }>('ml_collection', { items: [], loans: [] });
   useEffect(() => { if (okcol && ok2 && hid.ready && Platform.OS !== 'web') syncColAlerts(col, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okcol, ok2, hid.ready, JSON.stringify([((col && col.loans) || []).map((x: any) => [x.id, x.due, x.done, x.who, x.title, x.amount]), ((col && col.items) || []).filter((x: any) => x.cat === 'gadget').map((x: any) => [x.id, x.warranty, x.name])]), tg.ev, t.qh]);
   useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncTaskAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify(Object.values((rc && rc.data) || {}).map((v: any) => [v && v.tasks, v && v.trem])), tg.ev, t.qh]);

@@ -136,6 +136,34 @@ export async function syncDocAlerts(store: { docs?: { id: string; title: string;
   } catch (e) { /* ignore */ }
 }
 
+// Subscriptions: a 9 am reminder before each coming charge (and on the day), for the next 3 charges of each one. A free trial warns before it turns into a payment.
+export async function syncSubAlerts(store: { subs?: any[] }, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('sub-');
+    if (!on || !tg.ev) return;
+    const { nextCharge, addCycle, ymd, num, rm } = await import('./subs');
+    const now = Date.now(); const today = ymd(new Date()); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    ((store && store.subs) || []).forEach((s: any) => {
+      let d = nextCharge(s, today); if (!d) return;
+      for (let k = 0; k < 3; k++, d = addCycle(d, s.cycle)) {
+        const [y, m, dd] = d.split('-').map(Number); const trial = !!s.trial && k === 0; const p = rm(num(s.price));
+        const list: [number, string][] = [[0, 'today']]; if (s.remind > 0) list.unshift([s.remind, s.remind === 1 ? 'tomorrow' : 'in ' + s.remind + (s.remind === 7 ? ' days' : ' days')]);
+        list.forEach(([back, when]) => {
+          const at = new Date(y, m - 1, dd - back, 9, 0, 0); if (at.getTime() <= now + 5000 || inQuiet(at, tg)) return;
+          todo.push({ id: 'sub-' + s.id + '-' + d + '-' + back, at, title: trial ? s.name + ' free trial ends ' + when : s.name + ' charges ' + when, body: trial ? 'Cancel it now if you do not want to pay ' + p + '. Open Subscriptions.' : p + '. Open Subscriptions to see it.' });
+        });
+      }
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('subs', { name: 'Subscription reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#7c9cff' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({ identifier: t.id, content: { title: t.title, body: t.body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'subs' } as any });
+    }
+  } catch (e) { /* ignore */ }
+}
+
 // Personal Collection: a 9 am reminder on the due date of money or things you lent or borrowed, and 30 days before a gadget's warranty ends.
 export async function syncColAlerts(col: { items?: any[]; loans?: any[] }, tg: Toggles, on: boolean): Promise<void> {
   if (Platform.OS === 'web') return;
