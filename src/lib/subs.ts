@@ -78,12 +78,12 @@ export function dueOf(sub: Sub, today: string): Due {
 // ---- Money Left: charges still to come this month ----
 let SUBS_G: SubStore = SUB_EMPTY;
 export const setSubsG = (s: SubStore | null | undefined) => { SUBS_G = s && Array.isArray(s.subs) ? s : SUB_EMPTY; };
-/** The latest charge on or before today that has not been dealt with yet (recorded as spending, or skipped). Only the last 10 days count, so an old list never floods you. */
+/** The latest charge on or before today that has not been dealt with yet (recorded as spending, or skipped). Only the last 20 days count, so an old list never floods you. */
 export function pendingCharge(s: Sub, today: string): string {
   if (!live(s) || !(num(s.price) > 0) || !validDate(s.next) || s.next > today) return '';
   let d = s.next, i = 0; while (i++ < 600) { const n = addCycle(d, s.cycle); if (n > today) break; d = n; }
   if (d <= (s.rec || '')) return '';
-  if (dayN(today) - dayN(d) > 10) return '';
+  if (dayN(today) - dayN(d) > 20) return '';
   return d;
 }
 /** What your subscriptions will still charge between today and the end of this month. Only the current month is counted. */
