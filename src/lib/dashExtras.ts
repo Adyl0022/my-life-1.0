@@ -40,7 +40,7 @@ export function useDashExtras(core: Core, on: { islamic: boolean; planner: boole
   const calPage = (withIslamic: boolean): Extra | null => {
     type It = { date: string; name: string; src: 'mine' | 'islam' | 'holiday'; go: string };
     const all: It[] = [];
-    if (on.planner) ((core.pl && (core.pl as any).events) || []).forEach((e: any) => { if (e && !e.done && /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') && e.date >= today) all.push({ date: e.date, name: e.name, src: 'mine', go: '/planner' }); });
+    // Your own events are not mixed in here: they have their own Next event page.
     let my: any[] = []; try { my = upcomingMy(today, 40, mc, rg.cc); } catch (e) { my = []; }
     my.forEach((e) => { if (e.kind === 'islam') { if (withIslamic) all.push({ date: e.date, name: e.name, src: 'islam', go: '/islamic' }); } else all.push({ date: e.date, name: e.name, src: 'holiday', go: '/planner' }); });
     if (withIslamic && on.islamic) { try { islamicUp(now, hoff, 12).forEach((u) => { const d = ymd(u.date); if (!all.some((a) => a.src === 'islam' && Math.abs(dayN(a.date) - dayN(d)) <= 2)) all.push({ date: d, name: u.n, src: 'islam', go: '/islamic' }); }); } catch (e) { /* none */ } }

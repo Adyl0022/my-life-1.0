@@ -9,7 +9,7 @@ export const SUB_EMPTY: SubStore = { subs: [], next: 1, no: [] };
 
 export const SUB_CATS: { k: string; n: string; icon: string; c: string }[] = [
   { k: 'video', n: 'Video', icon: 'play', c: '#b794ff' }, { k: 'music', n: 'Music', icon: 'music', c: '#ff8fab' }, { k: 'ai', n: 'AI', icon: 'spark', c: '#ffb378' },
-  { k: 'cloud', n: 'Cloud', icon: 'cloud', c: '#7c9cff' }, { k: 'games', n: 'Games', icon: 'game', c: '#5ee7b5' }, { k: 'telco', n: 'Telco', icon: 'bolt', c: '#ffd24a' }, { k: 'other', n: 'Other', icon: 'repeat', c: '#8ea8ff' },
+  { k: 'cloud', n: 'Cloud', icon: 'cloud', c: '#7c9cff' }, { k: 'games', n: 'Games', icon: 'game', c: '#5ee7b5' }, { k: 'other', n: 'Other', icon: 'repeat', c: '#8ea8ff' },
 ];
 export const catOf = (k: string) => SUB_CATS.find((c) => c.k === k) || SUB_CATS[SUB_CATS.length - 1];
 export const CYCLES: { k: Cycle; n: string; per: string }[] = [{ k: 'week', n: 'Week', per: 'every week' }, { k: 'month', n: 'Month', per: 'every month' }, { k: 'year', n: 'Year', per: 'every year' }];
@@ -24,8 +24,10 @@ export const SERVICES: { n: string; cat: string; re: RegExp }[] = [
   { n: 'iCloud', cat: 'cloud', re: /icloud|apple\.com\/bill/i }, { n: 'Google One', cat: 'cloud', re: /google\s*one|google\s*storage/i }, { n: 'Dropbox', cat: 'cloud', re: /dropbox/i }, { n: 'Microsoft 365', cat: 'cloud', re: /microsoft\s*365|office\s*365|onedrive/i },
   { n: 'Canva', cat: 'cloud', re: /canva/i }, { n: 'Adobe', cat: 'cloud', re: /adobe/i }, { n: 'Notion', cat: 'cloud', re: /notion/i },
   { n: 'Xbox Game Pass', cat: 'games', re: /game\s*pass|xbox/i }, { n: 'PlayStation Plus', cat: 'games', re: /playstation|ps\s*plus/i }, { n: 'Nintendo Online', cat: 'games', re: /nintendo/i },
-  { n: 'Unifi', cat: 'telco', re: /unifi|\btm\b/i }, { n: 'Maxis', cat: 'telco', re: /maxis|hotlink/i }, { n: 'CelcomDigi', cat: 'telco', re: /celcom|digi\b/i }, { n: 'Duolingo', cat: 'other', re: /duolingo/i }, { n: 'LinkedIn Premium', cat: 'other', re: /linkedin/i },
+  { n: 'Duolingo', cat: 'other', re: /duolingo/i }, { n: 'LinkedIn Premium', cat: 'other', re: /linkedin/i },
 ];
+// Phone and internet plans are not subscriptions here: they are monthly commitments, which Money Left already takes off for you.
+const NOT_SUB = /maxis|hotlink|celcom|digi\b|unifi|\btm\b|u\s?mobile|umobile|yes\s?4g|redone|tune\s?talk|xox|telco|postpaid|prepaid|reload|top\s?-?up|broadband|internet|wifi/i;
 export const matchService = (text: string) => SERVICES.find((s) => s.re.test(text || '')) || null;
 const pad = (n: number) => String(n).padStart(2, '0');
 export const ymd = (d: Date) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -82,7 +84,7 @@ export type Found = { key: string; name: string; amt: number; months: number; da
 export function detect(spends: Sp[], subs: Sub[], no: string[], today: string): Found[] {
   const have = new Set(subs.map((s) => keyOf(s.name))); const skip = new Set(no || []);
   const by = new Map<string, Sp[]>();
-  (spends || []).forEach((p) => { if (!p || p.cat === 'Savings' || !(p.amt > 0) || !validDate(p.date)) return; const k = keyOf(p.name); if (k.length < 3) return; (by.get(k) || by.set(k, []).get(k)!).push(p); });
+  (spends || []).forEach((p) => { if (!p || p.cat === 'Savings' || !(p.amt > 0) || !validDate(p.date)) return; if (NOT_SUB.test(p.name || '')) return; const k = keyOf(p.name); if (k.length < 3) return; (by.get(k) || by.set(k, []).get(k)!).push(p); });
   const out: Found[] = [];
   by.forEach((list, key) => {
     if (have.has(key) || skip.has(key)) return;
