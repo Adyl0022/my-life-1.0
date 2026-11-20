@@ -11,7 +11,8 @@ import { Inp, W } from '../components/Ui';
 import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
 import { HeartLog } from '../components/HeartLog';
 import { PatternsTab } from '../components/PatternsTab';
-import { ENERGY, energyEstimate, restSignal } from '../lib/patterns';
+import { energyEstimate, restSignal } from '../lib/patterns';
+import { EnergyBig } from '../components/EnergyUi';
 import { SleepSchedule } from '../components/SleepSchedule';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
@@ -265,6 +266,10 @@ export default function Habit() {
               </View>
             </View>
           </Glass>
+          <Glass radius={26} style={{ marginTop: 12, padding: 16 }}>
+            <Ttl nm k="energy" t="Energy" />
+            <EnergyBig en={t.en} est={energyEstimate(t, cg, goal, restSignal(h, keyOfDate(dateOf(0))))} onPick={(i) => put({ en: i })} />
+          </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl nm k="sleep" t="Sleep Tracker" />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
@@ -359,19 +364,6 @@ export default function Habit() {
                   <Text style={{ color: on ? W : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: on ? '800' : '500' }}>{m[0]}</Text>
                 </Pressable>); })}
             </View>
-          </Glass>
-          <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-            {(() => { const est = energyEstimate(t, cg, goal, restSignal(h, keyOfDate(dateOf(0)))); const own = t.en != null && t.en >= 0; return (<>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><Ttl nm k="energy" t="Energy" /><Text style={{ color: own ? '#7df0c6' : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>{own ? 'YOUR RATING' : est ? 'ESTIMATED' : ''}</Text></View>
-            <Lbl t={own ? 'How you said you feel today' : est ? est.why : 'Log two things above and an estimate appears'} />
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
-              {ENERGY.map((e, i) => { const on = own && t.en === i; const guess = !own && est && est.lvl === i; return (
-                <Pressable key={e[0]} onPress={() => put({ en: on ? undefined : i })} style={{ flex: 1, paddingVertical: 9, paddingHorizontal: 2, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? e[1] : 'rgba(255,255,255,.1)', borderWidth: guess ? 1.5 : 0, borderColor: e[1] }}>
-                  <Text numberOfLines={2} style={{ color: on ? '#06222a' : W, fontSize: 11.5, fontWeight: '800', textAlign: 'center' }}>{e[0]}</Text>
-                </Pressable>); })}
-            </View>
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8, lineHeight: 15 }}>{own ? 'Tap your choice again to go back to the estimate.' : 'This is a guess from what you logged. Tap how you really feel to replace it.'}</Text>
-            </>); })()}
           </Glass>
           <Pressable onPress={() => router.push('/medicine' as any)} accessibilityLabel="Open Medicine">
             <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
