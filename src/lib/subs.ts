@@ -115,8 +115,9 @@ const CUR_OF: Record<string, string> = { RM: 'MYR', MYR: 'MYR', USD: 'USD', 'US$
 /** A line to show when the receipt is in a different currency from the one the person uses, or '' when they match. */
 export function curWarn(cur: string | undefined): string {
   if (!cur) return '';
-  if (cur === '$') return /\$/.test(cu()) ? '' : 'The receipt shows a $ price. ';
-  return cur === curCode() ? '' : 'The receipt looks like ' + cur + ', but your currency is ' + curCode() + '. Please type the price in ' + curCode() + '. ';
+  const hint = 'Type the price in ' + curCode() + ', or change your country in Settings, Region, so it matches your receipts. ';
+  if (cur === '$') return /\$/.test(cu()) ? '' : 'The receipt shows a $ price. ' + hint;
+  return cur === curCode() ? '' : 'This receipt is in ' + cur + ', but your currency is ' + curCode() + '. ' + hint;
 }
 export function readBill(text: string, today: string): Billed | null {
   const t = String(text || ''); if (t.trim().length < 6) return null;
