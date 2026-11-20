@@ -3,6 +3,7 @@ import { View, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Text } from '../components/Txt';
+import { LineIcon } from '../components/LineIcon';
 import { RecordPage, Intro } from '../components/RecordHubUi';
 import { ColArt } from '../components/ColArt';
 import { Tile } from '../components/ColUi';
@@ -56,8 +57,12 @@ export default function Screen() {
           <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.26)' }}>
             <LinearGradient colors={['rgba(142,168,255,.32)', 'rgba(183,148,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
             <View style={{ padding: 16 }}>
-              <Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'My things as a PDF'}</Text>
+              <Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>My things as a PDF</Text>
               <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>A list of everything you own with price, date and a photo. Handy for an insurance claim. It is made on this phone and nothing is uploaded.</Text>
+              <LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ marginTop: 14, height: 46, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                <LineIcon name="agreement" c="#0b1030" size={22} />
+                <Text style={{ color: '#0b1030', fontSize: 15, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'Export as PDF'}</Text>
+              </LinearGradient>
             </View>
           </View>
         </Pressable>
