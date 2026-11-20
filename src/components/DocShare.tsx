@@ -1,6 +1,6 @@
 import { Toggle } from './Toggle';
 import { fileStamp } from '../lib/exporter';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Pressable, Modal, Image, Platform, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -39,8 +39,12 @@ export function CopyRow({ number, name }: { number?: string; name?: string }) {
 /** A picture with a note printed across it, so a copy sent to someone cannot be used for something else. */
 export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: string; onClose: () => void }) {
   const [note, setNote] = useState(''); const [mark, setMark] = useState(true); const [i, setI] = useState(0); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('');
-  const ref = useRef<any>(null); const { width } = useWindowDimensions(); const w = Math.min(width - 40, 420); const h = w / 1.45;
+  const ref = useRef<any>(null); const { width } = useWindowDimensions(); const maxW = Math.min(width - 40, 420);
   const uri = pages[Math.min(i, pages.length - 1)];
+  // The picture box takes the shape of the photo itself, so there are no black bars at the sides.
+  const [ratio, setRatio] = useState(1.45);
+  useEffect(() => { let on = true; Image.getSize(uri, (iw, ih) => { if (on && iw > 0 && ih > 0) setRatio(Math.max(0.5, Math.min(2.4, iw / ih))); }, () => {}); return () => { on = false; }; }, [uri]);
+  let w = maxW; let h = w / ratio; if (h > 460) { h = 460; w = h * ratio; }
   const text = (note.trim() || 'FOR PURPOSE ONLY').toUpperCase();
   const chord = Math.hypot(0.4 * w, 0.55 * h); const bar = { cx: 0.2 * w, cy: 0.275 * h, len: chord * 1.1, deg: (Math.atan2(-0.55 * h, 0.4 * w) * 180) / Math.PI, fs: Math.max(7, Math.min(11, (chord * 0.9 - text.length) / (text.length * 0.66))) };
   const go = async () => {
@@ -84,7 +88,7 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
             </View>
           ) : null}
           <View ref={ref} collapsable={false} style={{ marginTop: 16, width: w, height: h, alignSelf: 'center', borderRadius: 14, overflow: 'hidden', backgroundColor: '#0d0a18' }}>
-            <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="contain" />
+            <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="cover" />
             <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, overflow: 'hidden' }}>
               {mark ? <>{/* One bar across the top-left corner, like the tip from Jabatan Pendaftaran Negara: two straight lines with the purpose written between them. */}
               <View style={{ position: 'absolute', left: bar.cx - bar.len, width: bar.len * 2, top: bar.cy - 13, height: 26, justifyContent: 'center', transform: [{ rotate: bar.deg + 'deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.92)', backgroundColor: 'rgba(0,0,0,.22)' }}>

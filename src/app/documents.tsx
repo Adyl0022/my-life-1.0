@@ -228,8 +228,8 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
             {!f.noExp ? <DateField value={f.expiry} onChange={(x: string) => set({ expiry: x })} /> : null}
             {tried && badDate ? <Text style={{ color: '#ff9aa9', fontSize: 12, marginTop: 5 }}>Please pick a valid date.</Text> : null}
             <Lab t={'REMIND ME BEFORE'} />
-            <View style={{ flexDirection: 'row', gap: 6, opacity: f.noExp ? 0.4 : 1 }}>
-              {REMINDS.map((x) => (<Pressable key={x.k} disabled={f.noExp} onPress={() => set({ remind: x.k })} style={{ flex: 1 }}><View style={{ ...chip(f.remind === x.k && !f.noExp, '#8fe9e2'), paddingHorizontal: 2 }}><Text numberOfLines={1} style={{ color: W, fontSize: 11.5, fontWeight: '700', textAlign: 'center' }}>{x.n}</Text></View></Pressable>))}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8, opacity: f.noExp ? 0.4 : 1 }}>
+              {REMINDS.map((x) => (<Pressable key={x.k} disabled={f.noExp} onPress={() => set({ remind: x.k })} style={{ width: '31.5%' }}><View style={chip(f.remind === x.k && !f.noExp, '#8fe9e2')}><Text numberOfLines={1} style={{ color: W, fontSize: 13, fontWeight: '700', textAlign: 'center' }}>{x.n}</Text></View></Pressable>))}
             </View>
             {f.noExp ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>No reminder is needed when there is no expiry.</Text> : null}
             </Sections>
