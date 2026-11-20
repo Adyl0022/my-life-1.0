@@ -119,7 +119,7 @@ export const Pill = ({ t, onPress, on, style, warm, fam }: { t: string; onPress:
   </Pressable>
 );
 export const SBtn = ({ t, onPress, kind = 'glass', style }: { t: string; onPress: () => void; kind?: 'glass' | 'danger' | 'primary'; style?: any }) => (
-  <Pressable onPress={onPress} style={[{ flex: 1 }, style]}>
+  <Pressable buzz={kind !== 'glass'} onPress={onPress} style={[{ flex: 1 }, style]}>
     <LinearGradient colors={kind === 'primary' ? GP : kind === 'danger' ? ['rgba(255,107,129,.28)', 'rgba(255,107,129,.28)'] : ['rgba(255,255,255,.12)', 'rgba(255,255,255,.12)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 11, borderRadius: 14, alignItems: 'center' }}>
       <Text style={{ color: kind === 'danger' ? '#ffb3bf' : W, fontSize: 13.5, fontWeight: '700' }}>{t}</Text>
     </LinearGradient>

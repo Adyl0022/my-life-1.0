@@ -54,7 +54,7 @@ export type EnergyPoint = { v: number | null; own: boolean; d: string };
 
 /** Half-circle gauge with the score in the middle. */
 function Gauge({ lvl, empty }: { lvl: number; empty: boolean }) {
-  const W = 250, H = 140, sw = 18, r = 100, cx = W / 2, cy = 118; const col = empty ? 'rgba(255,255,255,.3)' : ENERGY[lvl][1];
+  const W = 250, H = 156, sw = 18, r = 100, cx = W / 2, cy = 118; const col = empty ? 'rgba(255,255,255,.3)' : ENERGY[lvl][1];
   const d = 'M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy; const L = Math.PI * r;
   return (
     <View style={{ alignItems: 'center', marginTop: 6 }}>
@@ -63,7 +63,7 @@ function Gauge({ lvl, empty }: { lvl: number; empty: boolean }) {
           <Path d={d} stroke="rgba(255,255,255,.16)" strokeWidth={sw} fill="none" strokeLinecap="round" />
           {!empty ? <Path d={d} stroke={col} strokeWidth={sw} fill="none" strokeLinecap="round" strokeDasharray={(L * PCT[lvl] / 100) + ' ' + L} /> : null}
         </Svg>
-        <View style={{ position: 'absolute', left: 0, right: 0, top: 44, alignItems: 'center' }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, top: 60, alignItems: 'center' }}>
           <Text style={{ color: '#fff', fontSize: 52, fontWeight: '800', lineHeight: 58 }}>{empty ? '--' : PCT[lvl]}</Text>
           <Text style={{ color: col, fontSize: 15, fontWeight: '800', marginTop: 0 }}>{empty ? 'Not enough yet' : LABEL[lvl]}</Text>
         </View>

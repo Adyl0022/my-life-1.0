@@ -78,7 +78,7 @@ export const Empty = ({ e, t, s }: { e: string; t: string; s: string }) => (
 );
 
 export const BigBtn = ({ t, g, onPress, a11y, dark, outline }: { t: string; g?: [string, string]; onPress: () => void; a11y?: string; dark?: boolean; outline?: string }) => (
-  <Pressable onPress={onPress} accessibilityLabel={a11y || t} style={{ marginTop: 12 }}>
+  <Pressable buzz onPress={onPress} accessibilityLabel={a11y || t} style={{ marginTop: 12 }}>
     {outline ? (
       <View style={{ height: 50, borderRadius: 18, borderWidth: 1, borderColor: outline, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: outline, fontSize: 15, fontWeight: '800' }}>{t}</Text></View>
     ) : (

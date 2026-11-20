@@ -25,7 +25,7 @@ export function DialogHost() {
                 const main = b.style !== 'cancel' && b.style !== 'destructive'; const red = b.style === 'destructive';
                 const inner = <Text style={{ color: main ? '#2a1030' : red ? '#ffb3bf' : '#fff', fontSize: 14, fontWeight: '800' }}>{b.text || 'OK'}</Text>;
                 return (
-                  <Pressable key={i} onPress={() => close(b)} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.72 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+                  <Pressable buzz key={i} onPress={() => close(b)} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.72 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
                     {main
                       ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 13, borderRadius: 999, alignItems: 'center' }}>{inner}</LinearGradient>
                       : <View style={{ paddingVertical: 13, borderRadius: 999, alignItems: 'center', backgroundColor: red ? '#3d2c4c' : '#343d5a', borderWidth: red ? 1 : 0, borderColor: 'rgba(255,120,140,.4)' }}>{inner}</View>}

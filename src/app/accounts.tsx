@@ -232,9 +232,9 @@ export default function Accounts() {
                     <View key={g.k} style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
                       <Tap onPress={() => setFold(shut ? fold.filter((x) => x !== g.k) : [...fold, g.k])} label={(shut ? 'Open ' : 'Close ') + g.plural} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: shut ? 2 : 4 }}>
                         <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
-                        <Text style={{ flex: 1, color: g.c, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{g.plural.toUpperCase() + (shut ? '  ·  ' + list.length : '')}</Text>
-                        {list.length > 1 || shut ? <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.75)', fontSize: 12.5, fontWeight: '800' }}>{cs() + money(sub)}</Text> : null}
-                        <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 15, width: 14, textAlign: 'center' }}>{shut ? '▸' : '▾'}</Text>
+                        <Text numberOfLines={1} style={{ flex: 1, color: g.c, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{g.plural.toUpperCase() + (shut ? '  ·  ' + list.length : '')}</Text>
+                        {list.length > 1 || shut ? <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.75)', fontSize: 12.5, fontWeight: '800', flexShrink: 0 }}>{cs() + money(sub)}</Text> : null}
+                        <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 24, lineHeight: 26, width: 32, textAlign: 'center' }}>{shut ? '▸' : '▾'}</Text>
                       </Tap>
                       {shut ? null : list.map((a) => {
                         const b = balanceOf(a, data, spends, feeds);
@@ -253,9 +253,9 @@ export default function Accounts() {
                   <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
                     <Tap onPress={() => setFold(fold.includes('commit') ? fold.filter((x) => x !== 'commit') : [...fold, 'commit'])} label={(fold.includes('commit') ? 'Open ' : 'Close ') + 'Commitments'} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: 4 }}>
                       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: '#b794ff' }} />
-                      <Text style={{ flex: 1, color: '#b794ff', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{'COMMITMENTS' + (fold.includes('commit') ? '  ·  ' + cms.length : '')}</Text>
-                      {cms.length > 1 || fold.includes('commit') ? <Text style={{ color: PINK, fontSize: 12.5, fontWeight: '800' }}>{cs() + money(commitTotal(cms))}</Text> : null}
-                      <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 15, width: 14, textAlign: 'center' }}>{fold.includes('commit') ? '▸' : '▾'}</Text>
+                      <Text numberOfLines={1} style={{ flex: 1, color: '#b794ff', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{'COMMITMENTS' + (fold.includes('commit') ? '  ·  ' + cms.length : '')}</Text>
+                      {cms.length > 1 || fold.includes('commit') ? <Text style={{ color: PINK, fontSize: 12.5, fontWeight: '800', flexShrink: 0 }}>{cs() + money(commitTotal(cms))}</Text> : null}
+                      <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 24, lineHeight: 26, width: 32, textAlign: 'center' }}>{fold.includes('commit') ? '▸' : '▾'}</Text>
                     </Tap>
                     {fold.includes('commit') ? null : (<>
                       {cms.map((x) => (

@@ -26,8 +26,21 @@ export async function readWatchHeart(ask: boolean): Promise<WatchHeart> {
     const end = new Date(); const start = new Date(end.getTime() - 24 * 3600 * 1000);
     const r = await HC.readRecords('HeartRate', { timeRangeFilter: { operationType: 'between', startTime: start.toISOString(), endTime: end.toISOString() } });
     const all: { t: Date; bpm: number }[] = [];
-    ((r && r.records) || []).forEach((rec: any) => (rec.samples || []).forEach((s: any) => { const bpm = Math.round(Number(s.beatsPerMinute)); const t = new Date(s.time); if (bpm >= 30 && bpm <= 220 && !isNaN(t.getTime())) all.push({ t, bpm }); }));
-    if (!all.length) return { ok: false, msg: 'No pulse in Health Connect yet. In your watch app, turn on sharing to Health Connect for Heart rate, let the watch sync, then tap Check again.' };
+    ((r && r.records) || []).forEach((rec: any) => (rec.samples && rec.samples.length ? rec.samples : (rec.beatsPerMinute != null ? [{ beatsPerMinute: rec.beatsPerMinute, time: rec.startTime }] : [])).forEach((s: any) => { const bpm = Math.round(Number(s.beatsPerMinute)); const t = new Date(s.time); if (bpm >= 30 && bpm <= 220 && !isNaN(t.getTime())) all.push({ t, bpm }); }));
+    if (!all.length) {
+      // Nothing in the last 24 hours. Look further back, so the message can say whether Health Connect has any pulse at all and from which app.
+      let hint = '';
+      try {
+        const far = new Date(end.getTime() - 30 * 24 * 3600 * 1000);
+        const r2 = await HC.readRecords('HeartRate', { timeRangeFilter: { operationType: 'between', startTime: far.toISOString(), endTime: end.toISOString() } });
+        const recs: any[] = (r2 && r2.records) || [];
+        const apps: string[] = []; let lastT = 0;
+        recs.forEach((rec: any) => { const o = rec && rec.metadata && rec.metadata.dataOrigin; if (o && apps.indexOf(o) < 0) apps.push(o); const t = new Date(rec.endTime || rec.startTime || 0).getTime(); if (t > lastT) lastT = t; });
+        if (recs.length) hint = ' Health Connect does have older pulse (last one ' + keyOfDate(new Date(lastT)) + ', from ' + (apps.map((a) => a.replace(/^com\./, '')).join(', ') || 'another app') + '), so the watch has not sent new readings. Open Samsung Health, pull down to sync, then tap Check again.';
+        else hint = ' Health Connect has no pulse from any app. In Samsung Health, open Settings, Health Connect, and turn on Heart rate. Also open Health Connect, App permissions, Samsung Health, and allow it to write Heart rate.';
+      } catch (e2) { /* keep the short message */ }
+      return { ok: false, msg: 'No pulse in the last 24 hours.' + hint };
+    }
     all.sort((a, b) => a.t.getTime() - b.t.getTime());
     const bpms = all.map((x) => x.bpm); const last = all[all.length - 1];
     // Keep one reading for every 3 hours, so the notebook does not fill up.
