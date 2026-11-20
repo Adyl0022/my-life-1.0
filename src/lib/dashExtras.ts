@@ -5,7 +5,7 @@ import { cs } from './region';
 import { isActive, amountDue, dueDay, ymOf } from './debts';
 import type { Core } from './insights';
 import { useStored } from './store';
-import { SUB_EMPTY, dueOf, rm as rmSub, num as numSub, useSubsG, CYCLES, type SubStore } from './subs';
+import { SUB_EMPTY, live as liveSub, dueOf, rm as rmSub, num as numSub, useSubsG, CYCLES, type SubStore } from './subs';
 import { useRegion } from './region';
 import { upcomingMy, EMPTY_CACHE, MyCache } from './myEvents';
 import { upcoming as islamicUp, useHijriSync } from './hijriSync';
@@ -54,7 +54,7 @@ export function useDashExtras(core: Core, on: { islamic: boolean; planner: boole
   };
   const sbsS = useSubsG(); let subsX: Extra | null = null;
   if (on.finance) {
-    const near = ((sbsS && sbsS.subs) || []).map((s) => ({ s, d: dueOf(s, today) })).filter((x) => x.d.days <= 7).sort((a, b) => a.d.days - b.d.days)[0];
+    const near = ((sbsS && sbsS.subs) || []).filter(liveSub).map((s) => ({ s, d: dueOf(s, today) })).filter((x) => x.d.days <= 7).sort((a, b) => a.d.days - b.d.days)[0];
     if (near) subsX = { label: near.s.trial ? 'FREE TRIAL' : 'SUBSCRIPTION', title: near.s.name + ' · ' + rmSub(numSub(near.s.price)), sub: near.d.txt + ' · ' + CYCLES.find((c) => c.k === near.s.cycle)!.per, tone: near.d.col, go: '/subscriptions', val: near.d.days <= 0 ? 'Today' : near.d.days + 'd', ring: 1 - Math.min(near.d.days, 7) / 7 };
   }
   const calmix = calPage(true); let calgen = calPage(false); if (calgen && calmix && calgen.title === calmix.title) calgen = null; // never show the same date twice in a row

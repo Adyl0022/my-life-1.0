@@ -149,8 +149,8 @@ export async function buildReport(sel: string[], per: number): Promise<Report> {
   }
   if (sel.includes('finance')) {
     const ss = g('finance', 'ml_subs'); const rows: (string | number)[][] = [];
-    ((ss && ss.subs) || []).forEach((s: any) => { rows.push([s.name || '', s.cat || '', Number(String(s.price || '0').replace(',', '.')) || 0, s.cycle === 'year' ? 'Every year' : s.cycle === 'week' ? 'Every week' : 'Every month', s.next || '', s.trial ? 'Free trial' : '', s.note || '']); });
-    if (rows.length) sheets.push({ name: 'Subscriptions', head: ['Name', 'Category', 'Price', 'How often', 'Next charge', 'Trial', 'Note'], rows });
+    ((ss && ss.subs) || []).forEach((s: any) => { rows.push([s.name || '', s.cat || '', Number(String(s.price || '0').replace(',', '.')) || 0, ({ year: 'Every year', week: 'Every week', quarter: 'Every 3 months', half: 'Every 6 months' } as any)[s.cycle] || 'Every month', s.next || '', s.trial ? 'Free trial' : '', s.status === 'paused' ? 'Paused' : s.status === 'cancelled' ? 'Cancelled' : 'Active', ({ debit: 'Debit card', credit: 'Credit card', ewallet: 'E-wallet', bank: 'Bank', other: 'Other' } as any)[s.pay] || '', s.note || '']); });
+    if (rows.length) sheets.push({ name: 'Subscriptions', head: ['Name', 'Category', 'Price', 'How often', 'Next charge', 'Trial', 'Status', 'Paid with', 'Note'], rows });
   }
   if (sel.includes('docs')) {
     const dd = g('docs', 'ml_documents'); const rows: (string | number)[][] = [];

@@ -3,8 +3,11 @@
 import type { Sp } from './moneyLeft';
 import { useStored } from './store';
 import { cs, cu, curCode } from './region';
-export type Cycle = 'week' | 'month' | 'year';
-export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string };
+export type Cycle = 'week' | 'month' | 'quarter' | 'half' | 'year';
+export type Status = 'active' | 'paused' | 'cancelled';
+export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string; status?: Status; pay?: string };
+/** A subscription that still charges you. Paused and cancelled ones stay in the list but are left out of totals, reminders and Money Left. */
+export const live = (s: { status?: string }) => !s.status || s.status === 'active';
 export type SubStore = { subs: Sub[]; next: number; no: string[] };
 export const SUB_EMPTY: SubStore = { subs: [], next: 1, no: [] };
 
@@ -13,7 +16,11 @@ export const SUB_CATS: { k: string; n: string; icon: string; c: string }[] = [
   { k: 'cloud', n: 'Cloud', icon: 'cloud', c: '#7c9cff' }, { k: 'games', n: 'Games', icon: 'game', c: '#5ee7b5' }, { k: 'other', n: 'Other', icon: 'repeat', c: '#8ea8ff' },
 ];
 export const catOf = (k: string) => SUB_CATS.find((c) => c.k === k) || SUB_CATS[SUB_CATS.length - 1];
-export const CYCLES: { k: Cycle; n: string; per: string }[] = [{ k: 'week', n: 'Week', per: 'every week' }, { k: 'month', n: 'Month', per: 'every month' }, { k: 'year', n: 'Year', per: 'every year' }];
+export const CYCLES: { k: Cycle; n: string; per: string; lab: string; unit: string }[] = [{ k: 'week', n: 'Week', per: 'every week', lab: 'Weekly', unit: 'week' }, { k: 'month', n: 'Month', per: 'every month', lab: 'Monthly', unit: 'month' }, { k: 'quarter', n: '3 months', per: 'every 3 months', lab: '3 months', unit: '3 months' }, { k: 'half', n: '6 months', per: 'every 6 months', lab: '6 months', unit: '6 months' }, { k: 'year', n: 'Year', per: 'every year', lab: 'Yearly', unit: 'year' }];
+export const unitOf = (c: string) => (CYCLES.find((x) => x.k === c) || CYCLES[1]).unit;
+export const STATUSES: { k: Status; n: string; c: string }[] = [{ k: 'active', n: 'Active', c: '#5ee7b5' }, { k: 'paused', n: 'Paused', c: '#ffd24a' }, { k: 'cancelled', n: 'Cancelled', c: '#ff8fa3' }];
+export const PAYS: { k: string; n: string }[] = [{ k: 'debit', n: 'Debit card' }, { k: 'credit', n: 'Credit card' }, { k: 'ewallet', n: 'E-wallet' }, { k: 'bank', n: 'Bank' }, { k: 'other', n: 'Other' }];
+export const payName = (k?: string) => (PAYS.find((p) => p.k === k) || { n: '' }).n;
 export const REM: { d: number; n: string }[] = [{ d: 0, n: 'None' }, { d: 1, n: '1 day' }, { d: 3, n: '3 days' }, { d: 7, n: '1 week' }];
 
 // Names only, so the app can recognise a service. No prices are stored here because they change.
@@ -43,7 +50,7 @@ export const rm = (n: number) => cs() + n.toLocaleString('en-MY', { minimumFract
 export function addCycle(s: string, c: Cycle, n = 1): string {
   const d = parse(s);
   if (c === 'week') { d.setDate(d.getDate() + 7 * n); return ymd(d); }
-  const day = d.getDate(); const months = c === 'month' ? n : 12 * n;
+  const day = d.getDate(); const months = c === 'month' ? n : c === 'quarter' ? 3 * n : c === 'half' ? 6 * n : 12 * n;
   const t = new Date(d.getFullYear(), d.getMonth() + months, 1, 12); const dim = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
   t.setDate(Math.min(day, dim)); return ymd(t);
 }
@@ -54,8 +61,8 @@ export function nextCharge(sub: Sub, today: string): string {
   while (d < today && i++ < 600) d = addCycle(d, sub.cycle);
   return d;
 }
-export const monthly = (s: Sub) => { const p = num(s.price); return s.cycle === 'year' ? p / 12 : s.cycle === 'week' ? (p * 52) / 12 : p; };
-export const monthlyTotal = (list: Sub[]) => list.reduce((a, s) => a + monthly(s), 0);
+export const monthly = (s: Sub) => { const p = num(s.price); return s.cycle === 'year' ? p / 12 : s.cycle === 'half' ? p / 6 : s.cycle === 'quarter' ? p / 3 : s.cycle === 'week' ? (p * 52) / 12 : p; };
+export const monthlyTotal = (list: Sub[]) => list.filter(live).reduce((a, s) => a + monthly(s), 0);
 
 export type Due = { date: string; days: number; hot: boolean; warn: boolean; col: string; pill: string; txt: string };
 /** Yellow when the charge is close (3 days or less). Red only for the last day to cancel a free trial. */
@@ -74,7 +81,7 @@ export const setSubsG = (s: SubStore | null | undefined) => { SUBS_G = s && Arra
 /** What your subscriptions will still charge between today and the end of this month. Only the current month is counted. */
 export function subsStillToCome(ym: string, now: Date): number {
   if (ymd(now).slice(0, 7) !== ym) return 0; const today = ymd(now); let sum = 0;
-  SUBS_G.subs.forEach((s) => { const p = num(s.price); if (!(p > 0) || !validDate(s.next)) return; let d = nextCharge(s, today), i = 0; while (d && d.slice(0, 7) === ym && i++ < 6) { sum += p; d = addCycle(d, s.cycle); } });
+  SUBS_G.subs.forEach((s) => { const p = num(s.price); if (!live(s) || !(p > 0) || !validDate(s.next)) return; let d = nextCharge(s, today), i = 0; while (d && d.slice(0, 7) === ym && i++ < 6) { sum += p; d = addCycle(d, s.cycle); } });
   return sum;
 }
 export function useSubsG(): SubStore { const [s] = useStored<SubStore>('ml_subs', SUB_EMPTY); setSubsG(s); return s; }
@@ -127,7 +134,7 @@ export function readBill(text: string, today: string): Billed | null {
     const tot = am.find((m) => /total|amount|jumlah|charged|dicaj|pay/i.test(t.slice(Math.max(0, (m.index || 0) - 40), m.index))) || am[0];
     out.price = String(num(tot[2])); out.cur = CUR_OF[tot[1].toUpperCase()] || tot[1];
   }
-  if (/annual|yearly|per year|\/\s*year|\/yr|tahunan|setahun/i.test(t)) out.cycle = 'year'; else if (/weekly|per week|\/\s*week|mingguan/i.test(t)) out.cycle = 'week'; else if (/monthly|per month|\/\s*month|bulanan|sebulan|every month/i.test(t)) out.cycle = 'month';
+  if (/every\s*3\s*months|quarterly|per quarter|3\s*-?\s*month/i.test(t)) out.cycle = 'quarter'; else if (/every\s*6\s*months|half[\s-]?year|semi[\s-]?annual|6\s*-?\s*month/i.test(t)) out.cycle = 'half'; else if (/annual|yearly|per year|\/\s*year|\/yr|tahunan|setahun/i.test(t)) out.cycle = 'year'; else if (/weekly|per week|\/\s*week|mingguan/i.test(t)) out.cycle = 'week'; else if (/monthly|per month|\/\s*month|bulanan|sebulan|every month/i.test(t)) out.cycle = 'month';
   if (/free trial|trial period|percubaan percuma/i.test(t)) out.trial = true;
   const ds: string[] = [];
   [...t.matchAll(/(\d{4})-(\d{2})-(\d{2})/g)].forEach((m) => ds.push(m[0]));
@@ -138,14 +145,14 @@ export function readBill(text: string, today: string): Billed | null {
   if (fut) out.next = fut; else if (ok.length) out.next = addCycle(ok[ok.length - 1], (out.cycle || 'month') as Cycle);
   return out.name || out.price || out.next ? out : null;
 }
-export const aiPrompt = (text: string) => 'From this bill or receipt text, reply with ONLY one line of JSON and nothing else: {"name":"service name","price":number,"cycle":"week|month|year","next":"YYYY-MM-DD or empty","trial":true|false}. Use 0 for price if unknown.\n\n' + String(text).slice(0, 1500);
+export const aiPrompt = (text: string) => 'From this bill or receipt text, reply with ONLY one line of JSON and nothing else: {"name":"service name","price":number,"cycle":"week|month|quarter|half|year","next":"YYYY-MM-DD or empty","trial":true|false}. Use 0 for price if unknown.\n\n' + String(text).slice(0, 1500);
 export function readAi(reply: string): Billed | null {
   const m = /\{[\s\S]*?\}/.exec(String(reply || '')); if (!m) return null;
   try {
     const j = JSON.parse(m[0]); const out: Billed = {};
     if (typeof j.name === 'string' && j.name.trim()) { const nm = j.name.trim().slice(0, 40); const s = matchService(nm); out.name = s ? s.n : nm; if (s) out.cat = s.cat; }
     if (typeof j.price === 'number' && j.price > 0 && j.price < 100000) out.price = String(j.price);
-    if (j.cycle === 'week' || j.cycle === 'month' || j.cycle === 'year') out.cycle = j.cycle;
+    if (j.cycle === 'week' || j.cycle === 'month' || j.cycle === 'quarter' || j.cycle === 'half' || j.cycle === 'year') out.cycle = j.cycle;
     if (typeof j.next === 'string' && validDate(j.next)) out.next = j.next;
     if (j.trial === true) out.trial = true;
     return out.name || out.price || out.next ? out : null;

@@ -145,6 +145,7 @@ export async function syncSubAlerts(store: { subs?: any[] }, tg: Toggles, on: bo
     const { nextCharge, addCycle, ymd, num, rm } = await import('./subs');
     const now = Date.now(); const today = ymd(new Date()); const todo: { id: string; at: Date; title: string; body: string }[] = [];
     ((store && store.subs) || []).forEach((s: any) => {
+      if (s.status === 'paused' || s.status === 'cancelled') return;
       let d = nextCharge(s, today); if (!d) return;
       for (let k = 0; k < 3; k++, d = addCycle(d, s.cycle)) {
         const [y, m, dd] = d.split('-').map(Number); const trial = !!s.trial && k === 0; const p = rm(num(s.price));

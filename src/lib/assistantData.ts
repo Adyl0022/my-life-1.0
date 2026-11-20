@@ -104,7 +104,7 @@ export function useReal(P: [string, number, number][]): Real {
     docs: ((dcs && dcs.docs) || []).map((d) => ({ title: d.title || '', type: typeOf(d.type).label, expiry: d.expiry || '', n: d.expiry && validDate(d.expiry) ? daysLeft(d.expiry) : null })),
     loans: ((col && col.loans) || []).map((l) => ({ dir: l.dir, what: l.what, who: l.who || '', title: l.title || '', amount: parseFloat(String(l.amount || '0').replace(',', '.')) || 0, due: l.due || '', done: !!l.done })),
     itemsN: ((col && col.items) || []).length,
-    subs: ((sbs && sbs.subs) || []).map((s) => { const d = subDue(s, ymdS()); return { name: s.name, price: parseFloat(s.price) || 0, cycle: s.cycle, next: d.date, n: d.days, trial: !!s.trial }; }), subsMonth: subMonthly((sbs && sbs.subs) || []),
+    subs: ((sbs && sbs.subs) || []).filter((s) => !s.status || s.status === 'active').map((s) => { const d = subDue(s, ymdS()); return { name: s.name, price: parseFloat(s.price) || 0, cycle: s.cycle, next: d.date, n: d.days, trial: !!s.trial }; }), subsMonth: subMonthly((sbs && sbs.subs) || []),
     lessons: ((col && col.lessons) || []) as any,
     incomeLast: incomeLastMonth(fin), commit: commitFor(debts, ym), limits: ((fin as any).limits || {}) as Record<string, number>,
   };
