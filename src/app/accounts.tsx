@@ -53,7 +53,7 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
     onClose();
   };
   return (
-    <SheetFrame noNote title={edit ? 'Edit account' : 'Add account'} sub="Where your money is kept, or what you owe" onClose={onClose}>
+    <SheetFrame noNote finance title={edit ? 'Edit account' : 'Add account'} sub="Where your money is kept, or what you owe" onClose={onClose}>
       <Sections>
         <Lab t="TYPE" />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -102,7 +102,7 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
     setData({ ...data, moves: [...data.moves, m], nextId: data.nextId + 1 }); onClose();
   };
   return (
-    <SheetFrame noNote title={title} sub={mv.mode === 'transfer' ? 'Move money between your accounts' : mv.mode === 'deposit' ? 'Salary, a gift, or any money you receive' : 'Match it to what your bank or wallet shows'} onClose={onClose}>
+    <SheetFrame noNote finance title={title} sub={mv.mode === 'transfer' ? 'Move money between your accounts' : mv.mode === 'deposit' ? 'Salary, a gift, or any money you receive' : 'Match it to what your bank or wallet shows'} onClose={onClose}>
       <Sections>
         {mv.mode === 'transfer' ? (<><Lab t="FROM" />{pickChips(from, (id) => { setFrom(id); if (id === to) { const o = accs.find((a) => a.id !== id); if (o) setTo(o.id); } })}</>) : null}
         <Lab t={mv.mode === 'transfer' ? 'TO' : 'ACCOUNT'} />
@@ -128,7 +128,7 @@ function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; on
   if (!a) return null;
   const grp = groupOf(a.g); const liab = grp.liab; const b = balanceOf(a, data, spends, feeds); const ls = linesOf(a, data, spends, feeds); const shown = all ? ls : ls.slice(0, 8);
   return (
-    <SheetFrame noNote title={a.name} sub={grp.t + ' · as of ' + nice(a.since)} onClose={onClose}>
+    <SheetFrame noNote finance title={a.name} sub={grp.t + ' · as of ' + nice(a.since)} onClose={onClose}>
       <View style={{ marginTop: 14, padding: 18, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', overflow: 'hidden' }}>
         <LinearGradient colors={[grp.c + '55', 'rgba(255,255,255,.06)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{liab ? 'YOU OWE' : 'BALANCE'}</Text>

@@ -8,6 +8,8 @@ import { Text } from './Txt';
 import { W } from './Ui';
 import { INK } from '../lib/collection';
 import { ColIcon, type ColIconName } from './ColIcon';
+import { Blob } from './Bg';
+import { FinArt } from './FinArt';
 
 export const dim = 'rgba(255,255,255,.62)';
 export const Lab = ({ t }: { t: string }) => <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginTop: 18, marginBottom: 8 }}>{t}</Text>;
@@ -127,11 +129,16 @@ export function Sections({ children }: { children?: React.ReactNode }) {
   );
 }
 
-export function SheetFrame({ title, sub, onClose, children, noNote }: { title: string; sub?: string; onClose: () => void; children: React.ReactNode; noNote?: boolean }) {
+export function SheetFrame({ title, sub, onClose, children, noNote, finance }: { title: string; sub?: string; onClose: () => void; children: React.ReactNode; noNote?: boolean; finance?: boolean }) {
   return (
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={{ flex: 1, backgroundColor: '#1b0f26' }}>
-        <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+      <View style={{ flex: 1, backgroundColor: finance ? '#1a1030' : '#1b0f26' }}>
+        {finance ? (<>
+          <LinearGradient colors={['#1a1030', '#2a1747', '#3a1d3d']} locations={[0, 0.48, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+          <Blob size={320} color="rgba(255,196,107,.34)" style={{ right: -100, top: -40 }} />
+          <Blob size={340} color="rgba(183,148,255,.3)" style={{ left: -120, bottom: 0 }} />
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}><FinArt /></View>
+        </>) : <LinearGradient colors={['#1b0f26', '#2c1340', '#10244a']} locations={[0, 0.48, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />}
         <KbScroll contentContainerStyle={{ padding: 20, paddingTop: 52, paddingBottom: 40 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Pressable onPress={onClose} accessibilityLabel="Close"><View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 22 }}>‹</Text></View></Pressable>
