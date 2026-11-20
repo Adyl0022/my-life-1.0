@@ -3,7 +3,7 @@ import { LineIcon } from '../components/LineIcon';
 import { SubChargeCard } from '../components/SubChargeCard';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
-import { ACC_EMPTY, AccData, commitTotal, groupOf, totals } from '../lib/accounts';
+import { ACC_EMPTY, AccData, commitTotal, groupOf, incomeFeed, isLiab, totals } from '../lib/accounts';
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '../components/Txt';
@@ -26,7 +26,7 @@ import { cs, cu, cw, useRegion } from '../lib/region';
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string; acc?: number };
-type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number> };
+type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number>; incAcc?: Record<string, { acc: number; date: string; name: string }> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DEFS: [string, string, string][] = [['salary', 'Basic salary', '#7c9cff'], ['overtime', 'Overtime', '#ffc46b'], ['claim', 'Claim', '#8fe9e2'], ['sunday', 'Sunday work', '#b794ff'], ['holiday', 'Public holiday work', '#ff8fab'], ['other', 'Other', '#5ee7b5']];
@@ -64,7 +64,7 @@ export default function Finance() {
   const all = useMergedSpends(d.spends); const [vmode] = useVehMode();
   const now = new Date(); const curY = now.getFullYear(); const curKey = keyOf(curY, now.getMonth());
   const [ym, setYm] = useState(curKey);
-  const [editKey, setEditKey] = useState(''); const [editUnit, setEditUnit] = useState<'rm' | 'cnt'>('rm'); const [editVal, setEditVal] = useState('');
+  const [editKey, setEditKey] = useState(''); const [editUnit, setEditUnit] = useState<'rm' | 'cnt'>('rm'); const [editVal, setEditVal] = useState(''); const [editAcc, setEditAcc] = useState(0);
   const [limKey, setLimKey] = useState(''); const [limVal, setLimVal] = useState('');
   const [fDate, setFDate] = useState(todayStr()); const [fName, setFName] = useState(''); const [fAmt, setFAmt] = useState(''); const [fCat, setFCat] = useState('Food'); const [fGoal, setFGoal] = useState(0); const [fPre, setFPre] = useState('');
   const [fNote, setFNote] = useState(''); const [remId, setRemId] = useState(0); const [remF, setRemF] = useState({ name: '', amt: '', date: '', cat: 'Food', note: '', acc: 0 });
@@ -72,18 +72,20 @@ export default function Finance() {
   const NOTE_QUICK = ['Cash', 'Card', 'E-wallet', 'With family', 'Debt'];
   const quickNote = (t: string) => { const parts = fNote.split(',').map((x) => x.trim()).filter(Boolean); setFNote((parts.includes(t) ? parts.filter((x) => x !== t) : [...parts, t]).join(', ')); };
   const [sbs, setSbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
-  const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY); const accTot = totals(accD, d.spends as any, commitTotal(dbt.debts), dbt.debts as any);
+  const [sav, setSav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [dbt] = useStored<DebtData>('ml_debts', DEBT_EMPTY); const accTot = totals(accD, d.spends as any, commitTotal(dbt.debts), { debts: dbt.debts as any, incomes: incomeFeed(d.inc, d.incAcc) });
 
   const selY = parseInt(ym.slice(0, 4), 10), selM = parseInt(ym.slice(5, 7), 10) - 1;
   const sumOf = (o?: Record<string, number>) => DEFS.reduce((a, x) => a + ((o || {})[x[0]] || 0), 0);
   const incM = d.inc[ym] || {}; const cntM = d.cnt[ym] || {}; const total = sumOf(incM);
   const pickYm = (k: string) => { setYm(k); setEditKey(''); setEditVal(''); };
   const goYear = (dy: number) => { const ny = Math.min(curY, Math.max(2024, selY + dy)); let k = keyOf(ny, selM); if (k > curKey) k = curKey; pickYm(k); };
-  const open = (k: string, u: 'rm' | 'cnt') => { const n = ((u === 'cnt' ? d.cnt : d.inc)[ym] || {})[k] || 0; setEditKey(k); setEditUnit(u); setEditVal(n > 0 ? String(n) : ''); };
+  const open = (k: string, u: 'rm' | 'cnt') => { const n = ((u === 'cnt' ? d.cnt : d.inc)[ym] || {})[k] || 0; setEditKey(k); setEditUnit(u); setEditVal(n > 0 ? String(n) : ''); const L = (d.incAcc || {})[ym + '|' + k]; setEditAcc(L && accD.accs.some((a) => a.id === L.acc) ? L.acc : 0); };
   const saveLine = (k: string) => {
     const n = pn(editVal); const un = UN[k]; const store = editUnit === 'cnt' && un ? 'cnt' : 'inc';
     const alls = { ...d[store] }; alls[ym] = { ...alls[ym], [k]: n > 0 ? n : 0 };
-    setD({ ...d, [store]: alls }); setEditKey(''); setEditVal('');
+    const link = { ...(d.incAcc || {}) }; const lk = ym + '|' + k;
+    if (store === 'inc') { if (editAcc && n > 0) { const old = link[lk]; const td = todayStr(); link[lk] = { acc: editAcc, date: old && old.acc === editAcc ? old.date : (td.slice(0, 7) === ym ? td : ym + '-01'), name: (DEFS.find((x) => x[0] === k) || ['', k])[1] }; } else delete link[lk]; }
+    setD({ ...d, [store]: alls, incAcc: link }); setEditKey(''); setEditVal('');
   };
   const spendIn = (key: string) => all.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === key).reduce((a, p) => a + p.amt, 0);
   const gk = (back: number) => { const x = new Date(curY, now.getMonth() - back, 1); return { key: keyOf(x.getFullYear(), x.getMonth()), label: MON[x.getMonth()] }; };
@@ -254,6 +256,15 @@ export default function Finance() {
                         <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)' }}>
                           <Pressable onPress={() => open(k, 'rm')} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: unit === 'rm' ? '#ffc46b' : 'transparent' }}><Text style={{ color: unit === 'rm' ? '#2a1030' : W, fontSize: 12.5, fontWeight: '800' }}>{cu()}</Text></Pressable>
                           <Pressable onPress={() => open(k, 'cnt')} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: unit === 'cnt' ? '#8b7cff' : 'transparent' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{un[0]}</Text></Pressable>
+                        </View>
+                      ) : null}
+                      {unit === 'rm' && accD.accs.some((a) => !isLiab(a)) ? (
+                        <View>
+                          <Text style={{ color: dim, fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 6 }}>PUT INTO ACCOUNT (OPTIONAL)</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                            <Chip t="Not linked" on={!editAcc} onPress={() => setEditAcc(0)} />
+                            {accD.accs.filter((a) => !isLiab(a)).map((a) => <Chip key={a.id} t={a.name} on={editAcc === a.id} c={groupOf(a.g).c} onPress={() => setEditAcc(editAcc === a.id ? 0 : a.id)} />)}
+                          </View>
                         </View>
                       ) : null}
                       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
