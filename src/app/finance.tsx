@@ -352,10 +352,9 @@ export default function Finance() {
                 </View>
               ) : null}
               <Pressable onPress={addSpend} style={{ marginTop: 12 }}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 14, fontWeight: '800' }}>+ Add spending</Text></LinearGradient></Pressable>
-            </Glass>
 
             {/* Spending history */}
-            <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+            <View style={{ ...SEC, marginTop: 22 }}>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending History</Text>
                 <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{all.length + (all.length === 1 ? ' item' : ' items')}</Text>
@@ -418,7 +417,8 @@ export default function Finance() {
               ))}
               {all.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
             </View>
-            </Glass>
+            </View>
+          </Glass>
 
           {/* By category */}
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
