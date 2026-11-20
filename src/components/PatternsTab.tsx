@@ -9,7 +9,7 @@ import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal
 import { CardArt, IntelIcon } from './CardArt';
 import { TimeMachine } from './TimeMachine';
 import { cyclePatterns } from '../lib/cycle';
-import { ENERGY, energyEstimate, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, CATS, expState } from '../lib/patterns';
+import { ENERGY, energyEstimate, restSignal, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, CATS, expState } from '../lib/patterns';
 
 import { confirmDelete } from '../lib/dialog';
 const T = '#5ee7df';
@@ -30,7 +30,7 @@ const Tile = ({ ic, v, l }: { ic: string; v: string; l: string }) => (
 export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) => void; onToday: () => void }) {
   const goal = h.goal || 8000, cg = cupsGoal(h);
   const t = getDay(h, 0);
-  const est = t.en != null && t.en >= 0 ? { lvl: t.en, own: true, why: 'Your own rating' } : (() => { const e = energyEstimate(t, cg, goal); return e ? { lvl: e.lvl, own: false, why: e.why } : null; })();
+  const est = t.en != null && t.en >= 0 ? { lvl: t.en, own: true, why: 'Your own rating' } : (() => { const e = energyEstimate(t, cg, goal, restSignal(h, keyOfDate(dateOf(0)))); return e ? { lvl: e.lvl, own: false, why: e.why } : null; })();
   const [off, setOff] = useStored<Record<string, number>>('ml_pat_off', {});
   const [why, setWhy] = useState('');
   const pats = findPatterns(h);

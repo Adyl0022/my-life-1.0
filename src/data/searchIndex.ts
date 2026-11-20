@@ -366,7 +366,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "heart rate pulse nadi smart watch jam pintar band honor samsung xiaomi mi fitness zepp fitbit garmin health connect automatic auto steps langkah pedometer health connect walk jalan"
+  "k": "energy tenaga quick log suggested cadangan night pulse nadi malam heart rate pulse nadi smart watch jam pintar band honor samsung xiaomi mi fitness zepp fitbit garmin health connect automatic auto steps langkah pedometer health connect walk jalan"
  },
  {
   "t": "Mood",

@@ -22,6 +22,7 @@ const UNWELL = ['Headache', 'Tired', 'Fever'];
 const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
 import { HeadIcon, Face } from './HabitIcons';
+import { ENERGY, energyEstimate, restSignal } from '../lib/patterns';
 import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap opens the page, tap a bar segment to jump, long-press for the next one. Quick log keeps its own buttons.
@@ -115,7 +116,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     // Quick log: the next thing not filled in today, answered right here. When it is saved the next one takes its place.
     const td = getDay(hd, 0); const put = (p: Partial<HDay>) => setHd({ ...hd, days: { ...hd.days, [keyOfDate(dateOf(0))]: { ...td, ...p } } });
     const cg = cupsGoal(hd); const due = (hd.meds || []).filter((m) => medDue(m, dateOf(0))); const took = td.med || []; const med = due.find((m) => !took.includes(m.id));
-    const todo: string[] = []; const hr = new Date().getHours(); const nightNow = hr >= 20 || hr < 9; const needSleep = !(td.sleep > 0); if (needSleep && nightNow) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
+    const todo: string[] = []; const hr = new Date().getHours(); const nightNow = hr >= 20 || hr < 9; const needSleep = !(td.sleep > 0); if (needSleep && nightNow) todo.push('sleep'); if (td.mood < 0) todo.push('mood'); if ((td.en ?? -1) < 0 && td.mood >= 0 && hr >= 9 && !(skip.d === keyOfDate(dateOf(0)) && skip.k.includes('energy'))) todo.push('energy'); if (med) todo.push('med'); if (td.cups < cg) todo.push('water');
     // Pulse and period are not daily, so they are asked only when they fit, and "Skip" hides them until tomorrow.
     const dk = keyOfDate(dateOf(0)); const sk = skip.d === dk ? skip.k : []; const later = (k: string) => setSkip({ d: dk, k: [...sk, k] });
     if ((hd.heart || []).length && !(hd.heart || []).some((x) => x.d === dk) && !sk.includes('heart')) todo.push('heart');
@@ -141,8 +142,11 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Rnd z={26} t="−" onPress={() => setBedM((bedM + 1425) % 1440)} /><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', minWidth: 62, textAlign: 'center' }}>{to12(fm(bedM))}</Text><Rnd z={26} t="+" onPress={() => setBedM((bedM + 15) % 1440)} /><View style={{ width: 0 }} /><Btn t="Next" onPress={() => setSleepStep(1)} /></View></>);
     else if (cur === 'sleep') { const hr = hoursBetween(fm(bedM), fm(wkM)); body = (<>{head('Woke up', '= ' + hr + ' h of sleep', () => setSleepStep(0))}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Rnd z={26} t="−" onPress={() => setWkM((wkM + 1425) % 1440)} /><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', minWidth: 62, textAlign: 'center' }}>{to12(fm(wkM))}</Text><Rnd z={26} t="+" onPress={() => setWkM((wkM + 15) % 1440)} /><View style={{ width: 0 }} /><Btn t="Save" onPress={() => { put({ bed: fm(bedM), wake: fm(wkM), sleep: hr }); setSleepStep(0); }} /></View></>); }
-    else if (cur === 'mood') body = (<>{head('Mood today', 'Tap how you feel')}
+    else if (cur === 'mood') body = (<>{head('Mood today', td.sleep > 0 && td.sleep < 6 ? 'Slept ' + (Math.round(td.sleep * 10) / 10) + ' h. How do you feel?' : 'Tap how you feel')}
       <View style={{ flexDirection: 'row', gap: 5 }}>{[0, 1, 2, 3, 4].map((i) => <Pressable key={i} onPress={() => put({ mood: i })} hitSlop={4} accessibilityLabel={'Mood ' + (i + 1) + ' of 5'}><Face i={i} size={31} /></Pressable>)}</View></>);
+    else if (cur === 'energy') { const est = energyEstimate(td, cg, hd.goal || 8000, restSignal(hd, dk)); body = (<>{head('Energy today', est ? 'Suggested: ' + ENERGY[est.lvl][0].toLowerCase() + ' · ' + est.why : 'Tap how you feel')}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>{ENERGY.map((e, i) => <Pressable key={e[0]} onPress={() => put({ en: i })} hitSlop={4} accessibilityLabel={'Energy ' + e[0]} style={{ paddingVertical: 7, paddingHorizontal: 9, borderRadius: 999, borderWidth: est && est.lvl === i ? 1.5 : 1, borderColor: est && est.lvl === i ? e[1] : 'rgba(255,255,255,.25)', backgroundColor: est && est.lvl === i ? e[1] + '33' : 'rgba(255,255,255,.08)' }}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{['Energetic', 'Normal', 'Tired', 'Exhausted'][i]}</Text></Pressable>)}
+        <Pressable onPress={() => later('energy')} hitSlop={8}><Text style={{ color: dim, fontSize: 11.5, fontWeight: '700' }}>Skip</Text></Pressable></View></>); }
     else if (cur === 'med' && med) body = (<>{head(med.name, [med.dose, med.time ? to12(med.time) : ''].filter(Boolean).join(' · ') || 'Medicine for today')}
       <Btn t="Taken" onPress={() => put({ med: [...took, med.id] })} /></>);
     else if (cur === 'water') body = (<>{head('Water today', td.cups * 250 + ' / ' + cg * 250 + ' ml · ' + td.cups + ' of ' + cg + ' glasses')}

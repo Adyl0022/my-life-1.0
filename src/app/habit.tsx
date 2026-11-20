@@ -11,7 +11,7 @@ import { Inp, W } from '../components/Ui';
 import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
 import { HeartLog } from '../components/HeartLog';
 import { PatternsTab } from '../components/PatternsTab';
-import { ENERGY, energyEstimate } from '../lib/patterns';
+import { ENERGY, energyEstimate, restSignal } from '../lib/patterns';
 import { SleepSchedule } from '../components/SleepSchedule';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
@@ -361,7 +361,7 @@ export default function Habit() {
             </View>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-            {(() => { const est = energyEstimate(t, cg, goal); const own = t.en != null && t.en >= 0; return (<>
+            {(() => { const est = energyEstimate(t, cg, goal, restSignal(h, keyOfDate(dateOf(0)))); const own = t.en != null && t.en >= 0; return (<>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><Ttl nm k="energy" t="Energy" /><Text style={{ color: own ? '#7df0c6' : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>{own ? 'YOUR RATING' : est ? 'ESTIMATED' : ''}</Text></View>
             <Lbl t={own ? 'How you said you feel today' : est ? est.why : 'Log two things above and an estimate appears'} />
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>

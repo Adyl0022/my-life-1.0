@@ -5,12 +5,28 @@ export const ENERGY: [string, string][] = [['Very energetic', '#7df0c6'], ['Norm
 const hrs = (n: number) => (Math.round(n * 10) / 10) + ' h';
 
 // An estimate from what is already logged. It is a guess, not the person's own rating.
-export function energyEstimate(x: HDay, cg: number, goal: number): { lvl: number; why: string } | null {
+/** The lowest pulse your watch read in the night (before 7 am) on a day, from the readings saved in the Heart log. */
+export function nightLow(h: HData, key: string): number | null {
+  const v = (h.heart || []).filter((x) => x.id.startsWith('w') && x.d === key && x.bpm != null && x.at < '07:00').map((x) => x.bpm as number);
+  return v.length ? Math.min(...v) : null;
+}
+/** Today's night pulse against your own usual (the middle value of the last 14 nights). Needs at least 4 earlier nights. */
+export function restSignal(h: HData, key: string): { low: number; base: number } | null {
+  const low = nightLow(h, key); if (low == null) return null;
+  const t = new Date(key + 'T12:00:00'); const prev: number[] = [];
+  for (let i = 1; i <= 14; i++) { const d = new Date(t); d.setDate(d.getDate() - i); const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); const v = nightLow(h, k); if (v != null) prev.push(v); }
+  if (prev.length < 4) return null;
+  prev.sort((a, b) => a - b); return { low, base: prev[Math.floor(prev.length / 2)] };
+}
+
+export function energyEstimate(x: HDay, cg: number, goal: number, rs?: { low: number; base: number } | null): { lvl: number; why: string } | null {
   const why: string[] = []; let s = 0, n = 0;
   if (x.sleep > 0) { n++; s += x.sleep >= 7.5 ? 2 : x.sleep >= 6.5 ? 1 : x.sleep >= 5.5 ? 0 : x.sleep >= 4.5 ? -1 : -2; why.push(hrs(x.sleep) + ' sleep'); }
   if (x.cups > 0) { n++; if (x.cups / cg >= 0.8) s += 1; why.push(x.cups + ' of ' + cg + ' glasses'); }
   if (x.steps > 0) { n++; if (x.steps / goal >= 0.7) s += 1; why.push(Math.round(x.steps).toLocaleString() + ' steps'); }
   if (x.mood >= 0) { n++; s += x.mood >= 3 ? 1 : x.mood <= 1 ? -1 : 0; why.push('mood ' + MOODS[x.mood][0].toLowerCase()); }
+  // A night pulse clearly above your usual can mean a tired body. It only ever lowers the guess, and only a little.
+  if (rs && rs.low - rs.base >= 6) { n++; s -= 1; why.push('night pulse ' + rs.low + ' bpm, higher than your usual ' + rs.base); }
   if (n < 2) return null;
   let lvl = s >= 3 ? 0 : s >= 0 ? 1 : s >= -2 ? 2 : 3;
   // Feeling tired or having a fever (noted in the Dashboard Quick log) lowers the guess by one step.

@@ -9,7 +9,7 @@ import { HeadIcon, Face } from './HabitIcons';
 import { Inp } from './Ui';
 import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal, goalPctOf } from '../lib/habit';
 import { modOn } from '../lib/hidden';
-import { ENERGY, energyEstimate, dayLevel, hasAny, windowAvg } from '../lib/patterns';
+import { ENERGY, energyEstimate, restSignal, dayLevel, hasAny, windowAvg } from '../lib/patterns';
 import { METRICS, Metric, fmtVal, series, future, weightFuture, memories, dstr, Fut } from '../lib/timeline';
 
 const T = '#5ee7df'; const W = '#fff'; const DIM = 'rgba(255,255,255,.7)';
@@ -90,7 +90,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
   const keyOf = (d: number) => keyOfDate(new Date(y, m, d, 12));
   const dayOf = (k: string): HDay => ({ ...BLANK, ...(h.days[k] || {}) });
   const sel = pick || todayKey; const sd = dayOf(sel); const sdt = new Date(sel + 'T12:00:00');
-  const sEst = sd.en != null && sd.en >= 0 ? null : energyEstimate(sd, cg, goal);
+  const sEst = sd.en != null && sd.en >= 0 ? null : energyEstimate(sd, cg, goal, restSignal(h, sel));
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [sel]: { ...sd, ...p } } });
   const Stp = ({ l, v, onM, onP }: { l: string; v: string; onM: () => void; onP: () => void }) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
