@@ -36,6 +36,9 @@ import { PinDialog } from '../../components/LockScreen';
 import { useKb } from '../../lib/keyboard';
 import { storageInfo, clearTemp, fmtBytes, pickText, parseBackup, applyBackup, Backup } from '../../lib/storage';
 import { Toggle } from '../../components/Toggle';
+import { WAKE_KEY } from '../../lib/wake';
+import { showAlert } from '../../lib/dialog';
+import { micAllowed, voiceOk } from '../../lib/voice';
 
 const W = '#fff', DIM = 'rgba(255,255,255,.7)';
 const G = ['#34d399', '#5ee7df'] as [string, string];
@@ -153,6 +156,8 @@ export default function Settings() {
   const [nameMsg, setNameMsg] = useState('');
   const [hd, setHd] = useStored<any>('ml_habit', { goal: 8000, days: {}, kg: [] });
   const [tg, setTg] = useStored<Record<string, boolean>>('ml_toggles', { ev: true, pr: true, zk: true, qh: true });
+  const [wakeOn, setWakeOn] = useStored<boolean>(WAKE_KEY, false);
+  const toggleWake = async () => { if (wakeOn) { setWakeOn(false); return; } if (await micAllowed()) setWakeOn(true); else showAlert('Microphone needed', 'Allow the microphone for My Life 1.0 in your phone settings to use Say Hai My Life.'); };
   const kb = useKb(); const sref = React.useRef<any>(null);
   const dlgR = React.useRef(''); 
   React.useEffect(() => { if (kb > 0 && !dlgR.current) setTimeout(() => sref.current?.scrollToEnd({ animated: true }), 80); }, [kb]);
@@ -301,6 +306,7 @@ export default function Settings() {
                 </Glass>
               </Pressable>
 
+              {voiceOk ? <Glass style={{ paddingHorizontal: 16 }}><Row k="lang" t="Say Hai My Life" last sub={wakeOn ? 'On. Listens only while Home is open, and stops after 5 minutes without a touch.' : 'Open My Life Live by saying Hai My Life while Home is open'} onPress={toggleWake} right={<Sw on={!!wakeOn} />} /></Glass> : null}
               <Glass style={{ paddingHorizontal: 16 }}><Row k="lang" t="Language" last right={<Text style={{ color: DIM, fontSize: 12.5 }}>English</Text>} /></Glass>
               <Pressable onPress={() => setDlg('out')}><Glass style={{ paddingVertical: 14, alignItems: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 14, fontWeight: '700' }}>Log out</Text></Glass></Pressable>
             </View>
