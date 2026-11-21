@@ -68,7 +68,7 @@ export function DocScans() {
   const [qk, setQk] = useStored<ScanQ>('ml_scan_q', 'hd');
   const [q, setQ] = useState(''); const [busy, setBusy] = useState(''); const [msg, setMsg] = useState('');
   const [draft, setDraft] = useState<{ uris: string[]; title: string } | null>(null);
-  const [open, setOpen] = useState(0); const [sel, setSel] = useState(0);
+  const [open, setOpen] = useState(0); const [sel, setSel] = useState(0); const [ask, setAsk] = useState<{ s: Scan; name: string } | null>(null);
   const scans = (st && st.scans) || [];
   const qi = Math.max(0, SCAN_Q.findIndex((x) => x.k === qk));
   const cur = scans.find((s) => s.id === open) || null;
@@ -101,9 +101,12 @@ export function DocScans() {
     setSt({ scans: [sc, ...scans], next: sc.id + 1 });
     setBusy(''); setDraft(null);
   };
-  const doPdf = async (s: Scan) => {
+  // The file name the person chose: letters, numbers, spaces and a few marks only, so every phone and app accepts it.
+  const clean = (n: string) => n.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').replace(/\.pdf$/i, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  const doPdf = async (s: Scan, name: string) => {
     setMsg(''); setBusy('Making the PDF…');
-    const r = await exportPdf(s.pages, s.title, 'Document-scan-my-life-export');
+    const nm = clean(name);
+    const r = await exportPdf(s.pages, s.title, nm || 'Document-scan-my-life-export', !!nm);
     setBusy('');
     if (r === 'web') setMsg('Making a PDF works in the Android app.'); else if (r === 'fail') setMsg('Could not make the PDF. Try fewer pages or a lower quality.');
   };
@@ -200,13 +203,31 @@ export function DocScans() {
             </View>
             <View style={{ marginTop: 8 }}><Btn danger label="Delete this page" onPress={() => delPage(cur)} /></View>
           </View>
-          <View style={{ marginTop: 14 }}><Btn main label="Make PDF and share" disabled={!!busy} onPress={() => doPdf(cur)} /></View>
+          <View style={{ marginTop: 14 }}><Btn main label="Make PDF and share" disabled={!!busy} onPress={() => setAsk({ s: cur, name: cur.title })} /></View>
           {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{msg}</Text> : null}
           <View style={{ marginTop: 10 }}><Btn danger label="Delete this scan" onPress={() => delScan(cur)} /></View>
-          <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16, marginTop: 12 }}>The PDF is made on your phone, named Document-scan-my-life-export, and shared by you. Nothing is uploaded.</Text>
+          <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16, marginTop: 12 }}>The PDF is made on your phone with the file name you choose, and shared by you. Nothing is uploaded.</Text>
         </Sheet>
       ) : null}
 
+      {ask ? (
+        <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setAsk(null)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.6)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22 }}>
+            <View style={{ alignSelf: 'stretch', padding: 18, borderRadius: 24, backgroundColor: '#241338', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }}>
+              <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Name the PDF</Text>
+              <Text style={{ color: dim, fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>This is the file name people will see when you share it.</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                <View style={{ flex: 1 }}><Inp value={ask.name} onChangeText={(x: string) => setAsk({ ...ask, name: x })} placeholder="e.g. Graduation letter" maxLength={60} /></View>
+                <Text style={{ color: dim, fontSize: 14, fontWeight: '700' }}>.pdf</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+                <Btn flex label="Cancel" onPress={() => setAsk(null)} />
+                <Btn main flex label="Make PDF" onPress={() => { const a = ask; setAsk(null); doPdf(a.s, a.name); }} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
       {busy ? (
         <Modal visible transparent animationType="fade" statusBarTranslucent>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.55)', alignItems: 'center', justifyContent: 'center' }}>
