@@ -100,6 +100,15 @@ export default function Finance() {
   // The list follows the Sort by choice: newest date first (default), oldest date first, or the order the entries were added.
   const [sortBy, setSortBy] = useStored<'new' | 'old' | 'add'>('ml_spend_sort', 'new');
   const byDate = [...all].sort((a, b) => sortBy === 'add' ? b.id - a.id : sortBy === 'old' ? (a.date || '').localeCompare(b.date || '') || a.id - b.id : (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  const [hm, setHm] = useState(''); const [pickM, setPickM] = useState(false);
+  const curM = hm || ym;
+  const addM = (k: string, d: number) => { const n = parseInt(k.slice(0, 4), 10) * 12 + parseInt(k.slice(5), 10) - 1 + d; return Math.floor(n / 12) + '-' + String((n % 12) + 1).padStart(2, '0'); };
+  const monthsWith = Array.from(new Set(all.map((x) => (x.date || '').slice(0, 7)).filter((x) => x.length === 7).concat([ym]))).sort().reverse();
+  const earliest = monthsWith[monthsWith.length - 1] || ym;
+  const FULLM = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const mLabel = (k: string) => FULLM[parseInt(k.slice(5), 10) - 1] + ' ' + k.slice(0, 4);
+  const shown = byDate.filter((x) => (x.date || '').slice(0, 7) === curM);
+  const shownTotal = shown.filter((x) => x.cat !== 'Savings').reduce((a, x) => a + x.amt, 0);
   const monthSpent = all.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
   const tr = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, t: sumOf(d.inc[k.key]) }; });
   const maxT = Math.max(...tr.map((x) => x.t), 1);
@@ -364,12 +373,32 @@ export default function Finance() {
             <View style={SEC}>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <Text style={{ ...SECL, marginBottom: 0 }}>SPENDING HISTORY</Text>
-                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{all.length + (all.length === 1 ? ' item' : ' items')}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{shown.length + (shown.length === 1 ? ' item' : ' items')}</Text>
               </View>
+              {all.length > 0 ? (
+                <View style={{ marginTop: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Pressable accessibilityLabel="Earlier month" disabled={curM <= earliest} onPress={() => setHm(addM(curM, -1))} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.1)', opacity: curM <= earliest ? 0.35 : 1 }}><Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>‹</Text></Pressable>
+                    <Pressable accessibilityLabel="Pick a month" onPress={() => setPickM(!pickM)} style={{ flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 6, borderRadius: 13, backgroundColor: 'rgba(255,196,107,.14)', borderWidth: 1, borderColor: 'rgba(255,196,107,.35)' }}>
+                      <Text style={{ color: '#ffd593', fontSize: 14, fontWeight: '800' }}>{mLabel(curM) + '  ▾'}</Text>
+                      <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{cs() + money(shownTotal) + ' spent' + (curM === ym ? ' · this month' : '')}</Text>
+                    </Pressable>
+                    <Pressable accessibilityLabel="Later month" disabled={curM >= ym} onPress={() => setHm(addM(curM, 1) >= ym ? '' : addM(curM, 1))} style={{ width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.1)', opacity: curM >= ym ? 0.35 : 1 }}><Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>›</Text></Pressable>
+                  </View>
+                  {pickM ? (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                      {monthsWith.slice(0, 12).map((k) => (
+                        <Pressable key={k} onPress={() => { setHm(k === ym ? '' : k); setPickM(false); }} style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, backgroundColor: k === curM ? '#ffc46b' : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: k === curM ? '#ffc46b' : 'rgba(255,255,255,.22)' }}><Text style={{ color: k === curM ? '#0b1030' : W, fontSize: 12, fontWeight: '700' }}>{MON[parseInt(k.slice(5), 10) - 1] + ' ' + k.slice(0, 4)}</Text></Pressable>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
               {all.length === 0 ? (
                 <View style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}><Text style={{ textAlign: 'center', color: 'rgba(255,255,255,.7)', fontSize: 12, lineHeight: 18 }}>No spending yet. Fill in Add Spending above and tap Add.</Text></View>
               ) : null}
-              {all.length > 1 ? (
+              {all.length > 0 && shown.length === 0 ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, textAlign: 'center', marginTop: 14 }}>{'No spending in ' + mLabel(curM) + '.'}</Text> : null}
+              {shown.length > 1 ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                   <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: '700' }}>Sort by</Text>
                   {([['new', 'Newest'], ['old', 'Oldest'], ['add', 'Added']] as ['new' | 'old' | 'add', string][]).map(([k, t]) => (
@@ -380,10 +409,9 @@ export default function Finance() {
                 </View>
               ) : null}
             <View style={{ marginTop: 6 }}>
-              {byDate.map((p, i) => { const ymP = (p.date || '').slice(0, 7); const first = i === 0 || ymP !== (byDate[i - 1].date || '').slice(0, 7); const inM = byDate.filter((x) => (x.date || '').slice(0, 7) === ymP).length; return (
+              {shown.map((p, i) => (
               <React.Fragment key={p.id}>
-              {first ? <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: i === 0 ? 4 : 14, marginBottom: 2, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, backgroundColor: 'rgba(255,196,107,.14)', borderWidth: 1, borderColor: 'rgba(255,196,107,.35)' }}><Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>{ymP.length === 7 ? MON[parseInt(ymP.slice(5), 10) - 1] + ' ' + ymP.slice(0, 4) : 'No date'}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{inM + (inM === 1 ? ' item' : ' items')}</Text></View> : null}
-                <View style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+                <View style={{ paddingVertical: 9, borderBottomWidth: i === shown.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
                     <Pressable disabled={p.src === 'record'} style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '', acc: p.acc || 0 }); } }}>
@@ -424,7 +452,7 @@ export default function Finance() {
                   ) : null}
                 </View>
               </React.Fragment>
-              ); })}
+              ))}
               {all.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
             </View>
             </View>
