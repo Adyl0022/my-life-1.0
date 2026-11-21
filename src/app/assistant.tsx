@@ -235,7 +235,7 @@ class Chat extends AssistantBase {
           <Glass radius={26} style={{ marginHorizontal: 20, marginTop: empty ? 0 : 12, minHeight: 54, flexDirection: 'row', alignItems: 'flex-end', paddingLeft: 18, paddingRight: 6, paddingVertical: 7, gap: 8 }}>
             <TextInput value={v.draft} onChangeText={(t) => this.setState({ draft: t })} placeholder={v.ph} placeholderTextColor="rgba(255,255,255,.5)" multiline {...(Platform.OS === 'web' ? ({ rows: 1 } as any) : {})} blurOnSubmit={false} textAlignVertical="center" style={{ flex: 1, minWidth: 0, minHeight: 40, maxHeight: 120, paddingTop: 10, paddingBottom: 10, color: '#fff', fontSize: 14, fontWeight: '600', outlineStyle: 'none' } as any} />
             {voiceOk && !(this.state as any).draft ? (
-              <Pressable onPress={() => (this.props as any).onVoice && (this.props as any).onVoice()} accessibilityLabel="Open My Life Live" buzz>
+              <Pressable onPress={() => (this.props as any).onVoice && (this.props as any).onVoice()} accessibilityLabel="Talk to My Life Assistant" buzz>
                 <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(94,231,223,.14)', borderWidth: 1, borderColor: 'rgba(143,233,226,.5)' }}>
                   <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 10.5v3" {...stroke} stroke="#8fe9e2" /><Path d="M21 3l.6 1.6L23 5l-1.4.5L21 7l-.6-1.5L19 5l1.4-.4z" fill="#fff" stroke="none" /></Svg>
                 </View>

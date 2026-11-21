@@ -16,7 +16,7 @@ import { onlineOn } from '../lib/onlineAi';
 
 type Phase = 'ready' | 'idle' | 'listening' | 'thinking' | 'speaking';
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-const NAME = 'My Life Live';
+const NAME = 'My Life Assistant';
 // The live wave: soft ribbons of light that flow across the screen. They swell with the loudness of your voice while you talk,
 // flow calmly while the Assistant answers, and breathe slowly when it is quiet.
 const LAYERS = [
@@ -269,7 +269,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
     }, 90);
     return () => clearInterval(id);
   }, [phase, reply]);
-  const status = phase === 'ready' ? L('Getting ready…', 'Bersedia…') : phase === 'listening' ? L('Just talk, I\'m listening', 'Cakap sahaja, saya mendengar') : phase === 'thinking' ? L('Thinking…', 'Sedang fikir…') : phase === 'speaking' ? L('Speaking…', 'Bercakap…') : L('Paused. Tap the microphone to talk', 'Dijeda. Tekan mikrofon untuk bercakap');
+  const status = phase === 'ready' ? L('Getting ready…', 'Bersedia…') : phase === 'listening' ? L('Just talk, I\'m listening', 'Cakap sahaja, saya mendengar') : phase === 'thinking' ? L('Thinking', 'Sedang fikir') : phase === 'speaking' ? L('Speaking…', 'Bercakap…') : L('Tap the microphone to talk', 'Tekan mikrofon untuk bercakap');
   const chip = (on: boolean) => ({ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.25)', backgroundColor: on ? 'rgba(183,148,255,.35)' : 'rgba(255,255,255,.06)' } as const);
   const box = { marginTop: 12, padding: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' } as const;
   const lab = { color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6 } as const;
@@ -310,7 +310,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
             <View style={{ marginTop: 2, marginHorizontal: -20 }}><Wave target={ampT} width={sw} /></View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 15, fontWeight: '700' }}>{status}</Text>
-              {phase === 'listening' ? (
+              {phase === 'listening' || phase === 'thinking' ? (
                 <View style={{ flexDirection: 'row', gap: 4 }}>
                   {[[1, 0.25], [0.25, 1], [0.25, 0.25]].map((o, i) => <Animated.View key={i} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#8fe9e2', opacity: i === 2 ? glow.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.25, 0.25, 1] }) : glow.interpolate({ inputRange: [0, 1], outputRange: [o[0], o[1]] }) }} />)}
                 </View>
@@ -367,7 +367,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
                       </View>
                     </Glass>
                   </Pressable>
-                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{phase === 'speaking' ? L('Skip', 'Langkau') : heard ? L('Send', 'Hantar') : L('Pause', 'Jeda')}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{phase === 'speaking' ? L('Skip', 'Langkau') : heard ? L('Send', 'Hantar') : L('Stop', 'Henti')}</Text>
                 </View>
               )}
               <View style={{ alignItems: 'center', paddingTop: 16 }}>
