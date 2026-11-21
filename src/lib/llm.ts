@@ -213,7 +213,7 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
   const out = clean(raw, big ? 6000 : 1400);
   if (!out) return '';
   const fact = !task && /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
-  if (voice) return out;
+  if (voice) return fact && /\b(siapa|who|bila|when|tahun|year|presiden|president|perdana menteri|prime minister)\b/i.test(q) ? out + ' ' + (ms ? 'Saya AI kecil dalam telefon, jadi semak fakta ini dengan sumber rasmi.' : 'I am a small AI on your phone, so please check this fact with an official source.') : out;
   return out + (ms
     ? '\n\n(Jawapan AI dalam telefon awak. Ia boleh tersilap' + (fact ? ', terutama tentang orang, tarikh dan angka' : '') + '. Semak fakta penting dengan sumber rasmi.)'
     : '\n\n(An AI answer made on your phone. It can be wrong' + (fact ? ', especially about people, dates and numbers' : '') + '. Check important facts with an official source.)');
