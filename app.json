@@ -96,6 +96,13 @@
       "./plugins/withReleaseSigning",
       "react-native-document-scanner-plugin",
       [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "My Life 1.0 uses the microphone only when you tap the mic in the Assistant.",
+          "speechRecognitionPermission": "My Life 1.0 uses speech recognition only when you tap the mic in the Assistant."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#0a0f2c",

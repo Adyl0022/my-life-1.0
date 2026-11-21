@@ -433,6 +433,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "language bahasa translate terjemah chinese arabic tamil hindi chat language pack ml kit"
  },
  {
+  "t": "Talk to the Assistant",
+  "s": "Use your voice: ask, save spending and open pages",
+  "m": "Assistant",
+  "c": "#b794ff",
+  "h": "Assistant.dc.html",
+  "k": "voice suara mic mikrofon microphone talk cakap speak bercakap assistant voice assistant"
+ },
+ {
   "t": "Insights",
   "s": "Life score, weekly review and smart suggestions",
   "m": "System",

@@ -25,6 +25,8 @@ import { smartWarm } from '../lib/llm';
 import { LangWelcomeCard } from '../components/LangWelcomeCard';
 import { SmartChatSheet } from '../components/SmartChatSheet';
 import { getItem } from '../lib/store';
+import { VoiceAssistant } from '../components/VoiceAssistant';
+import { voiceOk } from '../lib/voice';
 
 const STARS: [number, number, number, number][] = Array.from({ length: 34 }, (_, i) => [(i * 37 + 11) % 100, (i * 53 + 7) % 96, 0.6 + ((i * 7) % 6) / 10, 0.25 + ((i * 13) % 6) / 10]);
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -232,6 +234,13 @@ class Chat extends AssistantBase {
           )}
           <Glass radius={26} style={{ marginHorizontal: 20, marginTop: empty ? 0 : 12, minHeight: 54, flexDirection: 'row', alignItems: 'flex-end', paddingLeft: 18, paddingRight: 6, paddingVertical: 7, gap: 8 }}>
             <TextInput value={v.draft} onChangeText={(t) => this.setState({ draft: t })} placeholder={v.ph} placeholderTextColor="rgba(255,255,255,.5)" multiline {...(Platform.OS === 'web' ? ({ rows: 1 } as any) : {})} blurOnSubmit={false} textAlignVertical="center" style={{ flex: 1, minWidth: 0, minHeight: 40, maxHeight: 120, paddingTop: 10, paddingBottom: 10, color: '#fff', fontSize: 14, fontWeight: '600', outlineStyle: 'none' } as any} />
+            {voiceOk && !(this.state as any).draft ? (
+              <Pressable onPress={() => (this.props as any).onVoice && (this.props as any).onVoice()} accessibilityLabel="Talk to the Assistant by voice" buzz>
+                <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)' }}>
+                  <Svg width={19} height={19} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3" {...stroke} /></Svg>
+                </View>
+              </Pressable>
+            ) : null}
             <Pressable onPress={v.send} accessibilityLabel="Send">
               <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
                 <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M5 12h14M13 6l6 6-6 6" {...stroke} /></Svg>
@@ -268,7 +277,7 @@ export default function Assistant() {
   const [xl] = useAssistLang(); const packs = useLangPacks();
   // The chosen language is used only when its pack is on the phone, otherwise the Assistant keeps to English or Bahasa Malaysia.
   const tlang = xlOk && xl && packs.ready(xl) ? xl : '';
-  const [smart, setSmart] = React.useState(false); const [sheet, setSheet] = React.useState(false); const [auto, setAuto] = React.useState('');
+  const [voice, setVoice] = React.useState(false); const [smart, setSmart] = React.useState(false); const [sheet, setSheet] = React.useState(false); const [auto, setAuto] = React.useState('');
   const go = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }
@@ -289,7 +298,8 @@ export default function Assistant() {
       </Svg>
       <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 12 + TOP }}>
         {last ? <PrayerFeed onTimes={setP} /> : null}
-        {real.ready ? <Chat ref={chat} tlang={tlang} onSmart={() => setSmart(true)} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
+        {real.ready ? <Chat ref={chat} onVoice={() => setVoice(true)} tlang={tlang} onSmart={() => setSmart(true)} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
+        <VoiceAssistant visible={voice} chat={chat} onClose={() => setVoice(false)} onOpen={(r: string) => { setVoice(false); setTimeout(() => router.push(r as any), 250); }} />
         <SmartChatSheet visible={smart} onClose={() => setSmart(false)} />
         <AssistLangSheet visible={sheet} auto={auto} onClose={() => { setSheet(false); setAuto(''); }} onPicked={(c: string) => setPicked(c)} />
         <LangPickedPopup code={picked} onHide={() => setPicked(null)} />
