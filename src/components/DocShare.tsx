@@ -108,7 +108,7 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
 }
 
 /** All pages into one PDF, made on the phone. */
-export async function exportPdf(pages: string[], title: string, prefix = 'Document-my-life-export', exact = false): Promise<'ok' | 'web' | 'fail'> {
+export async function exportPdf(pages: string[], title: string, prefix = 'Document-my-life-export', exact = false, onReady?: () => void): Promise<'ok' | 'web' | 'fail'> {
   if (Platform.OS === 'web') return 'web';
   try {
     const FS = await import('expo-file-system/legacy'); const PR = await import('expo-print'); const SH = await import('expo-sharing');
@@ -117,6 +117,7 @@ export async function exportPdf(pages: string[], title: string, prefix = 'Docume
     const html = '<html><body style="margin:0;padding:12px">' + imgs.join('') + '</body></html>';
     const r = await PR.printToFileAsync({ html });
     let uri = r.uri; try { const to = (FS.cacheDirectory || '') + (exact ? prefix : prefix + '-' + fileStamp()) + '.pdf'; await FS.deleteAsync(to, { idempotent: true }); await FS.copyAsync({ from: r.uri, to }); uri = to; } catch (e) { /* keep the original file */ }
+    try { onReady && onReady(); } catch (e) { /* ignore */ }
     if (await SH.isAvailableAsync()) await SH.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: title, UTI: 'com.adobe.pdf' });
     return 'ok';
   } catch (e) { return 'fail'; }

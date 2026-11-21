@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Modal, ScrollView, Image, ActivityIndicator, Platform, Alert } from 'react-native';
+import { View, Modal, ScrollView, Image, ActivityIndicator, Platform, Alert, useWindowDimensions } from 'react-native';
 import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -64,6 +64,7 @@ function Thumb({ uri, w, h, n, on, onPress }: { uri: string; w: number; h: numbe
 
 // Scans: kept apart from the papers of Documents. A paper here is just pages with a name, made into one PDF.
 export function DocScans() {
+  const { width: sw } = useWindowDimensions(); const gw = Math.floor((sw - 36 - 20) / 3);
   const [st, setSt] = useStored<ScanStore>('ml_scans', EMPTY);
   const [qk, setQk] = useStored<ScanQ>('ml_scan_q', 'hd');
   const [q, setQ] = useState(''); const [busy, setBusy] = useState(''); const [msg, setMsg] = useState('');
@@ -118,7 +119,7 @@ export function DocScans() {
   const doPdf = async (s: Scan, name: string) => {
     setMsg(''); setBusy('Making the PDF…');
     const nm = clean(name);
-    const r = await exportPdf(s.pages, s.title, nm || 'Document-scan-my-life-export', !!nm);
+    const r = await exportPdf(s.pages, s.title, nm || 'Document-scan-my-life-export', !!nm, () => setBusy(''));
     setBusy('');
     if (r === 'web') setMsg('Making a PDF works in the Android app.'); else if (r === 'fail') setMsg('Could not make the PDF. Try fewer pages or a lower quality.');
   };
@@ -160,15 +161,15 @@ export function DocScans() {
       {scans.length > 3 ? <View style={{ marginTop: 12 }}><SearchField value={q} onChangeText={setQ} placeholder="Search scans" /></View> : null}
       {list.length ? list.map((s) => (
         <Pressable key={s.id} onPress={() => { setSel(0); setOpen(s.id); }} accessibilityLabel={'Open ' + s.title} style={({ pressed }) => ({ marginTop: 10, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.07)' }}>
+          <LinearGradient colors={['rgba(124,156,255,.4)', 'rgba(183,148,255,.3)', 'rgba(255,180,94,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)', overflow: 'hidden' }}>
             <Thumb uri={s.pages[0]} w={52} h={68} />
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.1 }}>SCAN</Text>
+              <Text style={{ color: '#fff', opacity: 0.8, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.1 }}>SCAN</Text>
               <Text numberOfLines={1} style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 2 }}>{s.title}</Text>
               <Text numberOfLines={1} style={{ color: dim, fontSize: 12.5, marginTop: 2 }}>{s.pages.length + (s.pages.length === 1 ? ' page' : ' pages') + ' · ' + dstr(s.at)}</Text>
             </View>
-            <Svg width={18} height={18} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" {...stroke} /></Svg>
-          </View>
+            <Text style={{ color: '#fff', fontSize: 22 }}>›</Text>
+          </LinearGradient>
         </Pressable>
       )) : (
         <View style={{ marginTop: 26, alignItems: 'center', paddingHorizontal: 20 }}>
@@ -234,22 +235,19 @@ export function DocScans() {
         </Modal>
       ) : null}
       {ask ? (
-        <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setAsk(null)}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.6)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22 }}>
-            <View style={{ alignSelf: 'stretch', padding: 18, borderRadius: 24, backgroundColor: '#241338', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }}>
-              <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Name the PDF</Text>
-              <Text style={{ color: dim, fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>This is the file name people will see when you share it.</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                <View style={{ flex: 1 }}><Inp value={ask.name} onChangeText={(x: string) => setAsk({ ...ask, name: x })} placeholder="e.g. Graduation letter" maxLength={60} /></View>
-                <Text style={{ color: dim, fontSize: 14, fontWeight: '700' }}>.pdf</Text>
-              </View>
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-                <Btn flex label="Cancel" onPress={() => setAsk(null)} />
-                <Btn main flex label="Make PDF" onPress={() => { const a = ask; setAsk(null); doPdf(a.s, a.name); }} />
-              </View>
-            </View>
+        <Sheet title="Check your pages" onClose={() => setAsk(null)}>
+          <Text style={{ color: dim, fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{ask.s.pages.length + (ask.s.pages.length === 1 ? ' page' : ' pages') + ' will go into the PDF, in this order. Tap a page to look at it closely.'}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
+            {ask.s.pages.map((u, i) => <Thumb key={u + i} uri={u} w={gw} h={Math.round(gw * 1.32)} n={i + 1} onPress={() => setLook(u)} />)}
           </View>
-        </Modal>
+          <Text style={{ ...LAB, marginTop: 18, marginBottom: 8 }}>FILE NAME</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flex: 1 }}><Inp value={ask.name} onChangeText={(x: string) => setAsk({ ...ask, name: x })} placeholder="e.g. Graduation letter" maxLength={60} /></View>
+            <Text style={{ color: dim, fontSize: 14, fontWeight: '700' }}>.pdf</Text>
+          </View>
+          <View style={{ marginTop: 16 }}><Btn main label="Share PDF" onPress={() => { const a = ask; setAsk(null); doPdf(a.s, a.name); }} /></View>
+          <Text style={{ color: dim, fontSize: 11.5, lineHeight: 17, marginTop: 10 }}>The PDF is made on your phone and shared by you. Nothing is uploaded.</Text>
+        </Sheet>
       ) : null}
       {busy ? (
         <Modal visible transparent animationType="fade" statusBarTranslucent>
