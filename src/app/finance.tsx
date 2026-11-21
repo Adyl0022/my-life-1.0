@@ -108,6 +108,8 @@ export default function Finance() {
   const FULLM = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const mLabel = (k: string) => FULLM[parseInt(k.slice(5), 10) - 1] + ' ' + k.slice(0, 4);
   const shown = byDate.filter((x) => (x.date || '').slice(0, 7) === curM);
+  const [full, setFull] = useState('');
+  const vis = full === curM ? shown : shown.slice(0, 6);
   const shownTotal = shown.filter((x) => x.cat !== 'Savings').reduce((a, x) => a + x.amt, 0);
   const monthSpent = all.filter((p) => p.cat !== 'Savings' && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
   const tr = [5, 4, 3, 2, 1, 0].map((b) => { const k = gk(b); return { key: k.key, label: k.label, t: sumOf(d.inc[k.key]) }; });
@@ -409,9 +411,9 @@ export default function Finance() {
                 </View>
               ) : null}
             <View style={{ marginTop: 6 }}>
-              {shown.map((p, i) => (
+              {vis.map((p, i) => (
               <React.Fragment key={p.id}>
-                <View style={{ paddingVertical: 9, borderBottomWidth: i === shown.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+                <View style={{ paddingVertical: 9, borderBottomWidth: i === vis.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
                     <Pressable disabled={p.src === 'record'} style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '', acc: p.acc || 0 }); } }}>
@@ -453,6 +455,11 @@ export default function Finance() {
                 </View>
               </React.Fragment>
               ))}
+              {shown.length > 6 ? (
+                <Pressable onPress={() => setFull(full === curM ? '' : curM)} style={{ alignSelf: 'center', marginTop: 10, paddingVertical: 8, paddingHorizontal: 18, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)', backgroundColor: 'rgba(255,255,255,.08)' }}>
+                  <Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{full === curM ? 'Show less' : 'Show all ' + shown.length}</Text>
+                </Pressable>
+              ) : null}
               {all.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
             </View>
             </View>

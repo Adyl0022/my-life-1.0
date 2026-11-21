@@ -68,7 +68,7 @@ export function DocScans() {
   const [qk, setQk] = useStored<ScanQ>('ml_scan_q', 'hd');
   const [q, setQ] = useState(''); const [busy, setBusy] = useState(''); const [msg, setMsg] = useState('');
   const [draft, setDraft] = useState<{ uris: string[]; title: string } | null>(null);
-  const [big, setBig] = useState(0);
+  const [big, setBig] = useState(0); const [look, setLook] = useState('');
   React.useEffect(() => { let on = true; setBig(0); if (draft && draft.uris.length) Promise.all(draft.uris.slice(0, 8).map((u) => picSize(u))).then((r) => { if (on) setBig(Math.max(0, ...r.map((x) => (x ? Math.max(x.w, x.h) : 0)))); }); return () => { on = false; }; }, [draft ? draft.uris.join('|') : '']);
   const [open, setOpen] = useState(0); const [sel, setSel] = useState(0); const [ask, setAsk] = useState<{ s: Scan; name: string } | null>(null);
   const scans = (st && st.scans) || [];
@@ -184,7 +184,7 @@ export function DocScans() {
             <Text style={LAB}>NAME</Text>
             <Inp style={{ marginTop: 8 }} value={draft.title} onChangeText={(x: string) => setDraft({ ...draft, title: x })} placeholder="e.g. Graduation letter" maxLength={60} />
             <Text style={{ ...LAB, marginTop: 16 }}>{draft.uris.length + (draft.uris.length === 1 ? ' PAGE' : ' PAGES')}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 8 }}>{draft.uris.map((u, i) => <Thumb key={u + i} uri={u} w={72} h={96} n={i + 1} />)}</ScrollView>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 8 }}>{draft.uris.map((u, i) => <Thumb key={u + i} uri={u} w={72} h={96} n={i + 1} onPress={() => setLook(u)} />)}</ScrollView>
             <Text style={{ ...LAB, marginTop: 16, marginBottom: 8 }}>QUALITY</Text>
             <EqPills tabs={SCAN_Q.map((x) => x.n)} index={qi} onChange={(i) => setQk(SCAN_Q[i].k)} colors={['#7c9cff', '#b794ff']} fontSize={12.5} />
             <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{SCAN_Q[qi].note + '. The long side of each page is ' + SCAN_Q[qi].px + ' pixels.'}</Text>
@@ -225,6 +225,14 @@ export function DocScans() {
         </Sheet>
       ) : null}
 
+      {look ? (
+        <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setLook('')}>
+          <Pressable onPress={() => setLook('')} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}>
+            <Image source={{ uri: look }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
+            <Text style={{ color: dim, fontSize: 12.5, textAlign: 'center', marginTop: 10 }}>Tap anywhere to close</Text>
+          </Pressable>
+        </Modal>
+      ) : null}
       {ask ? (
         <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setAsk(null)}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,.6)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22 }}>
