@@ -137,15 +137,21 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
   const listenOnce = () => {
     if (!live.current) return;
     setPhase('listening'); setHeard('');
-    let final = ''; let fatal = false;
+    let final = ''; let part = ''; let fatal = false;
     stopL.current = listen(vl().tag, {
-      onPartial: (t) => setHeard(t),
+      onPartial: (t) => { part = t; setHeard(t); },
       onFinal: (t) => { final = t; },
       onLevel: (v) => setAmp(0.18 + v * 0.82, 90),
       onError: (c) => { fatal = true; setErr(errText(c)); },
       onEnd: () => {
         if (!live.current) return;
-        if (pause.current || fatal) { pause.current = false; setPhase('idle'); return; }
+        if (pause.current || fatal) {
+          // Tapping the button while words are on the screen means "that is all": send what was heard instead of throwing it away.
+          const txt = (final || part).trim(); const send = pause.current && !fatal && txt.length > 1;
+          pause.current = false;
+          if (send) { quiet.current = 0; handle(txt); return; }
+          setPhase('idle'); return;
+        }
         if (final) { quiet.current = 0; handle(final); return; }
         quiet.current += 1;
         if (quiet.current >= 2) setPhase('idle'); else listenOnce();
@@ -304,14 +310,14 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
                 </View>
               ) : (
                 <View style={{ alignItems: 'center', paddingTop: 16 }}>
-                  <Pressable onPress={tapMic} buzz accessibilityLabel={phase === 'speaking' ? 'Skip the answer' : 'Pause listening'}>
+                  <Pressable onPress={tapMic} buzz accessibilityLabel={phase === 'speaking' ? 'Skip the answer' : heard ? 'Send what you said' : 'Pause listening'}>
                     <Glass radius={30} style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
                       <View>
                         <Svg width={26} height={26} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3" {...stroke} /></Svg>
                       </View>
                     </Glass>
                   </Pressable>
-                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{phase === 'speaking' ? L('Skip', 'Langkau') : L('Pause', 'Jeda')}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{phase === 'speaking' ? L('Skip', 'Langkau') : heard ? L('Send', 'Hantar') : L('Pause', 'Jeda')}</Text>
                 </View>
               )}
               <View style={{ alignItems: 'center', paddingTop: 16 }}>

@@ -98,7 +98,9 @@ export function speak(text: string, tag: string, done: () => void): void {
   const t = speechText(text);
   if (!SP || !t || !PREF.talk) { setTimeout(done, 50); return; }
   let fired = false; const once = () => { if (!fired) { fired = true; done(); } };
-  try { SP.speak(t, { language: tag, rate: PREF.rate, pitch: PREF.pitch, ...(PREF.v[tag] ? { voice: PREF.v[tag] } : {}), onDone: once, onStopped: once, onError: once }); } catch (e) { once(); }
+  // If the phone has no voice for this language, or the chosen voice fails, try again with the phone's own default voice before giving up.
+  const plain = () => { try { SP.speak(t, { rate: PREF.rate, pitch: PREF.pitch, onDone: once, onStopped: once, onError: once }); } catch (e) { once(); } };
+  try { SP.speak(t, { language: tag, rate: PREF.rate, pitch: PREF.pitch, ...(PREF.v[tag] ? { voice: PREF.v[tag] } : {}), onDone: once, onStopped: once, onError: () => { if (fired) return; plain(); } }); } catch (e) { plain(); }
 }
 // A short sample in the voice, speed and tone that are set now (an id can be given to try a voice before choosing it).
 export function sample(tag: string, id?: string) {
