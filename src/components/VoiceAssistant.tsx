@@ -196,6 +196,14 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
     if (cmd && cmd.kind === 'stop') { say(await tr('Okay. Talk to me any time.', 'Baik. Panggil saya bila-bila masa.'), onClose); return; }
     if (cmd && cmd.kind === 'open') { say(await tr('Opening ' + cmd.name + '.', 'Membuka ' + cmd.name + '.'), () => onOpen(cmd.route)); return; }
     if (cmd && cmd.kind === 'openFail') { say(await tr('I could not find a page called ' + cmd.target + '.', 'Saya tak jumpa halaman ' + cmd.target + '.'), again); return; }
+    // An earlier question may still be worked on (the AI on the phone cannot be stopped half way). The chat ignores a new question until it is done,
+    // and its late answer would then be read out as the answer to this one. So wait for it to finish first, and let that old answer go.
+    if (c.state && c.state.typing) {
+      const w0 = Date.now();
+      while (live.current && c.state && c.state.typing && Date.now() - w0 < 90000) await new Promise((r) => setTimeout(r, 250));
+      if (!live.current) return;
+      if (c.state && c.state.typing) { say(await tr('I am still busy with the last question. Please ask again in a moment.', 'Saya masih sibuk dengan soalan tadi. Tanya semula sebentar lagi.'), again); return; }
+    }
     setReply('');
     const before = (c.state.msgs || []).length;
     if (cmd && cmd.kind === 'yes') c.confirm(true); else if (cmd && cmd.kind === 'no') c.confirm(false); else if (isX()) c.askX(text, vkR.current); else c.ask(text);
