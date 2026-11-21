@@ -438,7 +438,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#5ee7df",
   "h": "Insights.dc.html",
-  "k": "insights score skor life cadangan suggestion tips weekly mingguan relax energy tenaga medicine ubat cycle kitaran patterns corak tips"
+  "k": "insights score skor life cadangan suggestion tips weekly mingguan relax energy tenaga medicine ubat cycle kitaran patterns corak tips akaun account subscription langganan pulse nadi heart"
  },
  {
   "t": "Stats",
@@ -446,7 +446,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#5ee7df",
   "h": "Stats.dc.html",
-  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang"
+  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang total money akaun subscription langganan pulse nadi heart rate"
  },
  {
   "t": "Settings",

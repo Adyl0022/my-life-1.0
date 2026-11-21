@@ -33,6 +33,8 @@ import { goalSaved } from '../../lib/savings';
 import { healthMonths } from '../../components/BodyCards';
 import { sunatYear, qadhaOwed, ramadanState } from '../../lib/fasting';
 import { cs, useRegion } from '../../lib/region';
+import { ACC_EMPTY, AccData, totals, commitTotal, incomeFeed } from '../../lib/accounts';
+import { SUB_EMPTY, SubStore, monthlyTotal, live } from '../../lib/subs';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MI = ({ k, s = 30 }: { k: string; s?: number }) => {
@@ -56,6 +58,8 @@ export default function Stats() {
   useRegion();
   const hid = useHidden();
   const [tab0, setTab] = useState<'use' | 'health' | 'money'>('use');
+  const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY);
+  const [subS] = useStored<SubStore>('ml_subs', SUB_EMPTY);
   // A tab whose module was turned off falls back to App use.
   const tab: 'use' | 'health' | 'money' = tab0 === 'health' && !hid.on('habit') ? 'use' : tab0 === 'money' && !hid.on('finance') ? 'use' : tab0;
   const u = useUsage(16);
@@ -238,6 +242,19 @@ export default function Stats() {
           </Rise>
           </>)}
           {tab === 'health' && (<>
+          {(() => {
+            const from = keyOfDate(dateOf(-6)); const rs = ((core.hd.heart || []).filter((x) => x.bpm && x.d >= from)); if (!rs.length) return null;
+            const v = rs.map((x) => x.bpm as number); const avg = Math.round(v.reduce((a, b) => a + b, 0) / v.length);
+            return (<Rise i={3}><Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Pulse this week</Text><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5 }}>{rs.length} {rs.length === 1 ? 'reading' : 'readings'}</Text></View>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Average</Text><Text style={{ color: '#ff9ac0', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{avg + ' bpm'}</Text></View>
+                <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Lowest</Text><Text style={{ color: '#7df0c6', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{Math.min(...v) + ' bpm'}</Text></View>
+                <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Highest</Text><Text style={{ color: '#ffc46b', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{Math.max(...v) + ' bpm'}</Text></View>
+              </View>
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 8 }}>In beats per minute (bpm). A guide only, not medical advice.</Text>
+            </Glass></Rise>);
+          })()}
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -457,6 +474,36 @@ export default function Stats() {
           </Rise>
           </>)}
           {tab === 'money' && (<>
+          {(accD.accs.length > 0 || subS.subs.some(live)) && (
+          <Rise i={3}>
+          <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+            {(() => {
+              const at = totals(accD, ((fin && fin.spends) || []) as any, commitTotal((core.debts && core.debts.debts) || []), { debts: ((core.debts && core.debts.debts) || []) as any, incomes: incomeFeed((fin as any).inc || {}, (fin as any).incAcc) });
+              const fm = (n: number) => cs() + Math.round(Math.abs(n)).toLocaleString('en-MY');
+              const act = subS.subs.filter(live); const mt = monthlyTotal(subS.subs);
+              return (<>
+                {accD.accs.length > 0 && (<>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Money now</Text>
+                  <Text style={{ color: at.total < 0 ? '#ff9aa9' : '#7df0c6', fontSize: 22, fontWeight: '800', marginTop: 6 }}>{at.total < 0 ? '-' : ''}{fm(at.total)}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, marginTop: 2 }}>What you have, minus what you owe, across {accD.accs.length} {accD.accs.length === 1 ? 'account' : 'accounts'}.</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Assets</Text><Text style={{ color: '#9fb6ff', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.assets)}</Text></View>
+                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Liabilities</Text><Text style={{ color: '#ff8fab', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.liab)}</Text></View>
+                  </View>
+                </>)}
+                {act.length > 0 && (<>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginTop: accD.accs.length > 0 ? 18 : 0 }}>Subscriptions</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Every month</Text><Text style={{ color: '#ffc46b', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{cs() + (Math.round(mt * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
+                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Every year</Text><Text style={{ color: '#ffc46b', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(mt * 12)}</Text></View>
+                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Active</Text><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{act.length}</Text></View>
+                  </View>
+                </>)}
+              </>);
+            })()}
+          </Glass>
+          </Rise>
+          )}
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {

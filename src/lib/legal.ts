@@ -1,5 +1,6 @@
 export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
+  { h: 'More in Stats and Insights', p: '•  Stats, Money: your total money and your subscriptions each month and year\n•  Stats, Health: your pulse this week\n•  Insights now tells you when an account is below zero, a subscription or trial is about to charge, or your pulse stays high' },
   { h: 'Calmer heart log', p: '•  The watch now adds one pulse reading every 6 hours, so the notebook stays short and tidy\n•  The photo cut-out tells you to tap CROP at the top right to finish' },
   { h: 'Your own logos', p: '•  In Subscriptions and My Accounts, choose a picture from your gallery and cut out the square you want, and it becomes the logo\n•  It is made small on your phone and stays there. It is not saved to your account' },
   { h: 'Better document scans', p: '•  Scan with camera now works like a scanner app: it finds the paper, straightens and crops it, and clears up the colours\n•  Used in Documents and for bills in Subscriptions\n•  It all happens on your phone and nothing is uploaded' },

@@ -13,6 +13,8 @@ import { cs } from './region';
 import { missedDoses, medAdherence } from './medMissed';
 import { cycleInfo, cyclePatterns } from './cycle';
 import { ENERGY } from './patterns';
+import { ACC_EMPTY, AccData, balanceOf, isLiab, incomeFeed } from './accounts';
+import { SUB_EMPTY, SubStore, live as subLive, dueOf, num as subNum } from './subs';
 import { mins as relaxMins, weekMins, relaxStreak } from './relax';
 
 export type Sp = { amt: number; date: string; cat?: string; name?: string; id?: number; goal?: number };
@@ -21,7 +23,7 @@ export type Tk = { name: string; due: string; status: string };
 export type Ev = { name: string; date: string; done: boolean };
 export type Pl = { events: Ev[]; tasks: Tk[] };
 export type Veh = { readings?: { date: string; odo: number }[]; fuel?: { date: string; liters: number; amt: number; odo: number }[]; parts?: { name: string; odo: number; life: number }[]; renew?: { roadtax?: string; insurance?: string; licence?: string } };
-export type Core = { hd: HData; fin: Fin; pl: Pl; rec: { data: Record<string, Veh> }; tas: { day: string; total: number }; debts: DebtData; puasa: PuasaData; sav: SavData; off: Record<string, string>; setOff: (v: Record<string, string>) => void };
+export type Core = { hd: HData; fin: Fin; pl: Pl; rec: { data: Record<string, Veh> }; tas: { day: string; total: number }; debts: DebtData; puasa: PuasaData; sav: SavData; off: Record<string, string>; setOff: (v: Record<string, string>) => void; acc?: AccData; subs?: SubStore };
 export type Part = { k: string; label: string; pct: number; detail: string; c: string };
 export type Tip = { id: string; title: string; sub: string; why: string; go: string; k: string; pri: number };
 
@@ -35,9 +37,11 @@ export const useCore = (): Core => {
   const [puasa] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
   const [sav] = useStored<SavData>('ml_savings', SAV_EMPTY);
   const [off, setOff] = useStored<Record<string, string>>('ml_tips_off', {});
+  const [acc] = useStored<AccData>('ml_accounts', ACC_EMPTY);
+  const [subs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
   const [vm] = useStored<VMode>(VEH_KEY, 'ask');
   const fin = useMemo(() => ({ ...fin0, spends: mergeVeh(fin0 && fin0.spends, rec as any, vm) }) as Fin, [fin0, rec, vm]);
-  return { hd, fin, pl, rec, tas, debts, puasa, sav, off, setOff };
+  return { hd, fin, pl, rec, tas, debts, puasa, sav, off, setOff, acc, subs };
 };
 
 const tk = (o: number) => keyOfDate(dateOf(o));
@@ -340,6 +344,21 @@ export function tips(c: Core, week: boolean): Tip[] {
     const ms = ds.list.filter((x) => x.since <= lastYm && !((x.paid || {})[lastYm] > 0) && (x.fixed || remaining(x) > 0));
     if (ms.length) add({ id: 'cm-miss', title: ms.length + (ms.length === 1 ? ' payment' : ' payments') + ' not ticked last month', sub: ms.map((x) => x.name).slice(0, 3).join(', ') + '. Mark them paid to keep balances right.', why: 'Debt balances only go down when a month is ticked as paid.', go: '/finance', k: 'goal', pri: 56 });
   }
+  // My Accounts and Subscriptions
+  if (!week && c.acc && c.acc.accs.length) {
+    const sp = allSpends(c) as any[]; const feeds = { debts: ((c.debts && c.debts.debts) || []) as any, incomes: incomeFeed((c.fin as any).inc || {}, (c.fin as any).incAcc) };
+    const neg = c.acc.accs.filter((a) => !isLiab(a) && balanceOf(a, c.acc as AccData, sp, feeds) < 0);
+    if (neg.length) add({ id: 'acc-neg', title: neg.length === 1 ? neg[0].name + ' is below zero' : neg.length + ' accounts are below zero', sub: neg.slice(0, 2).map((a) => a.name + ' ' + rmf(balanceOf(a, c.acc as AccData, sp, feeds))).join(', ') + '. Add money or move some in so it matches your real balance.', why: 'Worked out from the start balance and what you added in My Accounts. If it does not match your bank, set the balance in the account.', go: '/accounts', k: 'goal', pri: 66 });
+  }
+  if (!week && c.subs) {
+    const soon = c.subs.subs.filter(subLive).map((s) => ({ s, d: dueOf(s, todayK) })).filter((x) => x.d.days >= 0 && x.d.days <= 3).sort((a, b) => a.d.days - b.d.days);
+    if (soon.length) { const x = soon[0]; add({ id: 'sub-soon', title: x.s.name + (x.s.trial ? ' trial ends ' : ' is charged ') + (x.d.days === 0 ? 'today' : x.d.days === 1 ? 'tomorrow' : 'in ' + x.d.days + ' days'), sub: rmf(subNum(x.s.price)) + (soon.length > 1 ? '. ' + (soon.length - 1) + ' more due soon.' : '. Cancel it first if you no longer use it.'), why: 'Based on the next date in your Subscriptions list.', go: '/subscriptions', k: 'goal', pri: x.s.trial ? 72 : 58 }); }
+  }
+  // Pulse (from the watch or typed in Habit & Health)
+  if (!week) {
+    const hv = ((c.hd.heart || []).filter((x) => x.bpm && x.d >= tk(-2)).map((x) => x.bpm as number));
+    if (hv.length >= 3 && Math.min(...hv) >= 100) add({ id: 'hrhigh', title: 'Your pulse has stayed high', sub: 'Every reading in the last 2 days was ' + Math.min(...hv) + ' bpm or more. If you feel unwell, see a doctor.', why: 'Counted from the pulse readings in Habit & Health. It is only a guide, not medical advice.', go: '/habit', k: 'energy', pri: 70 });
+  }
   // Record
   const vs = Object.entries((c.rec && c.rec.data) || {});
   let hadOdo = false, anyReading = false;
@@ -385,7 +404,7 @@ export const tipMods = (id: string): Mod[] => {
   return [cat === 'Health' ? 'habit' : cat === 'Faith' ? 'islamic' : cat === 'Tasks' ? 'planner' : cat === 'Vehicle' ? 'record' : 'finance'];
 };
 export const tipCat = (id: string): string => {
-  if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend|medmiss|meddue|medgood|relax|relaxlow|relaxmore|relaxweek|energystreak|energylow|cyrest|cysoon|cylate)$/.test(id)) return 'Health';
+  if (/^(water|steps|sleeplog|sleeplow|mood|wlog|debt|ramwater|ramsleep|hspend|medmiss|meddue|medgood|relax|relaxlow|relaxmore|relaxweek|energystreak|energylow|cyrest|cysoon|cylate|hrhigh)$/.test(id)) return 'Health';
   if (/^(fast|fastnext|kahfi|zikir|tasbih|ramtoday|qadha|ramsoon|sunat|ramgap)$/.test(id)) return 'Faith';
   if (/^(overdue|duetoday|event)$/.test(id)) return 'Tasks';
   if (/^(part-|ren-|cpk-|odo)/.test(id)) return 'Vehicle';
