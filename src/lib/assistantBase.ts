@@ -725,7 +725,7 @@ export class AssistantBase extends React.Component<any, any> {
       if ((smartOk || gemmaOk) && smartReady()) {
         const hist = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
         this.liveShown = 0; this.liveTarget = '';
-        const a = await smartAsk(q, lang, vc ? hv : hist, (t: string) => this.setLive(t), vc, dataDigest(this.R(), (smartModelName().indexOf('Gemma') >= 0 || smartModelName().indexOf('3.5') >= 0) ? 2600 : 900));
+        const a = await smartAsk(q, lang, vc ? hv : hist, (t: string) => this.setLive(t), vc, /\b(saya|aku|awak|kita|my|mine|me|belanja|spend|spent|gaji|salary|income|hutang|debt|tugas|task|tugasan|tidur|sleep|langkah|steps|bajet|budget|akaun|account|simpanan|savings|habit|motor|motosikal|kenderaan|vehicle|odometer|acara|event|baki|balance|berapa banyak|how much)\b/i.test(q) ? dataDigest(this.R(), vc ? 1200 : (smartModelName().indexOf('Gemma') >= 0 || smartModelName().indexOf('3.5') >= 0) ? 2600 : 900) : '');
         await this.finishLive();
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0, src: 'device', mdl: smartModelName() }); return r; }
       } else if (vc && !onlineOn()) {

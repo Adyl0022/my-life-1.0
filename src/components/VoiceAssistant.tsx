@@ -213,7 +213,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
       const s = c.state || {}; const ms = s.msgs || [];
       const last = ms[ms.length - 1];
       if (ms.length > before && last && !last.me && !s.typing) { answer(last, s); return; }
-      if (Date.now() - t0 > 45000) { say(await tr('Sorry, that took too long.', 'Maaf, ia ambil masa terlalu lama.'), again); return; }
+      if (Date.now() - t0 > 120000) { say(await tr('Sorry, that took too long.', 'Maaf, ia ambil masa terlalu lama.'), again); return; }
       setTimeout(wait, 250);
     };
     setTimeout(wait, 400);
