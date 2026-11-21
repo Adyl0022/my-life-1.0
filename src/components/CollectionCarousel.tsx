@@ -113,7 +113,7 @@ const kinds = ['all', 'need', 'top', 'ready', 'tip'];
               { l: 'Gadgets · ' + gad.length, r: rm(Math.round(gadWorth)), c: '#8ea8ff' },
               { l: 'Lifestyle · ' + lif.length, r: rm(Math.round(spent(lif))), c: '#ff8fab' },
               { l: 'Property · ' + prop.length, r: rm(Math.round(spent(prop))), c: '#8fe9e2' },
-              { l: 'Lent & Borrowed · ' + loans.length, r: (lent > 0 ? 'Lent ' + rm(lent) : '') + (lent > 0 && borrowed > 0 ? ' · ' : '') + (borrowed > 0 ? 'Borrowed ' + rm(borrowed) : '') || 'None open', c: '#ffe3c2' },
+              { l: 'Lend & Borrow · ' + loans.length, r: (lent > 0 ? 'Lent ' + rm(lent) : '') + (lent > 0 && borrowed > 0 ? ' · ' : '') + (borrowed > 0 ? 'Borrowed ' + rm(borrowed) : '') || 'None open', c: '#ffe3c2' },
             ] : []}
             foot={[countOf(items.length, 'thing') + ' saved', 'About ' + rm(Math.round(total))]} empty={['Everything you own', 'Save your gadgets, lifestyle items and property, and what you lent or borrowed. A summary shows here.']} />
         ) : cur === 'need' ? (
