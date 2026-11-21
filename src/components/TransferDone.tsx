@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Modal, Platform, useWindowDimensions } from 'react-native';
-import Svg, { Circle, Defs, G, Path, RadialGradient, Stop } from 'react-native-svg';
+import { View, Modal, Platform, Animated, Easing, useWindowDimensions } from 'react-native';
+import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from './Txt';
@@ -13,102 +13,105 @@ import { cs } from '../lib/region';
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export type TransferInfo = { amt: number; from: string; to: string; date: string; ref: string; pay: boolean; fromC?: string; toC?: string; fromBal?: number; toBal?: number; fromAfter?: number; toAfter?: number };
 
-const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
-const eio = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+// Everything that moves here is driven by the phone's native animation engine (no redraw on every frame), so it stays smooth even on a busy phone.
+// Only the small number texts count up, a few times a second.
+const ND = Platform.OS !== 'web';
+const FLOW_AT = 350, FLOW_MS = 2100;   // the light streams from one account to the other
 const eo = (x: number) => 1 - Math.pow(1 - x, 3);
 const rnd = (i: number) => { const v = Math.sin(i * 12.9898 + 1.7) * 43758.5453; return v - Math.floor(v); };
+const STARS = Array.from({ length: 34 }, (_, i) => ({ x: rnd(i + 1), y: rnd(i + 91), r: 0.7 + rnd(i + 7) * 1.4, g: i % 2 }));
+const SPARKS = Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * 6.2832 + rnd(i) * 0.4, v: 80 + rnd(i + 21) * 90, r: 2 + rnd(i + 41) * 2.4, c: ['#8fe9e2', '#b794ff', '#ffd593', '#ffffff', '#5ee7b5'][i % 5] }));
+const PULSES = [0, 1, 2, 3, 4, 5, 6].map((i) => ({ at: i * 0.075, c: i % 3 === 0 ? '#ffd593' : i % 2 ? '#b794ff' : '#8fe9e2', k: i % 2 ? 1 : -1 }));
 
-// Timeline, in seconds. The transfer is already saved when this opens; this only shows it.
-const N = 24;            // particles in the stream
-const T0 = 0.55;         // first particle leaves
-const GAP = 0.072;       // time between particles
-const D = 1.3;           // time one particle takes to cross
-const ARRIVE0 = T0 + D;  // first arrival
-const TB = T0 + (N - 1) * GAP + D + 0.05; // last arrival = burst
-const END = TB + 3.2;
-
-const STARS = Array.from({ length: 46 }, (_, i) => ({ x: rnd(i + 1), y: rnd(i + 91), r: 0.6 + rnd(i + 7) * 1.5, p: rnd(i + 33) * 6.28, s: 0.8 + rnd(i + 55) * 1.6 }));
-const SPARKS = Array.from({ length: 34 }, (_, i) => ({ a: rnd(i + 3) * 6.2832, v: 70 + rnd(i + 21) * 130, r: 1.6 + rnd(i + 41) * 2.6, c: ['#8fe9e2', '#b794ff', '#ffd593', '#ffffff', '#5ee7b5'][i % 5], d: rnd(i + 61) * 0.18 }));
+/** A number that counts up or down while the light flows. It redraws only this small text, about 16 times a second. */
+function useTween(from: number, to: number, key: string): number {
+  const [v, setV] = useState(from);
+  useEffect(() => {
+    setV(from);
+    if (from === to) return;
+    let id: any = null; let t0 = 0;
+    const st = setTimeout(() => {
+      t0 = Date.now();
+      id = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / FLOW_MS); setV(from + (to - from) * eo(k)); if (k >= 1 && id) clearInterval(id); }, 60);
+    }, FLOW_AT + 250);
+    return () => { clearTimeout(st); if (id) clearInterval(id); };
+  }, [key, from, to]);
+  return v;
+}
 
 export function TransferDone({ info, onClose }: { info: TransferInfo | null; onClose: () => void }) {
   const { width: sw, height: sh } = useWindowDimensions();
-  const [t, setT] = useState(0);
-  const buzzed = useRef(false);
+  const p = useRef(new Animated.Value(0)).current;    // the light streaming across (0 to 1)
+  const b = useRef(new Animated.Value(0)).current;    // the arrival burst
+  const tk = useRef(new Animated.Value(0)).current;   // the tick popping in
+  const lift = useRef(new Animated.Value(0)).current; // the stage moving up
+  const rc = useRef(new Animated.Value(0)).current;   // the receipt
+  const bn = useRef(new Animated.Value(0)).current;   // the Done button
+  const drift = useRef(new Animated.Value(0)).current; // slow aurora drift, loops
+  const twinkle = useRef(new Animated.Value(0)).current;
+  const ring = useRef(new Animated.Value(0)).current;
+  const [burst, setBurst] = useState(false); const [ready, setReady] = useState(false);
+
+  const amt = info ? info.amt : 0;
+  const shown = useTween(0, amt, info ? info.ref : '');
+  const f0 = info && info.fromBal != null ? info.fromBal : 0; const f1 = info && info.fromAfter != null ? info.fromAfter : f0;
+  const t0b = info && info.toBal != null ? info.toBal : 0; const t1 = info && info.toAfter != null ? info.toAfter : t0b;
+  const fromShown = useTween(f0, f1, info ? 'f' + info.ref : '');
+  const toShown = useTween(t0b, t1, info ? 't' + info.ref : '');
 
   useEffect(() => {
     if (!info) return;
-    buzzed.current = false; setT(0);
-    const ND = Platform.OS !== 'web';
+    [p, b, tk, lift, rc, bn].forEach((v) => v.setValue(0)); setBurst(false); setReady(false);
     if (ND) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    let raf = 0; let last = 0; const t0 = Date.now();
-    const loop = () => {
-      const now = (Date.now() - t0) / 1000;
-      if (now - last >= 0.028 || now >= END) {
-        last = now; setT(Math.min(now, END));
-        if (!buzzed.current && now >= TB && ND) { buzzed.current = true; Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }
-      }
-      if (now < END) raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+    const tm = (v: Animated.Value, to: number, ms: number, easing = Easing.inOut(Easing.cubic)) => Animated.timing(v, { toValue: to, duration: ms, easing, useNativeDriver: ND });
+    const loops = [
+      Animated.loop(Animated.timing(drift, { toValue: 1, duration: 14000, easing: Easing.linear, useNativeDriver: ND })),
+      Animated.loop(Animated.sequence([tm(twinkle, 1, 2600, Easing.inOut(Easing.sin)), tm(twinkle, 0, 2600, Easing.inOut(Easing.sin))])),
+      Animated.loop(Animated.timing(ring, { toValue: 1, duration: 7000, easing: Easing.linear, useNativeDriver: ND })),
+    ];
+    drift.setValue(0); twinkle.setValue(0); ring.setValue(0);
+    loops.forEach((l) => l.start());
+    const run = Animated.sequence([
+      Animated.delay(FLOW_AT),
+      tm(p, 1, FLOW_MS, Easing.inOut(Easing.quad)),
+    ]);
+    let dead = false;
+    run.start(({ finished }) => {
+      if (!finished || dead) return;
+      setBurst(true);
+      if (ND) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      Animated.parallel([
+        tm(b, 1, 1100, Easing.out(Easing.cubic)),
+        Animated.sequence([Animated.delay(160), Animated.spring(tk, { toValue: 1, friction: 5, tension: 120, useNativeDriver: ND })]),
+        Animated.sequence([Animated.delay(900), tm(lift, 1, 650)]),
+        Animated.sequence([Animated.delay(1250), tm(rc, 1, 550, Easing.out(Easing.cubic))]),
+        Animated.sequence([Animated.delay(1750), tm(bn, 1, 450)]),
+      ]).start(() => { if (!dead) setReady(true); });
+    });
+    return () => { dead = true; run.stop(); loops.forEach((l) => l.stop()); [p, b, tk, lift, rc, bn].forEach((v) => v.stopAnimation()); };
   }, [info]);
 
   if (!info) return null;
   const W = Math.min(sw - 24, 360); const H = 230;
-  const ax = 64, bx = W - 64, cy = 112, R = 33;
+  const ax = 64, bx = W - 64, cy = 112, R = 33; const span = bx - ax;
   const fc = info.fromC || '#7c9cff', tc = info.toC || '#5ee7df';
   const word = info.pay ? 'Payment' : 'Transfer';
-  const burst = t >= TB; const bt = Math.max(0, t - TB);
-
-  // how much has arrived (0..1), how much has left (0..1)
-  const arrived = clamp((t - ARRIVE0) / (TB - ARRIVE0)); const left = clamp((t - T0) / ((N - 1) * GAP + 0.1));
-  const flowing = clamp(t / 0.5) * (burst ? 0 : 1);
-  const amtShown = info.amt * eo(arrived) * (burst ? 1 : 1);
-  const fromShown = info.fromBal != null ? info.fromBal - (info.fromBal - (info.fromAfter != null ? info.fromAfter : info.fromBal)) * eo(arrived) : null;
-  const toShown = info.toBal != null ? info.toBal + ((info.toAfter != null ? info.toAfter : info.toBal) - info.toBal) * eo(arrived) : null;
-
-  // the stage moves up when the receipt comes in
-  const lift = eio(clamp((t - (TB + 0.65)) / 0.6));
-  const stageY = -86 * lift; const stageK = 1 - 0.1 * lift;
-  const pop = burst ? 1 + 0.2 * Math.sin(clamp(bt / 0.45) * Math.PI) : 1 + 0.05 * arrived;
-  const green = eo(clamp(bt / 0.35));
-  const tick = eo(clamp((bt - 0.18) / 0.42));
-  const rec = eo(clamp((t - (TB + 0.95)) / 0.55));
-  const btn = eo(clamp((t - (TB + 1.5)) / 0.5));
-
-  // the braided stream
-  const dots: React.ReactNode[] = [];
-  for (let i = 0; i < N; i++) {
-    const s0 = (t - (T0 + i * GAP)) / D; if (s0 < 0 || s0 > 1.02) continue;
-    const k = i % 2; const col = i % 5 === 0 ? '#ffd593' : k ? '#b794ff' : '#8fe9e2';
-    for (let j = 6; j >= 0; j--) {
-      const s = s0 - j * 0.022; if (s < 0 || s > 1) continue;
-      const e = eio(s); const env = Math.pow(Math.sin(Math.PI * s), 0.8);
-      const x = ax + (bx - ax) * e; const y = cy + env * 46 * Math.sin(2 * Math.PI * (1.5 * s) + k * Math.PI);
-      const f = 1 - j / 7;
-      dots.push(<Circle key={'g' + i + '_' + j} cx={x} cy={y} r={(j === 0 ? 3.8 : 3.2) * (0.5 + f * 0.6)} fill={col} opacity={(j === 0 ? 1 : 0.55 * f) * clamp(env * 3)} />);
-      if (j === 0) dots.push(<Circle key={'h' + i} cx={x} cy={y} r={9} fill={col} opacity={0.2 * clamp(env * 3)} />);
-    }
-  }
-  // the thin guide threads behind the stream
-  const thread = (k: number) => { let d = ''; for (let q = 0; q <= 40; q++) { const s = q / 40; const e = eio(s); const x = ax + (bx - ax) * e; const y = cy + Math.pow(Math.sin(Math.PI * s), 0.8) * 46 * Math.sin(2 * Math.PI * 1.5 * s + k * Math.PI); d += (q ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1) + ' '; } return d; };
-
-  // sparks after the arrival
-  const sparks = burst ? SPARKS.map((p, i) => { const a = bt - p.d; if (a < 0 || a > 1.5) return null; const x = bx + Math.cos(p.a) * p.v * a; const y = cy + Math.sin(p.a) * p.v * a + 90 * a * a; return <Circle key={'sp' + i} cx={x} cy={y} r={p.r * (1 - a / 1.6)} fill={p.c} opacity={clamp(1 - a / 1.4)} />; }) : null;
-  const waves = burst ? [0, 0.14, 0.3].map((d, i) => { const a = clamp((bt - d) / 0.95); if (a <= 0 || a >= 1) return null; return <Circle key={'w' + i} cx={bx} cy={cy} r={R + 8 + eo(a) * 95} stroke={i === 1 ? '#8fe9e2' : '#5ee7b5'} strokeWidth={2.4 * (1 - a) + 0.4} fill="none" opacity={0.75 * (1 - a)} />; }) : null;
-
-  const C = 2 * Math.PI * (R + 9);
-  const orbR = (cx: number, id: string, k: number) => (
-    <G transform={`translate(${cx} ${cy}) scale(${k}) translate(${-cx} ${-cy})`}>
-      <Circle cx={cx} cy={cy} r={R + 20} fill={`url(#${id}g)`} opacity={0.55} />
-      <Circle cx={cx} cy={cy} r={R} fill={`url(#${id})`} />
-      <Circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(255,255,255,.45)" strokeWidth={1.2} />
-    </G>
+  const rg = (id: string, c: string, c2: string) => (
+    <RadialGradient id={id} cx="38%" cy="32%" r="75%"><Stop offset="0" stopColor="#ffffff" stopOpacity={0.95} /><Stop offset="0.45" stopColor={c} stopOpacity={1} /><Stop offset="1" stopColor={c2} stopOpacity={0.7} /></RadialGradient>
   );
-  const bgRings = [0, 1, 2].map((i) => { const a = ((t * 0.18 + i / 3) % 1); return <Circle key={'bg' + i} cx={sw / 2} cy={sh * 0.36} r={40 + a * Math.max(sw, sh) * 0.62} stroke="#8fe9e2" strokeWidth={1.2} fill="none" opacity={0.18 * (1 - a) * (burst ? 0.5 : 1)} />; });
-  const stars = STARS.map((p, i) => <Circle key={'st' + i} cx={p.x * sw} cy={p.y * sh} r={p.r} fill="#fff" opacity={0.25 + 0.55 * (0.5 + 0.5 * Math.sin(t * p.s + p.p))} />);
-
-  const dots3 = '.'.repeat(1 + (Math.floor(t * 2.6) % 3));
+  const halo = (id: string, c: string) => (
+    <RadialGradient id={id} cx="50%" cy="50%" r="50%"><Stop offset="0.35" stopColor={c} stopOpacity={0.6} /><Stop offset="1" stopColor={c} stopOpacity={0} /></RadialGradient>
+  );
+  const OS = (R + 26) * 2; // size of an orb with its glow
+  const orb = (id: string, c: string, c2: string) => (
+    <Svg width={OS} height={OS}>
+      <Defs>{rg(id, c, c2)}{halo(id + 'h', c)}</Defs>
+      <Circle cx={OS / 2} cy={OS / 2} r={R + 26} fill={`url(#${id}h)`} />
+      <Circle cx={OS / 2} cy={OS / 2} r={R} fill={`url(#${id})`} />
+      <Circle cx={OS / 2} cy={OS / 2} r={R} fill="none" stroke="rgba(255,255,255,.45)" strokeWidth={1.2} />
+    </Svg>
+  );
+  const abs = { position: 'absolute' as const };
   const Row = ({ k, v, sub }: { k: string; v: string; sub?: string }) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, gap: 12 }}>
       <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 13 }}>{k}</Text>
@@ -118,51 +121,89 @@ export function TransferDone({ info, onClose }: { info: TransferInfo | null; onC
       </View>
     </View>
   );
+  const drX = drift.interpolate({ inputRange: [0, 1], outputRange: [0, -W] });
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={burst ? onClose : undefined}>
       <View style={{ flex: 1, backgroundColor: '#070a22' }}>
-        <LinearGradient colors={['#070a22', '#150d3e', '#0a2848']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-        <Blob size={340} color="rgba(183,148,255,.45)" style={{ right: -110, top: -50 }} />
-        <Blob size={360} color="rgba(94,231,223,.28)" style={{ left: -130, bottom: 40 }} />
-        <Svg width={sw} height={sh} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">{bgRings}{stars}</Svg>
+        <LinearGradient colors={['#070a22', '#150d3e', '#0a2848']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ ...abs, left: 0, top: 0, right: 0, bottom: 0 }} />
+        {/* aurora: big soft colour bands that drift slowly */}
+        <Animated.View pointerEvents="none" style={{ ...abs, left: -sw * 0.3, top: sh * 0.08, width: sw * 1.6, height: sh * 0.42, opacity: 0.9, transform: [{ translateX: drift.interpolate({ inputRange: [0, 0.5, 1], outputRange: [-30, 30, -30] }) }, { rotate: '-8deg' }, { scaleY: twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.12] }) }] }}>
+          <LinearGradient colors={['rgba(94,231,223,0)', 'rgba(94,231,223,.2)', 'rgba(183,148,255,.26)', 'rgba(124,156,255,.14)', 'rgba(124,156,255,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ flex: 1 }} />
+        </Animated.View>
+        <Animated.View pointerEvents="none" style={{ ...abs, left: -sw * 0.2, top: sh * 0.5, width: sw * 1.4, height: sh * 0.34, opacity: 0.8, transform: [{ translateX: drift.interpolate({ inputRange: [0, 0.5, 1], outputRange: [40, -40, 40] }) }, { rotate: '6deg' }, { scaleY: twinkle.interpolate({ inputRange: [0, 1], outputRange: [1.1, 0.9] }) }] }}>
+          <LinearGradient colors={['rgba(183,148,255,0)', 'rgba(183,148,255,.2)', 'rgba(94,231,223,.22)', 'rgba(94,231,223,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ flex: 1 }} />
+        </Animated.View>
+        <Blob size={340} color="rgba(183,148,255,.3)" style={{ right: -110, top: -50 }} />
+        <Blob size={360} color="rgba(94,231,223,.2)" style={{ left: -130, bottom: 40 }} />
+        {/* stars: two groups that twinkle in turn */}
+        {[0, 1].map((g) => (
+          <Animated.View key={g} pointerEvents="none" style={{ ...abs, left: 0, top: 0, width: sw, height: sh, opacity: twinkle.interpolate({ inputRange: [0, 1], outputRange: g ? [0.9, 0.35] : [0.35, 0.9] }) }}>
+            {STARS.filter((s) => s.g === g).map((s, i) => <View key={i} style={{ ...abs, left: s.x * sw, top: s.y * sh, width: s.r * 2, height: s.r * 2, borderRadius: s.r, backgroundColor: '#fff' }} />)}
+          </Animated.View>
+        ))}
+        {/* slow rings spreading out behind the stage */}
+        {[0, 1, 2].map((i) => {
+          const d = (i / 3);
+          return <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: sw / 2 - 150, top: sh * 0.36 - 150, width: 300, height: 300, borderRadius: 150, borderWidth: 1.2, borderColor: '#8fe9e2', opacity: ring.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.2 - d * 0.1, 0] }), transform: [{ scale: ring.interpolate({ inputRange: [0, 1], outputRange: [0.25 + d * 0.5, 1.5 + d * 0.5] }) }] }} />;
+        })}
         <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 40 }}>
-          <View style={{ alignItems: 'center', transform: [{ translateY: stageY }, { scale: stageK }] }}>
-            <Text style={{ color: burst ? '#7df0c6' : 'rgba(255,255,255,.85)', fontSize: 14, fontWeight: '800', letterSpacing: 1.6, opacity: 1 }}>{burst ? word.toUpperCase() + ' SUCCESSFUL' : (word === 'Payment' ? 'PAYING' : 'SENDING') + dots3}</Text>
-            <Text style={{ color: '#fff', fontSize: 40, fontWeight: '800', marginTop: 6, letterSpacing: 0.4 }}>{cs() + money(amtShown)}</Text>
+          <Animated.View style={{ alignItems: 'center', transform: [{ translateY: lift.interpolate({ inputRange: [0, 1], outputRange: [0, -86] }) }, { scale: lift.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] }) }] }}>
+            <View style={{ height: 20, width: W, alignItems: 'center', justifyContent: 'center' }}>
+              <Animated.View style={{ ...abs, opacity: b.interpolate({ inputRange: [0, 0.2], outputRange: [1, 0], extrapolate: 'clamp' }) }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 14, fontWeight: '800', letterSpacing: 1.6 }}>{(word === 'Payment' ? 'PAYING' : 'SENDING') + '...'}</Text></Animated.View>
+              <Animated.View style={{ ...abs, opacity: b.interpolate({ inputRange: [0.1, 0.4], outputRange: [0, 1], extrapolate: 'clamp' }) }}><Text style={{ color: '#7df0c6', fontSize: 14, fontWeight: '800', letterSpacing: 1.6 }}>{word.toUpperCase() + ' SUCCESSFUL'}</Text></Animated.View>
+            </View>
+            <Text style={{ color: '#fff', fontSize: 40, fontWeight: '800', marginTop: 6, letterSpacing: 0.4 }}>{cs() + money(burst ? amt : shown)}</Text>
             <View style={{ width: W, height: H, marginTop: 2 }}>
-              <Svg width={W + 140} height={H + 140} style={{ position: 'absolute', left: -70, top: -70 }} pointerEvents="none">
-                <G transform="translate(70 70)">
-                <Defs>
-                  <RadialGradient id="ogA" cx="38%" cy="32%" r="75%"><Stop offset="0" stopColor="#ffffff" stopOpacity={0.95} /><Stop offset="0.45" stopColor={fc} stopOpacity={1} /><Stop offset="1" stopColor={fc} stopOpacity={0.55} /></RadialGradient>
-                  <RadialGradient id="ogAg" cx="50%" cy="50%" r="50%"><Stop offset="0.55" stopColor={fc} stopOpacity={0.55} /><Stop offset="1" stopColor={fc} stopOpacity={0} /></RadialGradient>
-                  <RadialGradient id="ogB" cx="38%" cy="32%" r="75%"><Stop offset="0" stopColor="#ffffff" stopOpacity={0.95} /><Stop offset="0.45" stopColor={tc} stopOpacity={1} /><Stop offset="1" stopColor={tc} stopOpacity={0.55} /></RadialGradient>
-                  <RadialGradient id="ogBg" cx="50%" cy="50%" r="50%"><Stop offset="0.55" stopColor={tc} stopOpacity={0.55} /><Stop offset="1" stopColor={tc} stopOpacity={0} /></RadialGradient>
-                  <RadialGradient id="ogC" cx="38%" cy="32%" r="75%"><Stop offset="0" stopColor="#ffffff" stopOpacity={0.95} /><Stop offset="0.45" stopColor="#5ee7b5" stopOpacity={1} /><Stop offset="1" stopColor="#2fbf8f" stopOpacity={1} /></RadialGradient>
-                  <RadialGradient id="ogCg" cx="50%" cy="50%" r="50%"><Stop offset="0.55" stopColor="#5ee7b5" stopOpacity={0.6} /><Stop offset="1" stopColor="#5ee7b5" stopOpacity={0} /></RadialGradient>
-                </Defs>
-                {!burst ? (<><Path d={thread(0)} stroke="#8fe9e2" strokeWidth={1} fill="none" opacity={0.14 * flowing} /><Path d={thread(1)} stroke="#b794ff" strokeWidth={1} fill="none" opacity={0.14 * flowing} /></>) : null}
-                {orbR(ax, 'ogA', 1 - 0.1 * left)}
-                {orbR(bx, 'ogB', pop)}
-                {burst ? <G opacity={green}><G transform={`translate(${bx} ${cy}) scale(${pop}) translate(${-bx} ${-cy})`}><Circle cx={bx} cy={cy} r={R + 20} fill="url(#ogCg)" /><Circle cx={bx} cy={cy} r={R} fill="url(#ogC)" /></G></G> : null}
-                <Circle cx={ax} cy={cy} r={R + 9} stroke={fc} strokeWidth={3} fill="none" strokeLinecap="round" opacity={0.9} strokeDasharray={`${Math.max(0.1, C * (1 - left))} ${C}`} transform={`rotate(-90 ${ax} ${cy})`} />
-                <Circle cx={bx} cy={cy} r={R + 9} stroke={burst ? '#5ee7b5' : tc} strokeWidth={3} fill="none" strokeLinecap="round" opacity={0.95} strokeDasharray={`${Math.max(0.1, C * (burst ? 1 : arrived))} ${C}`} transform={`rotate(-90 ${bx} ${cy})`} />
-                {dots}
-                {waves}
-                {sparks}
-                {burst ? <Path d={`M${bx - 13} ${cy + 1} L${bx - 3} ${cy + 11} L${bx + 14} ${cy - 10}`} stroke="#fff" strokeWidth={5.5} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray="44" strokeDashoffset={44 * (1 - tick)} opacity={tick > 0 ? 1 : 0} /> : null}
-                </G>
-              </Svg>
-              <View pointerEvents="none" style={{ position: 'absolute', left: ax - 48, top: cy + R + 20, width: 96, alignItems: 'center' }}>
+              {/* the aurora ribbon the light travels along */}
+              <Animated.View pointerEvents="none" style={{ ...abs, left: ax + R, top: cy - 20, width: span - R * 2, height: 40, overflow: 'hidden', opacity: p.interpolate({ inputRange: [0, 0.15, 0.85, 1], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }) }}>
+                <Animated.View style={{ width: (span - R * 2) * 2, height: 40, transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -(span - R * 2)] }) }] }}>
+                  <LinearGradient colors={['rgba(143,233,226,0)', 'rgba(143,233,226,.3)', 'rgba(183,148,255,.34)', 'rgba(143,233,226,.3)', 'rgba(183,148,255,.34)', 'rgba(143,233,226,.3)', 'rgba(143,233,226,0)']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1, borderRadius: 20 }} />
+                </Animated.View>
+              </Animated.View>
+              {/* the light: soft comets that flow from the first account into the second, in a gentle braid */}
+              {PULSES.map((q, i) => {
+                const a = q.at, z = Math.min(1, a + 0.55);
+                const xr = [a, z], yr = [a, a + (z - a) * 0.25, a + (z - a) * 0.5, a + (z - a) * 0.75, z];
+                return (
+                  <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: ax + R - 30, top: cy - 6, width: 60, height: 12, opacity: p.interpolate({ inputRange: [a, a + 0.06, z - 0.1, z], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }), transform: [
+                    { translateX: p.interpolate({ inputRange: xr, outputRange: [0, span - R * 2], easing: Easing.inOut(Easing.quad), extrapolate: 'clamp' }) },
+                    { translateY: p.interpolate({ inputRange: yr, outputRange: [0, q.k * -20, 0, q.k * 20, 0], extrapolate: 'clamp' }) },
+                  ] }}>
+                    <LinearGradient colors={[q.c + '00', q.c]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1, borderRadius: 6 }} />
+                    <View style={{ ...abs, right: 0, top: 1, width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff', opacity: 0.95 }} />
+                  </Animated.View>
+                );
+              })}
+              {/* the sender orb gives light away, shrinking a little */}
+              <Animated.View pointerEvents="none" style={{ ...abs, left: ax - OS / 2, top: cy - OS / 2, transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] }) }] }}>{orb('oA', fc, fc)}</Animated.View>
+              {/* the receiver orb pulls the light in: it glows and grows as it fills */}
+              <Animated.View pointerEvents="none" style={{ ...abs, left: bx - OS / 2, top: cy - OS / 2, transform: [{ scale: p.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 1.04, 1.16] }) }] }}>{orb('oB', tc, tc)}</Animated.View>
+              <Animated.View pointerEvents="none" style={{ ...abs, left: bx - OS / 2, top: cy - OS / 2, opacity: b.interpolate({ inputRange: [0, 0.35], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: b.interpolate({ inputRange: [0, 0.3, 1], outputRange: [1.16, 1.3, 1.06] }) }] }}>{orb('oC', '#5ee7b5', '#2fbf8f')}</Animated.View>
+              {/* the glow that opens as the light arrives, then the ripples */}
+              {[0, 0.12, 0.26].map((d, i) => (
+                <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: bx - 40, top: cy - 40, width: 80, height: 80, borderRadius: 40, borderWidth: 2.4, borderColor: i === 1 ? '#8fe9e2' : '#5ee7b5', opacity: b.interpolate({ inputRange: [d, d + 0.08, 1], outputRange: [0, 0.75, 0], extrapolate: 'clamp' }), transform: [{ scale: b.interpolate({ inputRange: [d, 1], outputRange: [0.6, 3.1], extrapolate: 'clamp' }) }] }} />
+              ))}
+              {SPARKS.map((s, i) => (
+                <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: bx - s.r, top: cy - s.r, width: s.r * 2, height: s.r * 2, borderRadius: s.r, backgroundColor: s.c, opacity: b.interpolate({ inputRange: [0, 0.05, 0.7, 1], outputRange: [0, 1, 0.8, 0], extrapolate: 'clamp' }), transform: [
+                  { translateX: b.interpolate({ inputRange: [0, 1], outputRange: [0, Math.cos(s.a) * s.v] }) },
+                  { translateY: b.interpolate({ inputRange: [0, 1], outputRange: [0, Math.sin(s.a) * s.v + 50] }) },
+                  { scale: b.interpolate({ inputRange: [0, 1], outputRange: [1, 0.3] }) },
+                ] }} />
+              ))}
+              <Animated.View pointerEvents="none" style={{ ...abs, left: bx - 26, top: cy - 26, width: 52, height: 52, alignItems: 'center', justifyContent: 'center', opacity: tk.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: tk.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }] }}>
+                <Svg width={52} height={52}><Path d="M13 27 L23 37 L40 15" stroke="#fff" strokeWidth={5.5} strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>
+              </Animated.View>
+              <View pointerEvents="none" style={{ ...abs, left: ax - 48, top: cy + R + 24, width: 96, alignItems: 'center' }}>
                 <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>{info.from}</Text>
-                {fromShown != null ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{cs() + money(fromShown)}</Text> : null}
+                {info.fromBal != null ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{cs() + money(burst ? f1 : fromShown)}</Text> : null}
               </View>
-              <View pointerEvents="none" style={{ position: 'absolute', left: bx - 48, top: cy + R + 20, width: 96, alignItems: 'center' }}>
+              <View pointerEvents="none" style={{ ...abs, left: bx - 48, top: cy + R + 24, width: 96, alignItems: 'center' }}>
                 <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>{info.to}</Text>
-                {toShown != null ? <Text style={{ color: burst ? '#9af3d2' : 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{cs() + money(toShown)}</Text> : null}
+                {info.toBal != null ? <Text style={{ color: burst ? '#9af3d2' : 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{cs() + money(burst ? t1 : toShown)}</Text> : null}
               </View>
             </View>
-          </View>
-          <View style={{ position: 'absolute', left: 24, right: 24, bottom: 0, paddingBottom: 26, opacity: rec, transform: [{ translateY: 18 * (1 - rec) }] }} pointerEvents={rec > 0.5 ? 'auto' : 'none'}>
+          </Animated.View>
+          <Animated.View style={{ ...abs, left: 24, right: 24, bottom: 0, paddingBottom: 26, opacity: rc, transform: [{ translateY: rc.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] }} pointerEvents={burst ? 'auto' : 'none'}>
             <Glass radius={22} style={{ paddingHorizontal: 18, paddingVertical: 8 }}>
               <Row k="From" v={info.from} sub={info.fromBal != null && info.fromAfter != null ? cs() + money(info.fromBal) + '  →  ' + cs() + money(info.fromAfter) : undefined} />
               <Row k={info.pay ? 'Paid to' : 'To'} v={info.to} sub={info.toBal != null && info.toAfter != null ? cs() + money(info.toBal) + '  →  ' + cs() + money(info.toAfter) : undefined} />
@@ -170,12 +211,12 @@ export function TransferDone({ info, onClose }: { info: TransferInfo | null; onC
               <Row k="Reference" v={info.ref} />
             </Glass>
             <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, lineHeight: 16, textAlign: 'center', marginTop: 10 }}>This only moves money between your own accounts inside My Life 1.0. It does not send money at a real bank.</Text>
-            <View style={{ opacity: btn }} pointerEvents={btn > 0.5 ? 'auto' : 'none'}>
+            <Animated.View style={{ opacity: bn }} pointerEvents={ready ? 'auto' : 'none'}>
               <Pressable onPress={onClose} buzz accessibilityLabel="Done">
                 <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ marginTop: 14, paddingVertical: 15, borderRadius: 18, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>Done</Text></LinearGradient>
               </Pressable>
-            </View>
-          </View>
+            </Animated.View>
+          </Animated.View>
         </SafeAreaView>
       </View>
     </Modal>
