@@ -69,6 +69,17 @@ function Wave({ target, width }: { target: React.MutableRefObject<number>; width
 
 // The Assistant by voice. It talks to the same Assistant as the chat screen (chat.current), so everything it can do by typing it can do by voice,
 // and the whole talk is also kept in the chat afterwards.
+/** A modern glass panel: soft colour wash, light edge. */
+function Pane({ children, style }: { children: React.ReactNode; style?: any }) {
+  return (
+    <View style={[{ borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,.26)', overflow: 'hidden' }, style]}>
+      <LinearGradient colors={['rgba(124,156,255,.30)', 'rgba(183,148,255,.14)', 'rgba(94,231,223,.10)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+      <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, height: 1.5 }} />
+      {children}
+    </View>
+  );
+}
+
 export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visible: boolean; chat: React.MutableRefObject<any>; onClose: () => void; onOpen: (route: string) => void; onAI?: () => void }) {
   const packs = useLangPacks(); const myName = (useName() || '').trim().split(' ')[0];
   const [phase, setPhase] = useState<Phase>('idle');
@@ -123,7 +134,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
     if (isX() && !packs.ready(vkR.current)) { begin(); return; }
     const nm = myName ? ' ' + myName : '';
     const noAI = !smartReady() && !onlineOn();
-    const txt = await tr('Hi' + nm + ', how can I help you today?' + (noAI ? ' To chat about anything, I need an AI first. Tap Set up AI to download it.' : ''), 'Hai' + nm + ', apa yang boleh saya bantu hari ini?' + (noAI ? ' Untuk bersembang tentang apa-apa, saya perlukan AI dahulu. Tekan Sediakan AI untuk memuat turunnya.' : ''));
+    const txt = await tr('Hi' + nm + ', you can ask me anything about your data.' + (noAI ? ' To chat about anything, I need an AI first. Tap Set up AI to download it.' : ''), 'Hai' + nm + ', awak boleh tanya saya apa-apa tentang data awak.' + (noAI ? ' Untuk bersembang tentang apa-apa, saya perlukan AI dahulu. Tekan Sediakan AI untuk memuat turunnya.' : ''));
     if (!live.current) return;
     setReply(txt); setPhase('speaking');
     speak(txt, outTag(), () => { if (live.current) { setReply(''); listenOnce(); } });
@@ -236,7 +247,6 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
     return () => clearInterval(id);
   }, [phase, reply]);
   const status = phase === 'ready' ? L('Getting ready…', 'Bersedia…') : phase === 'listening' ? L('Just talk, I\'m listening', 'Cakap sahaja, saya mendengar') : phase === 'thinking' ? L('Thinking…', 'Sedang fikir…') : phase === 'speaking' ? L('Speaking…', 'Bercakap…') : L('Paused. Tap the microphone to talk', 'Dijeda. Tekan mikrofon untuk bercakap');
-  const tries = ms ? ['"belanja makan 12 ringgit"', '"buka akaun"', '"apa pendapat awak pasal menyimpan dulu?"'] : ['"spent 12 ringgit on lunch"', '"open My Accounts"', '"what do you think about saving first?"'];
   const chip = (on: boolean) => ({ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.25)', backgroundColor: on ? 'rgba(183,148,255,.35)' : 'rgba(255,255,255,.06)' } as const);
   const box = { marginTop: 12, padding: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' } as const;
   const lab = { color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6 } as const;
@@ -288,28 +298,27 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
           <View style={{ flex: 1, marginTop: 8 }}>
             {heard ? <Text style={{ color: '#fff', fontSize: 20, lineHeight: 28, textAlign: 'center', fontWeight: '600', marginBottom: 10 }} numberOfLines={3}>{'“' + heard + '”'}</Text> : null}
             {reply ? (
-              <Glass radius={22} style={{ flexShrink: 1, marginBottom: 10 }}>
+              <Pane style={{ flexShrink: 1, marginBottom: 10 }}>
                 <ScrollView ref={sc} onLayout={(e) => { dims.current.vh = e.nativeEvent.layout.height; }} onScrollBeginDrag={() => { manual.current = true; }} onContentSizeChange={(_w, h) => { dims.current.ch = h; if (phase !== 'speaking' && sc.current) sc.current.scrollToEnd({ animated: true }); }} style={{ flexGrow: 0, flexShrink: 1 }} contentContainerStyle={{ gap: 12, paddingVertical: 14, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
                   <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{reply}</Text>
                 </ScrollView>
-              </Glass>
+              </Pane>
             ) : (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 14 }}>
             {err ? <Text style={{ color: '#ffb3a0', fontSize: 13, lineHeight: 19, textAlign: 'center' }}>{err}</Text> : null}
             {!heard && !reply && !err ? (
-              <View style={{ gap: 8, alignItems: 'center' }}>
-                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5 }}>{L('Try saying or just chat:', 'Cuba sebut atau bersembang:')}</Text>
-                {tries.map((t) => <Text key={t} style={{ color: 'rgba(255,255,255,.9)', fontSize: 14, fontWeight: '600', textAlign: 'center' }}>{t}</Text>)}
-              </View>
+              <Pane style={{ alignSelf: 'center', paddingVertical: 11, paddingHorizontal: 20 }}>
+                <Text style={{ color: 'rgba(255,255,255,.92)', fontSize: 14, fontWeight: '600', textAlign: 'center' }}>{L('Ask me anything about your data', 'Tanya saya apa-apa tentang data awak')}</Text>
+              </Pane>
             ) : null}
             {!smartReady() && !onlineOn() && onAI ? (
-              <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
+              <Pane style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('AI needed to chat about anything', 'AI diperlukan untuk bersembang tentang apa-apa')}</Text>
-                <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{L('Spending, pages and your own data already work. For opinions and general questions, download the AI on your phone or turn on Online AI.', 'Belanja, halaman dan data awak sudah berfungsi. Untuk pendapat dan soalan umum, muat turun AI dalam telefon atau hidupkan AI dalam talian.')}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{L('Your own data already works. For opinions and general questions, set up an AI.', 'Data awak sudah berfungsi. Untuk pendapat dan soalan umum, sediakan AI.')}</Text>
                 <Pressable onPress={() => { onClose(); onAI(); }} buzz accessibilityLabel="Set up AI">
                   <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ marginTop: 10, paddingVertical: 11, borderRadius: 14, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('Set up AI', 'Sediakan AI')}</Text></LinearGradient>
                 </Pressable>
-              </Glass>
+              </Pane>
             ) : null}
           
               </ScrollView>
