@@ -174,7 +174,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Finance.dc.html",
-  "k": "spending belanja expense perbelanjaan beli petrol makan food kategori category today spending belanja hari ini remark catatan susun sort edit vehicle kenderaan maintenance count kira"
+  "k": "spending belanja expense perbelanjaan beli petrol makan food kategori category custom category delete padam kategori sendiri today spending belanja hari ini remark catatan susun sort edit vehicle kenderaan maintenance count kira"
  },
  {
   "t": "Commitments and debts",
@@ -182,7 +182,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Finance.dc.html",
-  "k": "commitment komitmen hutang debt ansuran installment bil bill phone parents bayar pay loan pinjaman"
+  "k": "commitment komitmen hutang debt ansuran installment bil bill phone parents bayar pay loan pinjaman what you owe sort details when finish habis"
  },
  {
   "t": "Payment reminders",

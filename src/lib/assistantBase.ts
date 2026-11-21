@@ -781,7 +781,7 @@ export class AssistantBase extends React.Component<any, any> {
       if (modOn('habit')) {
         const meds0 = (hd0.meds || []).filter((m) => !m.days || m.days.length === 0 || m.days.length >= 7 || m.days.indexOf(now0.getDay()) >= 0); const took0 = ((hd0.days || {})[tk0] || {}).med || [];
         if (meds0.length && meds0.some((m) => took0.indexOf(m.id) < 0)) dyn.push(['Have I taken my medicine today?', 'Dah makan ubat ke belum hari ini?']);
-        if ((hd0.exps || []).length) dyn.push(['How is my experiment going?', 'Macam mana eksperimen saya?']);
+        if ((hd0.exps || []).some((x: any) => !x.ok)) dyn.push(['How is my experiment going?', 'Macam mana eksperimen saya?']);
         if ((hd0.heart || []).length) dyn.push(['My pulse this week', 'Nadi saya minggu ini']);
         if (now0.getHours() >= 15 && (s.cups || 0) < (R0.cupGoal || 8)) dyn.push(['Add a glass of water', 'Tambah segelas air']);
       }
