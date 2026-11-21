@@ -123,7 +123,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   // Coming back from another page: the card must keep turning, and must never be left half faded.
   useFocusEffect(React.useCallback(() => { last.current = 0; v.setValue(1); ty.setValue(0); }, [v, ty]));
   // The card turns by itself every few seconds. It waits after a touch, and stays put while you are sleeping or typing something.
-  React.useEffect(() => { const i = setInterval(() => { if (busy.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 5000); return () => clearInterval(i); }, []);
+  React.useEffect(() => { const i = setInterval(() => { if (busy.current || hold.current || Date.now() - last.current < 20000) return; nextRef.current(); }, 5000); return () => clearInterval(i); }, []);
 
   const maxM = Math.max(...series.filter((x) => Number.isFinite(x)), 1);
   let body: React.ReactNode = null; let cur0: string | undefined; let hotC: string | undefined;
