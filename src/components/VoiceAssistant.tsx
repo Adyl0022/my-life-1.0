@@ -83,7 +83,22 @@ function Pane({ children, style }: { children: React.ReactNode; style?: any }) {
 export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visible: boolean; chat: React.MutableRefObject<any>; onClose: () => void; onOpen: (route: string) => void; onAI?: () => void }) {
   const packs = useLangPacks(); const myName = (useName() || '').trim().split(' ')[0];
   const [phase, setPhase] = useState<Phase>('idle');
-  const [heard, setHeard] = useState(''); const [reply, setReply] = useState(''); const [err, setErr] = useState('');
+  const [heard, setHeard] = useState(''); const [reply, setReply] = useState('');
+  const [shownReply, setShownReply] = useState(''); const [mode, setMode] = useState<'reply' | 'idle'>('idle');
+  const fade = useRef(new Animated.Value(1)).current; const lift = useRef(new Animated.Value(0)).current; const hadReply = useRef(false);
+  useEffect(() => {
+    if (reply) {
+      setShownReply(reply);
+      if (!hadReply.current) { hadReply.current = true; setMode('reply'); fade.setValue(0); lift.setValue(8); Animated.parallel([Animated.timing(fade, { toValue: 1, duration: 350, useNativeDriver: true }), Animated.timing(lift, { toValue: 0, duration: 350, useNativeDriver: true })]).start(); }
+    } else if (hadReply.current) {
+      hadReply.current = false;
+      Animated.timing(fade, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(({ finished }) => {
+        if (!finished || hadReply.current) return;
+        setMode('idle'); setShownReply(''); lift.setValue(16);
+        Animated.parallel([Animated.timing(fade, { toValue: 1, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true }), Animated.timing(lift, { toValue: 0, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true })]).start();
+      });
+    }
+  }, [reply]); const [err, setErr] = useState('');
   const [vk, setVk] = useState('en'); const vkR = useRef('en');
   const [sheet, setSheet] = useState(false); const [vopts, setVopts] = useState<VoiceOpt[]>([]); const [pref, setPref] = useState(voicePref());
   const [note, setNote] = useState('');
@@ -297,10 +312,11 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
 
           <View style={{ flex: 1, marginTop: 8 }}>
             {heard ? <Text style={{ color: '#fff', fontSize: 20, lineHeight: 28, textAlign: 'center', fontWeight: '600', marginBottom: 10 }} numberOfLines={3}>{'“' + heard + '”'}</Text> : null}
-            {reply ? (
+            <Animated.View style={{ flexShrink: 1, flex: mode === 'idle' ? 1 : undefined, opacity: fade, transform: [{ translateY: lift }] }}>
+            {mode === 'reply' ? (
               <Pane style={{ flexShrink: 1, marginBottom: 10 }}>
                 <ScrollView ref={sc} onLayout={(e) => { dims.current.vh = e.nativeEvent.layout.height; }} onScrollBeginDrag={() => { manual.current = true; }} onContentSizeChange={(_w, h) => { dims.current.ch = h; if (phase !== 'speaking' && sc.current) sc.current.scrollToEnd({ animated: true }); }} style={{ flexGrow: 0, flexShrink: 1 }} contentContainerStyle={{ gap: 12, paddingVertical: 14, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
-                  <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{reply}</Text>
+                  <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{shownReply}</Text>
                 </ScrollView>
               </Pane>
             ) : (
@@ -323,6 +339,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
           
               </ScrollView>
             )}
+            </Animated.View>
           </View>
 
           <View style={{ alignItems: 'center', paddingBottom: 6 }}>
