@@ -17,6 +17,7 @@ import { Blob } from '../components/Bg';
 import { FinArt } from '../components/FinArt';
 import { TOP } from '../lib/layout';
 import { useStored } from '../lib/store';
+import { EMPTY_COL, thingsValue, rm as rmC, type ColStore } from '../lib/collection';
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 import { cs, useRegion } from '../lib/region';
@@ -275,6 +276,7 @@ export default function Accounts() {
   const feeds: Feeds = { debts, incomes: incomeFeed((fin && fin.inc) || {}, fin && fin.incAcc) };
   const ctx: Ctx = { data, setData, spends, feeds };
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
+  const [col] = useStored<ColStore>('ml_collection', EMPTY_COL); const [withThings, setWithThings] = useStored<number>('ml_acc_things', 1); const tv = thingsValue((col && col.items) || []);
   const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
   const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
   // Sort by: your own order (move groups up or down), most money first, least money first, or A to Z. It is kept on this phone.
@@ -394,6 +396,28 @@ export default function Accounts() {
               </Glass>
             );
           })}
+          {tv.n > 0 ? (
+            <Glass radius={24} style={{ marginTop: 14, padding: 16 }}>
+              <LinearGradient colors={['rgba(142,168,255,.3)', 'rgba(183,148,255,.18)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+              <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR THINGS</Text>
+              <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{'~ ' + rmC(tv.total)}</Text>
+              {[['Gadgets', tv.gadget, 'gets less valuable each year'], ['Lifestyle', tv.lifestyle, 'gets less valuable each year'], ['Property', tv.property, 'kept at the price you paid']].filter((r) => (r[1] as number) > 0).map((r) => (
+                <View key={r[0] as string} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)', marginTop: 6 }}>
+                  <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{r[0] as string}</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{r[2] as string}</Text></View>
+                  <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{rmC(r[1] as number)}</Text>
+                </View>
+              ))}
+              <View style={{ marginTop: 10 }}><EqPills tabs={['Count in total', 'Leave out']} index={withThings ? 0 : 1} onChange={(i) => setWithThings(i === 0 ? 1 : 0)} colors={['#7c9cff', '#b794ff']} /></View>
+              {withThings ? (
+                <View style={{ marginTop: 12, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>Money + your things</Text>
+                  <Text style={{ color: W, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{'~ ' + (t.total + tv.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total + tv.total))}</Text>
+                </View>
+              ) : null}
+              <Tap onPress={() => router.push('/collection')} label="Open Personal Collection" style={{ marginTop: 10 }}><Text style={{ color: '#b9c8ff', fontSize: 13, fontWeight: '700' }}>Open Personal Collection ›</Text></Tap>
+              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>A guess from the prices and dates you entered, not a market price. It stays separate from your account balances above. Rent is not counted.</Text>
+            </Glass>
+          ) : null}
           <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone from what you enter and from the spending you link to an account. They are saved with your My Life 1.0 data and synced to your account like your other finance entries. My Life 1.0 never connects to your bank.</Text>
         </ScrollView>
       </SafeAreaView>

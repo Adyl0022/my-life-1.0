@@ -570,7 +570,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "My Accounts",
-  "s": "Cash, banks, wallets and cards with balances",
+  "s": "Cash, banks, wallets and cards with balances, plus what your things are worth",
   "m": "Finance",
   "c": "#7c9cff",
   "h": "Finance.dc.html",

@@ -66,6 +66,21 @@ export function worthNow(x: Item, now = new Date()): number | null {
   return Math.round(Math.min(price, price * Math.max(0.12, base) * cf));
 }
 
+/** What a thing counts for in My Accounts. Gadgets use the worth-now guess. Lifestyle things lose value every year, down to 30 percent. Property keeps what you paid, because houses and land rarely go down. Rent is not owned, so it counts for nothing. Only a guess, not a market price. */
+export function assetNow(x: Item, now = new Date()): number {
+  const price = num(x.price); if (!(price > 0)) return 0;
+  if (x.cat === 'gadget') { const w = worthNow(x, now); return w != null ? w : price; }
+  if (x.cat === 'property') return x.kind === 'Rent' ? 0 : price;
+  const cf = (CONDS.find((c) => c.k === (x.cond || 'good')) || CONDS[1]).f;
+  const yrs = x.bought && validDate(x.bought) ? Math.max(0, (dayN(ymd(now)) - dayN(x.bought)) / 365) : 0;
+  return Math.round(Math.min(price, price * Math.max(0.3, 1 - 0.15 * yrs) * cf));
+}
+export function thingsValue(items: Item[], now = new Date()) {
+  const sum = (c: ItemCat) => items.filter((x) => x.cat === c).reduce((t, x) => t + assetNow(x, now), 0);
+  const g = sum('gadget'), l = sum('lifestyle'), p = sum('property');
+  return { gadget: g, lifestyle: l, property: p, total: g + l + p, n: items.filter((x) => assetNow(x, now) > 0).length };
+}
+
 /** Warranty progress: days left, and how much of the time is already used (0 to 1). */
 export function warrantyBar(x: Item, now = new Date()): { left: number; used: number } | null {
   if (!x.warranty || !validDate(x.warranty)) return null;
