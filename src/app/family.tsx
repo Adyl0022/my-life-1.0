@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, ScrollView, ActivityIndicator } from 'react-native';
+import { Pressable } from '../components/Press';
 import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -46,7 +47,7 @@ function FamilyInner() {
   let body: React.ReactNode;
   if (f.state === 'loading') body = <View style={{ paddingVertical: 60 }}><ActivityIndicator color="#fff" /></View>;
   else if (lic.status === 'locked' || f.state === 'locked') {
-    body = <Rise><Note warm t="Family Planner needs an active My Life subscription. Your own data is safe and stays on your phone. Renew to open your family again." /></Rise>;
+    body = <Rise><Note warm t="Family Planner needs an active My Life 1.0 subscription. Your own data is safe and stays on your phone. Renew to open your family again." /></Rise>;
   } else if (f.state === 'none' || !info) {
     body = (
       <>

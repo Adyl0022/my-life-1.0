@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { showAlert } from '../lib/dialog';
+import { useStored } from '../lib/store';
 import { Avatar, Btn, Chip, Field, Note, W, DIM } from './FamilyUi';
 import { famError, isParent, useAutoRefresh, FInfo } from '../lib/family';
-import { useFamChores, useFamChoreLog, useFamRedeems, useFamRewards, useBalances, choreSave, choreDelete, choreMark, choreDecide, rewardSave, rewardDelete, rewardAsk, redeemDecide, choreWho, nextWho, periodOf, peopleOf, useReloadOnFocus, FChore, FReward } from '../lib/familyData';
+import { useFamChores, useFamChoreLog, useFamRedeems, useFamRewards, useBalances, choreSave, choreDelete, choreMark, choreDecide, rewardSave, rewardDelete, rewardAsk, redeemDecide, redeemsClear, choreWho, nextWho, periodOf, peopleOf, useReloadOnFocus, FChore, FReward } from '../lib/familyData';
 
 // Chores that take turns, the points they earn, and the rewards the points can buy.
 // A chore ticked by a child waits for a parent to check it. Only parents give points, approve rewards and set rewards.
@@ -59,7 +61,7 @@ export function HouseChores({ info }: { info: FInfo | null }) {
           </View>
         ))}
       </Glass>
-      {msg ? <Note warm t={msg} /> : null}
+      {msg ? <View style={{ marginBottom: 14 }}><Note warm t={msg} /></View> : null}
       {parent && pending.length ? (
         <View>
           <Text style={{ color: '#ffc46b', fontSize: 11, letterSpacing: 1.5, fontWeight: '800', marginTop: 14, marginBottom: 8, marginLeft: 4 }}>WAITING FOR YOU TO CHECK</Text>
@@ -156,7 +158,20 @@ export function HouseRewards({ info }: { info: FInfo | null }) {
   const held = (id: string) => reds.rows.filter((x) => x.person === id && x.status === 'pending').reduce((a, x) => a + x.cost, 0);
   const have = sel ? (b.bal[sel.id] || 0) - held(sel.id) : 0;
   const pending = reds.rows.filter((x) => x.status === 'pending');
-  const recent = reds.rows.filter((x) => x.status !== 'pending' && sel && x.person === sel.id).slice(0, 4);
+  // Clearing the Recent list only hides those lines on this phone. The points, and what was approved, do not change.
+  const [hid, setHid] = useStored<string[]>('ml_fam_reds_hidden', []);
+  const done = reds.rows.filter((x) => x.status !== 'pending' && sel && x.person === sel.id && !(hid || []).includes(x.id));
+  const recent = done.slice(0, 4);
+  // A parent clears the list for everyone (it is removed from the server; points stay). Others only hide it on this phone.
+  const clearRecent = () => parent
+    ? showAlert('Clear the Recent list?', 'This removes these lines for everyone in the family. Points and approved rewards do not change.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => run(async () => { try { await redeemsClear(sel!.id); } catch (e) { setHid(((hid || []) as string[]).concat(done.map((x) => x.id)).slice(-300)); } }, 'Cleared.') },
+    ])
+    : showAlert('Clear the Recent list?', 'This only hides these lines on this phone. Points and approved rewards do not change.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => setHid(((hid || []) as string[]).concat(done.map((x) => x.id)).slice(-300)) },
+    ]);
 
   return (
     <View>
@@ -171,7 +186,7 @@ export function HouseRewards({ info }: { info: FInfo | null }) {
         <Text style={{ color: '#ffc46b', fontSize: 44, fontWeight: '900', marginTop: 2 }}>⭐ {sel ? b.bal[sel.id] || 0 : 0}</Text>
         {sel && held(sel.id) ? <Text style={{ color: DIM, fontSize: 11.5 }}>{held(sel.id)} ⭐ waiting for a parent to approve</Text> : null}
       </Glass>
-      {msg ? <Note warm t={msg} /> : null}{ok ? <Note t={ok} /> : null}
+      {msg || ok ? <View style={{ marginBottom: 14 }}>{msg ? <Note warm t={msg} /> : null}{msg && ok ? <View style={{ height: 8 }} /> : null}{ok ? <Note t={ok} /> : null}</View> : null}
       {parent && pending.length ? (
         <View>
           <Text style={{ color: '#ffc46b', fontSize: 11, letterSpacing: 1.5, fontWeight: '800', marginBottom: 8, marginLeft: 4 }}>WAITING FOR A PARENT</Text>
@@ -218,7 +233,7 @@ export function HouseRewards({ info }: { info: FInfo | null }) {
       })}
       {rewards.ready && !rewards.rows.length ? <Note t={parent ? 'No rewards yet. Add things the points can buy, like game time or choosing dinner.' : 'No rewards yet. A parent can add them.'} /> : null}
       {parent && !panel ? <View style={{ marginTop: 6 }}><Btn solid t="+ New reward" kind="main" onPress={() => open()} /></View> : null}
-      {recent.length ? <View style={{ marginTop: 16 }}><Text style={{ color: DIM, fontSize: 11, letterSpacing: 1.5, fontWeight: '800', marginBottom: 6, marginLeft: 4 }}>RECENT</Text>
+      {recent.length ? <View style={{ marginTop: 16 }}><View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}><Text style={{ color: DIM, fontSize: 11, letterSpacing: 1.5, fontWeight: '800', marginLeft: 4 }}>RECENT</Text><Pressable onPress={clearRecent} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear the Recent list"><Text style={{ color: '#ffc46b', fontSize: 12.5, fontWeight: '800' }}>Clear</Text></Pressable></View>
         {recent.map((x) => <Text key={x.id} style={{ color: DIM, fontSize: 12.5, marginLeft: 4, marginBottom: 3 }}>{x.status === 'approved' ? '✔' : '✕'} {x.title} · {x.cost} ⭐ · {x.status === 'approved' ? 'approved' : 'not now'}</Text>)}</View> : null}
       <Text style={{ color: DIM, fontSize: 11.5, marginLeft: 4, marginTop: 12 }}>Only a parent can approve rewards, check chores and set rewards.</Text>
     </View>

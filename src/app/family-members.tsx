@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Share } from 'react-native';
+import { View, ScrollView, Share } from 'react-native';
+import { Pressable } from '../components/Press';
 import { showAlert } from '../lib/dialog';
 import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,7 +45,7 @@ function FamilyMembersInner() {
   const owner = info.role === 'owner';
   const nextOwner = ([...info.members].filter((m) => m.user_id !== info.me).sort((a, b) => (a.role === 'parent' ? 0 : 1) - (b.role === 'parent' ? 0 : 1) || new Date(a.joined).getTime() - new Date(b.joined).getTime())[0] || { name: 'the next member' }).name;
   const parent = isParent(info.role);
-  const share = () => Share.share({ message: 'Join our family on My Life. Open Daily Planner, then Family, then Join with a code. Code: ' + showCode(info.code) }).catch(() => {});
+  const share = () => Share.share({ message: 'Join our family on My Life 1.0. Open Daily Planner, then Family, then Join with a code. Code: ' + showCode(info.code) }).catch(() => {});
 
   // A solid dark card tinted with the member's own colour (no see-through).
   const tint = (hex: string, t: number, a = 1) => {
@@ -87,7 +88,7 @@ function FamilyMembersInner() {
                 <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Invite code</Text>
                 {info.invites_open ? (
                   <>
-                    <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 3 }}>Share it with your family. Everyone who joins needs an active My Life subscription.</Text>
+                    <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, marginTop: 3 }}>Share it with your family. Everyone who joins needs an active My Life 1.0 subscription.</Text>
                     <Text style={{ color: W, fontSize: 28, fontWeight: '900', letterSpacing: 6, textAlign: 'center', paddingVertical: 14, marginTop: 12, borderRadius: 16, backgroundColor: 'rgba(0,0,0,.28)', borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.3)' }}>{showCode(info.code)}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
                       <Btn solid t="Share code" kind="main" onPress={share} flex />

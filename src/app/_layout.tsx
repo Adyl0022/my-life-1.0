@@ -8,12 +8,14 @@ import { warmKey } from '../lib/secure';
 warmKey();
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
-import { Platform, View, ActivityIndicator, Pressable, AppState } from 'react-native';
+import { Platform, View, ActivityIndicator, AppState } from 'react-native';
+import { Pressable } from '../components/Press';
 import { useState } from 'react';
 import { Text } from '../components/Txt';
 import { usePrayer } from '../lib/prayer';
 import { useStored, encryptExisting } from '../lib/store';
 import { useLockWatcher } from '../lib/lock';
+import { SleepNowSync } from '../components/SleepNowSync';
 import { LockScreen } from '../components/LockScreen';
 import { AuthScreen } from '../components/AuthScreen';
 import { useSession } from '../lib/auth';
@@ -24,8 +26,12 @@ import { FREEMIUM } from '../lib/edition';
 import { startSync, syncNow } from '../lib/sync';
 import { DEBT_EMPTY, DebtData, syncDebtAlerts } from '../lib/debts';
 import { cycleInfo } from '../lib/cycle';
-import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncCycleAlert, PEvent } from '../lib/alerts';
-import { TG_DEFAULT, Toggles } from '../lib/adhan';
+import { syncTaskAlerts } from '../lib/maintTasks';
+import { useSubsG } from '../lib/subs';
+import { expState } from '../lib/patterns';
+import type { Exp } from '../lib/habit';
+import { syncEventAlerts, syncNoteAlerts, syncZikirAlerts, syncBackupAlert, syncRenewAlerts, syncDocAlerts, syncSubAlerts, syncColAlerts, syncWeekAlert, syncMedAlerts, syncRelaxAlert, syncExpAlerts, syncCycleAlert, PEvent } from '../lib/alerts';
+import { TG_DEFAULT, Toggles, allowPermissionPrompts, openPrompts, usePromptsOpen } from '../lib/adhan';
 import { useFamily } from '../lib/family';
 import { useFamTasks, useFamEvents } from '../lib/familyData';
 import { syncFamilyAlerts } from '../lib/familyAlerts';
@@ -60,16 +66,25 @@ function AlertSync() {
   const noteRems = ((nt && nt.notes) || []).filter((n) => n.rm).map((n) => ({ id: n.id, t: n.t, s: (n.s || '').slice(0, 300), rm: n.rm, rd: n.rd, ra: n.ra }));
   useEffect(() => { if (okn && hid.ready && Platform.OS !== 'web') syncNoteAlerts(noteRems, hid.on('planner')); }, [okn, hid.ready, JSON.stringify(noteRems)]);
   useEffect(() => { if (ok2 && Platform.OS !== 'web') syncWeekAlert({ ...t, ev: tg.ev !== false }); }, [ok2, tg.ev]);
-  const [hb, , okh] = useStored<{ meds?: { id: string; name: string; dose: string; time: string }[]; days?: Record<string, { med?: string[] }>; rlRem?: string; cyOn?: boolean; cyRem?: boolean }>('ml_habit', {});
+  const [hb, , okh] = useStored<{ meds?: { id: string; name: string; dose: string; time: string }[]; days?: Record<string, { med?: string[] }>; rlRem?: string; cyOn?: boolean; cyRem?: boolean; exps?: Exp[] }>('ml_habit', {});
   const todayK = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
   const medsNow = (hb && hb.meds) || []; const medTaken = (hb && hb.days && hb.days[todayK] && hb.days[todayK].med) || [];
   const [medRing] = useStored<boolean>('ml_med_ring', true);
   useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncMedAlerts(medsNow, medTaken, t.md !== false && hid.on('habit'), medRing !== false); }, [okh, ok2, hid.ready, JSON.stringify(medsNow), JSON.stringify(medTaken), t.md, todayK, medRing]);
   useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncRelaxAlert(hb && hb.rlRem, hid.on('habit')); }, [okh, ok2, hid.ready, hb && hb.rlRem]);
+  const expRems = ((hb && hb.exps) || []).filter((e) => e.rem && !e.ok).map((e) => { const st = expState(e, hb as any); return st && !st.done ? { id: e.id, title: st.tpl.title, day: st.dayNo, days: st.tpl.days } : null; }).filter(Boolean) as { id: string; title: string; day: number; days: number }[];
+  useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncExpAlerts(expRems, hid.on('habit')); }, [okh, ok2, hid.ready, JSON.stringify(expRems), todayK]);
   const cyNext = hb && hb.cyOn && hb.days ? cycleInfo(hb as any).nextOff : null;
   useEffect(() => { if (okh && ok2 && hid.ready && Platform.OS !== 'web') syncCycleAlert(cyNext, !!(hb && hb.cyOn) && hb.cyRem !== false && hid.on('habit')); }, [okh, ok2, hid.ready, cyNext, hb && hb.cyOn, hb && hb.cyRem]);
   const [rc, , okr] = useStored<{ data?: Record<string, any> }>('ml_record', { data: {} });
   useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncRenewAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify((rc && rc.data) || {}), tg.ev, t.qh]);
+  const [dcs, , okd] = useStored<{ docs?: any[] }>('ml_documents', { docs: [] });
+  useEffect(() => { if (okd && ok2 && hid.ready && Platform.OS !== 'web') syncDocAlerts(dcs, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okd, ok2, hid.ready, JSON.stringify(((dcs && dcs.docs) || []).map((x: any) => [x.id, x.title, x.expiry, x.remind])), tg.ev, t.qh]);
+  const [sbs, , oksb] = useStored<{ subs?: any[] }>('ml_subs', { subs: [] }); useSubsG();
+  useEffect(() => { if (oksb && ok2 && hid.ready && Platform.OS !== 'web') syncSubAlerts(sbs, { ...t, ev: tg.ev !== false }, hid.on('finance')); }, [oksb, ok2, hid.ready, JSON.stringify(((sbs && sbs.subs) || []).map((x: any) => [x.id, x.name, x.price, x.cycle, x.next, x.remind, x.trial])), tg.ev, t.qh, new Date().toDateString()]);
+  const [col, , okcol] = useStored<{ items?: any[]; loans?: any[] }>('ml_collection', { items: [], loans: [] });
+  useEffect(() => { if (okcol && ok2 && hid.ready && Platform.OS !== 'web') syncColAlerts(col, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okcol, ok2, hid.ready, JSON.stringify([((col && col.loans) || []).map((x: any) => [x.id, x.due, x.done, x.who, x.title, x.amount, x.remind, (x.pays || []).length]), ((col && col.items) || []).filter((x: any) => x.cat === 'gadget').map((x: any) => [x.id, x.warranty, x.name])]), tg.ev, t.qh]);
+  useEffect(() => { if (okr && ok2 && hid.ready && Platform.OS !== 'web') syncTaskAlerts(rc, { ...t, ev: tg.ev !== false }, hid.on('record')); }, [okr, ok2, hid.ready, JSON.stringify(Object.values((rc && rc.data) || {}).map((v: any) => [v && v.tasks, v && v.trem])), tg.ev, t.qh]);
   const [bk, , okb] = useStored<number>('ml_backup_last', 0);
   const [bo, , okc] = useStored<boolean>('ml_backup_rem', false);
   useEffect(() => { if (okb && okc && Platform.OS !== 'web') syncBackupAlert(!!bo, bk); }, [okb, okc, bk, bo]);
@@ -118,11 +133,14 @@ function Checking() {
   );
 }
 export { ErrorBoundary } from 'expo-router';
-function Tracker() { const p = usePathname(); useEffect(() => { trackModule(p); }, [p]); return null; }
+// Opening any screen except Home, Stats, Insights and Settings counts as entering a module, which is when the notification popup may show.
+const NOT_MODULE = ['/', '/index', '/stats', '/insights', '/settings'];
+function Tracker() { const p = usePathname(); useEffect(() => { trackModule(p); if (NOT_MODULE.indexOf(p) < 0) openPrompts(); }, [p]); return null; }
 export default function Root() {
   useRegion(); // keeps the chosen currency ready for every screen and notification
   useLockWatcher();
   const [sess, authReady] = useSession(); const lic = useLicense();
   useEffect(() => { encryptExisting(); }, []);
-  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync /><DebtSync /><AlertSync /><FamilySync /><DialogHost /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && !FREEMIUM && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && !FREEMIUM && lic.status === 'unknown' ? <Checking /> : null}<PaywallHost />{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
+  const popOpen = usePromptsOpen(); const gate = !!sess && lic.status === 'active' && popOpen; allowPermissionPrompts(gate);
+  return (<><Tracker /><StatusBar style="light" />{Platform.OS === 'android' ? <NavigationBar hidden style="light" /> : null}<SyncRunner /><PrayerSync key={gate ? 'on' : 'off'} /><DebtSync key={gate ? 'on' : 'off'} /><AlertSync key={gate ? 'on' : 'off'} /><FamilySync key={gate ? 'on' : 'off'} /><SleepNowSync key={gate ? 'on' : 'off'} /><DialogHost /><View style={{ flex: 1, backgroundColor: '#0a0f2c', alignItems: 'center' }}><View style={{ flex: 1, width: '100%', maxWidth: 520, overflow: 'hidden' }}><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0a0f2c' }, animation: 'slide_from_right' }} /><LockScreen />{sess && !FREEMIUM && lic.status === 'locked' ? <ActivationScreen email={sess.user.email || ''} expired={!!lic.expires} /> : null}{sess && !FREEMIUM && lic.status === 'unknown' ? <Checking /> : null}<PaywallHost />{authReady && !sess ? <AuthScreen /> : null}</View></View></>);
 }

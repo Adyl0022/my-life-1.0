@@ -174,7 +174,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Finance.dc.html",
-  "k": "spending belanja expense perbelanjaan beli petrol makan food kategori category today spending belanja hari ini remark catatan susun sort edit vehicle kenderaan maintenance count kira"
+  "k": "spending belanja expense perbelanjaan beli petrol makan food kategori category custom category delete padam kategori sendiri today spending belanja hari ini remark catatan susun sort edit vehicle kenderaan maintenance count kira"
  },
  {
   "t": "Commitments and debts",
@@ -182,7 +182,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Finance.dc.html",
-  "k": "commitment komitmen hutang debt ansuran installment bil bill phone parents bayar pay loan pinjaman"
+  "k": "commitment komitmen hutang debt ansuran installment bil bill phone parents bayar pay loan pinjaman what you owe sort details when finish habis"
  },
  {
   "t": "Payment reminders",
@@ -194,7 +194,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "My Record",
-  "s": "Motorcycle logs and records",
+  "s": "Documents, vehicle and personal collection",
   "m": "Record",
   "c": "#ff8fab",
   "h": "Record.dc.html",
@@ -239,6 +239,38 @@ export const SEARCH_INDEX: SearchItem[] = [
   "c": "#ff8fab",
   "h": "Record.dc.html",
   "k": "parts bahagian servis service oil minyak enjin tyre tayar chain rantai brake brek bateri battery"
+ },
+ {
+  "t": "Personal Collection",
+  "s": "Gadgets, lifestyle, property, lent, lessons",
+  "m": "Record",
+  "c": "#3df0ff",
+  "h": "Record.dc.html",
+  "k": "life lesson pengajaran lesson of the day setiap hari dashboard card personal collection gadget gadgets phone laptop warranty waranti lifestyle shoes bag property house land rent lent borrowed pinjam hutang utang loan lessons life lesson pengajaran barang koleksi worth value nilai estimate anggaran condition keadaan like new good worn broken warranty days left baki hari waranti link papers receipt resit grid list view photos gambar whatsapp remind polite reminder history sejarah part payment bayar separa baki pdf insurance insurans senarai barang my things"
+ },
+ {
+  "t": "Spending from a sentence",
+  "s": "Tell the Assistant your spending in your own words",
+  "m": "Assistant",
+  "c": "#ffc46b",
+  "h": "Assistant.dc.html",
+  "k": "ai spending sentence ayat makan tengah hari guna maybank account akaun paid from dibayar dari category kategori belanja assistant gemma qwen on phone confirm"
+ },
+ {
+  "t": "Scan to PDF",
+  "s": "Scan letters and papers into one clean PDF",
+  "m": "Record",
+  "c": "#7c9cff",
+  "h": "Record.dc.html",
+  "k": "scan to pdf imbas surat certificate sijil tamat belajar graduation camscanner scanner clean white putih bersih pages halaman 2k quality kualiti export pdf scans"
+ },
+ {
+  "t": "Documents",
+  "s": "Passport, cards, warranty",
+  "m": "Record",
+  "c": "#7c9cff",
+  "h": "Record.dc.html",
+  "k": "documents dokumen passport pasport mykad ic cidb permit bank card kad member warranty waranti insurance agreement certificate sijil scan imbas scanner straighten crop enhance camscanner luruskan expiry tamat tempoh reminder peringatan renew renewing soon negara country another country luar negara issued in how to renew perbaharui lock kunci fingerprint cap jari biometric share kongsi watermark copy salin pdf pages halaman"
  },
  {
   "t": "Road tax, insurance and licence",
@@ -294,7 +326,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "experiment experiments challenge cabaran eksperimen before after sleep tidur steps water"
+  "k": "experiment experiments history run again note reminder own target share challenge cabaran eksperimen before after sleep tidur steps water"
  },
  {
   "t": "Relax",
@@ -306,11 +338,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Energy",
-  "s": "How energetic you feel today",
+  "s": "Energy score, tip and week or month trend",
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "energy tenaga tired penat letih exhausted energetic bertenaga"
+  "k": "energy tenaga tired penat letih exhausted energetic bertenaga score skor gauge trend graf weekly mingguan monthly bulanan"
  },
  {
   "t": "Sleep schedule",
@@ -350,7 +382,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "steps langkah pedometer health connect walk jalan"
+  "k": "energy tenaga quick log suggested cadangan night pulse nadi malam heart rate pulse nadi smart watch jam pintar band honor samsung xiaomi mi fitness zepp fitbit garmin health connect automatic auto steps langkah pedometer health connect walk jalan"
  },
  {
   "t": "Mood",
@@ -401,12 +433,36 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "assistant pembantu ai tanya ask chat bantuan help"
  },
  {
+  "t": "AI answers (Smart chat)",
+  "s": "Online AI or AI on your phone for any question",
+  "m": "System",
+  "c": "#5ee7df",
+  "h": "Assistant.dc.html",
+  "k": "ai smart chat online ai offline gemma qwen max model download model ai jawapan soalan kod code summarise rumus ringkas chat bersembang openrouter"
+ },
+ {
+  "t": "Chat in your language",
+  "s": "Talk to the Assistant in 20+ languages",
+  "m": "System",
+  "c": "#5ee7df",
+  "h": "Assistant.dc.html",
+  "k": "language bahasa translate terjemah chinese arabic tamil hindi chat language pack ml kit"
+ },
+ {
+  "t": "My Life Assistant (talk)",
+  "s": "Chat by voice, pick a male or female voice, save spending, open pages",
+  "m": "Assistant",
+  "c": "#b794ff",
+  "h": "Assistant.dc.html",
+  "k": "voice suara mic mikrofon microphone talk cakap speak bercakap assistant my life assistant live voice assistant chat borak chinese cina tamil language pack bahasa lain gemini lelaki perempuan male female tone pitch speed"
+ },
+ {
   "t": "Insights",
   "s": "Life score, weekly review and smart suggestions",
   "m": "System",
   "c": "#5ee7df",
   "h": "Insights.dc.html",
-  "k": "insights score skor life cadangan suggestion tips weekly mingguan relax energy tenaga medicine ubat cycle kitaran patterns corak tips"
+  "k": "insights score skor life cadangan suggestion tips weekly mingguan relax energy tenaga medicine ubat cycle kitaran patterns corak tips akaun account subscription langganan pulse nadi heart"
  },
  {
   "t": "Stats",
@@ -414,7 +470,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#5ee7df",
   "h": "Stats.dc.html",
-  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang"
+  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang total money akaun subscription langganan pulse nadi heart rate"
  },
  {
   "t": "Settings",
@@ -422,7 +478,15 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#5ee7df",
   "h": "Settings.dc.html",
-  "k": "settings tetapan setting"
+  "k": "settings tetapan setting notification notifikasi reminder peringatan battery bateri exact timing late lewat"
+ },
+ {
+  "t": "Country, currency and week start",
+  "s": "Holidays, money symbol and the first day of the week",
+  "m": "System",
+  "c": "#5ee7df",
+  "h": "Settings.dc.html",
+  "k": "country negara currency mata wang ringgit dollar rupiah region location holidays cuti umum symbol simbol week starts minggu mula monday sunday saturday rm usd sgd idr"
  },
  {
   "t": "Reminders and notifications",
@@ -450,11 +514,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Export my data",
-  "s": "Excel, PDF, CSV or a backup. Choose which modules, including turned-off ones",
+  "s": "Excel, PDF, CSV or a backup, with Documents and Personal Collection. Choose which modules",
   "m": "System",
   "c": "#5ee7df",
   "h": "Export.dc.html",
-  "k": "export eksport backup sandaran excel pdf csv xlsx download muat turun data tabung savings goals money left had kategori category limits laporan report simpanan module modul turned off dimatikan pilih choose"
+  "k": "export eksport backup sandaran excel pdf csv xlsx download muat turun data tabung savings goals money left had kategori category limits laporan report simpanan module modul turned off dimatikan pilih choose documents dokumen personal collection gadget pinjam lent borrowed lessons"
  },
  {
   "t": "Reset all data",
@@ -474,7 +538,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Terms of Use",
-  "s": "Using My Life",
+  "s": "Using My Life 1.0",
   "m": "System",
   "c": "#5ee7df",
   "h": "Settings.dc.html",
@@ -495,6 +559,22 @@ export const SEARCH_INDEX: SearchItem[] = [
   "c": "#ffc46b",
   "h": "Finance.dc.html",
   "k": "money left baki tinggal duit left to spend gaji income belanja sehari per day month end projection akhir bulan"
+ },
+ {
+  "t": "Subscriptions",
+  "s": "Netflix, YouTube, Spotify and more: what charges when, found for you",
+  "m": "Finance",
+  "c": "#7c9cff",
+  "h": "Finance.dc.html",
+  "k": "subscriptions subscription langganan summary ringkasan costliest paling mahal per day sehari by payment cara bayar save jimat income pendapatan next 5 months lima bulan akan datang auto automatic netflix youtube spotify claude pro chatgpt disney icloud google one free trial percubaan percuma renew bayar bulanan monthly scan bill resit receipt auto detect charged add to spending record charge how to cancel unsubscribe stop paying berhenti langgan cara batal pause paused cancel cancelled batal jeda status payment method bayar guna kad debit credit e-wallet every 3 months 6 months suku tahun"
+ },
+ {
+  "t": "My Accounts",
+  "s": "Cash, banks, wallets and cards with balances",
+  "m": "Finance",
+  "c": "#7c9cff",
+  "h": "Finance.dc.html",
+  "k": "accounts akaun logo icon ikon gambar gallery baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
  },
  {
   "t": "Savings Goals",
@@ -615,5 +695,45 @@ export const SEARCH_INDEX: SearchItem[] = [
   "c": "#5ee7df",
   "h": "FamilyTrash.dc.html",
   "k": "recently deleted trash dipadam restore pulih sampah family"
+ },
+ {
+  "t": "Sleep timer",
+  "s": "Tap Going to sleep and I'm awake, or use the Quick Settings tile",
+  "m": "Habit",
+  "c": "#b794ff",
+  "h": "Habit.dc.html",
+  "k": "sleep timer tidur going to sleep i'm awake bangun quick settings tile jam tidur bedtime sleep schedule jadual tidur 30 days last night notification"
+ },
+ {
+  "t": "Vehicle score and maintenance jobs",
+  "s": "Health score, jobs you repeat and days since or left",
+  "m": "Record",
+  "c": "#ff8fab",
+  "h": "Record.dc.html",
+  "k": "vehicle score skor kenderaan motorcycle score maintenance tasks tugasan spray chain minyak rantai tyre pressure tekanan tayar engine oil minyak enjin coolant done today days left hari lagi overdue lewat parts alat ganti"
+ },
+ {
+  "t": "Event days left",
+  "s": "Each event shows days left in red, yellow or green",
+  "m": "Planner",
+  "c": "#8ea8ff",
+  "h": "Planner.dc.html",
+  "k": "event acara days left hari lagi overdue lewat today hari ini upcoming akan datang red yellow green merah kuning hijau tarikh date"
+ },
+ {
+  "t": "Dashboard card pages",
+  "s": "Choose which pages turn by themselves in the card at the bottom of Home",
+  "m": "System",
+  "c": "#8ea8ff",
+  "h": "Settings.dc.html",
+  "k": "upcoming calendar kalendar akan datang event acara cuti umum public holiday islamic islam tarikh dashboard card kad capsule quick log pages halaman next prayer solat event vehicle job tasks today tugasan hari ini road tax cukai jalan insurans lesen licence renewal tamat tempoh debt hutang bayaran money streak score tip memories hide sembunyi pilih choose settings automatik auto turn"
+ },
+ {
+  "t": "Your Memories with My Life 1.0",
+  "s": "Journey, numbers, timeline, on this day, badges and year in review",
+  "m": "System",
+  "c": "#b794ff",
+  "h": "Settings.dc.html",
+  "k": "memories kenangan journey perjalanan timeline on this day pada hari ini achievements badge pencapaian year in review ringkasan tahun milestone 30 days 100 days 1 year every moment matters since started day together streak"
  },
 ];

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Keyboard, Platform, BackHandler } from 'react-native';
+import { View, ScrollView, TextInput, Keyboard, Platform, BackHandler } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,8 +14,10 @@ import { useStored } from '../lib/store';
 import { AheadPicker } from '../components/QuickRemind';
 import { TOP } from '../lib/layout';
 
+import { confirmDelete } from '../lib/dialog';
+import { SearchField } from '../components/Shine';
 // rm: when to remind (a time in ms), rd: the reminder is done
-type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean; ra?: number[] };
+type Note = { id: number; t: string; s: string; c: number; pin: boolean; u: number; r: string; rm?: number; rd?: boolean; ra?: number[]; cr?: number };
 type Data = { notes: Note[]; seq: number };
 const COL = ['#7c9cff', '#5ee7df', '#ffc46b', '#ff8fb1', '#a78bfa', '#9be37a', '#94a3b8'];
 const PAPER = [['#4f6bff', '#8a6cff', '#3fb0ff'], ['#0fae9f', '#2f84d8', '#3fd1a8'], ['#f5a623', '#ef6a3a', '#e8436b'], ['#e0518a', '#a24fe0', '#ff8f6b'], ['#7a50e6', '#c05fd8', '#5b7cff'], ['#2fae64', '#2f93c4', '#8bd45a'], ['#334155', '#475569', '#94a3b8']];
@@ -76,7 +79,7 @@ export default function Notes() {
   const save = () => {
     if (!draft) return;
     if (!(draft.t.trim() || draft.s.trim())) return say('Add a title or some text first');
-    const nn = { ...draft, u: Date.now() };
+    const nn = { ...draft, u: Date.now(), cr: draft.cr || (isNew ? Date.now() : undefined) };
     setData(isNew ? { notes: [nn, ...notes], seq: data.seq + 1 } : { ...data, notes: notes.map((x) => (x.id === nn.id ? nn : x)) });
     closeEd(); say('Note saved');
   };
@@ -157,10 +160,7 @@ export default function Notes() {
           <Pressable onPress={openNew} accessibilityLabel="New note"><LinearGradient colors={['#ffc46b', '#ff8f5a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 26, marginTop: -2 }}>+</Text></LinearGradient></Pressable>
         </View>
         <View style={{ paddingHorizontal: 20, marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <Glass radius={16} style={{ flex: 1, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ color: 'rgba(255,255,255,.6)' }}>⌕</Text>
-            <TextInput value={q} onChangeText={setQ} placeholder="Search title or text" placeholderTextColor="rgba(255,255,255,.45)" style={{ flex: 1, color: W, fontSize: 14, paddingVertical: 11, outlineStyle: 'none' } as any} />
-          </Glass>
+          <View style={{ flex: 1 }}><SearchField value={q} onChangeText={setQ} placeholder="Search title or text" /></View>
           <Pressable onPress={() => setSort((sort + 1) % 3)}><Glass radius={16} style={{ paddingHorizontal: 12, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{SORTS[sort]}</Text></Glass></Pressable>
           <Pressable onPress={() => setGrid(!grid)} accessibilityLabel="Layout"><Glass radius={16} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 16 }}>{grid ? '☰' : '▦'}</Text></Glass></Pressable>
         </View>
@@ -234,10 +234,10 @@ export default function Notes() {
           <Sheet onClose={() => setMenuId(0)}>
             <View style={{ padding: 16, gap: 8, borderRadius: 24, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
               <Text style={{ color: W, fontSize: 15, fontWeight: '800', marginBottom: 4 }} numberOfLines={1}>{menuNote.t || 'Untitled'}</Text>
-              <SBtn t={menuNote.pin ? 'Unpin' : 'Pin to top'} style={{ flex: 0 }} onPress={() => { setData({ ...data, notes: notes.map((x) => (x.id === menuNote.id ? { ...x, pin: !x.pin } : x)) }); setMenuId(0); say(menuNote.pin ? 'Unpinned' : 'Pinned to top'); }} />
+              <SBtn t={menuNote.pin ? 'Unpin' : 'Pin to top'} style={{ flex: 0 }} onPress={() => { const go = () => { setData({ ...data, notes: notes.map((x) => (x.id === menuNote.id ? { ...x, pin: !x.pin } : x)) }); setMenuId(0); say(menuNote.pin ? 'Unpinned' : 'Pinned to top'); }; if (menuNote.pin) confirmDelete('this pin', go, { title: 'Unpin this note?', message: 'It goes back to its normal place in the list.', yes: 'Unpin' }); else go(); }} />
               {menuNote.rm ? <SBtn t={menuNote.rd ? 'Remind me again' : 'Mark reminder done'} style={{ flex: 0 }} onPress={() => { const again = menuNote.rd && (menuNote.rm as number) <= Date.now(); setData({ ...data, notes: notes.map((x) => (x.id === menuNote.id ? { ...x, rd: !x.rd } : x)) }); setMenuId(0); say(again ? 'Reminder is in the past. Open the note to set a new time.' : menuNote.rd ? 'Reminder is on again' : 'Reminder done'); }} /> : null}
               {menuNote.rm ? <SBtn t="Remove reminder" style={{ flex: 0 }} onPress={() => { setData({ ...data, notes: notes.map((x) => { if (x.id !== menuNote.id) return x; const { rm, rd, ra, ...rest } = x; return rest as Note; }) }); setMenuId(0); say('Reminder removed'); }} /> : null}
-              <SBtn t="Delete" kind="danger" style={{ flex: 0 }} onPress={() => { del(menuNote.id); setMenuId(0); say('Note deleted'); }} />
+              <SBtn t="Delete" kind="danger" style={{ flex: 0 }} onPress={() => confirmDelete('this note', () => { del(menuNote.id); setMenuId(0); say('Note deleted'); })} />
             </View>
           </Sheet>
         )}

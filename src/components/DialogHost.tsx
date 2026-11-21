@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, View, Easing } from 'react-native';
+import { Animated, Modal, View, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
 import { onDialog, DialogState, DialogButton } from '../lib/dialog';
@@ -11,6 +12,7 @@ export function DialogHost() {
   useEffect(() => { onDialog((x) => { setD(x); if (x) { a.setValue(0); Animated.timing(a, { toValue: 1, duration: 180, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); } }); return () => onDialog(null); }, [a]);
   if (!d) return null;
   const close = (b?: DialogButton) => { setD(null); if (b && b.onPress) setTimeout(() => b.onPress!(), 30); };
+  const stack = d.buttons.length > 2; // three choices do not fit side by side, so they sit one under another (Cancel last)
   const cancel = d.buttons.find((b) => b.style === 'cancel');
   return (
     <Modal transparent visible animationType="none" statusBarTranslucent onRequestClose={() => close(cancel)}>
@@ -19,12 +21,12 @@ export function DialogHost() {
           <Pressable onPress={() => {}} style={{ borderRadius: 26, padding: 22, backgroundColor: '#1a2250', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)' }}>
             <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800' }}>{d.title}</Text>
             {d.message ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 14, lineHeight: 20, marginTop: 8 }}>{d.message}</Text> : null}
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 22 }}>
+            <View style={{ flexDirection: stack ? 'column-reverse' : 'row', gap: 10, marginTop: 22 }}>
               {d.buttons.map((b, i) => {
                 const main = b.style !== 'cancel' && b.style !== 'destructive'; const red = b.style === 'destructive';
-                const inner = <Text style={{ color: main ? '#2a1030' : red ? '#ffb3bf' : '#fff', fontSize: 14, fontWeight: '800' }}>{b.text || 'OK'}</Text>;
+                const inner = <Text style={{ color: main ? '#2a1030' : red ? '#ffb3bf' : '#fff', fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{b.text || 'OK'}</Text>;
                 return (
-                  <Pressable key={i} onPress={() => close(b)} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.72 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
+                  <Pressable buzz key={i} onPress={() => close(b)} style={({ pressed }) => ({ flex: stack ? undefined : 1, opacity: pressed ? 0.72 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
                     {main
                       ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 13, borderRadius: 999, alignItems: 'center' }}>{inner}</LinearGradient>
                       : <View style={{ paddingVertical: 13, borderRadius: 999, alignItems: 'center', backgroundColor: red ? '#3d2c4c' : '#343d5a', borderWidth: red ? 1 : 0, borderColor: 'rgba(255,120,140,.4)' }}>{inner}</View>}

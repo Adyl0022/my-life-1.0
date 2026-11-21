@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Pressable, Animated, Easing } from 'react-native';
+import { View, Animated, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -7,7 +8,7 @@ import { Glass } from './Glass';
 import { Blob } from './Bg';
 import { W } from './Ui';
 import Svg, { Path, Circle, Rect, Defs, Pattern, G } from 'react-native-svg';
-import { Verse, AR_SIZE, M_SIZE } from '../lib/islamic';
+import { Verse, AR_SIZE, M_SIZE, QURAN_FONT } from '../lib/islamic';
 
 export function Ic({ n, size = 22, color = '#fff' }: { n: string; size?: number; color?: string }) {
   const p: any = { stroke: color, strokeWidth: 1.8, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' };
@@ -215,12 +216,12 @@ export function ReadPicker({ opts, mode, onMode, lang, onLang, onClose }: { opts
     </>
   );
 }
-export function ToolBar({ saved, onSave, size, onSize, lang, onLang, langLabel }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void; langLabel?: string }) {
-  const T = ({ a, b, onPress, c }: any) => <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}><Text style={{ color: c || 'rgba(255,255,255,.85)', fontSize: 15, fontWeight: '800' }}>{a}</Text><Text style={{ color: c || 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{b}</Text></Pressable>;
+export function ToolBar({ saved, onSave, size, onSize, lang, onLang, langLabel, sizeLabel }: { saved: boolean; onSave: () => void; size: number; onSize: () => void; lang: string; onLang: () => void; langLabel?: string; sizeLabel?: string }) {
+  const T = ({ a, b, onPress, c }: any) => <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', paddingVertical: 8 }}>{typeof a === 'string' ? <Text style={{ color: c || 'rgba(255,255,255,.85)', fontSize: 15, fontWeight: '800' }}>{a}</Text> : <View style={{ height: 20, alignItems: 'center', justifyContent: 'center' }}>{a}</View>}<Text style={{ color: c || 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{b}</Text></Pressable>;
   return (
     <Glass radius={22} style={{ marginHorizontal: 20, marginBottom: 12, flexDirection: 'row' }}>
-      <T a={saved ? '★' : '☆'} b={saved ? 'Saved' : 'Save'} c={saved ? '#ffd593' : undefined} onPress={onSave} />
-      <T a="Aa" b={['S', 'M', 'L'][size]} onPress={onSize} />
+      <T a={<Svg width={24} height={24} viewBox="0 0 24 24"><Path d="M12 2.8l2.8 5.9 6.4.9-4.7 4.5 1.2 6.4L12 17.4l-5.7 3.1 1.2-6.4L2.8 9.6l6.4-.9z" fill={saved ? '#ffd593' : 'none'} stroke={saved ? '#ffd593' : 'rgba(255,255,255,.85)'} strokeWidth={2} strokeLinejoin="round" /></Svg>} b={saved ? 'Saved' : 'Save'} c={saved ? '#ffd593' : undefined} onPress={onSave} />
+      <T a="Aa" b={sizeLabel || ['S', 'M', 'L'][size]} onPress={onSize} />
       <T a="文" b={langLabel || (lang === 'en' ? 'EN' : 'BM')} onPress={onLang} />
     </Glass>
   );
@@ -229,7 +230,7 @@ export function VerseBlock({ v, size, lang, arOnly, showNum = true, active, onPr
   const full = !!active && !!bleed; // playing verse: solid box running edge to edge of its card
   return (
     <Pressable onPress={onPress} onLongPress={onLong} delayLongPress={380} style={{ paddingVertical: 14, paddingHorizontal: full ? 4 + (bleed as number) : 4, marginHorizontal: full ? -(bleed as number) : 0, borderBottomWidth: last || full ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)', backgroundColor: full ? 'rgba(125,240,198,.16)' : active ? 'rgba(125,240,198,.12)' : 'transparent', borderRadius: active && !full ? 14 : 0 }}>
-      <Text style={{ color: W, fontSize: AR_SIZE[size] + 3, lineHeight: (AR_SIZE[size] + 3) * 1.9, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{showNum ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'  ﴿' + v.n + '﴾'}</Text> : null}{marked ? <Text style={{ color: '#ffd593', fontSize: 15 }}>{'  ★'}</Text> : null}</Text>
+      <Text style={{ color: W, fontSize: AR_SIZE[size] + 6, fontFamily: QURAN_FONT, lineHeight: (AR_SIZE[size] + 6) * 1.95, textAlign: 'right', writingDirection: 'rtl' }}>{v.ar}{showNum ? <Text style={{ color: '#7df0c6', fontSize: 15 }}>{'\u00A0\u00A0﴿' + v.n + '﴾'}</Text> : null}{marked ? <Text style={{ color: '#ffd593', fontSize: 15 }}>{'  ★'}</Text> : null}</Text>
       {v.rumi && !arOnly ? <Text style={{ color: '#8fe9e2', fontSize: M_SIZE[size] + 1, fontStyle: 'italic', lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{v.rumi}</Text> : null}
       {arOnly ? null : <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: M_SIZE[size] + 1, lineHeight: (M_SIZE[size] + 1) * 1.5, marginTop: 6 }}>{lang === 'en' ? v.en : v.ms}</Text>}
     </Pressable>
@@ -237,7 +238,7 @@ export function VerseBlock({ v, size, lang, arOnly, showNum = true, active, onPr
 }
 export const Credit = ({ lang }: { lang: string }) => (
   <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, lineHeight: 15, marginTop: 14, marginHorizontal: 4 }}>
-    Arabic: Quran Uthmani (Hafs), King Fahd Quran Complex text. {lang === 'en' ? 'English: Marmaduke Pickthall (public domain).' : 'Malay: Abdullah Muhammad Basmeih (Tanzil edition).'} Dataset: github.com/fawazahmed0/quran-api. Texts checked by an ustaz.
+    Arabic: Quran Uthmani (Hafs), King Fahd Quran Complex text and font (KFGQPC Uthmanic Script Hafs). {lang === 'en' ? 'English: Marmaduke Pickthall (public domain).' : 'Malay: Abdullah Muhammad Basmeih (Tanzil edition).'} Dataset: github.com/fawazahmed0/quran-api.
   </Text>
 );
 export const Pending = ({ kind }: { kind: string }) => (

@@ -22,8 +22,10 @@
       "backgroundColor": "#0a0f2c",
       "permissions": [
         "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_HEART_RATE",
         "android.permission.ACTIVITY_RECOGNITION",
-        "android.permission.SCHEDULE_EXACT_ALARM"
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.RECORD_AUDIO"
       ],
       "allowBackup": false
     },
@@ -65,7 +67,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "My Life lets you attach photos of receipts and documents to your records."
+          "photosPermission": "My Life lets you attach photos of receipts and documents to your records.",
+          "cameraPermission": "My Life uses the camera only when you scan a document."
         }
       ],
       [
@@ -91,6 +94,15 @@
         }
       ],
       "./plugins/withReleaseSigning",
+      "./plugins/withScannerGallery",
+      "react-native-document-scanner-plugin",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "My Life 1.0 uses the microphone only when you tap the mic in the Assistant.",
+          "speechRecognitionPermission": "My Life 1.0 uses speech recognition only when you tap the mic in the Assistant."
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -105,6 +117,14 @@
         {
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": true
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/UthmanicHafs.otf"
+          ]
         }
       ]
     ],

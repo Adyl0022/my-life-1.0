@@ -25,6 +25,8 @@ const L: MyEv[] = [
   { date: '2027-12-25', name: 'Christmas Day', kind: 'cultural' },
 ];
 
+export const OFFICIAL_LIST = L;
+
 // Fixed-date holidays continue automatically after the table ends.
 function fixed(y: number): MyEv[] {
   return [

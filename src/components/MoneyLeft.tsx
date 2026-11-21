@@ -1,5 +1,7 @@
+import { useSubsG } from '../lib/subs';
 import React from 'react';
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
@@ -11,6 +13,7 @@ import { calcLeft, commitFor, monthSummary, MONTHS, Sp } from '../lib/moneyLeft'
 import { setup } from '../lib/adhan';
 import { BUDGET_EMPTY, BudgetCfg, checkBudget } from '../lib/budgetAlert';
 import { cs } from '../lib/region';
+import { Toggle } from './Toggle';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
@@ -33,16 +36,13 @@ const Tile = ({ l, v, sub, c }: { l: string; v: string; sub?: string; c?: string
     {sub ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 10, marginTop: 1 }}>{sub}</Text> : null}
   </View>
 );
-const Sw = ({ on, set }: { on: boolean; set: (v: boolean) => void }) => (
-  <Pressable accessibilityLabel="Budget alerts" onPress={() => set(!on)} style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)', alignItems: on ? 'flex-end' : 'flex-start', justifyContent: 'center' }}>
-    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: on ? '#2a1030' : '#fff' }} />
-  </Pressable>
-);
+const Sw = ({ on, set }: { on: boolean; set: (v: boolean) => void }) => <Toggle on={on} onPress={() => set(!on)} label="Budget alerts" colors="#ffc46b" thumbOn="#2a1030" />;
 
 export function MoneyLeft({ ym, income, spends }: Props) {
   const narrow = useWindowDimensions().width < 360;
   const [debts] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
   const [bc, setBc] = useStored<BudgetCfg>('ml_budget', BUDGET_EMPTY);
+  useSubsG();
   const c = calcLeft({ ym, income, commit: commitFor(debts, ym), spends });
   const { isCur, dim: dimDays, dayNo, daysLeft, commit, spent, today, left, over, savings, used, allowance, projLeft, pace, oneOff, runOutDay, state } = c;
   const sc = state === 'over' ? COL.over : state === 'care' ? COL.spent : COL.left;
@@ -136,7 +136,7 @@ export function MoneyLeft({ ym, income, spends }: Props) {
               <Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Budget alerts</Text>
               <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16, marginTop: 2 }}>A notification when you use 80% of your income, go over today's limit, or go over budget.</Text>
             </View>
-            <Sw on={bc.on} set={(v) => { setBc({ ...bc, on: v }); if (v) setup().then(() => setTimeout(() => { checkBudget(); }, 600)).catch(() => {}); }} />
+            <Sw on={bc.on} set={(v) => { setBc({ ...bc, on: v }); if (v) setup(true).then(() => setTimeout(() => { checkBudget(); }, 600)).catch(() => {}); }} />
           </View>
         </View>
       ) : null}

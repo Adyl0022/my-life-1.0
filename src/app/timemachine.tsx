@@ -1,10 +1,12 @@
+import { SlidePills } from '../components/TabSlide';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, AccessibilityInfo, Animated, Easing, useWindowDimensions } from 'react-native';
+import { View, ScrollView, AccessibilityInfo, Animated, Easing, useWindowDimensions } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
 import { W } from '../components/Ui';
@@ -117,7 +119,7 @@ function TimeMachinePageInner() {
 
   const Future = () => {
     const ms = FMETRICS[reg];
-    if (reg === 'heart') return <View style={{ marginTop: 12 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Nothing to estimate</Text><Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>My Life does not guess pulse or blood pressure. A straight line through vital signs would not be honest or safe, so there is no estimate for this part. Ask a doctor or nurse about your readings.</Text></View>;
+    if (reg === 'heart') return <View style={{ marginTop: 12 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Nothing to estimate</Text><Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>My Life 1.0 does not guess pulse or blood pressure. A straight line through vital signs would not be honest or safe, so there is no estimate for this part. Ask a doctor or nurse about your readings.</Text></View>;
     const gs = ms.map((m) => ({ m, g: guess(h, m, hz) }));
     const wg = reg === 'body' ? weightGuess(h, hz) : null;
     const any = gs.some((x) => x.g) || !!wg;
@@ -183,8 +185,7 @@ function TimeMachinePageInner() {
             )}
           </View>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-            <Chip on={mode === 'past'} t="Past" onPress={() => setMode('past')} />
-            <Chip on={mode === 'future'} t="Future" onPress={() => setMode('future')} c="#b794ff" />
+            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={13} padX={16} />
             <Chip on={use3d && !failed} t="3D view" onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
             {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
           </View>

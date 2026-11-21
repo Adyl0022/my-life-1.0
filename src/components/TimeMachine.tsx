@@ -1,5 +1,7 @@
+import { SlidePills } from './TabSlide';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Pressable, ScrollView, Animated, Easing } from 'react-native';
+import { View, ScrollView, Animated, Easing } from 'react-native';
+import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Line, Polyline, Circle, Rect } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -11,7 +13,7 @@ import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal
 import { modOn } from '../lib/hidden';
 import { usePro } from '../lib/pro';
 import { openPaywall, ProTag } from './Paywall';
-import { ENERGY, energyEstimate, dayLevel, hasAny, windowAvg } from '../lib/patterns';
+import { ENERGY, energyEstimate, restSignal, dayLevel, hasAny, windowAvg } from '../lib/patterns';
 import { METRICS, Metric, fmtVal, series, future, weightFuture, memories, dstr, Fut } from '../lib/timeline';
 
 const T = '#5ee7df'; const W = '#fff'; const DIM = 'rgba(255,255,255,.7)';
@@ -92,7 +94,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
   const keyOf = (d: number) => keyOfDate(new Date(y, m, d, 12));
   const dayOf = (k: string): HDay => ({ ...BLANK, ...(h.days[k] || {}) });
   const sel = pick || todayKey; const sd = dayOf(sel); const sdt = new Date(sel + 'T12:00:00');
-  const sEst = sd.en != null && sd.en >= 0 ? null : energyEstimate(sd, cg, goal);
+  const sEst = sd.en != null && sd.en >= 0 ? null : energyEstimate(sd, cg, goal, restSignal(h, sel));
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [sel]: { ...sd, ...p } } });
   const Stp = ({ l, v, onM, onP }: { l: string; v: string; onM: () => void; onP: () => void }) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
@@ -136,7 +138,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
         </LinearGradient>
       </Pressable>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -4 }} contentContainerStyle={{ gap: 6, paddingHorizontal: 4 }}>
-        {TABS.map(([k, l]) => <Chip key={k} on={tab === k} t={l} onPress={() => setTab(k)} />)}
+        <SlidePills tabs={TABS.map((x) => x[1])} index={Math.max(0, TABS.findIndex((x) => x[0] === tab))} onChange={(i) => setTab(TABS[i][0])} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={14} />
       </ScrollView>
 
       {tab === 'cal' ? (<>
@@ -202,7 +204,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
 
       {tab === 'explore' ? (<>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>{METRICS.map((x) => <Chip key={x.k} on={met === x.k} c={x.c} t={x.l} onPress={() => setMet(x.k)} />)}</View>
-        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, marginBottom: 14 }}>{[7, 30, 90].map((n) => <Chip key={n} on={range === n} t={n + ' days'} onPress={() => setRange(n)} />)}</View>
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, marginBottom: 14 }}><SlidePills tabs={['7 days', '30 days', '90 days']} index={[7, 30, 90].indexOf(range)} onChange={(i) => setRange([7, 30, 90][i])} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={14} /></View>
         {nums.length ? (<>
           <Chart vals={ser.map((s) => s.v)} est={ser.map((s) => !!s.est)} color={mdef.c} line={line} goal={mg} max={mx} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: DIM, fontSize: 10.5 }}>{dstr(dateOf(-(range - 1)))}</Text><Text style={{ color: DIM, fontSize: 10.5 }}>Today</Text></View>

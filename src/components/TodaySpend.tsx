@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { Glass } from './Glass';
 import { W, todayStr } from './Ui';

@@ -16,3 +16,11 @@ export function showAlert(title: string, message?: string, buttons?: DialogButto
     if (list.length > 1 && list.some((b) => b.style === 'cancel')) { if (w.confirm(text) && act && act.onPress) act.onPress(); } else { w.alert(text); if (act && act.onPress) act.onPress(); }
   }
 }
+
+/** Ask "are you sure?" before something is deleted or removed, so a wrong tap does not lose anything. */
+export function confirmDelete(what: string, onYes: () => void, opts?: { title?: string; message?: string; yes?: string }) {
+  showAlert(opts && opts.title ? opts.title : 'Delete ' + what + '?', opts && opts.message ? opts.message : 'This cannot be undone.', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: opts && opts.yes ? opts.yes : 'Delete', style: 'destructive', onPress: onYes },
+  ]);
+}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, G, Path, Rect, Line, RadialGradient, Stop } from 'react-native-svg';
 
@@ -11,6 +11,31 @@ const WASH: Record<string, [string, string]> = {
   cycle: ['rgba(255,143,171,0)', 'rgba(255,143,171,.22)'],
   intel: ['rgba(183,148,255,0)', 'rgba(183,148,255,.26)'],
 };
+
+
+// The linked points behind My Life Intelligence. The points drift slowly, the links follow them, and small lights travel along the links like thoughts being connected.
+const NODES: [number, number, number][] = [[40, 120, 3], [96, 92, 4], [150, 118, 3], [214, 84, 5], [262, 112, 4], [300, 62, 5], [250, 34, 3], [120, 40, 3]];
+const LINKS: [number, number][] = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [3, 6], [6, 5], [1, 7]];
+function IntelNet() {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    let id: any, last = 0; const t0 = Date.now();
+    const tick = () => { const n = Date.now(); if (n - last > 45) { last = n; setT((n - t0) / 1000); } id = requestAnimationFrame(tick); };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const P = NODES.map((n, i) => ({ x: n[0] + Math.sin(t * (0.22 + i * 0.03) + i * 1.7) * 6, y: n[1] + Math.cos(t * (0.18 + i * 0.022) + i * 2.3) * 5, r: n[2], tw: 0.5 + 0.5 * Math.sin(t * 0.8 + i * 0.9) }));
+  return (
+    <G>
+      {LINKS.map((l, i) => <Line key={i} x1={P[l[0]].x} y1={P[l[0]].y} x2={P[l[1]].x} y2={P[l[1]].y} stroke="#b794ff" strokeOpacity=".24" strokeWidth="1.2" />)}
+      {P.map((c, i) => <Circle key={i} cx={c.x} cy={c.y} r={c.r + c.tw * 0.9} fill="#d3c1ff" fillOpacity={0.2 + c.tw * 0.22} />)}
+      {LINKS.map((l, i) => {
+        const ph = ((t * 0.15 + i * 0.37) % 1), a = P[l[0]], b = P[l[1]], o = Math.sin(ph * Math.PI);
+        return <Circle key={'p' + i} cx={a.x + (b.x - a.x) * ph} cy={a.y + (b.y - a.y) * ph} r={2.4} fill="#fff" fillOpacity={0.15 + o * 0.6} />;
+      })}
+    </G>
+  );
+}
 
 export function CardArt({ kind }: { kind: 'med' | 'relax' | 'cycle' | 'intel' }) {
   const w = WASH[kind];
@@ -54,14 +79,29 @@ export function CardArt({ kind }: { kind: 'med' | 'relax' | 'cycle' | 'intel' })
             <Circle cx="170" cy="30" r="2" fill="#fff" fillOpacity=".4" /><Circle cx="316" cy="132" r="2.2" fill="#fff" fillOpacity=".4" /><Circle cx="214" cy="124" r="1.6" fill="#fff" fillOpacity=".35" />
           </G>
         ) : null}
-        {kind === 'intel' ? (
-          <G>
-            {/* a faint network of linked points, spread across the card and kept soft so the text stays easy to read */}
-            {[[40, 120, 96, 92], [96, 92, 150, 118], [150, 118, 214, 84], [214, 84, 262, 112], [262, 112, 300, 62], [214, 84, 250, 34], [250, 34, 300, 62], [96, 92, 120, 40]].map((l, i) => <Line key={i} x1={l[0]} y1={l[1]} x2={l[2]} y2={l[3]} stroke="#b794ff" strokeOpacity=".16" strokeWidth="1.2" />)}
-            {[[40, 120, 3], [96, 92, 4], [150, 118, 3], [214, 84, 5], [262, 112, 4], [300, 62, 5], [250, 34, 3], [120, 40, 3]].map((c, i) => <Circle key={i} cx={c[0]} cy={c[1]} r={c[2]} fill="#d3c1ff" fillOpacity={i === 3 ? 0.3 : 0.2} />)}
-          </G>
-        ) : null}
+        {kind === 'intel' ? <IntelNet /> : null}
       </Svg>
+    </View>
+  );
+}
+
+// The brain icon of My Life Intelligence: it breathes slowly, and soft rings spread out from it.
+export function IntelIcon({ children, size = 48 }: { children: React.ReactNode; size?: number }) {
+  const ring1 = React.useRef(new Animated.Value(0)).current, ring2 = React.useRef(new Animated.Value(0)).current;
+  const breath = React.useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const L = (v: Animated.Value, ms: number, delay = 0) => Animated.loop(Animated.sequence([Animated.delay(delay), Animated.timing(v, { toValue: 1, duration: ms, easing: Easing.out(Easing.quad), useNativeDriver: true }), Animated.timing(v, { toValue: 0, duration: 0, useNativeDriver: true })]));
+    const a = [L(ring1, 3200), L(ring2, 3200, 1600),
+      Animated.loop(Animated.sequence([Animated.timing(breath, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(breath, { toValue: 0, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]))];
+    a.forEach((x) => x.start());
+    return () => a.forEach((x) => x.stop());
+  }, []);
+  const ring = (v: Animated.Value) => ({ position: 'absolute' as const, width: size, height: size, borderRadius: size * 0.34, borderWidth: 1.5, borderColor: '#d3c1ff', opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] }), transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.55] }) }] });
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View pointerEvents="none" style={ring(ring1)} />
+      <Animated.View pointerEvents="none" style={ring(ring2)} />
+      <Animated.View style={{ transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.07] }) }] }}>{children}</Animated.View>
     </View>
   );
 }

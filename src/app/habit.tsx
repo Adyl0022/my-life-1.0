@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, Pressable, Platform, Keyboard, TextInput, Animated, Easing } from 'react-native';
+import { View, ScrollView, Platform, Keyboard, TextInput, Animated, Easing } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,7 +12,8 @@ import { Inp, W } from '../components/Ui';
 import { Face, GlassIcon, HeadIcon } from '../components/HabitIcons';
 import { HeartLog } from '../components/HeartLog';
 import { PatternsTab } from '../components/PatternsTab';
-import { ENERGY, energyEstimate } from '../lib/patterns';
+import { energyEstimate, restSignal } from '../lib/patterns';
+import { EnergyBig, PCT, type EnergyPoint } from '../components/EnergyUi';
 import { SleepSchedule } from '../components/SleepSchedule';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
@@ -22,12 +24,15 @@ import { useCycleSave } from '../lib/cycleHook';
 import { TOP } from '../lib/layout';
 import { WeightGoal, DailyNeeds, HealthSpend } from '../components/BodyCards';
 import { PUASA_EMPTY, PuasaData, ramadanState, qadhaOwed, keyD } from '../lib/fasting';
-import { HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf, medDue, to12 } from '../lib/habit';
+import { weekOffs, HData, HEMPTY, MOODS, WD, MON, GLASS, dateOf, getDay, keyOfDate, goalPctOf, HDay, BLANK as BLANKD, cupsGoal, latestKg, hoursBetween, fmtTime, bestStreakAll, avgOf, medDue, to12 } from '../lib/habit';
 import { withNavBar } from '../lib/permNav';
 import { sensorToday } from '../lib/stepSensor';
 import { stepWhy } from '../../modules/step-counter';
 import { useRegion } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
+import { pn, tryForm } from '../lib/num';
+import { Toggle } from '../components/Toggle';
 const T = '#5ee7df';
 // Slowly fades and slides in when shown, and slowly fades out (then frees its space) when hidden.
 function SoftShow({ show, children }: { show: boolean; children: React.ReactNode }) {
@@ -72,6 +77,15 @@ export default function Habit() {
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'patterns' | 'today' | 'progress' | 'body'>('patterns');
+  const tabOrder = ['patterns', 'today', 'progress', 'body'] as const; const [pw, setPw] = useState(0);
+  const pos = useRef(new Animated.Value(0)).current; const fx = useRef(new Animated.Value(1)).current; const dir = useRef(1);
+  useEffect(() => { Animated.spring(pos, { toValue: tabOrder.indexOf(tab), useNativeDriver: true, friction: 8, tension: 90 }).start(); }, [tab]);
+  const goTab = (k: typeof tabOrder[number]) => {
+    if (k === tab) return; dir.current = tabOrder.indexOf(k) > tabOrder.indexOf(tab) ? 1 : -1;
+    fx.setValue(0); setTab(k); Animated.timing(fx, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  };
+  const tw = pw ? (pw - 6) / 4 : 0;
+  const slide = { opacity: fx, transform: [{ translateX: fx.interpolate({ inputRange: [0, 1], outputRange: [dir.current * 38, 0] }) }] };
   const svRef = useRef<any>(null); const scrollY = useRef(0); const [kb, setKb] = useState(0);
   useEffect(() => {
     const sh = Keyboard.addListener('keyboardDidShow', (e) => {
@@ -88,9 +102,11 @@ export default function Habit() {
   const hRef = useRef(h); hRef.current = h;
   const [autoMsg, setAutoMsg] = useState('');
   const [kgIn, setKgIn] = useState(''); const [cmIn, setCmIn] = useState(''); const [bed, setBed] = useState<string | null>(null); const [wake, setWake] = useState<string | null>(null);
+  const [tErr, setTErr] = useState(''); const [tN, setTN] = useState(0);
   const goal = h.goal || 8000;
   const cg = cupsGoal(h); const kg = latestKg(h);
   const t = getDay(h, 0);
+  const enSeries = (n: number): EnergyPoint[] => { const out: EnergyPoint[] = []; for (let o = -(n - 1); o <= 0; o++) { const d = getDay(h, o); const k = keyOfDate(dateOf(o)); const ow = d.en != null && d.en >= 0; const e = ow ? null : energyEstimate(d, cg, goal, restSignal(h, k)); const lv = ow ? (d.en as number) : e ? e.lvl : -1; out.push({ d: k, own: ow, v: lv >= 0 ? PCT[lv] : null }); } return out; };
   const put = (p: Partial<HDay>) => setH({ ...h, days: { ...h.days, [keyOfDate(dateOf(0))]: { ...t, ...p } } });
   const meds = h.meds || []; const taken = t.med || [];
   const relaxToday = mins(t);
@@ -100,7 +116,7 @@ export default function Habit() {
   const km = (t.steps * 0.00075).toFixed(1);
   const gp = goalPctOf(t, goal, cg);
   const stepPct = Math.min(t.steps / goal, 1);
-  const wk = [-6, -5, -4, -3, -2, -1, 0].map((o) => ({ o, d: getDay(h, o), dt: dateOf(o) }));
+  const wk = weekOffs().map((o) => ({ o, d: getDay(h, o), dt: dateOf(o) }));
   const wl = wk.map((x) => x.o === 0 ? 'Today' : WD[x.dt.getDay()]);
   const saveGoal = () => { const n = parseInt(gv.replace(/[^0-9]/g, ''), 10); if (n >= 500 && n <= 100000) { setH({ ...h, goal: n }); setEdit(false); } };
   // streak: consecutive days reaching 70%
@@ -130,7 +146,7 @@ export default function Habit() {
         const bad = await sensorReady();
         if (!bad) {
           // All day count from the phone's sensor. Manual changes stay on top (adj), like with Health Connect.
-          setAutoMsg('Counting with your phone\'s step sensor, also when My Life is closed. Open My Life to refresh the total.');
+          setAutoMsg('Counting with your phone\'s step sensor, also when My Life 1.0 is closed. Open My Life 1.0 to refresh the total.');
           const sync = async () => { try { const n = await sensorN(); if (alive && n >= 0) saveToday((td) => ({ ...td, hc: n, steps: Math.max(0, n + (td.adj || 0)) })); } catch (e) {} };
           await sync(); timer = setInterval(sync, 30000);
           return;
@@ -196,7 +212,7 @@ export default function Habit() {
   const klist = (h.kg || []).slice().sort((a, b) => (a.d < b.d ? -1 : 1)); const kl = klist.slice(-8);
   const bmi = kg > 0 && h.cm ? kg / Math.pow(h.cm / 100, 2) : 0;
   const bmiTxt = bmi ? (bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy range' : bmi < 30 ? 'Overweight' : 'Obese') : '';
-  const logKg = () => { const v = parseFloat(kgIn.replace(',', '.')); const c = parseInt(cmIn, 10); const nk = (v >= 20 && v <= 300) ? [...klist.filter((x) => x.d !== keyOfDate(dateOf(0))), { d: keyOfDate(dateOf(0)), v: Math.round(v * 10) / 10 }] : h.kg; setH({ ...h, kg: nk, cm: c >= 100 && c <= 250 ? c : h.cm }); setKgIn(''); setCmIn(''); };
+  const logKg = () => { const v = pn(kgIn); const c = parseInt(cmIn, 10); if (!(v >= 20 && v <= 300) && !(c >= 100 && c <= 250)) { tryForm('kg'); return; } const nk = (v >= 20 && v <= 300) ? [...klist.filter((x) => x.d !== keyOfDate(dateOf(0))), { d: keyOfDate(dateOf(0)), v: Math.round(v * 10) / 10 }] : h.kg; setH({ ...h, kg: nk, cm: c >= 100 && c <= 250 ? c : h.cm }); setKgIn(''); setCmIn(''); };
   // water vs mood / sleep
   const wd: { ok: boolean; mood: number; sleep: number }[] = []; for (let o = -60; o <= 0; o++) { const x = getDay(h, o); if (x.cups > 0 && x.mood >= 0) wd.push({ ok: x.cups >= cg, mood: x.mood, sleep: x.sleep }); }
   const hiW = wd.filter((x) => x.ok), loW = wd.filter((x) => !x.ok);
@@ -229,18 +245,18 @@ export default function Habit() {
             <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Small habits, big health</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12, marginTop: 4 }}>Mood, water, sleep and goals</Text></View>
           </Glass>
 
-          <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
+          <View onLayout={(e) => setPw(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
+            {tw ? <Animated.View pointerEvents="none" style={{ position: 'absolute', left: 3, top: 3, bottom: 3, width: tw, transform: [{ translateX: Animated.multiply(pos, tw) }] }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: 999 }} /></Animated.View> : null}
             {([['patterns', 'Patterns'], ['today', 'Today'], ['progress', 'Progress'], ['body', 'Body']] as ['patterns' | 'today' | 'progress' | 'body', string][]).map(([k, n]) => (
-              <Pressable key={k} onPress={() => setTab(k)} style={{ flex: 1 }}>
-                {tab === k ? (
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                ) : (<View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '700' }}>{n}</Text></View>)}
+              <Pressable key={k} onPress={() => goTab(k)} style={{ flex: 1 }}>
+                <View style={{ paddingVertical: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 5 }}><Text style={{ color: tab === k ? '#fff' : 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: tab === k ? '800' : '700' }}>{n}</Text></View>
               </Pressable>
             ))}
           </View>
           {tab === 'patterns' || tab === 'progress' ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>{tab === 'patterns' ? 'What the app notices in your records' : 'How you are doing, week by week'}</Text> : null}
 
-          {tab === 'patterns' && <PatternsTab h={h} setH={setH} onToday={() => setTab('today')} />}
+          <Animated.View style={slide}>
+          {tab === 'patterns' && <PatternsTab h={h} setH={setH} onToday={() => goTab('today')} />}
           {tab === 'today' && (<>
           <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
             <Ttl k="goal" t="Goal Tracker" />
@@ -251,6 +267,10 @@ export default function Habit() {
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, marginTop: 6 }}>Water, sleep and steps combined</Text>
               </View>
             </View>
+          </Glass>
+          <Glass radius={26} style={{ marginTop: 12, padding: 16 }}>
+            <Ttl nm k="energy" t="Energy" />
+            <EnergyBig en={t.en} est={energyEstimate(t, cg, goal, restSignal(h, keyOfDate(dateOf(0))))} week={enSeries(7)} month={enSeries(30)} onPick={(i) => put({ en: i })} />
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl nm k="sleep" t="Sleep Tracker" />
@@ -263,19 +283,24 @@ export default function Habit() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed ?? t.bed ?? ''} onChangeText={(x: string) => setBed(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 08:30" style={{ marginTop: 4 }} /></View>
-              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake ?? t.wake ?? ''} onChangeText={(x: string) => setWake(fmtTime(x))} keyboardType="number-pad" maxLength={5} placeholder="e.g. 15:30" style={{ marginTop: 4 }} /></View>
-              <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
+              <View style={{ flex: 1 }}><Lbl t="Went to bed" /><Inp value={bed ?? t.bed ?? ''} onChangeText={(x: string) => { setBed(fmtTime(x)); setTErr(''); }} keyboardType="number-pad" maxLength={5} placeholder="e.g. 08:30" bad={tErr ? tN : 0} style={{ marginTop: 4 }} /></View>
+              <View style={{ flex: 1 }}><Lbl t="Woke up" /><Inp value={wake ?? t.wake ?? ''} onChangeText={(x: string) => { setWake(fmtTime(x)); setTErr(''); }} keyboardType="number-pad" maxLength={5} placeholder="e.g. 15:30" bad={tErr ? tN : 0} style={{ marginTop: 4 }} /></View>
+              <Pressable onPress={() => { const b = bed ?? t.bed ?? '', w = wake ?? t.wake ?? ''; if (!b && !w) { put({ bed: '', wake: '' }); setBed(null); setWake(null); return; } const hr = hoursBetween(b, w); if (hr > 0 && hr <= 24) { put({ bed: b, wake: w, sleep: hr }); setBed(null); setWake(null); setTErr(''); } else { setTErr('Not a valid time. Use 24-hour time from 00:00 to 23:59, for example 08:30. Sleep cannot be more than 24 hours.'); setTN((n) => n + 1); } }} style={{ marginTop: 18, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#b794ff' }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set</Text></Pressable>
             </View>
+            {tErr ? <Text style={{ color: '#ff8fa3', fontSize: 12, fontWeight: '700', marginTop: 6 }}>{tErr}</Text> : null}
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Night shift? Sleep in the day counts too. Use 24-hour time: type 0830 for 08:30 and the hours fill in for you.</Text>
             <SoftShow show={!!(t.sleep > 0 || t.bed || t.wake)}>
-              <Pressable onPress={() => { put({ sleep: 0, bed: '', wake: '' }); setBed(null); setWake(null); }} accessibilityLabel="Clear last night's sleep" style={{ alignSelf: 'flex-start', marginTop: 10,  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,143,171,.7)', backgroundColor: 'rgba(255,143,171,.14)' }}>
+              <Pressable onPress={() => confirmDelete('last night\'s sleep', () => { put({ sleep: 0, bed: '', wake: '' }); setBed(null); setWake(null); }, { title: 'Clear last night\'s sleep?', yes: 'Clear' })} accessibilityLabel="Clear last night's sleep" style={{ alignSelf: 'flex-start', marginTop: 10,  paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,143,171,.7)', backgroundColor: 'rgba(255,143,171,.14)' }}>
                 <Text style={{ color: '#ffb3c4', fontSize: 12.5, fontWeight: '800' }}>Clear last night's sleep</Text>
               </Pressable>
             </SoftShow>
             <SleepSchedule h={h} />
-            <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={6} />
+            <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={wk.findIndex((x) => x.o === 0)} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
+          </Glass>
+          <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+            <Ttl k="rheart" t="Heart log" /><Lbl t="Your own pulse and blood pressure notes" />
+            <HeartLog h={h} setH={setH} />
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="water" t="Drink Water" /><Text style={{ color: t.cups >= cg ? '#7df0c6' : 'rgba(255,255,255,.7)', fontSize: 13, fontWeight: '800' }}>{t.cups} of {cg} glasses</Text></View>
@@ -296,7 +321,7 @@ export default function Habit() {
                   {[5000, 8000, 10000, 12000].map((n) => <Pressable key={n} onPress={() => { setH({ ...h, goal: n }); setEdit(false); }} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: goal === n ? T : 'rgba(255,255,255,.12)' }}><Text style={{ color: goal === n ? '#0d1030' : W, fontSize: 12, fontWeight: '700' }}>{n.toLocaleString('en-MY')}</Text></Pressable>)}
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                  <Inp value={gv} onChangeText={setGv} keyboardType="number-pad" placeholder="Custom (500 – 100,000)" style={{ flex: 1 }} />
+                  <Inp min={500} max={100000} value={gv} onChangeText={setGv} keyboardType="number-pad" placeholder="Custom (500 – 100,000)" style={{ flex: 1 }} />
                   <Pressable onPress={saveGoal} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
                 </View>
               </View>
@@ -306,20 +331,20 @@ export default function Habit() {
               <View><Text style={{ color: W, fontSize: 30, fontWeight: '800', letterSpacing: -0.5 }}>{km}</Text><Lbl t="km" /></View>
             </View>
             <View style={{ height: 10, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)', marginTop: 10, overflow: 'hidden' }}><LinearGradient colors={['#7c9cff', T]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 10, width: (stepPct * 100 + '%') as any }} /></View>
-            <Bars vals={wk.map((x) => x.d.steps)} labels={wl} max={Math.max(goal, ...wk.map((x) => x.d.steps))} goal={goal} color={T} hi={6} />
+            <Bars vals={wk.map((x) => x.d.steps)} labels={wl} max={Math.max(goal, ...wk.map((x) => x.d.steps))} goal={goal} color={T} hi={wk.findIndex((x) => x.o === 0)} />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <Pressable onPress={() => setSteps(t.steps + 500)} style={{ flex: 1, paddingVertical: 11, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>+500 steps</Text></Pressable>
               <Pressable onPress={() => setSteps(Math.max(0, t.steps - 500))} style={{ paddingVertical: 11, paddingHorizontal: 18, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>−500</Text></Pressable>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-              <Inp value={stepIn} onChangeText={(v: string) => setStepIn(v.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="Type steps" style={{ flex: 1 }} />
+              <Inp max={100000} value={stepIn} onChangeText={(v: string) => setStepIn(v.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="Type steps" style={{ flex: 1 }} />
               <Pressable onPress={() => { const n = parseInt(stepIn, 10); if (n > 0) { setSteps(t.steps + n); setStepIn(''); } }} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '800', fontSize: 13 }}>Add</Text></Pressable>
               <Pressable onPress={() => { const n = parseInt(stepIn, 10); if (n >= 0 && stepIn !== '') { setSteps(Math.min(n, 200000)); setStepIn(''); } }} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Set total</Text></Pressable>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Add puts the number on top of today's steps. Set total replaces today's steps with the number.</Text>
             {Platform.OS !== 'web' && (
               <Pressable onPress={() => setH({ ...h, auto: !h.auto })} style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 46, height: 26, borderRadius: 13, backgroundColor: h.auto ? T : 'rgba(255,255,255,.2)', padding: 3, alignItems: h.auto ? 'flex-end' : 'flex-start' }}><View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: W }} /></View>
+                <Toggle on={!!h.auto} colors={T} w={46} />
                 <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>Count steps automatically</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 4 }}>All-day count from Health Connect or your phone's step sensor.</Text></View>
               </Pressable>
             )}
@@ -334,7 +359,7 @@ export default function Habit() {
                 </View>
               </View>
             )}
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect and your phone\'s step sensor. Open My Life to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, marginTop: 10, lineHeight: 16 }}>{Platform.OS === 'web' ? 'Add steps by hand here. On the phone app you can turn on automatic counting.' : !h.auto ? 'Turn this on to count steps. You can always add or correct steps by hand.' : hcOn ? 'Counting all day through Health Connect and your phone\'s step sensor. Open My Life 1.0 to refresh the total.' : 'You can always add or correct steps by hand.'}</Text>
           </Glass>
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Ttl nm k="mood" t="Mood" /><Text style={{ color: t.mood >= 0 ? MOODS[t.mood][1] : 'rgba(255,255,255,.6)', fontSize: 13, fontWeight: '800' }}>{t.mood >= 0 ? MOODS[t.mood][0] : 'How do you feel?'}</Text></View>
@@ -345,19 +370,6 @@ export default function Habit() {
                   <Text style={{ color: on ? W : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: on ? '800' : '500' }}>{m[0]}</Text>
                 </Pressable>); })}
             </View>
-          </Glass>
-          <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-            {(() => { const est = energyEstimate(t, cg, goal); const own = t.en != null && t.en >= 0; return (<>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><Ttl nm k="energy" t="Energy" /><Text style={{ color: own ? '#7df0c6' : 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>{own ? 'YOUR RATING' : est ? 'ESTIMATED' : ''}</Text></View>
-            <Lbl t={own ? 'How you said you feel today' : est ? est.why : 'Log two things above and an estimate appears'} />
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 10 }}>
-              {ENERGY.map((e, i) => { const on = own && t.en === i; const guess = !own && est && est.lvl === i; return (
-                <Pressable key={e[0]} onPress={() => put({ en: on ? undefined : i })} style={{ flex: 1, paddingVertical: 9, paddingHorizontal: 2, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? e[1] : 'rgba(255,255,255,.1)', borderWidth: guess ? 1.5 : 0, borderColor: e[1] }}>
-                  <Text numberOfLines={2} style={{ color: on ? '#06222a' : W, fontSize: 11.5, fontWeight: '800', textAlign: 'center' }}>{e[0]}</Text>
-                </Pressable>); })}
-            </View>
-            <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8, lineHeight: 15 }}>{own ? 'Tap your choice again to go back to the estimate.' : 'This is a guess from what you logged. Tap how you really feel to replace it.'}</Text>
-            </>); })()}
           </Glass>
           <Pressable onPress={() => router.push('/medicine' as any)} accessibilityLabel="Open Medicine">
             <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
@@ -477,10 +489,6 @@ export default function Habit() {
           </>)}
           {tab === 'body' && (<>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-            <Ttl k="rheart" t="Heart log" /><Lbl t="Your own pulse and blood pressure notes" />
-            <HeartLog h={h} setH={setH} />
-          </Glass>
-          <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl k="weight" t="Weight & BMI" /><Lbl t={kg > 0 ? 'Your water goal follows your weight' : 'Add your weight to personalise your water goal'} />
             {kg > 0 && (
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 18, marginTop: 10 }}>
@@ -491,8 +499,8 @@ export default function Habit() {
             {kg > 0 && <Text style={{ color: T, fontSize: 12, fontWeight: '700', marginTop: 6 }}>Water goal: {(cg * GLASS / 1000).toFixed(1)} L a day ({cg} glasses)</Text>}
             {kl.length >= 2 && <Bars vals={kl.map((x) => x.v - Math.min(...kl.map((y) => y.v)) + 1)} labels={kl.map((x) => parseInt(x.d.slice(8), 10) + '/' + parseInt(x.d.slice(5, 7), 10))} max={Math.max(...kl.map((x) => x.v)) - Math.min(...kl.map((x) => x.v)) + 2} color="#b794ff" hi={kl.length - 1} />}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
-              <Inp value={kgIn} onChangeText={setKgIn} keyboardType="decimal-pad" placeholder="Weight (kg)" style={{ flex: 1 }} />
-              <Inp value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
+              <Inp form="kg" need="your weight in kg" min={20} max={300} value={kgIn} onChangeText={setKgIn} keyboardType="decimal-pad" placeholder="Weight (kg)" style={{ flex: 1 }} />
+              <Inp form="kg" need="your height" min={100} max={250} value={cmIn} onChangeText={setCmIn} keyboardType="number-pad" placeholder={h.cm ? h.cm + ' cm' : 'Height (cm)'} style={{ flex: 1 }} />
               <Pressable onPress={logKg} style={{ paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Log</Text></Pressable>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6 }}>Weigh yourself once a week. Water goal is about 33 ml per kg. BMI is a rough guide only.</Text>
@@ -500,6 +508,7 @@ export default function Habit() {
           <WeightGoal h={h} setH={setH} />
           <DailyNeeds h={h} setH={setH} />
           </>)}
+          </Animated.View>
           <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center', marginTop: 14 }}>Your habits are saved on this phone and backed up to your account.</Text>
         </ScrollView>
       </SafeAreaView>

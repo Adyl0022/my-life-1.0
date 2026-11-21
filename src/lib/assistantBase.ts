@@ -7,13 +7,32 @@ import { think, fix } from './assistantBrain';
 import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
+import { chatReply } from './assistantChat';
+import { mathReply } from './assistantMath';
+import { dataDigest } from './assistantDigest';
+import { balanceOf, totals, isLiab, groupOf, incomeFeed, commitTotal } from './accounts';
+import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
+import { parseTranslate, runTranslate } from './translateCmd';
+import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
+import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
+import { looksLikeSpend, aiSpend } from './aiSpend';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
+// A pasted text or a "summarise / rewrite" job is not a question about the person's own data. It goes straight to the AI,
+// so a word like "maintenance" or "medical" inside the text cannot trigger a written answer or a fixed reply.
+const textTask = (q: string) => q.length > 160 || /\b(summari[sz]e|summary|rewrite|paraphrase|proofread|ringkaskan|ringkasan|rumuskan|tulis semula)\b/i.test(q);
+// Asking for an opinion or for tips is a general question for the AI, even when it mentions a word the app also uses (sleep, work, income...).
+// Questions about the person's own numbers ("my sleep", "this month", "how much") stay with the app.
+const generalQ = (q: string) => /\b(what do you think|your opinion|do you think|your view|apa pendapat|pendapat awak|pendapat kau|awak rasa|kau rasa|tips?|advice|suggestions?|petua|nasihat|cadangan)\b/i.test(q)
+  && !/\b(my|saya punya|hari ini|today|bulan ini|this month|minggu ini|this week|berapa|how much|how many|bajet|budget|spent|belanja)\b/i.test(q);
+const noAnswer = (hm: string, lang: string) => ({ me: false, time: hm, big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '', text: lang === 'ms' ? 'Maaf, saya tak dapat bantu itu sekarang.' : 'Sorry, I could not help with that right now.', fb: 1 });
+
 export class AssistantBase extends React.Component<any, any> {
+  voice = false; // true while the person is talking to the Assistant by voice
   render(): any { return null; }
   constructor(props) {
     super(props);
     this.state = {
-      msgs: [], draft: '', lang: 'en', cat: 0, typing: false, cups: 0,
+      msgs: [], draft: '', lang: 'en', cat: 0, typing: false, live: '', cups: 0,
       steps: 0, sleep: 0, mood: 0, odo: 0, nextSvc: 0, kmMonth: 0, mtcMonth: 0, income: 0, pending: null, pid: 0,
       tasks: []
     };
@@ -126,7 +145,7 @@ export class AssistantBase extends React.Component<any, any> {
       m = this.mk(L('Saved to your Heart log. I only keep the numbers you type and cannot say whether a reading is good or bad. Please ask a doctor or nurse about your readings.', 'Disimpan dalam Heart log. Saya hanya simpan nombor yang awak taip dan tidak boleh kata sama ada bacaan itu baik atau tidak. Sila tanya doktor atau jururawat tentang bacaan awak.'), { label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
     } else if (p.type === 'spend') {
       const tdy = D.spendToday + (p.date === this.todayStr() ? p.amt : 0);
-      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
+      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + (p.accName ? ' from ' + p.accName : '') + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + (p.accName ? ' dari ' + p.accName : '') + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
     } else if (p.type === 'mtc') {
       patch.mtcMonth = s.mtcMonth + p.amt;
       let extra = '';
@@ -231,7 +250,7 @@ export class AssistantBase extends React.Component<any, any> {
       { id: 'advice', k: ['patut', 'should', 'cadang', 'suggest', 'nasihat', 'advice', 'buat sekarang', 'tips', 'do next', 'what next'] },
       { id: 'greet', k: ['hi', 'hello', 'hai', 'salam', 'assalamualaikum', 'hey', 'helo'] },
       { id: 'thanks', k: ['terima kasih', 'thanks', 'thank', 'tq', 'makasih', 'thx'] },
-      { id: 'who', k: ['siapa', 'who are you', 'who', 'kamu', 'nama awak', 'are you ai', 'adakah awak ai', 'chatgpt'] },
+      { id: 'who', k: ['siapa awak', 'siapa kamu', 'awak siapa', 'who are you', 'kamu', 'nama awak', 'are you ai', 'adakah awak ai', 'chatgpt'] },
       { id: 'family', k: ['keluarga', 'family', 'family planner', 'household', 'chores', 'chore', 'rewards', 'wishes', 'wish list', 'ahli keluarga', 'family code', 'kod keluarga', 'pasangan'] },
       { id: 'help', k: ['boleh tanya', 'help', 'bantuan', 'apa boleh', 'what can', 'tolong', 'can i ask', 'commands', 'awak boleh buat', 'boleh buat apa', 'apa awak boleh', 'what do you do', 'what can you do', 'apa fungsi'] },
       { id: 'puasa', k: ['puasa', 'fasting', 'fast', 'ramadan', 'ramadhan', 'qadha', 'qada', 'sunat', 'sunnah', 'berpuasa'] },
@@ -285,6 +304,14 @@ export class AssistantBase extends React.Component<any, any> {
     const dnow = s.tasks.filter(t => t.s === 'done').length;
     const isAfford = /(mampu|afford|boleh ke|boleh saya beli|patut ke|should i buy|can i buy|worth it)/i.test(q);
     const act = isAfford ? null : this.parseAct(q, qf);
+    if (!act && !cmdWater) {
+      const mr = mathReply(q, lang);
+      if (mr) return { m: mk(mr), patch: {}, act: null };
+    }
+    if (!act && !cmdWater) {
+      const ch = chatReply(q, lang);
+      if (ch) return { m: mk(ch), patch: {}, act: null };
+    }
     if (!act && !cmdWater) {
       let th = null;
       try { th = think(this, q, lang); } catch (e) { th = null; }
@@ -490,7 +517,7 @@ export class AssistantBase extends React.Component<any, any> {
           const hb = modOn('habit'), fi = modOn('finance'), pl = modOn('planner'), isl = modOn('islamic');
           const en = [], my = [];
           const hr = new Date().getHours();
-          const gEn = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening'; const gMs = hr < 12 ? 'Selamat pagi' : hr < 18 ? 'Selamat petang' : 'Selamat malam';
+          const gEn = hr >= 5 && hr < 12 ? 'Good morning' : hr >= 12 && hr < 17 ? 'Good afternoon' : hr >= 17 && hr < 20 ? 'Good evening' : 'Good night'; const gMs = hr >= 5 && hr < 12 ? 'Selamat pagi' : hr >= 12 && hr < 17 ? 'Selamat tengah hari' : hr >= 17 && hr < 20 ? 'Selamat petang' : 'Selamat malam';
           if (isl && np) { en.push('Next prayer ' + np.name + ' at ' + np.time); my.push('Solat seterusnya ' + np.name + ' pada ' + np.time); }
           if (pl) { const due = open.filter((t) => { const n = this.daysTo(t.d); return n !== null && n <= 0; }).length; en.push('Open tasks ' + open.length + (due ? ' (' + due + ' due or overdue)' : '')); my.push('Tugasan belum siap ' + open.length + (due ? ' (' + due + ' hampir atau lewat)' : '')); }
           if (hb) { en.push('Steps ' + this.num(D.steps) + ' (' + pc + '%)', 'Water ' + s.cups + '/' + D.cupGoal + ' · Sleep ' + D.sleep + 'h'); my.push('Langkah ' + this.num(D.steps) + ' (' + pc + '%)', 'Air ' + s.cups + '/' + D.cupGoal + ' · Tidur ' + D.sleep + 'j'); }
@@ -529,7 +556,7 @@ export class AssistantBase extends React.Component<any, any> {
           m = mk(L('You are welcome. I am here whenever you need me.', 'Sama-sama. Saya ada bila-bila masa awak perlukan.'));
           break;
         case 'who':
-          m = mk(L('I am the My Life assistant. I am not a chatbot on the internet. I read your own data on this device and put the answer together using rules written for this app.', 'Saya pembantu My Life. Saya bukan chatbot di internet. Saya baca data awak sendiri dalam peranti ini dan susun jawapan menggunakan peraturan yang ditulis untuk app ini.'));
+          m = mk(L('I am the My Life assistant. I am not a chatbot on the internet. I read your own data on this device and put the answer together using rules written for this app. For general questions I can use a small AI that runs on your phone, if you choose to download it.', 'Saya pembantu My Life. Saya bukan chatbot di internet. Saya baca data awak sendiri dalam peranti ini dan susun jawapan menggunakan peraturan yang ditulis untuk app ini. Untuk soalan umum, saya boleh guna AI kecil yang berjalan dalam telefon awak, kalau awak pilih untuk memuat turunnya.'));
           break;
         case 'privacy':
           m = mk(L('Your data is encrypted on this phone and backed up to your own account when you are signed in. I work offline, and nothing is sent to an AI service. You can also lock the app with a PIN or fingerprint in Settings, Security.', 'Data awak disulitkan dalam telefon ini dan disimpan ke akaun awak sendiri bila awak log masuk. Saya berfungsi tanpa internet, dan tiada apa dihantar ke perkhidmatan AI. Awak juga boleh kunci app dengan PIN atau cap jari di Settings, Security.'), { label: L('Open Security', 'Buka Security'), href: 'Settings.dc.html' });
@@ -540,7 +567,7 @@ export class AssistantBase extends React.Component<any, any> {
         case 'help': {
           const hb = modOn('habit'), isl = modOn('islamic'), fi = modOn('finance'), rc = modOn('record'), pl = modOn('planner');
           const hE = ['You can ask me about:'], hM = ['Awak boleh tanya saya tentang:'];
-          if (hb) { hE.push('• Health: steps, distance, sleep, water, mood', '• Medicine: what is left today, missed doses, how to edit one', '• Relax minutes, energy and Cycle & Wellbeing'); hM.push('• Kesihatan: langkah, jarak, tidur, air, mood', '• Ubat: apa yang belum diambil hari ini, dos terlepas, cara ubah ubat', '• Minit relax, tenaga dan Cycle & Wellbeing'); }
+          if (hb) { hE.push('• Health: steps, distance, sleep, water, mood', '• Sleep timer: tap Going to sleep on the Dashboard Quick log, then I\'m awake when you wake up', '• Medicine: what is left today, missed doses, how to edit one', '• Relax minutes, energy and Cycle & Wellbeing'); hM.push('• Kesihatan: langkah, jarak, tidur, air, mood', '• Sleep timer: tekan Going to sleep pada Quick log Dashboard, kemudian I\'m awake bila bangun', '• Ubat: apa yang belum diambil hari ini, dos terlepas, cara ubah ubat', '• Minit relax, tenaga dan Cycle & Wellbeing'); }
           if (isl) { hE.push('• Faith: next prayer, prayer times, Quran, zikir, fasting', '• Quran Audio: how to listen, download and continue'); hM.push('• Ibadah: solat seterusnya, waktu solat, Quran, zikir, puasa dan qadha', '• Quran Audio: cara dengar, muat turun dan sambung'); }
           if (fi) { hE.push('• Money: spending, income, money left, category limits, budget alerts, commitments and debts', '• Savings goals: how much saved, progress, what is left to reach a goal', '• How much you can spend today'); hM.push('• Wang: belanja, pendapatan, baki, had kategori, amaran bajet, komitmen dan hutang', '• Tabung: berapa simpanan, kemajuan, baki untuk capai sasaran', '• Berapa boleh dibelanjakan hari ini'); }
           if (rc) { hE.push('• Motorcycle: mileage, service, odometer'); hM.push('• Motosikal: jarak, servis, odometer'); }
@@ -556,30 +583,215 @@ export class AssistantBase extends React.Component<any, any> {
           break;
         }
         default:
-          m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford ' + cu() + '300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli ' + cu() + '300?"'));
+          m = mk(L('I did not quite get that. I answer from your own data, so you can say it in your own words, for example:\n• "How much did I spend last week?"\n• "Why is my spending high?"\n• "Add task send report on Friday"\n• "Can I afford ' + cu() + '300?"', 'Saya kurang faham ayat itu. Saya jawab berdasarkan data awak sendiri, jadi awak boleh cakap dengan cara awak, contohnya:\n• "Berapa saya belanja minggu lepas?"\n• "Kenapa belanja saya tinggi?"\n• "Tambah tugasan hantar laporan Jumaat"\n• "Boleh ke saya beli ' + cu() + '300?"'), { fb: 1 });
       }
     }
     if (!patch.ctx) { const mkm = { steps: 'steps', dist: 'steps', sleep: 'sleep', water: 'water', mood: 'mood' }; const idd = this.pick(this.norm(fix(q))); patch.ctx = mkm[idd] ? { intent: 'metric', mkey: mkm[idd] } : (idd === 'spend' || idd === 'spendM') ? { intent: 'spend' } : {}; }
     return { m: m, patch: patch, act: doAct };
   }
+  // Smooth writing: the AI's words are shown a few characters at a time, so the answer flows instead of jumping in chunks.
+  liveTarget = ''; liveShown = 0; liveTimer: any = 0; liveConst = 0; liveScrolled = 0;
+  setLive(t: string) {
+    this.liveTarget = t;
+    if (this.liveTimer) return;
+    this.liveTimer = setInterval(() => {
+      const n = this.liveTarget.length;
+      if (this.liveShown > n) this.liveShown = n;
+      if (this.liveShown >= n) return;
+      const gap = n - this.liveShown;
+      this.liveShown += this.liveConst ? this.liveConst : Math.min(10, Math.max(1, Math.ceil(gap / 10)));
+      this.setState({ live: this.liveTarget.slice(0, this.liveShown) });
+      const now = Date.now();
+      if (now - this.liveScrolled > 600) { this.liveScrolled = now; this.scroll(); }
+    }, 40);
+  }
+  // Waits until what is on the screen has caught up with the answer (at most a few seconds), then resets.
+  async finishLive() {
+    const end = Date.now() + 3500;
+    while (this.liveShown < this.liveTarget.length && Date.now() < end) await new Promise((r) => setTimeout(r, 40));
+    if (this.liveTimer) { clearInterval(this.liveTimer); this.liveTimer = 0; }
+    this.liveTarget = ''; this.liveShown = 0; this.liveConst = 0;
+  }
+  // An answer that arrives all at once (Online AI) is written out smoothly too.
+  async typeOut(text: string) {
+    this.liveShown = 0; this.liveTarget = '';
+    this.liveConst = Math.max(2, Math.ceil(text.length / 70));
+    this.setLive(text);
+    await this.finishLive();
+  }
   scroll() { setTimeout(() => { try { this.props.onScroll && this.props.onScroll(); } catch (e) { } }, 80); }
   ask(q) {
-    q = (q || '').trim();
+    // The box can have several lines (Enter makes a new line). The Assistant reads it as one line, but the bubble keeps the lines.
+    const shown = (q || '').trim();
+    q = shown.replace(/\s*\n+\s*/g, ' ');
     if (!q || this.state.typing) return;
+    // A language chosen in Settings (not English or Bahasa Malaysia): translate on the phone, answer in English, translate back.
+    const tl = this.props.tlang;
+    if (tl) { this.askX(q, tl); return; }
+    // Typed in a script the built-in Assistant does not know, and no language is set up yet: offer to set it up, instead of a confusing "I did not understand".
+    const sg = xlOk && !this.state.xlNo ? scriptLang(q) : '';
+    if (sg) { this.offerX(q, sg); return; }
     const lang = this.detect(q) || this.state.lang;
-    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
+    const trc = xlOk ? parseTranslate(q) : null;
+    if (trc) { this.translateCmd(q, trc, lang); return; }
+    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: shown, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
-    setTimeout(() => {
+    setTimeout(async () => {
       let r;
       try { r = this.reply(q, lang); } catch (e) {
         r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
+      const tt = textTask(q);
+      if (tt || generalQ(q)) r = { m: noAnswer(this.hm(), lang), patch: {} };
+      if (!r.act && !tt) { const ar = await this.accountReply(q, lang); if (ar) r = ar; }
+      r = await this.tagAccount(r, q, lang);
+      if (r.m && r.m.fb && !r.act && !tt) r = (await this.aiSpendReply(q, lang)) || r;
+      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r, tt);
       // Anything saved from here can be undone with one tap (or by typing "undo").
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
-      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false }, r.patch));
+      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false, live: '' }, r.patch));
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
     }, 700);
+  }
+  // A spending the written rules understood, with an account named in the sentence ("... guna Maybank"): link it to that account.
+  async tagAccount(r, q, lang) {
+    try {
+      const p = r && r.patch && r.patch.pending; if (!p || p.type !== 'spend' || p.acc) return r;
+      const d: any = await getItem('ml_accounts', { accs: [] }); const ql = ' ' + q.toLowerCase() + ' ';
+      const hit = ((d && d.accs) || []).filter((a) => a.name && ql.indexOf(String(a.name).toLowerCase()) >= 0).sort((a, b) => String(b.name).length - String(a.name).length)[0];
+      if (!hit) return r;
+      r.patch = Object.assign({}, r.patch, { pending: Object.assign({}, p, { acc: hit.id, accName: hit.name }) });
+      r.m = Object.assign({}, r.m, { text: r.m.text.replace(/\n• (Date|Tarikh):/, (_x, w) => '\n• ' + (lang === 'ms' ? 'Dibayar dari: ' : 'Paid from: ') + hit.name + '\n• ' + w + ':') });
+    } catch (e) { /* keep it as it was */ }
+    return r;
+  }
+  // A sentence the written rules did not understand but that looks like money spent ("makan tengah hari 12 guna Maybank"):
+  // the AI on the phone reads it, and the person still has to confirm before anything is saved.
+  async aiSpendReply(q, lang) {
+    try {
+      if (!(smartOk || gemmaOk) || !smartReady() || !modOn('finance') || !looksLikeSpend(q)) return null;
+      const a = await aiSpend(q); if (!a) return null;
+      const L = (en, ms) => (lang === 'ms' ? ms : en);
+      const id = this.state.pid + 1; const d = new Date(); if (a.ydy) d.setDate(d.getDate() - 1);
+      const act = { type: 'spend', amt: a.amt, cat: a.cat, name: a.name, date: this.todayStr(d), ydy: a.ydy, acc: a.acc, accName: a.accName };
+      const m = this.mk(L('Got it. Save this spending?\n• ' + a.name + '\n• Category: ' + a.cat + (a.accName ? '\n• Paid from: ' + a.accName : '') + '\n• Date: ' + (a.ydy ? 'yesterday' : 'today') + '\n(Read by the AI on your phone. Please check it.)', 'Faham. Simpan perbelanjaan ini?\n• ' + a.name + '\n• Kategori: ' + a.cat + (a.accName ? '\n• Dibayar dari: ' + a.accName : '') + '\n• Tarikh: ' + (a.ydy ? 'semalam' : 'hari ini') + '\n(Dibaca oleh AI dalam telefon awak. Sila semak.)'), { pid: id, big: cs() + this.rm(a.amt), bigLbl: a.cat, color: '#ffc46b' });
+      return { m, patch: { pending: Object.assign({ id }, act), pid: id }, act: null };
+    } catch (e) { return null; }
+  }
+  // Questions with no written answer: a careful fixed reply for religion, health, law and money, then the small AI on the phone if it is downloaded,
+  // otherwise an offer to get it.
+  // "How much is in my account?" and "add my mileage": answered from the saved accounts and odometer.
+  async accountReply(q, lang) {
+    try {
+      const ms = lang === 'ms'; const L = (e, b) => (ms ? b : e);
+      const ql = ' ' + q.toLowerCase().replace(/[?!.,]+/g, ' ').replace(/\s+/g, ' ') + ' ';
+      if (/\b(tambah|add|update|kemas\s?kini|rekod|record|set|masuk|masukkan|isi)\b/.test(ql) && /\b(mileage|milage|odometer|odo|meter|batu|jarak|km)\b/.test(ql) && !/\d{4,}/.test(ql.replace(/,/g, ''))) {
+        const s = this.state; const o = s.odo || 0;
+        const text = L('What is the reading on your odometer now?' + (o ? ' The last one I have is ' + this.num(o) + ' km.' : '') + ' Say it like this: "odometer 45200".', 'Berapa bacaan odometer awak sekarang?' + (o ? ' Yang terakhir saya ada ialah ' + this.num(o) + ' km.' : '') + ' Sebut macam ni: "odometer 45200".');
+        return { m: this.mk(text), patch: {}, act: null };
+      }
+      if (!modOn('finance')) return null;
+      const askBal = /\b(baki|balance|berapa|how much|total|jumlah|ada|tinggal|left)\b/.test(ql) && /\b(akaun|account|accounts|bank|e-?wallet|tunai|cash|simpanan|savings|kad kredit|credit card|net worth)\b/.test(ql) && !/\b(how|macam mana|cara|where|mana nak|add|tambah akaun|set up|buat akaun)\b/.test(ql) && !/\d/.test(ql);
+      if (!askBal) return null;
+      const d = await getItem('ml_accounts', { accs: [], moves: [], nextId: 1 }); const fin = (await getItem('ml_finance', {})) || {}; const dbt = (await getItem('ml_debts', { debts: [] })) || { debts: [] };
+      const accs = (d && d.accs) || [];
+      if (!accs.length) return { m: this.mk(L('You have no accounts yet. Open My Finance, tap the My Accounts card, then Add account.', 'Awak belum ada akaun. Buka My Finance, tekan kad My Accounts, kemudian Add account.')), patch: {}, act: null };
+      const feeds = { debts: dbt.debts || [], incomes: incomeFeed(fin.inc || {}, fin.incAcc) }; const sp = fin.spends || [];
+      const named = accs.filter((a) => a.name && ql.indexOf(String(a.name).toLowerCase()) >= 0).sort((a, b) => String(b.name).length - String(a.name).length)[0];
+      const fm = (n) => cs() + this.rm(Math.abs(n)) + (n < 0 ? ' (minus)' : '');
+      if (named) { const b = balanceOf(named, d, sp, feeds); const lb = isLiab(named); return { m: this.mk(L(named.name + (lb ? ': you owe ' : ' has ') + fm(b) + '.', named.name + (lb ? ': awak berhutang ' : ' ada ') + fm(b) + '.'), { big: fm(b), bigLbl: named.name }), patch: {}, act: null }; }
+      const lines = accs.map((a) => '• ' + a.name + ' (' + groupOf(a.g).t + '): ' + fm(balanceOf(a, d, sp, feeds)) + (isLiab(a) ? L(' owed', ' hutang') : ''));
+      const t = totals(d, sp, 0, feeds);
+      return { m: this.mk(lines.join('\n') + '\n\n' + L('Money you have: ', 'Wang yang awak ada: ') + fm(t.assets) + (t.liab > 0 ? '\n' + L('Cards and loans owed: ', 'Kad dan pinjaman yang terhutang: ') + fm(t.liab) : '') + '\n' + L('Net: ', 'Bersih: ') + fm(t.total)), patch: {}, act: null };
+    } catch (e) { return null; }
+  }
+  async fallbackAI(q, lang, r, tt = false) {
+    try {
+      const hv = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Online AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
+      const devOk = (smartOk || gemmaOk) && smartReady(); const vc = !!this.voice;
+      const sv = tt ? '' : sensitiveReply(q, lang);
+      if (sv) { r.m = Object.assign({}, r.m, { text: sv, fb: 0 }); return r; }
+      let note = '';
+      // Talking by voice: the AI on the phone goes first when it is ready (no daily limit, nothing leaves the phone), otherwise Online AI.
+      if (onlineOn() && !(vc && devOk)) {
+        const o: any = await onlineAsk(q, lang, hv, vc);
+        if (o.text) { await this.typeOut(o.text); r.m = Object.assign({}, r.m, { text: o.text, fb: 0, src: 'online' }); return r; }
+        note = onlineNote(o.why, lang);
+        if (!note) note = lang === 'ms' ? 'AI dalam talian tak dapat dihubungi sekarang. Cuba lagi sebentar.' : 'Online AI could not be reached right now. Try again in a moment.';
+      }
+      const cr = tt ? '' : currentReply(q, lang);
+      if (cr) { r.m = Object.assign({}, r.m, { text: cr + (note ? '\n\n' + note : ''), fb: 0 }); return r; }
+      if ((smartOk || gemmaOk) && smartReady()) {
+        const hist = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
+        this.liveShown = 0; this.liveTarget = '';
+        const a = await smartAsk(q, lang, vc ? hv : hist, (t: string) => this.setLive(t), vc, /\b(saya|aku|awak|kita|my|mine|me|belanja|spend|spent|gaji|salary|income|hutang|debt|tugas|task|tugasan|tidur|sleep|langkah|steps|bajet|budget|akaun|account|simpanan|savings|habit|motor|motosikal|kenderaan|vehicle|odometer|acara|event|baki|balance|berapa banyak|how much)\b/i.test(q) ? dataDigest(this.R(), vc ? 1200 : (smartModelName().indexOf('Gemma') >= 0 || smartModelName().indexOf('3.5') >= 0) ? 2600 : 900) : '');
+        await this.finishLive();
+        if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0, src: 'device', mdl: smartModelName() }); return r; }
+      } else if (vc && !onlineOn()) {
+        r.m = Object.assign({}, r.m, { text: lang === 'ms' ? 'Untuk bersembang tentang apa-apa, hidupkan AI dahulu: tekan Language atau AI di skrin chat Assistant.' : 'To chat about anything, turn on AI first: tap Language or AI on the Assistant chat screen.' });
+      } else if (!this.state.smNo && !onlineOn()) {
+        const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI: AI kecil dalam telefon awak (muat turun sekali, lebih kurang 550 MB), atau AI dalam talian (soalan dihantar ke internet, awak pilih sendiri).' : '\n\nI can also answer general questions with AI: a small AI on your phone (one-time download of about 550 MB), or Online AI (your question is sent over the internet, and you choose whether to use it).';
+        r.m = Object.assign({}, r.m, { text: r.m.text + more, sm: 1 });
+      } else if (note) { r.m = Object.assign({}, r.m, { text: r.m.text + '\n\n' + note }); }
+    } catch (e) { /* keep the normal reply */ }
+    return r;
+  }
+  // "Translate to Chinese: ..." Done on the phone with ML Kit. Works from Bahasa Malaysia or English into the language asked for.
+  translateCmd(q, tc, lang) {
+    const ms = lang === 'ms';
+    const base = { me: false, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' };
+    const user = { me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' };
+    this.setState({ msgs: this.state.msgs.concat([user]), draft: '', typing: true, lang: lang });
+    this.scroll();
+    (async () => {
+      let text = '';
+      if (tc.to === '?india') text = ms ? 'Bahasa India yang mana? Hindi atau Tamil? Tulis semula, contohnya "terjemah ke Tamil: ..."' : 'Which Indian language? Hindi or Tamil? Write it again, for example "translate to Tamil: ..."';
+      else {
+        const dl = this.detect(tc.text);
+        let from = dl === 'ms' || dl === 'en' ? dl : (lang === 'ms' ? 'ms' : 'en');
+        if (from === tc.to) from = tc.to === 'ms' ? 'en' : 'ms'; // for example a single English word asked in Malay: "tukar cousin kepada melayu"
+        const lg = tc.to === 'en' ? { name: 'English', native: 'English' } : tc.to === 'ms' ? { name: 'Bahasa Malaysia', native: 'Bahasa Malaysia' } : xlLang(tc.to);
+        if (!lg) text = ms ? 'Maaf, saya belum boleh terjemah ke bahasa itu.' : 'Sorry, I cannot translate into that language yet.';
+        else {
+          const r = await runTranslate(tc.text, from, tc.to);
+          if (r.ok) text = lg.name + (lg.native !== lg.name ? ' (' + lg.native + ')' : '') + ':\n' + r.text + (ms ? '\n\n(Terjemahan dibuat dalam telefon awak. Ia boleh kurang tepat untuk ayat penting.)' : '\n\n(Translated on your phone. It can be less accurate for important sentences.)');
+          else if (r.why === 'download') text = ms ? 'Pek bahasa perlu dimuat turun sekali (sekitar 30 MB setiap satu). Muat turun tak berjaya. Semak internet dan storan, kemudian cuba lagi.' : 'The language pack must be downloaded once (about 30 MB each). The download did not finish. Check your internet and storage, then try again.';
+          else text = ms ? 'Maaf, saya tak dapat terjemah itu sekarang. Cuba lagi.' : 'Sorry, I could not translate that right now. Try again.';
+        }
+      }
+      this.setState({ msgs: this.state.msgs.concat([Object.assign({}, base, { text })]), typing: false });
+      this.scroll();
+    })();
+  }
+  offerX(q, code) {
+    const lg = xlLang(code); const nm = lg ? lg.native : code;
+    const base = { me: false, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' };
+    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }, Object.assign({}, base, { text: 'Want to chat in ' + nm + '? I can understand and answer in your language. It is translated on your phone, with a one-time download of about 30 MB.', xl: code, xlName: nm })]), draft: '', typing: false });
+    this.scroll();
+  }
+  // Same as ask(), for a language that is translated on the phone. The person sees their own words and the answer in their language.
+  askX(q, tl) {
+    this.setState({ msgs: this.state.msgs.concat([{ me: true, text: q, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: 'en' });
+    this.scroll();
+    (async () => {
+      let qe = q;
+      try { qe = await xlText(q, tl, 'en'); } catch (e) { qe = q; }
+      let r;
+      try { r = this.reply(qe, 'en'); } catch (e) {
+        r = { m: { me: false, text: 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
+      }
+      const tt = textTask(qe);
+      if (tt || generalQ(qe)) r = { m: noAnswer(this.hm(), 'en'), patch: {} };
+      r = await this.tagAccount(r, qe, 'en');
+      if (r.m && r.m.fb && !r.act && !tt) r = (await this.aiSpendReply(qe, 'en')) || r;
+      if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(qe, 'en', r, tt);
+      try { r.m = await xlMsg(r.m, tl); } catch (e) { /* keep the English answer */ }
+      if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
+      this.setState(Object.assign({ msgs: this.state.msgs.concat([r.m]), typing: false, live: '' }, r.patch));
+      if (r.act && this.props.persist) this.props.persist(r.act);
+      this.scroll();
+    })();
   }
   renderVals() {
     const s = this.state; const ms = s.lang === 'ms';
@@ -602,7 +814,7 @@ export class AssistantBase extends React.Component<any, any> {
       if (modOn('habit')) {
         const meds0 = (hd0.meds || []).filter((m) => !m.days || m.days.length === 0 || m.days.length >= 7 || m.days.indexOf(now0.getDay()) >= 0); const took0 = ((hd0.days || {})[tk0] || {}).med || [];
         if (meds0.length && meds0.some((m) => took0.indexOf(m.id) < 0)) dyn.push(['Have I taken my medicine today?', 'Dah makan ubat ke belum hari ini?']);
-        if ((hd0.exps || []).length) dyn.push(['How is my experiment going?', 'Macam mana eksperimen saya?']);
+        if ((hd0.exps || []).some((x: any) => !x.ok)) dyn.push(['How is my experiment going?', 'Macam mana eksperimen saya?']);
         if ((hd0.heart || []).length) dyn.push(['My pulse this week', 'Nadi saya minggu ini']);
         if (now0.getHours() >= 15 && (s.cups || 0) < (R0.cupGoal || 8)) dyn.push(['Add a glass of water', 'Tambah segelas air']);
       }
@@ -638,13 +850,14 @@ export class AssistantBase extends React.Component<any, any> {
         rad: me ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
         bigD: m.big ? 'block' : 'none', barD: m.pct >= 0 ? 'block' : 'none',
         big: m.big, bigLbl: m.bigLbl, pct: m.pct < 0 ? 0 : m.pct, color: m.color || '#8fe9e2',
-        text: m.text, time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
+        text: m.text, srcD: m.src ? 'flex' : 'none', srcOn: m.src === 'online', srcT: m.src === 'online' ? L('Online AI', 'AI dalam talian') : (m.mdl ? L('On this phone · ', 'Dalam telefon · ') + m.mdl : L('On this phone', 'Dalam telefon')), time: m.time, linkD: m.href ? 'block' : 'none', href: m.href || '#', label: m.label,
         undoD: m.uid && s.lastUndo && s.lastUndo.id === m.uid ? 'flex' : 'none', undo: () => this.undoLast(), undoL: L('Undo', 'Buat asal'),
+        xlD: (m.xl || m.sm) ? 'flex' : 'none', xlYes: () => { if (m.sm) { if (this.props.onSmart) this.props.onSmart(); } else if (this.props.onXl) this.props.onXl(m.xl); }, xlNo: () => { if (m.sm) { this.setState({ smNo: true }); setItem('ml_sm_no', true); } else { this.setState({ xlNo: true }); setItem('ml_xl_nosug', true); } }, xlL: m.sm ? 'Set up AI chat' : 'Set up ' + (m.xlName || ''),
         btnD: m.pid && s.pending && s.pending.id === m.pid ? 'flex' : 'none', yes: () => this.confirm(true), no: () => this.confirm(false), yesL: L('Save', 'Simpan'), noL: L('Cancel', 'Batal')
       };
     });
     return {
-      sub: L('Private · offline', 'Peribadi · luar talian'),
+      sub: (() => { const la = [...(s.msgs || [])].reverse().find((x: any) => !x.me); return la && la.src === 'online' ? L('Online AI · question sent over the internet', 'AI dalam talian · soalan dihantar ke internet') : L('Private · offline', 'Peribadi · luar talian'); })(),
       l1: ms ? '' : 'on', l2: ms ? 'on' : '',
       goEn: () => this.setState({ lang: 'en' }), goMs: () => this.setState({ lang: 'ms' }),
       clear: () => this.setState({ msgs: [], typing: false }),
@@ -653,10 +866,11 @@ export class AssistantBase extends React.Component<any, any> {
       starters: S.map((x, n) => [x, n]).filter((xn) => (!catMod[xn[0][0]] || modOn(catMod[xn[0][0]])) && qOk(Q[xn[0][0]][xn[0][1]][0])).map(xn => { const x = xn[0]; const q = Q[x[0]][x[1]][ix]; return { id: xn[1], label: q, d: x[2], bg: x[3], go: () => this.ask(q) }; }),
       msgs: msgs,
       typD: s.typing ? 'flex' : 'none',
+      live: s.live || '',
       cats: order.map((i) => ({ name: catNames[i][ix], cls: i === cat ? 'cat on' : 'cat', go: () => this.setState({ cat: i }) })),
       chips: Q[cat].filter((x) => qOk(x[0])).map(x => ({ label: x[ix], go: () => this.ask(x[ix]) })),
       draft: s.draft,
-      ph: L('Ask or say "spent ' + cu() + '10 on lunch"...', 'Tanya atau cakap "belanja ' + cu() + '10 makan"...'),
+      ph: L('Ask or say "spent ' + cu() + '10 on lunch"...', 'Tanya / cakap "belanja ' + cu() + '10 makan"...'),
       onDraft: (e) => this.setState({ draft: e.target.value }),
       onKey: (e) => { if (e && e.key === 'Enter') this.ask(e.target.value); },
       send: () => this.ask(this.state.draft)

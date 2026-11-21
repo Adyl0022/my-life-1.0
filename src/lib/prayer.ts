@@ -87,8 +87,9 @@ async function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
   try { await AsyncStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
   return v;
 }
-async function whereAmI(fresh = false): Promise<{ lat: number; lon: number }> {
-  const perm = await withNavBar(() => Location.requestForegroundPermissionsAsync());
+// ask = false (the Dashboard card and the assistant): never opens the permission popup, only uses a location you already allowed.
+async function whereAmI(fresh = false, ask = true): Promise<{ lat: number; lon: number }> {
+  const perm = ask ? await withNavBar(() => Location.requestForegroundPermissionsAsync()) : await Location.getForegroundPermissionsAsync();
   if (perm.status !== 'granted') throw new Error('denied');
   const last = fresh ? null : await Location.getLastKnownPositionAsync({ maxAge: 10 * 60 * 1000 }).catch(() => null);
   const pos = last || (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
@@ -141,7 +142,7 @@ export function usePrayer(passive = false) {
         if (mode.auto) {
           let c: { lat: number; lon: number };
           const fr = freshRef.current; freshRef.current = false;
-          try { c = await whereAmI(fr); } catch (e: any) {
+          try { c = await whereAmI(fr, !passive); } catch (e: any) {
             if (lastPlace) c = { lat: lastPlace.lat, lon: lastPlace.lon };
             else { if (alive) setStatus(e && e.message === 'denied' ? 'denied' : 'error'); return; }
           }

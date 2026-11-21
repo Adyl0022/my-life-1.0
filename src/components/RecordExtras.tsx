@@ -1,6 +1,7 @@
 import { fileStamp } from '../lib/exporter';
 import React, { useState } from 'react';
-import { View, Pressable, Image, Modal, Platform } from 'react-native';
+import { View, Image, Modal, Platform } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Glass } from './Glass';
@@ -9,11 +10,14 @@ import { useName } from '../lib/store';
 import { Inp, DateField, todayStr, W } from './Ui';
 import { cs, cu } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
+import { pn, pi, tryForm } from '../lib/num';
 export type Fu = { id: number; date: string; liters: number; amt: number; odo: number };
 export type Pt = { id: number; name: string; date: string; odo: number; life: number };
 export type Dc = { id: number; title: string; date: string; uri: string };
 export type Ren = { roadtax?: string; insurance?: string; licence?: string };
-export type Ext = { profile?: { model: string; plate: string }; renew?: Ren; fuel?: Fu[]; parts?: Pt[]; docs?: Dc[] };
+export type Tk = { id: number; name: string; kind?: 'check' | 'part'; days?: number; km?: number; last: string; odo?: number; hist?: string[] };
+export type Ext = { profile?: { model: string; plate: string }; renew?: Ren; fuel?: Fu[]; parts?: Pt[]; docs?: Dc[]; tasks?: Tk[]; trem?: boolean; oreadings?: { id: number; date: string; odo: number }[] };
 type P<T> = { d: T; upd: (fn: (x: any) => any) => void };
 
 const PG = ['#ff8fab', '#b794ff'] as [string, string];
@@ -22,10 +26,10 @@ const num = (n: number) => n.toLocaleString('en-MY', { maximumFractionDigits: 0 
 const dec = (n: number, k = 2) => n.toLocaleString('en-MY', { minimumFractionDigits: k, maximumFractionDigits: k });
 const fd = (s: string) => { const p = (s || '').split('-'); return p.length === 3 ? parseInt(p[2], 10) + ' ' + MO[parseInt(p[1], 10) - 1] + ' ' + p[0] : s; };
 const dim = 'rgba(255,255,255,.65)';
-const f = (s: string) => parseFloat((s || '').replace(',', '.'));
+const f = (s: string) => pn(s || '');
 const daysTo = (s: string) => { const a = new Date(s + 'T00:00:00').getTime(); const n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((a - n.getTime()) / 86400000); };
 
-const Card = ({ title, sub, children, right }: { title: string; sub?: string; children: React.ReactNode; right?: React.ReactNode }) => (
+export const Card = ({ title, sub, children, right }: { title: string; sub?: string; children: React.ReactNode; right?: React.ReactNode }) => (
   <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{title}</Text>{sub ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 1 }}>{sub}</Text> : null}</View>
@@ -34,11 +38,11 @@ const Card = ({ title, sub, children, right }: { title: string; sub?: string; ch
     {children}
   </Glass>
 );
-const Btn = ({ t, onPress, h = 42, w = 16 }: { t: string; onPress: () => void; h?: number; w?: number }) => <Pressable onPress={onPress}><LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: h, paddingHorizontal: w, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{t}</Text></LinearGradient></Pressable>;
-const Sq = ({ t, onPress, c = W, label }: { t: string; onPress: () => void; c?: string; label: string }) => <Pressable accessibilityLabel={label} onPress={onPress} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: c, fontSize: 14 }}>{t}</Text></Pressable>;
+export const Btn = ({ t, onPress, h = 42, w = 16 }: { t: string; onPress: () => void; h?: number; w?: number }) => <Pressable buzz onPress={onPress}><LinearGradient colors={PG} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: h, paddingHorizontal: w, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{t}</Text></LinearGradient></Pressable>;
+export const Sq = ({ t, onPress, c = W, label }: { t: string; onPress: () => void; c?: string; label: string }) => <Pressable accessibilityLabel={label} onPress={onPress} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: c, fontSize: 14 }}>{t}</Text></Pressable>;
 const Stat = ({ l, v }: { l: string; v: string }) => <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 2 }} numberOfLines={1}>{v}</Text></View>;
 const Row = ({ children, last }: { children: React.ReactNode; last?: boolean }) => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: last ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>{children}</View>;
-const Chip = ({ t, on, onPress }: { t: string; on?: boolean; onPress: () => void }) => <Pressable onPress={onPress} style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: on ? 'transparent' : 'rgba(255,255,255,.2)', backgroundColor: on ? '#b06ad8' : 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{t}</Text></Pressable>;
+export const Chip = ({ t, on, onPress }: { t: string; on?: boolean; onPress: () => void }) => <Pressable onPress={onPress} style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: on ? 'transparent' : 'rgba(255,255,255,.2)', backgroundColor: on ? '#b06ad8' : 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '700' }}>{t}</Text></Pressable>;
 
 // 7. Vehicle profile ---------------------------------------------------------
 export function ProfileCard({ d, upd, name }: P<Ext> & { name: string }) {
@@ -77,11 +81,11 @@ export const renewStatus = (s?: string) => {
   if (n <= 60) return { txt: n + ' days left', col: '#ffe9b0', bg: 'rgba(255,196,107,.14)', n };
   return { txt: n + ' days left', col: '#7df0c6', bg: 'rgba(94,231,181,.18)', n };
 };
-export function RenewCard({ d, upd }: P<Ext>) {
+export function RenewRows({ d, upd }: P<Ext>) {
   const [ek, setEk] = useState<keyof Ren | ''>(''); const [ev, setEv] = useState(todayStr());
   const r = d.renew || {};
   return (
-    <Card title="Road Tax, Insurance and Licence" sub="Enter the expiry date and see how many days are left">
+    <View>
       <View style={{ marginTop: 6 }}>
         {RK.map(([k, label], i) => {
           const s = renewStatus(r[k]);
@@ -100,9 +104,10 @@ export function RenewCard({ d, upd }: P<Ext>) {
           );
         })}
       </View>
-    </Card>
+    </View>
   );
 }
+export const RenewCard = (p: P<Ext>) => <Card title="Road Tax, Insurance and Licence" sub="Enter the expiry date and see how many days are left"><RenewRows {...p} /></Card>;
 
 // 3. Fuel log ----------------------------------------------------------------
 export function FuelCard({ d, upd }: P<Ext>) {
@@ -117,7 +122,7 @@ export function FuelCard({ d, upd }: P<Ext>) {
   const nw = new Date(); const key = (x: Date) => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0');
   const cur = key(nw), prev = key(new Date(nw.getFullYear(), nw.getMonth() - 1, 1));
   const sp = (k: string) => list.filter((x) => x.date.slice(0, 7) === k).reduce((s, x) => s + x.amt, 0);
-  const add = () => { const l = f(li), a = f(rm), o = parseInt(od, 10); if (!(l > 0) || !(a > 0)) return; upd((x) => ({ ...x, fuel: [...(x.fuel || []), { id: Date.now(), date: dt || todayStr(), liters: l, amt: a, odo: o >= 0 ? o : 0 }] })); setLi(''); setRm(''); setOd(''); };
+  const add = () => { const l = f(li), a = f(rm), o = pi(od, { max: 2000000 }); if (!(l > 0) || !(a > 0)) { tryForm('fuel'); return; } upd((x) => ({ ...x, fuel: [...(x.fuel || []), { id: Date.now(), date: dt || todayStr(), liters: l, amt: a, odo: o >= 0 ? o : 0 }] })); setLi(''); setRm(''); setOd(''); };
   return (
     <Card title="Fuel Log" sub="Fuel economy and cost per km" right={<Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{dec(list.reduce((s, x) => s + x.amt, 0))}</Text>}>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
@@ -128,8 +133,8 @@ export function FuelCard({ d, upd }: P<Ext>) {
       <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 6 }}>{eff.length ? 'Based on ' + eff.length + ' fill-up' + (eff.length > 1 ? 's' : '') + '. This month ' + cs() + num(sp(cur)) + ', last month ' + cs() + num(sp(prev)) + '.' : 'Add at least two fill-ups with odometer readings to see km per litre. Fill the tank each time for the best result.'}</Text>
       <DateField value={dt} onChange={setDt} style={{ marginTop: 12 }} />
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-        <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={li} onChangeText={setLi} placeholder="Litres" />
-        <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={rm} onChangeText={setRm} placeholder={cu()} />
+        <Inp form="fuel" need="the litres" style={{ flex: 1 }} keyboardType="decimal-pad" value={li} onChangeText={setLi} placeholder="Litres" />
+        <Inp form="fuel" need="the amount" style={{ flex: 1 }} keyboardType="decimal-pad" value={rm} onChangeText={setRm} placeholder={cu()} />
         <Inp style={{ flex: 1.2 }} keyboardType="number-pad" value={od} onChangeText={setOd} placeholder="Odometer" />
       </View>
       <View style={{ marginTop: 8, alignItems: 'flex-end' }}><Btn t="+ Add fill-up" onPress={add} /></View>
@@ -140,7 +145,7 @@ export function FuelCard({ d, upd }: P<Ext>) {
             <Row key={x.id} last={i === a.length - 1}>
               <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14 }}>{fd(x.date)}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 1 }}>{dec(x.liters, 1)} L{x.odo > 0 ? ' · ' + num(x.odo) + ' km' : ''}{e ? ' · ' + dec(e.kml, 1) + ' km/L' : ''}</Text></View>
               <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs()}{dec(x.amt)}</Text>
-              <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => upd((y) => ({ ...y, fuel: (y.fuel || []).filter((z: Fu) => z.id !== x.id) }))} />
+              <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => confirmDelete('this fuel entry', () => upd((y) => ({ ...y, fuel: (y.fuel || []).filter((z: Fu) => z.id !== x.id) })))} />
             </Row>
           );
         })}
@@ -155,10 +160,10 @@ const Lbl = ({ t, s }: { t: string; s?: string }) => <View style={{ marginBottom
 export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number; addNow: (odo: number) => void }) {
   const [open, setOpen] = useState(false); const [nm, setNm] = useState(''); const [dt, setDt] = useState(todayStr()); const [od, setOd] = useState(''); const [life, setLife] = useState(''); const [cur, setCur] = useState('');
   const list = d.parts || [];
-  const odN = parseInt(od, 10); const tooHigh = latest > 0 && odN > latest;
+  const odN = pi(od, { max: 2000000 }); const tooHigh = latest > 0 && odN > latest;
   const pick = (n: string, l: number) => { setNm(n); setLife(String(l)); if (!od && latest > 0) setOd(String(latest)); };
-  const save = () => { const o = parseInt(od, 10), l = parseInt(life, 10); if (!nm.trim() || !(o >= 0) || !(l > 0)) return; upd((x) => ({ ...x, parts: [...(x.parts || []), { id: Date.now(), name: nm.trim(), date: dt, odo: o, life: l }] })); setOpen(false); setNm(''); setOd(''); setLife(''); };
-  const ok = !!nm.trim() && odN >= 0 && parseInt(life, 10) > 0;
+  const save = () => { const o = pi(od, { max: 2000000 }), l = pi(life, { max: 2000000 }); if (!nm.trim() || !(o >= 0) || !(l > 0)) return; upd((x) => ({ ...x, parts: [...(x.parts || []), { id: Date.now(), name: nm.trim(), date: dt, odo: o, life: l }] })); setOpen(false); setNm(''); setOd(''); setLife(''); };
+  const ok = !!nm.trim() && odN >= 0 && pi(life, { max: 2000000 }) > 0;
   return (
     <Card title="Parts Schedule" sub="Tyres, battery, brakes and chain" right={!open ? <Btn t="+ Add part" h={34} w={12} onPress={() => { setOpen(true); setDt(todayStr()); setNm(''); setLife(''); setOd(latest > 0 ? String(latest) : ''); }} /> : undefined}>
       {latest <= 0 && list.length > 0 ? (
@@ -190,7 +195,7 @@ export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number;
             <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === list.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{p.name}</Text><Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>Changed {fd(p.date)} at {num(p.odo)} km · lasts about {num(p.life)} km</Text></View>
-                <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => upd((x) => ({ ...x, parts: (x.parts || []).filter((y: Pt) => y.id !== p.id) }))} />
+                <Sq t="✕" label="Delete" c="#ff9aa9" onPress={() => confirmDelete(p.name, () => upd((x) => ({ ...x, parts: (x.parts || []).filter((y: Pt) => y.id !== p.id) })))} />
               </View>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 7, overflow: 'hidden' }}><View style={{ width: pct + '%', height: '100%', backgroundColor: st.b }} /></View>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, gap: 8 }}>
@@ -207,6 +212,7 @@ export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number;
 
 // 5. Documents and receipts ----------------------------------------------------
 async function pickImage(): Promise<string | null> {
+  if (Platform.OS === 'android') { const { docFromGallery } = await import('../lib/photo'); return docFromGallery(); }
   const IP = await import('expo-image-picker');
   const r = await IP.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.4, base64: Platform.OS === 'web' });
   if (r.canceled || !r.assets || !r.assets[0]) return null;
@@ -225,21 +231,22 @@ async function pickImage(): Promise<string | null> {
 export function DocsCard({ d, upd }: P<Ext>) {
   const [title, setTitle] = useState(''); const [view, setView] = useState<Dc | null>(null); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('');
   const list = d.docs || [];
-  const add = async () => {
+  const add = async (camera = false) => {
     setBusy(true); setMsg('');
-    try { const uri = await pickImage(); if (uri) { upd((x) => ({ ...x, docs: [{ id: Date.now(), title: title.trim() || 'Receipt', date: todayStr(), uri }, ...(x.docs || [])] })); setTitle(''); } }
-    catch (e) { setMsg('Could not open your photos. Please allow photo access and try again.'); }
+    try { const uri = camera ? await (await import('../lib/photo')).scanDocument() : await pickImage(); if (uri) { upd((x) => ({ ...x, docs: [{ id: Date.now(), title: title.trim() || 'Receipt', date: todayStr(), uri }, ...(x.docs || [])] })); setTitle(''); } }
+    catch (e: any) { setMsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings, or choose a photo from your gallery.' : 'Could not open your photos. Please allow photo access and try again.'); }
     setBusy(false);
   };
   return (
     <Card title="Documents and Receipts" sub="Service receipts, grant and insurance photos">
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
         <Inp style={{ flex: 1 }} value={title} onChangeText={setTitle} placeholder="Title, e.g. Oil change receipt" />
-        <Btn t={busy ? 'Opening…' : '+ Photo'} onPress={add} />
+        <Btn t={busy ? 'Opening…' : 'Scan'} onPress={() => add(true)} />
+        <Btn t={busy ? '…' : 'Gallery'} onPress={() => add(false)} />
       </View>
       {msg ? <Text style={{ color: '#ffb3c6', fontSize: 12, marginTop: 6 }}>{msg}</Text> : null}
-      <Text style={{ marginTop: 10, color: dim, fontSize: 11.5, lineHeight: 16 }}>Photos stay on this phone and are not synced to a server. To keep them, save a backup in Settings (Backup JSON file). The backup carries up to 25 photos.</Text>
-      {list.length === 0 ? <Text style={{ marginTop: 10, color: dim, fontSize: 12 }}>No documents yet. Type a title, tap + Photo and pick a picture from your gallery.</Text> : null}
+      <Text style={{ marginTop: 10, color: dim, fontSize: 11.5, lineHeight: 16 }}>Photos stay on this phone and are not synced to a server. To keep them, save a backup in Settings (Backup JSON file). The backup carries up to 40 photos.</Text>
+      {list.length === 0 ? <Text style={{ marginTop: 10, color: dim, fontSize: 12 }}>No documents yet. Type a title, tap Scan to scan the paper with the camera, or Gallery to pick a photo and clean it up with the scanner.</Text> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
         {list.map((x) => (
           <Pressable key={x.id} onPress={() => setView(x)} style={{ width: '47%', flexGrow: 1 }}>
@@ -256,7 +263,7 @@ export function DocsCard({ d, upd }: P<Ext>) {
             <Text style={{ color: W, fontSize: 15, fontWeight: '800', textAlign: 'center', marginTop: 10 }}>{view.title}</Text>
             <Text style={{ color: dim, fontSize: 12, textAlign: 'center' }}>{fd(view.date)}</Text>
             <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', marginTop: 14 }}>
-              <Pressable onPress={() => { upd((x) => ({ ...x, docs: (x.docs || []).filter((y: Dc) => y.id !== view.id) })); setView(null); }} style={{ height: 42, paddingHorizontal: 20, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.28)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 13, fontWeight: '700' }}>Delete</Text></Pressable>
+              <Pressable onPress={() => confirmDelete('this document', () => { upd((x) => ({ ...x, docs: (x.docs || []).filter((y: Dc) => y.id !== view.id) })); setView(null); })} style={{ height: 42, paddingHorizontal: 20, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.28)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 13, fontWeight: '700' }}>Delete</Text></Pressable>
               <Btn t="Close" onPress={() => setView(null)} />
             </View>
           </View>
@@ -276,7 +283,7 @@ export function ExportCard({ name, d, latest }: { name: string; d: any; latest: 
     try {
       const html = buildHtml(name, d, latest, owner); const Print = await import('expo-print');
       if (Platform.OS === 'web') await Print.printAsync({ html });
-      else { const r = await Print.printToFileAsync({ html }); const Sh = await import('expo-sharing'); let uri = r.uri; const fn = 'my-life-record-' + (name || 'vehicle').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + fileStamp() + '.pdf'; try { const FS = await import('expo-file-system/legacy'); const to = (FS.cacheDirectory || '') + fn; await FS.deleteAsync(to, { idempotent: true }); await FS.copyAsync({ from: r.uri, to }); uri = to; } catch (e) { /* keep name */ } if (await Sh.isAvailableAsync()) await Sh.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: fn }); else setMsg('PDF saved.'); }
+      else { const r = await Print.printToFileAsync({ html }); const Sh = await import('expo-sharing'); let uri = r.uri; const fn = 'Vehicle-my-life-export-' + (name || 'vehicle').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + fileStamp() + '.pdf'; try { const FS = await import('expo-file-system/legacy'); const to = (FS.cacheDirectory || '') + fn; await FS.deleteAsync(to, { idempotent: true }); await FS.copyAsync({ from: r.uri, to }); uri = to; } catch (e) { /* keep name */ } if (await Sh.isAvailableAsync()) await Sh.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: fn }); else setMsg('PDF saved.'); }
     } catch (e) { setMsg('Could not create the PDF. Please try again.'); }
     setBusy(false);
   };

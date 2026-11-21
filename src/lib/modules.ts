@@ -12,7 +12,7 @@ export const modOf = (path: string): string => {
   if (path.startsWith('/planner') || path.startsWith('/notes') || path.startsWith('/family')) return 'planner';
   if (['/islamic', '/prayer', '/mathurat', '/tasbih', '/puasa', '/tahlil', '/surah'].some((p) => path.startsWith(p))) return 'islamic';
   if (path.startsWith('/finance')) return 'finance';
-  if (path.startsWith('/record')) return 'record';
+  if (['/record', '/vehicle', '/documents', '/collection'].some((p) => path.startsWith(p))) return 'record';
   if (path.startsWith('/habit')) return 'habit';
   return '';
 };

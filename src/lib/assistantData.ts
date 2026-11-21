@@ -1,4 +1,5 @@
 import { mergeVeh, VEH_KEY, VMode } from './vehicleSpend';
+import { partsOf } from './partsOf';
 import { goalSaved } from './savings';
 import { useEffect } from 'react';
 import { useStored, getItem, getItemStrict, setItem } from './store';
@@ -8,9 +9,13 @@ import { commitFor, calcLeft } from './moneyLeft';
 import { PUASA_EMPTY, PuasaData } from './fasting';
 import { Fin, Pl, scoreParts, lifeScore, incomeOf, Core } from './insights';
 import { TG_DEFAULT, Toggles } from './adhan';
+import { SUB_EMPTY, dueOf as subDue, monthlyTotal as subMonthly, type SubStore } from './subs';
+import { DocStore, EMPTY_DOCS, typeOf, daysLeft, validDate } from './documents';
+import { ColStore, EMPTY_COL } from './collection';
 import { LockCfg, LOCK_OFF, useLock, loadLock } from './lock';
 
 // Everything the Assistant knows comes from here: the same saved data the rest of the app uses.
+const ymdS = () => { const x = new Date(); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
 export type Real = {
   ready: boolean;
   hd: HData; goal: number; cupGoal: number; steps: number; cups: number; sleep: number; mood: number; // mood 1 to 5, 0 = not logged
@@ -25,6 +30,7 @@ export type Real = {
   noteList: { t: string; s: string; rm?: number; rd?: boolean }[];
   plTasks: { id: number; name: string; due: string; prio: string; status: string }[]; plEvents: { id: number; name: string; date: string; done: boolean }[];
   parts: { k: string; label: string; pct: number; detail: string }[]; allow: number;
+  subs: { name: string; price: number; cycle: string; next: string; n: number; trial: boolean }[]; subsMonth: number; docs: { title: string; type: string; expiry: string; n: number | null }[]; loans: { dir: string; what: string; who: string; title: string; amount: number; due: string; done: boolean }[]; itemsN: number; lessons: { tag: string; title: string; text: string; id: number; date: string }[];
   incomeLast: number; commit: number; limits: Record<string, number>; goals: { id: number; name: string; target: number; place: string; due: string; saved: number }[];
 };
 
@@ -57,6 +63,9 @@ export function useReal(P: [string, number, number][]): Real {
   const [sav, , o9] = useStored<any>('ml_savings', { goals: [], nextId: 1 });
   const [puasa, , o7] = useStored<PuasaData>('ml_puasa', PUASA_EMPTY);
   const [tgRaw, , o8] = useStored<Partial<Toggles>>('ml_toggles', {});
+  const [dcs] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
+  const [col] = useStored<ColStore>('ml_collection', EMPTY_COL);
+  const [sbs] = useStored<SubStore>('ml_subs', SUB_EMPTY);
   const { cfg: lockRaw } = useLock();
   useEffect(() => { loadLock(); }, []);
   const ready = o1 && o2 && o3 && o4 && o5 && o6 && o7 && o8 && o9;
@@ -77,7 +86,7 @@ export function useReal(P: [string, number, number][]): Real {
   const odo = sorted.length ? sorted[sorted.length - 1].odo : 0;
   const mtcMonth = (v.exps || []).filter((x) => (x.date || '').slice(0, 7) === ym).reduce((a, x) => a + num(x.amt), 0);
   let nextSvc: number | null = null, nextSvcName = '';
-  (v.parts || []).forEach((p) => { const due = num(p.odo) + num(p.life); if (p.life > 0 && (nextSvc == null || due < nextSvc)) { nextSvc = due; nextSvcName = p.name; } });
+  partsOf(v).forEach((p) => { const due = num(p.odo) + num(p.life); if (p.life > 0 && (nextSvc == null || due < nextSvc)) { nextSvc = due; nextSvcName = p.name; } });
 
   return {
     ready, hd, goal: hd.goal || 8000, cupGoal: cg, steps: t.steps, cups: t.cups, sleep: t.sleep, mood: t.mood >= 0 ? t.mood + 1 : 0,
@@ -92,6 +101,11 @@ export function useReal(P: [string, number, number][]): Real {
     noteList: ((nts && nts.notes) || []).map((n: any) => ({ t: n.t || '', s: n.s || '', rm: n.rm, rd: n.rd })),
     plEvents: ((pl && pl.events) || []).map((e: any) => ({ id: e.id, name: e.name, date: e.date, done: !!e.done })),
     parts: scoreParts(core, false).map((x) => ({ k: x.k, label: x.label, pct: x.pct, detail: x.detail })), allow: (() => { try { const inc = incomeOf(core); return inc > 0 ? calcLeft({ ym, income: inc, commit: commitFor(debts, ym), spends: spends as any }).allowance : 0; } catch (e) { return 0; } })(),
+    docs: ((dcs && dcs.docs) || []).map((d) => ({ title: d.title || '', type: typeOf(d.type).label, expiry: d.expiry || '', n: d.expiry && validDate(d.expiry) ? daysLeft(d.expiry) : null })),
+    loans: ((col && col.loans) || []).map((l) => ({ dir: l.dir, what: l.what, who: l.who || '', title: l.title || '', amount: parseFloat(String(l.amount || '0').replace(',', '.')) || 0, due: l.due || '', done: !!l.done })),
+    itemsN: ((col && col.items) || []).length,
+    subs: ((sbs && sbs.subs) || []).filter((s) => !s.status || s.status === 'active').map((s) => { const d = subDue(s, ymdS()); return { name: s.name, price: parseFloat(s.price) || 0, cycle: s.cycle, next: d.date, n: d.days, trial: !!s.trial }; }), subsMonth: subMonthly((sbs && sbs.subs) || []),
+    lessons: ((col && col.lessons) || []) as any,
     incomeLast: incomeLastMonth(fin), commit: commitFor(debts, ym), limits: ((fin as any).limits || {}) as Record<string, number>,
   };
 }
@@ -102,7 +116,7 @@ export async function persist(a: any): Promise<void> {
   if (a.type === 'spend') {
     const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const nid = f.nextId || 1;
-    await setItem('ml_finance', { ...f, spends: [{ id: nid, name: a.name, cat: a.cat, amt: a.amt, date: a.date || today }, ...(f.spends || [])], nextId: nid + 1 });
+    await setItem('ml_finance', { ...f, spends: [{ id: nid, name: a.name, cat: a.cat, amt: a.amt, date: a.date || today, ...(a.acc ? { acc: a.acc } : {}) }, ...(f.spends || [])], nextId: nid + 1 });
   } else if (a.type === 'inc') {
     const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const ym = ymOf(new Date()); const inc = { ...(f.inc || {}) }; const row = { ...(inc[ym] || {}) };

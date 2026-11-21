@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../components/Txt';
@@ -7,13 +8,10 @@ import { Glass } from '../components/Glass';
 import { IslamicBg, Header } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { useStored } from '../lib/store';
+import { Toggle } from '../components/Toggle';
 
 const DIM = 'rgba(255,255,255,.7)';
-const Sw = ({ on }: { on: boolean }) => (
-  <LinearGradient colors={on ? ['#34d399', '#5ee7df'] : ['rgba(255,255,255,.22)', 'rgba(255,255,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 26, borderRadius: 13, padding: 3 }}>
-    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', marginLeft: on ? 18 : 0 }} />
-  </LinearGradient>
-);
+const Sw = ({ on }: { on: boolean }) => <Toggle on={on} colors={['#34d399', '#5ee7df']} />;
 
 // Islamic alerts live here (not in the general Settings) so people who do not use the Hub never see them.
 export default function IslamicSettings() {
@@ -44,7 +42,7 @@ export default function IslamicSettings() {
             </View>
             {lead ? <Text style={{ color: DIM, fontSize: 12, marginTop: 8 }}>{'Rings ' + lead + ' minutes before each prayer'}</Text> : null}
           </Glass>
-          <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, paddingHorizontal: 4 }}>Alerts only ring when notifications are allowed for My Life. You can send a test notification from Settings.</Text>
+          <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, paddingHorizontal: 4 }}>Alerts only ring when notifications are allowed for My Life 1.0. You can send a test notification from Settings.</Text>
         </ScrollView>
       </SafeAreaView>
     </View>

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Platform } from 'react-native';
+import { View, ScrollView, Platform, Animated } from 'react-native';
+import { Pressable } from '../components/Press';
 import * as Notifications from 'expo-notifications';
 import { Text } from '../components/Txt';
+import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
@@ -15,8 +17,10 @@ import { PageArt } from '../components/PageArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
 import { missedDoses } from '../lib/medMissed';
-import { HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
+import { weekOffs, HData, HEMPTY, Med, dateOf, keyOfDate, getDay, fmtTime, medDue, medRepeat, to12 } from '../lib/habit';
 
+import { confirmDelete } from '../lib/dialog';
+import { Toggle } from '../components/Toggle';
 const T = '#5ee7df';
 const DN = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const ICS: [string, string][] = [['medicine', 'Capsule'], ['tablet', 'Tablet'], ['syrup', 'Syrup'], ['needle', 'Injection'], ['drops', 'Drops'], ['inhaler', 'Inhaler'], ['cream', 'Cream'], ['vitamin', 'Vitamin']];
@@ -27,6 +31,7 @@ export default function Medicine() {
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'today' | 'week' | 'all'>('today');
+  const slide = useTabSlide(['today', 'week', 'all'].indexOf(tab));
   // Without "exact timing" Android may hold a reminder back by many minutes, even an hour. Tell the person and let them turn it on.
   const [exact, setExact] = useState<boolean | null>(null);
   React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
@@ -36,7 +41,7 @@ export default function Medicine() {
   const [editId, setEditId] = useState('');
   const [name, setName] = useState(''); const [dose, setDose] = useState(''); const [time, setTime] = useState('');
   const [rep, setRep] = useState<'every' | 'weekdays' | 'pick'>('every'); const [pick, setPick] = useState<number[]>([]);
-  const [ic, setIc] = useState('medicine'); const [err, setErr] = useState('');
+  const [ic, setIc] = useState('medicine'); const [err, setErr] = useState(''); const [eN, setEN] = useState(0);
   const meds = h.meds || [];
   const [clock, setClock] = useState(Date.now());
   React.useEffect(() => { const t = setInterval(() => setClock(Date.now()), 60000); return () => clearInterval(t); }, []);
@@ -61,7 +66,7 @@ export default function Medicine() {
   const save = () => {
     const nm = name.trim(); const tm = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(time);
     if (!nm) { setErr('Type the name of the medicine.'); return; }
-    if (!tm) { setErr('Type the time as 24-hour, for example 20:30.'); return; }
+    if (!tm) { setErr('Type the time as 24-hour, for example 20:30.'); setEN((n) => n + 1); return; }
     if (rep === 'pick' && pick.length === 0) { setErr('Pick at least one day.'); return; }
     if (!editId && meds.length >= 10) { setErr('You can keep up to 10 medicines.'); return; }
     const days = rep === 'every' ? undefined : rep === 'weekdays' ? [1, 2, 3, 4, 5] : [...pick].sort();
@@ -99,11 +104,11 @@ export default function Medicine() {
       ) : (
         <View style={{ alignItems: 'flex-end', gap: 10 }}>
           <Pressable onPress={() => startEdit(m)} hitSlop={8} accessibilityLabel={'Edit ' + m.name}><Text style={{ color: T, fontSize: 12.5, fontWeight: '800' }}>Edit</Text></Pressable>
-          <Pressable onPress={() => drop(m.id)} hitSlop={8}><Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable>
+          <Pressable onPress={() => confirmDelete('this medicine', () => drop(m.id), { title: 'Remove this medicine?', yes: 'Remove' })} hitSlop={8}><Text style={{ color: '#ff8fab', fontSize: 12.5, fontWeight: '800' }}>Remove</Text></Pressable>
         </View>
       )}
     </View>); };
-  const week = Array.from({ length: 7 }, (_, i) => { const off = i - 6; const d = dateOf(off); const x = getDay(h, off); const dm = meds.filter((m) => medDue(m, d)); return { d, n: dm.length, k: dm.filter((m) => (x.med || []).includes(m.id)).length, off }; });
+  const week = weekOffs().map((off) => { const d = dateOf(off); const x = getDay(h, off); const dm = meds.filter((m) => medDue(m, d)); return { d, n: off > 0 ? 0 : dm.length, k: dm.filter((m) => (x.med || []).includes(m.id)).length, off }; });
   const R = 36; const C = 2 * Math.PI * R;
   return (
     <View style={{ flex: 1, backgroundColor: '#0d1030' }}>
@@ -127,7 +132,7 @@ export default function Medicine() {
                 <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 14 }}>DOSE (FROM YOUR LABEL OR DOCTOR)</Text>
                 <Inp value={dose} onChangeText={setDose} placeholder="e.g. 500 mg, 1 tablet" style={{ marginTop: 6 }} />
                 <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 14 }}>REMINDER TIME (24-HOUR)</Text>
-                <Inp value={time} onChangeText={(v: string) => setTime(fmtTime(v))} placeholder="e.g. 20:30" keyboardType="number-pad" maxLength={5} style={{ marginTop: 6 }} />
+                <Inp value={time} onChangeText={(v: string) => { setTime(fmtTime(v)); setErr(''); }} placeholder="e.g. 20:30" keyboardType="number-pad" maxLength={5} bad={err.indexOf('time') >= 0 ? eN : 0} style={{ marginTop: 6 }} />
                 <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 14 }}>REPEAT</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                   <Chip on={rep === 'every'} t="Every day" onPress={() => setRep('every')} /><Chip on={rep === 'weekdays'} t="Weekdays" onPress={() => setRep('weekdays')} /><Chip on={rep === 'pick'} t="Pick days" onPress={() => setRep('pick')} />
@@ -143,7 +148,7 @@ export default function Medicine() {
                 </View>
                 {err ? <Text style={{ color: '#ffb3bf', fontSize: 12, marginTop: 12 }}>{err}</Text> : null}
               </Glass>
-              <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>My Life does not give dose advice. Type what is on the label or in your doctor's note. You get a reminder at the time you set, and again an hour later if it is not ticked.</Text>
+              <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>My Life 1.0 does not give dose advice. Type what is on the label or in your doctor's note. You get a reminder at the time you set, and again an hour later if it is not ticked.</Text>
               <Pressable onPress={save} style={{ marginTop: 14, alignSelf: 'flex-start' }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 26, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{editId ? 'Save changes' : 'Save medicine'}</Text></LinearGradient></Pressable>
             </>
           ) : (
@@ -171,9 +176,7 @@ export default function Medicine() {
                       <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>Never late</Text>
                       <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, lineHeight: 17, marginTop: 3 }}>{ring !== false ? 'Medicine reminders use an alarm-style timer so your phone cannot hold them back. A small alarm icon may show in the status bar.' : 'Off. Your phone may delay a reminder to save battery.'}</Text>
                     </View>
-                    <Pressable onPress={() => setRing(ring === false)} accessibilityLabel="Never late reminders" style={{ width: 52, height: 30, borderRadius: 15, backgroundColor: ring !== false ? '#ffc46b' : 'rgba(255,255,255,.18)', justifyContent: 'center', paddingHorizontal: 3 }}>
-                      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: ring !== false ? '#1b1038' : '#fff', alignSelf: ring !== false ? 'flex-end' : 'flex-start' }} />
-                    </Pressable>
+                    <Toggle on={ring !== false} onPress={() => setRing(ring === false)} label="Never late reminders" colors="#ffc46b" thumbOn="#1b1038" w={52} h={30} />
                   </View>
                 </Glass>
               ) : null}
@@ -187,6 +190,7 @@ export default function Medicine() {
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 14 }}>
                 <Chip on={tab === 'today'} t="Today" onPress={() => setTab('today')} /><Chip on={tab === 'week'} t="Week" onPress={() => setTab('week')} /><Chip on={tab === 'all'} t="All medicines" onPress={() => setTab('all')} />
               </View>
+              <Animated.View style={slide}>
               {tab === 'today' ? (
                 !due.length ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 13, marginTop: 18 }}>{meds.length ? 'No medicine is due today.' : 'Tap + to add your first medicine.'}</Text>
                 : ORDER.filter((p) => due.some((m) => part(m.time) === p)).map((p) => (
@@ -197,7 +201,7 @@ export default function Medicine() {
               ) : null}
               {tab === 'week' ? (
                 <Glass radius={24} style={{ marginTop: 14, padding: 14 }}>
-                  <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Last 7 days</Text>
+                  <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>This week</Text>
                   {week.map((x) => { const full = x.n > 0 && x.k === x.n; return (
                     <View key={x.off} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }}>
                       <Text style={{ color: 'rgba(255,255,255,.8)', width: 78, fontSize: 12.5, fontWeight: x.off === 0 ? '800' : '600' }}>{x.off === 0 ? 'Today' : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][x.d.getDay()] + ' ' + x.d.getDate()}</Text>
@@ -218,6 +222,7 @@ export default function Medicine() {
                   {meds.length ? meds.map((m) => <Row key={m.id} m={m} />) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 13 }}>No medicines yet. Tap + to add one.</Text>}
                 </View>
               ) : null}
+              </Animated.View>
             </>
           )}
         </ScrollView>

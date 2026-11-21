@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Animated, Easing } from 'react-native';
+import { View, ScrollView, Animated, Easing } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,7 +9,7 @@ import { Glass } from '../components/Glass';
 import { IslamicBg, Header } from '../components/IslamicUi';
 import { W } from '../components/Ui';
 import { useStored } from '../lib/store';
-import { useLang, dayKey } from '../lib/islamic';
+import { useLang, dayKey, QURAN_FONT } from '../lib/islamic';
 
 const PRE = [
   ['Subhanallah', 'سُبْحَانَ ٱللَّهِ', 'Maha Suci Allah', 'Glory be to Allah'],
@@ -50,7 +51,7 @@ export default function Tasbih() {
             {PRE.map((x, i) => chip(p === i, x[0], () => { setP(i); setCount(0); setDone(false); }))}
           </ScrollView>
           <Glass radius={28} style={{ marginTop: 14, padding: 18, alignItems: 'center' }}>
-            <Text style={{ color: W, fontSize: 34, lineHeight: 60, textAlign: 'center' }}>{cur[1]}</Text>
+            <Text style={{ color: W, fontFamily: QURAN_FONT, fontSize: 34, lineHeight: 70, alignSelf: 'stretch', textAlign: 'center' }}>{cur[1]}</Text>
             <Text style={{ color: '#8fe9e2', fontSize: 13, fontWeight: '700' }}>{cur[0]}</Text>
             <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, marginTop: 2 }}>{lang === 'en' ? cur[3] : cur[2]}</Text>
             <Pressable accessibilityLabel="Tap to count" onPress={tap} style={({ pressed }) => ({ marginTop: 14, width: 220, height: 220, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.95 : 1 }] })}>

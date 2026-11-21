@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { ZikirScreen } from '../components/ZikirScreen';
 import { MATHURAT, dayKey } from '../lib/islamic';
@@ -13,5 +14,5 @@ export default function Mathurat() {
     </View>
   );
   return <ZikirScreen title="Al-Ma'thurat Sughra" sub="31 parts · Malaysian edition" parts={MATHURAT} storeKey={'mathurat_' + dayKey() + '_' + pe} bmKey="mathurat" start={0} evening={pe === 1} headExtra={head}
-    footNote="Morning (Asbahna) and evening (Amsaina) differ only in a few doa wordings. Quran parts come from the full Quran text. Dhikr, selawat and doa texts have been checked by an ustaz." />;
+    footNote="Morning (Asbahna) and evening (Amsaina) differ only in a few doa wordings. Quran parts come from the full Quran text." />;
 }

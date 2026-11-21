@@ -9,13 +9,24 @@ const LEGACY: Record<number, [string, string, string, string]> = { 1: ['fatihah'
 export type SurahInfo = { title: string; ar: string; sub: string; verses: Verse[]; bismillah: boolean; num: number };
 export const SURAH: Record<string, SurahInfo> = {};
 export const SURAH_LIST: { key: string; num: number; title: string; ar: string; sub: string; place: string }[] = [];
+// The Quran font (KFGQPC Hafs) has no open-tanwin marks and draws two characters as a dotted circle (the comma and U+06DF), so they are swapped for display.
+export const fixAr = (s: string) => (s || '').replace(/\u08F0/g, '\u064B').replace(/\u08F1/g, '\u064C').replace(/\u08F2/g, '\u064D').replace(/\u06DF/g, '\u06E0')
+  // The small madd sign U+06E4 is drawn by this font as one long flat line over the word, which looks like a stray line and runs into the line above. The letters and harakat stay as they are.
+  .replace(/\u06E4/g, '').replace(/\s*\u060C\s*/g, ' ')
+  // Tahlil/Mathurat write Allah with a plain alif; the Quran font only draws its marks on the lafz Allah when it starts with alif wasla, like the Quran text
+  .replace(/\u0627(?=\u0644\u0644[\u064B-\u0652\u0670]*\u0647)/g, '\u0671')
+  // Some zikir lines write Allah without the shaddah and fathah on the two lams. Write every Allah / lillah / Allahumma in the standard way, like the Quran text.
+  .replace(/(^|\s)((?:[\u0648\u0641\u0628\u0643][\u064B-\u0652]*)?)[\u0627\u0671]\u0644\u0644[\u064B-\u0652\u0670]*\u0647([\u064B-\u0652]?)[\u064B-\u0652]*(?![\u0621-\u064A\u0670\u0671])/g, '$1$2\u0671\u0644\u0644\u064E\u0651\u0647$3')
+  .replace(/(^|\s)\u0644\u0650?\u0644[\u064B-\u0652\u0670]*\u0647([\u064B-\u0652]?)[\u064B-\u0652]*(?![\u0621-\u064A\u0670\u0671])/g, '$1\u0644\u0650\u0644\u064E\u0651\u0647$2')
+  .replace(/(^|\s)((?:[\u0648\u0641\u0628\u0643][\u064B-\u0652]*)?)[\u0627\u0671]\u0644\u0644[\u064B-\u0652\u0670]*\u0647[\u064B-\u0652]*\u0645[\u064B-\u0652]*(?![\u0621-\u064A\u0670\u0671])/g, '$1$2\u0671\u0644\u0644\u064E\u0651\u0647\u064F\u0645\u064E\u0651');
+const uth = fixAr;
 FULL.forEach((f: any) => {
   const L = LEGACY[f.n];
   const key = L ? L[0] : String(f.n);
   const title = L ? L[1] : 'Surah ' + f.t;
   const sub = L ? L[3] : f.tr + ' · ' + f.v.length + ' verses';
   const info: any = { title, ar: L ? L[2] : f.a, sub, bismillah: f.n !== 1 && f.n !== 9, num: f.n };
-  Object.defineProperty(info, 'verses', { enumerable: true, get: () => f.v.map((x: string[], i: number) => ({ n: i + 1, ar: x[0], ms: x[1], en: x[2] })) });
+  Object.defineProperty(info, 'verses', { enumerable: true, get: () => f.v.map((x: string[], i: number) => ({ n: i + 1, ar: uth(x[0]), ms: x[1], en: x[2] })) });
   SURAH[key] = info;
   SURAH_LIST.push({ key, num: f.n, title, ar: info.ar, sub: f.tr + ' · ' + f.v.length + ' verses', place: f.ty === 'meccan' ? 'Makkiyyah' : 'Madaniyyah' });
 });
@@ -43,13 +54,13 @@ export const dayKey = () => { const d = new Date(); return d.getFullYear() + '-'
 
 export type Part = { name: string; kind: string; refs?: string[]; count?: string; custom?: 'tahlil33'; surah?: string };
 export const TAHLIL: Part[] = [
-  { name: 'Opening dedication (Ayat Pembuka)', kind: 'Intro' }, { name: 'Al-Fatihah', kind: 'Quran', surah: 'fatihah' }, { name: 'Al-Ikhlas (3×)', kind: 'Quran', refs: ['ikhlas'] },
+  { name: 'Opening dedication (Ayat Pembuka)', kind: 'Intro' }, { name: 'Al-Fatihah', kind: 'Quran', surah: 'fatihah' }, { name: 'Al-Ikhlas', kind: 'Quran', refs: ['ikhlas'], count: '3×' },
   { name: 'Tahlil and Takbir', kind: 'Dhikr' }, { name: 'Al-Falaq', kind: 'Quran', refs: ['falaq'] }, { name: 'Tahlil and Takbir', kind: 'Dhikr' }, { name: 'An-Nas', kind: 'Quran', refs: ['nas'] },
   { name: 'Tahlil and Takbir', kind: 'Dhikr' }, { name: 'Al-Fatihah', kind: 'Quran', surah: 'fatihah' }, { name: 'Al-Baqarah 1 to 5', kind: 'Quran', refs: ['baq1-5'] },
   { name: 'Al-Baqarah 163', kind: 'Quran', refs: ['baq163'] }, { name: 'Ayat Al-Kursi (Al-Baqarah 255)', kind: 'Quran', refs: ['baq255'] }, { name: 'Al-Baqarah 284 to 286', kind: 'Quran', refs: ['baq284', 'baq285', 'baq286'] },
-  { name: 'Hud 73 (3×)', kind: 'Quran', refs: ['hud73'] }, { name: 'Al-Ahzab 33', kind: 'Quran', refs: ['ahzab33'] }, { name: 'Al-Ahzab 56', kind: 'Quran', refs: ['ahzab56'] },
-  { name: 'Selawat upon the Prophet (11×)', kind: 'Selawat' }, { name: 'Salam upon the Prophet', kind: 'Selawat' }, { name: 'Ali Imran 173 and Al-Anfal 40', kind: 'Quran', refs: ['imran173', 'anfal40'] },
-  { name: 'Hauqalah', kind: 'Dhikr' }, { name: 'Istighfar (3×)', kind: 'Dhikr' }, { name: 'Tahlil (33×)', kind: 'Dhikr', custom: 'tahlil33' },
+  { name: 'Hud 73', kind: 'Quran', refs: ['hud73'], count: '3×' }, { name: 'Al-Ahzab 33', kind: 'Quran', refs: ['ahzab33'] }, { name: 'Al-Ahzab 56', kind: 'Quran', refs: ['ahzab56'] },
+  { name: 'Selawat upon the Prophet', kind: 'Selawat', count: '11×' }, { name: 'Salam upon the Prophet', kind: 'Selawat' }, { name: 'Ali Imran 173 and Al-Anfal 40', kind: 'Quran', refs: ['imran173', 'anfal40'] },
+  { name: 'Hauqalah', kind: 'Dhikr' }, { name: 'Istighfar', kind: 'Dhikr', count: '3×' }, { name: 'Tahlil', kind: 'Dhikr', custom: 'tahlil33', count: '33×' },
   { name: 'Syahadah (La ilaha illallah Muhammadur Rasulullah)', kind: 'Dhikr' }, { name: 'Al-Fatihah (closing)', kind: 'Quran', surah: 'fatihah' }, { name: 'Doa Tahlil', kind: 'Doa' },
 ];
 export const MATHURAT: Part[] = [
@@ -68,9 +79,15 @@ export const MATHURAT: Part[] = [
 export const KIND_COL: Record<string, [string, string]> = { Quran: ['rgba(94,231,181,.25)', '#7df0c6'], Dhikr: ['rgba(255,196,107,.25)', '#ffd593'], Selawat: ['rgba(124,156,255,.28)', '#a9bcff'], Doa: ['rgba(255,143,171,.25)', '#ffb3c6'], Intro: ['rgba(255,255,255,.14)', '#ffffff'] };
 export function partVerses(p: Part, evening = false): Verse[] | null {
   const z = ZTEXT[p.name];
-  if (z) { const t = evening && z.e ? z.e : z.m; return [t, ...(z.more || [])].map((x, i) => ({ n: i + 1, ar: x.ar, ms: x.ms, en: x.en, rumi: x.rumi })); }
+  if (z) { const t = evening && z.e ? z.e : z.m; return [t, ...(z.more || [])].map((x, i) => ({ n: i + 1, ar: fixAr(x.ar), ms: x.ms, en: x.en, rumi: x.rumi })); }
   if (p.surah) return SURAH[p.surah].verses;
-  if (p.refs) return p.refs.flatMap((r) => REFS[r]);
+  if (p.refs) return p.refs.flatMap((r) => REFS[r]).map((v) => ({ ...v, ar: fixAr(v.ar) }));
   return null;
 }
 export const nm = (n: string, evening: boolean) => n.replace('Asbahna / Amsaina wa amsal-mulku lillah', evening ? 'Amsaina wa amsal-mulku lillah' : 'Asbahna wa asbahal-mulku lillah').replace('Asbahna / Amsaina, firm', evening ? 'Amsaina, firm' : 'Asbahna, firm').replace('asbahtu / amsaytu', evening ? 'amsaytu' : 'asbahtu').replace('ma asbaha / ma amsa', evening ? 'ma amsa' : 'ma asbaha').replace('bika asbahna / amsayna', evening ? 'bika amsayna' : 'bika asbahna');
+
+// Quran font (KFGQPC Uthmanic Script Hafs, King Fahd Glorious Quran Printing Complex (used unmodified, per its licence)): draws every small mark (dagger alif, madd, waqf signs) like the printed mushaf.
+export const QURAN_FONT = 'UthmanicHafs';
+if (typeof document !== 'undefined') {
+  try { require('expo-font').loadAsync({ [QURAN_FONT]: require('../../assets/fonts/UthmanicHafs.otf') }); } catch (e) {}
+}

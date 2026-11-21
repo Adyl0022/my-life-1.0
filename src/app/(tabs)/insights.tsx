@@ -4,7 +4,8 @@ import { PageIn } from '../../components/PageIn';
 import { Rise, FillBar, GrowBar, useReplay } from '../../components/Anim';
 import { HeadIcon } from '../../components/HabitIcons';
 import { navScroll } from '../../lib/navbar';
-import { View, ScrollView, Pressable, Animated } from 'react-native';
+import { View, ScrollView, Animated } from 'react-native';
+import { Pressable } from '../../components/Press';
 import { Text } from '../../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../../components/Glass';
 import { openPaywall, ProTag } from '../../components/Paywall';
 import { usePro } from '../../lib/pro';
-import { getDay, cupsGoal, goalPctOf, keyOfDate, dateOf } from '../../lib/habit';
+import { weekOffs, getDay, cupsGoal, goalPctOf, keyOfDate, dateOf } from '../../lib/habit';
 import { useHidden } from '../../lib/hidden';
 import { useCore, scoreParts, lifeScore, tips, weekly, patterns, hideTip, tipCat } from '../../lib/insights';
 import { TOP } from '../../lib/layout';
@@ -71,8 +72,9 @@ export default function Insights() {
       { l: 'Spending', v: rm(sp), p: av > 0 ? (sp / av) * 50 : sp > 0 ? 50 : 0, c: '#ffc46b', ic: <Wallet s={26} /> },
     ];
   }
-  const src = week ? [-6, -5, -4, -3, -2, -1, 0].map((o) => (has(o) ? dayPct(o) : 0)) : [-27, -20, -13, -6].map((o) => avgPct(o, o + 6));
-  const lab = week ? [-6, -5, -4, -3, -2, -1, 0].map((o) => ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dateOf(o).getDay()]) : ['W1', 'W2', 'W3', 'W4'];
+  const wo = weekOffs(); const todayI = week ? wo.indexOf(0) : 3;
+  const src = week ? wo.map((o) => (o <= 0 && has(o) ? dayPct(o) : 0)) : [-27, -20, -13, -6].map((o) => avgPct(o, o + 6));
+  const lab = week ? wo.map((o) => ['S', 'M', 'T', 'W', 'T', 'F', 'S'][dateOf(o).getDay()]) : ['W1', 'W2', 'W3', 'W4'];
   const habitPct = metrics.slice(0, 3).map((m) => Math.min(100, m.p));
   const low = habitPct.indexOf(Math.min(...habitPct));
   const title = !anyData ? 'Nothing logged yet' : score >= 80 ? (week ? 'A great week' : 'You are doing great today') : score >= 50 ? (week ? 'A steady week' : 'You are doing well today') : (week ? 'A quiet week' : 'A slow start today');
@@ -245,14 +247,14 @@ export default function Insights() {
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{week ? 'Score this week' : 'Score by week'}</Text>
-              <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5 }}>{week ? 'Last 7 days' : 'Last 4 weeks'}</Text>
+              <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5 }}>{week ? 'This week' : 'Last 4 weeks'}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: week ? 8 : 16, height: 96, marginTop: 12 }}>
               {src.map((v, i) => (
                 <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 5 }}>
                   <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 10, fontWeight: '700' }}>{v > 0 ? v : ''}</Text>
                   <GrowBar h={Math.max(5, Math.round((v / Math.max(mx, 100)) * 58))} delay={i * 70} dep={String(week) + src.join()} style={{ width: '100%' }}>
-                    <LinearGradient colors={i === src.length - 1 ? ['#8fe9e2', '#7c9cff'] : ['rgba(255,255,255,.4)', 'rgba(255,255,255,.14)']} style={{ flex: 1, borderTopLeftRadius: 7, borderTopRightRadius: 7, borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }} />
+                    <LinearGradient colors={i === todayI ? ['#8fe9e2', '#7c9cff'] : ['rgba(255,255,255,.4)', 'rgba(255,255,255,.14)']} style={{ flex: 1, borderTopLeftRadius: 7, borderTopRightRadius: 7, borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }} />
                   </GrowBar>
                   <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 10 }}>{lab[i]}</Text>
                 </View>

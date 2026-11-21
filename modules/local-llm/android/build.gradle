@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.localllm'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.localllm"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+    consumerProguardFiles 'consumer-rules.pro'
+  }
+}
+
+dependencies {
+  // Google MediaPipe LLM Inference: runs a small language model on the phone, with no internet after the one-time model download.
+  implementation 'com.google.mediapipe:tasks-genai:0.10.24'
+}

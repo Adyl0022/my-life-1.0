@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
@@ -9,6 +10,8 @@ import { useStored } from '../lib/store';
 import { HData, GLASS, cupsGoal, latestKg, avgOf, keyOfDate, dateOf } from '../lib/habit';
 import { cs, cu } from '../lib/region';
 
+import { confirmDelete } from '../lib/dialog';
+import { pn, tryForm } from '../lib/num';
 const W = '#fff'; const T = '#5ee7df';
 const dim = 'rgba(255,255,255,.65)';
 const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (
@@ -27,7 +30,8 @@ export function WeightGoal({ h, setH }: { h: HData; setH: (v: HData) => void }) 
   const goal = h.goalKg || 0;
   const pts = list.filter((x) => x.d >= daysAgoKey(rng));
   const startW = list.length ? list[0].v : kg;
-  const save = () => { const v = parseFloat(gin.replace(',', '.')); setH({ ...h, goalKg: v >= 20 && v <= 300 ? r1(v) : 0 }); setGin(''); setEditing(false); };
+  const save = () => { const v = pn(gin); if (!(v >= 20 && v <= 300)) { tryForm('goalKg'); return; } setH({ ...h, goalKg: r1(v) }); setGin(''); setEditing(false); };
+  const removeGoal = () => confirmDelete('your target weight', () => { setH({ ...h, goalKg: 0 }); setGin(''); setEditing(false); });
   // change over the last 30 days
   const cutK = daysAgoKey(30); const before = list.filter((x) => x.d <= cutK); const base30 = before.length ? before[before.length - 1].v : (list.length > 1 ? list[0].v : 0);
   const base30d = before.length ? 30 : list.length > 1 ? Math.max(1, Math.round((new Date(list[list.length - 1].d).getTime() - new Date(list[0].d).getTime()) / 86400000)) : 0;
@@ -55,10 +59,11 @@ export function WeightGoal({ h, setH }: { h: HData; setH: (v: HData) => void }) 
       </View>
       {editing ? (
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-          <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={gin} onChangeText={setGin} placeholder="Target weight (kg)" onSubmitEditing={save} />
+          <Inp min={20} max={300} form="goalKg" need="a target weight" style={{ flex: 1 }} keyboardType="decimal-pad" value={gin} onChangeText={setGin} placeholder="Target weight (kg)" onSubmitEditing={save} />
           <Pressable onPress={save} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
         </View>
       ) : null}
+      {editing && goal > 0 ? <Pressable onPress={removeGoal} style={{ alignSelf: 'flex-start', marginTop: 8 }}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Remove target</Text></Pressable> : null}
       {hi > 0 ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>Healthy range for your height: {r1(lo)} to {r1(hi)} kg</Text> : <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>Add your height in the weight card above to see your healthy range.</Text>}
       {lowGoal ? <Text style={{ color: '#ffc46b', fontSize: 12, marginTop: 6, lineHeight: 17 }}>This target is below the healthy range for your height. Please talk to a doctor before aiming this low.</Text> : null}
       {kg > 0 ? (
@@ -119,7 +124,7 @@ export function DailyNeeds({ h, setH }: { h: HData; setH: (v: HData) => void }) 
   useEffect(() => { if (h.age) setAge(String(h.age)); }, [h.age]);
   const ok = kg > 0 && cm > 0 && a > 0 && !!sx;
   const showEd = ed || !(a > 0 && sx);
-  const saveAge = (sex: 'm' | 'f' | undefined, ag: string) => { const n = parseInt(ag, 10); const okAge = n >= 12 && n <= 100; setH({ ...h, sex: sex || h.sex, age: okAge ? n : h.age }); if (okAge && (sex || h.sex)) setEd(false); };
+  const saveAge = (sex: 'm' | 'f' | undefined, ag: string) => { const n = parseInt(ag, 10); const okAge = n >= 12 && n <= 100; if (!okAge) tryForm('age'); setH({ ...h, sex: sex || h.sex, age: okAge ? n : h.age }); if (okAge && (sex || h.sex)) setEd(false); };
   const missing: string[] = []; if (!(kg > 0)) missing.push('weight'); if (!(cm > 0)) missing.push('height');
   let body: React.ReactNode = null;
   if (ok) {
@@ -186,7 +191,7 @@ export function DailyNeeds({ h, setH }: { h: HData; setH: (v: HData) => void }) 
             {([['m', 'Male'], ['f', 'Female']] as ['m' | 'f', string][]).map(([k, n]) => <Pressable key={k} onPress={() => saveAge(k, age)} style={{ flex: 1, paddingVertical: 7, borderRadius: 999, alignItems: 'center', backgroundColor: sx === k ? '#b794ff' : 'transparent' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{n}</Text></Pressable>)}
           </View>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <Inp style={{ flex: 1 }} keyboardType="number-pad" value={age} onChangeText={setAge} placeholder="Age (years)" onSubmitEditing={() => saveAge(undefined, age)} />
+            <Inp form="age" need="your age" min={12} max={100} style={{ flex: 1 }} keyboardType="number-pad" value={age} onChangeText={setAge} placeholder="Age (years)" onSubmitEditing={() => saveAge(undefined, age)} />
             <Pressable onPress={() => saveAge(undefined, age)} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
           </View>
         </View>
@@ -216,7 +221,7 @@ export function HealthSpend() {
   const mon = healthMonths(spends); const cur = mon[mon.length - 1].v, prev = mon[mon.length - 2].v; const mx = Math.max(...mon.map((m) => m.v), 1);
   const list = spends.filter((x) => x.cat === HEALTH_CAT).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id)).slice(0, 5);
   const add = () => {
-    const n = parseFloat(amt.replace(',', '.')); if (!(n > 0)) return;
+    const n = pn(amt); if (!(n > 0)) { tryForm('bodySpend'); return; }
     const t = new Date(); const date = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
     const id = (fin && fin.nextId) || 1;
     setFin({ ...fin, spends: [{ id, name: nm.trim() || 'Health', cat: HEALTH_CAT, amt: n, date }, ...spends], nextId: id + 1 });
@@ -235,7 +240,7 @@ export function HealthSpend() {
         <View style={{ marginTop: 12, gap: 8 }}>
           <Inp value={nm} onChangeText={setNm} placeholder="What for? e.g. Clinic consultation" />
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <Inp style={{ flex: 1 }} keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={add} />
+            <Inp form="bodySpend" need="an amount" style={{ flex: 1 }} keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={add} />
             <Pressable onPress={add}><LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, paddingHorizontal: 18, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 13, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
           </View>
         </View>
@@ -255,7 +260,7 @@ export function HealthSpend() {
             <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
               <View style={{ flex: 1 }}><Text numberOfLines={1} style={{ color: W, fontSize: 13.5, fontWeight: '600' }}>{x.name}</Text><Text style={{ color: dim, fontSize: 11 }}>{x.date}</Text></View>
               <Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{rmh(x.amt)}</Text>
-              <Pressable accessibilityLabel="Delete" onPress={() => del(x.id)} hitSlop={6}><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 15 }}>✕</Text></Pressable>
+              <Pressable accessibilityLabel="Delete" onPress={() => confirmDelete('this entry', () => del(x.id))} hitSlop={6}><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 15 }}>✕</Text></Pressable>
             </View>
           ))}
         </View>

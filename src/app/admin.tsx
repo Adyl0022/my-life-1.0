@@ -1,5 +1,7 @@
+import { SlidePills } from '../components/TabSlide';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, Pressable, Share, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, ScrollView, Share, ActivityIndicator, RefreshControl } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +13,7 @@ import { CodeBoxes } from '../components/CodeBoxes';
 import { TOP } from '../lib/layout';
 import { adminCall, useIsAdmin } from '../lib/admin';
 
+import { SearchField } from '../components/Shine';
 const dim = 'rgba(255,255,255,.62)';
 const GOLD = '#f5c76b'; const EM = '#5ee7b5'; const CARD = '#14231f'; const LINE = 'rgba(245,199,107,.22)';
 const GR = ['#f5c76b', '#5ee7b5'] as [string, string];   // gold to emerald: the admin colours
@@ -123,7 +126,7 @@ export default function Admin() {
     if (!r.ok) { if (r.err === 'admin_locked') { setGate('enter'); return; } setErr(r.err); return; }
     setErr(''); setTmp({ id, pw: r.data });
   };
-  const send = (code: string) => Share.share({ message: 'Your My Life activation code: ' + code + '\nOpen the app, sign in, then type the 8 characters after ML-.' });
+  const send = (code: string) => Share.share({ message: 'Your My Life 1.0 activation code: ' + code + '\nOpen the app, sign in, then type the 8 characters after ML-.' });
   return (
     <View style={{ flex: 1, backgroundColor: '#06100d', overflow: 'hidden' }}>
       <LinearGradient colors={['#06100d', '#0b1a16', '#090d14']} locations={[0, 0.5, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
@@ -226,14 +229,8 @@ export default function Admin() {
               ))}
             </View>
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 26 }}>
-              {(['users', 'codes', 'inbox', 'log'] as const).map((t) => (
-                <Pressable key={t} onPress={() => setTab(t)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, backgroundColor: tab === t ? GOLD : CARD, borderWidth: 1, borderColor: 'rgba(255,255,255,.1)', ...RAISED }}>
-                  <Text style={{ color: tab === t ? '#0b1512' : W, fontWeight: '800', fontSize: 13 }}>{t === 'users' ? 'Users (' + users.length + ')' : t === 'codes' ? 'Codes (' + codes.length + ')' : t === 'inbox' ? 'Inbox (' + fb.length + ')' : 'Log (' + att.length + ')'}</Text>
-                </Pressable>
-              ))}
-            </View>
-            {tab === 'users' ? <View style={{ marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}><View style={{ flex: 1 }}><Inp value={q} onChangeText={setQ} placeholder="Search by name or email" autoCapitalize="none" /></View><Pill t="Export" on={false} onPress={exportUsers} /></View> : null}
+            <View style={{ marginTop: 26 }}><SlidePills tabs={[('Users (' + users.length + ')'), ('Codes (' + codes.length + ')'), ('Inbox (' + fb.length + ')'), ('Log (' + att.length + ')')]} index={['users', 'codes', 'inbox', 'log'].indexOf(tab)} onChange={(i) => setTab((['users', 'codes', 'inbox', 'log'] as const)[i])} colors={[GOLD, GOLD]} textOn="#0b1512" fontSize={13} padX={14} /></View>
+            {tab === 'users' ? <View style={{ marginTop: 12, flexDirection: 'row', gap: 8, alignItems: 'center' }}><View style={{ flex: 1 }}><SearchField value={q} onChangeText={setQ} placeholder="Search by name or email" autoCapitalize="none" /></View><Pill t="Export" on={false} onPress={exportUsers} /></View> : null}
             {tab === 'codes' ? <View style={{ marginTop: 12, flexDirection: 'row' }}><Pill t="Export all codes" on={false} onPress={exportCodes} /></View> : null}
             {tab === 'users' ? [...users].sort((a, b) => (adm[b.id] ? 1 : 0) - (adm[a.id] ? 1 : 0)).filter((u) => !q.trim() || (u.email + ' ' + (u.name || '')).toLowerCase().includes(q.trim().toLowerCase())).map((u) => (
               <Pressable key={u.id} onPress={() => { setOpen(open === u.id ? '' : u.id); setAsk(''); }} style={{ marginTop: 10, padding: 12, borderRadius: 18, backgroundColor: CARD, borderWidth: 1, borderColor: open === u.id ? 'rgba(245,199,107,.55)' : 'rgba(255,255,255,.09)', overflow: 'hidden', ...RAISED }}>
@@ -267,7 +264,7 @@ export default function Admin() {
                     <Text style={{ color: dim, fontSize: 11.5 }}>Temporary password. They were signed out. Send it to them; they can change it in Settings.</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
                       <Text selectable style={{ flex: 1, color: '#cfe0ff', fontSize: 17, fontWeight: '800', letterSpacing: 1 }}>{tmp.pw}</Text>
-                      <Pressable onPress={() => Share.share({ message: 'Your temporary My Life password: ' + tmp.pw + '\nSign in with it, then change it in Settings > Change password.' })} hitSlop={8}><Text style={{ color: GOLD, fontWeight: '800' }}>Send</Text></Pressable>
+                      <Pressable onPress={() => Share.share({ message: 'Your temporary My Life 1.0 password: ' + tmp.pw + '\nSign in with it, then change it in Settings > Change password.' })} hitSlop={8}><Text style={{ color: GOLD, fontWeight: '800' }}>Send</Text></Pressable>
                     </View>
                   </View>
                 ) : null}

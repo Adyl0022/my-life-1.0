@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { cs } from './region';
 import * as Notifications from 'expo-notifications';
 import { setup, cancelPrefix, inQuiet, Toggles } from './adhan';
 
@@ -105,6 +106,94 @@ export async function syncRenewAlerts(rec: RenData, tg: Toggles, on: boolean): P
   } catch (e) { /* ignore */ }
 }
 
+// Documents: a reminder per document on the day chosen in the document (days before expiry) and on the day itself, at 9 am.
+export async function syncDocAlerts(store: { docs?: { id: string; title: string; expiry?: string; remind?: string }[] }, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('doc-');
+    if (!on || !tg.ev) return;
+    const DAYS: Record<string, number> = { '1w': 7, '1m': 30, '3m': 90, '6m': 180 };
+    const now = Date.now(); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    ((store && store.docs) || []).forEach(dc => {
+      const s = dc.expiry; const rd = DAYS[dc.remind || ''];
+      if (!s || !rd) return;
+      const [y, m, d] = s.split('-').map(Number); if (!y || !m || !d) return;
+      ([[rd, 'is due in ' + (rd >= 30 ? Math.round(rd / 30) + (rd >= 60 ? ' months' : ' month') : '1 week')], [0, 'expires today']] as [number, string][]).forEach(([back, when]) => {
+        const at = new Date(y, m - 1, d - back, 9, 0, 0);
+        if (at.getTime() <= now + 5000 || inQuiet(at, tg)) return;
+        todo.push({ id: 'doc-' + dc.id + '-' + back, at, title: dc.title + ' ' + (back === 0 ? when : 'expires soon'), body: back === 0 ? 'Open Documents to see it.' : 'It ' + when.replace('is due', 'expires') + '. Open Documents to see it.' });
+      });
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('renewals', { name: 'Renewal reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ff8fab' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: t.id,
+        content: { title: t.title, body: t.body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals' } as any,
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Subscriptions: a 9 am reminder before each coming charge (and on the day), for the next 3 charges of each one. A free trial warns before it turns into a payment.
+export async function syncSubAlerts(store: { subs?: any[] }, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('sub-');
+    if (!on || !tg.ev) return;
+    const { nextCharge, addCycle, ymd, num, rm } = await import('./subs');
+    const now = Date.now(); const today = ymd(new Date()); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    ((store && store.subs) || []).forEach((s: any) => {
+      if (s.status === 'paused' || s.status === 'cancelled') return;
+      let d = nextCharge(s, today); if (!d) return;
+      for (let k = 0; k < 3; k++, d = addCycle(d, s.cycle)) {
+        const [y, m, dd] = d.split('-').map(Number); const trial = !!s.trial && k === 0; const p = rm(num(s.price));
+        const list: [number, string][] = [[0, 'today']]; if (s.remind > 0) list.unshift([s.remind, s.remind === 1 ? 'tomorrow' : 'in ' + s.remind + (s.remind === 7 ? ' days' : ' days')]);
+        list.forEach(([back, when]) => {
+          const at = new Date(y, m - 1, dd - back, 9, 0, 0); if (at.getTime() <= now + 5000 || inQuiet(at, tg)) return;
+          todo.push({ id: 'sub-' + s.id + '-' + d + '-' + back, at, title: trial ? s.name + ' free trial ends ' + when : s.name + ' charges ' + when, body: trial ? 'Cancel it now if you do not want to pay ' + p + '. Open Subscriptions.' : p + '. Open Subscriptions to see it.' });
+        });
+      }
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('subs', { name: 'Subscription reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#7c9cff' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({ identifier: t.id, content: { title: t.title, body: t.body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'subs' } as any });
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Personal Collection: a 9 am reminder on the due date of money or things you lent or borrowed, and 30 days before a gadget's warranty ends.
+export async function syncColAlerts(col: { items?: any[]; loans?: any[] }, tg: Toggles, on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('col-');
+    if (!on || !tg.ev) return;
+    const now = Date.now(); const todo: { id: string; at: Date; title: string; body: string }[] = [];
+    const at9 = (s: string, back: number) => { const [y, m, d] = String(s || '').split('-').map(Number); if (!y || !m || !d) return null; const t = new Date(y, m - 1, d - back, 9, 0, 0); return t.getTime() <= now + 5000 || inQuiet(t, tg) ? null : t; };
+    ((col && col.loans) || []).forEach((l) => {
+      if (l.done || !l.due || l.remind === 'off') return;
+      const what = l.what === 'money' ? cs() + Math.max(0, (parseFloat(String(l.amount).replace(',', '.')) || 0) - (l.pays || []).reduce((t: number, p: any) => t + (p.a > 0 ? p.a : 0), 0)) : l.title;
+      const lead = l.remind === '3d' ? 3 : 0; const t = at9(l.due, lead); if (!t) return;
+      const when = lead ? 'Due in 3 days' : 'Due today';
+      todo.push({ id: 'col-loan-' + l.id, at: t, title: l.dir === 'lent' ? when + ': ' + l.who + ' should return ' + what : when + ': return ' + what + ' to ' + l.who, body: 'Open Lent & Borrowed to mark it returned.' });
+    });
+    ((col && col.items) || []).forEach((x) => {
+      if (x.cat !== 'gadget' || !x.warranty) return; const t = at9(x.warranty, 30); if (!t) return;
+      todo.push({ id: 'col-warr-' + x.id, at: t, title: x.name + ' warranty ends in 30 days', body: 'Check it now if anything needs fixing.' });
+    });
+    if (!todo.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('renewals', { name: 'Renewal reminders', importance: Notifications.AndroidImportance.HIGH, lightColor: '#ff8fab' });
+    for (const t of todo.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 30)) {
+      await Notifications.scheduleNotificationAsync({ identifier: t.id, content: { title: t.title, body: t.body, sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.at, channelId: 'renewals' } as any });
+    }
+  } catch (e) { /* ignore */ }
+}
+
 // Every Sunday at 8 pm: a nudge to look at the weekly review in Insights. Only when notifications are already allowed.
 export async function syncWeekAlert(tg: Toggles): Promise<void> {
   if (Platform.OS === 'web') return;
@@ -115,7 +204,7 @@ export async function syncWeekAlert(tg: Toggles): Promise<void> {
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('week', { name: 'Weekly review', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#7c9cff' });
     await Notifications.scheduleNotificationAsync({
       identifier: 'week-review',
-      content: { title: 'Your week in My Life', body: 'See how your week went. Open Insights and tap Week.', sound: false },
+      content: { title: 'Your week in My Life 1.0', body: 'See how your week went. Open Insights and tap Week.', sound: false },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 20, minute: 0, channelId: 'week', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }
@@ -185,6 +274,23 @@ export async function syncRelaxAlert(time: string | undefined, on: boolean): Pro
     });
   } catch (e) { /* ignore */ }
 }
+// A daily nudge at 8:30 pm for each running experiment that has its reminder on, so a day is not forgotten.
+export async function syncExpAlerts(list: { id: string; title: string; day: number; days: number }[], on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('exp-rem');
+    if (!on || !list.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('experiments', { name: 'Experiment reminders', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#7df0c6' });
+    for (const x of list) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'exp-rem-' + x.id,
+        content: { title: 'Experiment: ' + x.title, body: 'Day ' + x.day + ' of ' + x.days + '. Log today in Habit & Health so it counts.', sound: false },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 20, minute: 30, channelId: 'experiments' } as any,
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
 // A soft bell when a meditation ends, in case the screen has locked.
 export async function scheduleRelaxEnd(seconds: number): Promise<void> {
   if (Platform.OS === 'web') return;
@@ -218,7 +324,7 @@ export async function syncCycleAlert(daysTo: number | null, on: boolean): Promis
     if (at.getTime() <= Date.now() + 5000) return;
     await Notifications.scheduleNotificationAsync({
       identifier: 'cyc-next',
-      content: { title: 'Reminder from My Life', body: 'Open My Life to see your reminder.', sound: false },
+      content: { title: 'Reminder from My Life 1.0', body: 'Open My Life 1.0 to see your reminder.', sound: false },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'cycle', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }

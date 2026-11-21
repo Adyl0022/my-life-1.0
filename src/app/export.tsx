@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Platform, Share } from 'react-native';
+import { View, ScrollView, Platform, Share } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +21,8 @@ const IC: Record<string, React.ReactNode> = {
   finance: <><Rect x="3" y="6" width="18" height="14" rx="3" /><Path d="M3 10h18M16 15h2" /></>,
   record: <><Circle cx="6" cy="16" r="3" /><Circle cx="18" cy="16" r="3" /><Path d="M6 16l4-7h4l4 7M10 9L9 6H6" /></>,
   habit: <Path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />,
+  docs: <><Path d="M7 3h7l4 4v14H7z" /><Path d="M14 3v4h4M10 12h5M10 16h5" /></>,
+  collection: <><Rect x="4" y="8" width="16" height="12" rx="3" /><Path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 13h16" /></>,
   usage: <><Circle cx="12" cy="12" r="8.5" /><Path d="M12 7v5l3 2" /></>,
   xlsx: <><Rect x="4" y="4" width="16" height="16" rx="3" /><Path d="M4 10h16M4 15h16M10 4v16" /></>,
   pdf: <><Path d="M7 3h7l4 4v14H7z" /><Path d="M14 3v4h4M10 12h5M10 16h5" /></>,
@@ -27,7 +30,7 @@ const IC: Record<string, React.ReactNode> = {
   json: <><Path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" /><Path d="M9 12l2 2 4-4" /></>,
 };
 const GR: Record<string, [string, string]> = {
-  planner: ['#7c9cff', '#5b7bff'], islamic: ['#34d399', '#12a58a'], finance: ['#ffc46b', '#ff8f5a'], record: ['#ff8fab', '#e0518a'], habit: ['#b794ff', '#7059e8'], usage: ['#5ee7df', '#4a8dff'],
+  planner: ['#7c9cff', '#5b7bff'], islamic: ['#34d399', '#12a58a'], finance: ['#ffc46b', '#ff8f5a'], record: ['#ff8fab', '#e0518a'], habit: ['#b794ff', '#7059e8'], docs: ['#8ea8ff', '#b794ff'], collection: ['#8fe9e2', '#4a8dff'], usage: ['#5ee7df', '#4a8dff'],
   xlsx: ['#34d399', '#12a58a'], pdf: ['#ff8fab', '#e0518a'], csv: ['#7c9cff', '#5b7bff'], json: ['#ffc46b', '#ff8f5a'],
 };
 const Ico = ({ k, size = 36 }: { k: string; size?: number }) => (
@@ -46,9 +49,9 @@ const PER = ['This month', '3 months', 'All time'];
 export default function Export() {
   const router = useRouter();
   const hid = useHidden();
-  const isOff = (k: string) => k !== 'usage' && hid.off.indexOf(k) >= 0 && k !== 'family';
+  const isOff = (k: string) => { const h = k === 'docs' || k === 'collection' ? 'record' : k; return k !== 'usage' && hid.off.indexOf(h) >= 0 && k !== 'family'; };
   const seeded = React.useRef(false);
-  const [inc, setInc] = useState<Record<string, boolean>>({ planner: true, islamic: true, finance: true, record: true, habit: true, usage: true });
+  const [inc, setInc] = useState<Record<string, boolean>>({ planner: true, islamic: true, finance: true, record: true, docs: true, collection: true, habit: true, usage: true });
   const [, setBkLast] = useStored<number>('ml_backup_last', 0);
   const [per, setPer] = useState(0); const [fmt, setFmt] = useState(3);
   const [phase, setPhase] = useState(0); const [msg, setMsg] = useState('');
@@ -78,7 +81,7 @@ export default function Export() {
         if (Object.keys(pk.images).length) out.images = pk.images;
         ok = await deliver(file, 'application/json', JSON.stringify(out, null, 2));
         setBkLast(Date.now());
-        if (pk.skipped > 0) bkNote = pk.skipped + (pk.skipped === 1 ? ' receipt photo' : ' receipt photos') + ' did not fit in the backup and stay only on this phone.';
+        if (pk.skipped > 0) bkNote = pk.skipped + (pk.skipped === 1 ? ' photo' : ' photos') + ' did not fit in the backup and stay only on this phone.';
       } else {
         const r = await buildReport(sel, per);
         if (k === 'xlsx') ok = await deliver(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', await toXlsxBase64(r), true);

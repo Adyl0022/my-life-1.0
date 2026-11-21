@@ -20,7 +20,7 @@ export const LOCK_OFF: LockCfg = { on: false, bio: false, after: 60, scope: 'all
 const KEY = 'ml_lock';
 export const AFTER = [[0, 'Instantly'], [60, '1 min'], [300, '5 min'], [900, '15 min']] as [number, string][];
 // Finance, debts, notes and vehicle records are the sensitive part of the app.
-export const SENSITIVE = ['/finance', '/notes', '/record'];
+export const SENSITIVE = ['/finance', '/notes', '/record', '/vehicle', '/documents', '/collection'];
 
 let cfg: LockCfg = LOCK_OFF;
 let loaded = false;
@@ -43,7 +43,7 @@ export const bioReady = async () => {
   if (Platform.OS === 'web') return false;
   try { return (await LocalAuth.hasHardwareAsync()) && (await LocalAuth.isEnrolledAsync()); } catch (e) { return false; }
 };
-export async function bioAuth(msg = 'Unlock My Life'): Promise<boolean> {
+export async function bioAuth(msg = 'Unlock My Life 1.0'): Promise<boolean> {
   try { const r = await LocalAuth.authenticateAsync({ promptMessage: msg, cancelLabel: 'Use PIN', disableDeviceFallback: true }); return !!r.success; } catch (e) { return false; }
 }
 

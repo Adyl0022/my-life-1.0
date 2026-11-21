@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Pressable, TextInput, Dimensions } from 'react-native';
+import { View, ScrollView, TextInput, Dimensions } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Header, VerseBlock, ReadBg } from '../components/IslamicUi';
 import { W } from '../components/Ui';
-import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize } from '../lib/islamic';
+import { SURAH_LIST, SURAH, BISMILLAH, useLang, useSize, QURAN_FONT } from '../lib/islamic';
 import { useStored } from '../lib/store';
 import { usePro } from '../lib/pro';
 import { openPaywall, ProTag } from '../components/Paywall';
 import { dlSupported, useDl, surahDone, juzDone, downloadSurah, downloadJuz, downloadAll, cancelDownload, deleteSurah, deleteAll, usage, fmtBytes, clearDlError, NET_KEY, NetPref } from '../lib/quranDl';
 import { QariOpt, JUZ_NAMES, loadQaris, playSurah, playJuz, toggle, next, prev, stop, useQuranAudio, getResume, resumeLast, Resume } from '../lib/quranAudio';
+import { SlidePills } from '../components/TabSlide';
 import { Shine, GlowField } from '../components/Shine';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon, DownloadIcon, CheckIcon, CloseIcon, SearchIcon } from '../components/AudioIcons';
 
+import { confirmDelete } from '../lib/dialog';
 const TEAL = '#7df0c6';
 const Btn = ({ ic, onPress, big, label, pulse }: { ic: React.ReactNode; onPress: () => void; big?: boolean; label: string; pulse?: boolean }) => (
   <Shine label={label} hitSlop={8} onPress={onPress} pulse={pulse} radius={big ? 29 : 22} style={{ width: big ? 58 : 44, height: big ? 58 : 44, backgroundColor: big ? '#7df0c6' : 'rgba(255,255,255,.12)' }}>{ic}</Shine>
@@ -86,7 +89,7 @@ export default function QuranAudio() {
                   );
                 })}
               </View>
-              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
+              {info.bismillah ? <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 24, lineHeight: 48, fontFamily: QURAN_FONT, textAlign: 'center', writingDirection: 'rtl' }}>{BISMILLAH.ar}</Text></View> : null}
               {info.verses.map((v, i) => (
                 <View key={v.n} onLayout={(e) => { ys.current[info.num + ':' + v.n] = e.nativeEvent.layout.y + 90; }}>
                   <VerseBlock v={v} size={size} lang={lang} arOnly={arOnly} bleed={16} active={!!it && it.ayah === v.n} last={i === info.verses.length - 1} />
@@ -154,13 +157,7 @@ export default function QuranAudio() {
               <Pressable onPress={clearDlError} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>OK</Text></Pressable>
             </Glass>
           ) : null}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
-            {['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? ['Downloads'] : []).map((t, i) => (
-              <Pressable key={t} onPress={() => { setTab(i); setFind(''); }} style={{ paddingVertical: 8, paddingHorizontal: 13, borderRadius: 999, backgroundColor: tab === i ? 'rgba(94,231,181,.4)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: tab === i ? TEAL : 'rgba(255,255,255,.14)' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{t}</Text>{t === 'Downloads' && !pro ? <ProTag /> : null}</View>
-              </Pressable>
-            ))}
-          </View>
+          <SlidePills tabs={['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? [pro ? 'Downloads' : 'Downloads · PRO'] : [])} index={tab} onChange={(i) => { setTab(i); setFind(''); }} colors={['rgba(94,231,181,.55)', 'rgba(94,231,223,.45)']} padX={16} padY={8} fontSize={12.5} style={{ marginTop: 6 }} />
 
           {tab < 2 ? (
             <GlowField focused={sf}>
@@ -247,7 +244,7 @@ export default function QuranAudio() {
                           <Text numberOfLines={1} style={{ color: W, fontSize: 14, fontWeight: '700' }}>{u.s + '. ' + (m ? m.title : 'Surah')}</Text>
                           <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, marginTop: 1 }}>{fmtBytes(u.bytes) + (u.total === 0 ? ' · part of a juz' : u.have < u.total ? ' · partly saved (' + u.have + '/' + u.total + ')' : '')}</Text>
                         </View>
-                        <Pressable onPress={() => deleteSurah(cur.id, u.s)} hitSlop={6} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '800' }}>Delete</Text></Pressable>
+                        <Pressable onPress={() => confirmDelete('this download', () => deleteSurah(cur.id, u.s), { title: 'Delete this download?', message: 'You can download it again later.' })} hitSlop={6} style={{ paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: '#ff9aa9', fontSize: 12.5, fontWeight: '800' }}>Delete</Text></Pressable>
                       </View>
                     );
                   })}

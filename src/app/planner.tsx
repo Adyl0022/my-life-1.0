@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, Animated } from 'react-native';
+import { View, ScrollView, Animated } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
+import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -16,8 +18,9 @@ import { TOP } from '../lib/layout';
 import { useRegion, regionCountry } from '../lib/region';
 import { upcomingMy, fetchMy, EMPTY_CACHE, MyCache } from '../lib/myEvents';
 
-type Ev = { id: number; name: string; date: string; remind: string; done: boolean };
-type Tk = { id: number; name: string; note: string; prio: string; due: string; cat: string; status: 'todo' | 'doing' | 'done' };
+import { confirmDelete } from '../lib/dialog';
+type Ev = { id: number; name: string; date: string; remind: string; done: boolean; doneAt?: string };
+type Tk = { id: number; name: string; note: string; prio: string; due: string; cat: string; status: 'todo' | 'doing' | 'done'; doneAt?: string };
 type Data = { events: Ev[]; tasks: Tk[]; cats: string[]; nextId: number };
 const EMPTY: Data = { events: [], tasks: [], cats: ['Tasks'], nextId: 1 };
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -68,6 +71,7 @@ export default function Planner() {
   const [d, setD, ok] = useStored<Data>('ml_planner', EMPTY);
   const [tab, setTab] = useState<'events' | 'tasks'>('events');
   const [cat, setCat] = useState(0);
+  const slide = useTabSlide(tab === 'events' ? 0 : 1 + cat);
   const [addingCat, setAddingCat] = useState(false); const [catIn, setCatIn] = useState('');
   const [edit, setEdit] = useState<any>(null);
   const [add, setAdd] = useState<any>(null);
@@ -84,7 +88,7 @@ export default function Planner() {
     else setD({ ...d, nextId: d.nextId + 1, tasks: [...d.tasks, { id: d.nextId, name, note: (add.note || '').trim(), prio: add.prio, due: add.due || '', cat: add.cat || 'Tasks', status: 'todo' }] });
     setAdd(null); say(add.kind === 'event' ? 'Event added' : 'Task added');
   };
-  const setStatus = (id: number, status: Tk['status']) => { setD({ ...d, tasks: d.tasks.map((x) => (x.id === id ? { ...x, status } : x)) }); setEdit(null); };
+  const setStatus = (id: number, status: Tk['status']) => { setD({ ...d, tasks: d.tasks.map((x) => (x.id === id ? { ...x, status, doneAt: status === 'done' ? (x.status === 'done' && x.doneAt ? x.doneAt : todayStr()) : undefined } : x)) }); setEdit(null); };
   const saveEdit = () => {
     const name = edit.name.trim() || 'Untitled';
     if (edit.kind === 'event') setD({ ...d, events: d.events.map((x) => (x.id === edit.id ? { ...x, name, date: edit.date, remind: edit.remind } : x)) });
@@ -103,7 +107,7 @@ export default function Planner() {
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <SBtn t="Cancel" onPress={() => setEdit(null)} />
-        {kind === 'task' && <SBtn t="Delete" kind="danger" onPress={() => { setD({ ...d, tasks: d.tasks.filter((y) => y.id !== edit.id) }); setEdit(null); }} />}
+        {kind === 'task' && <SBtn t="Delete" kind="danger" onPress={() => confirmDelete('this task', () => { setD({ ...d, tasks: d.tasks.filter((y) => y.id !== edit.id) }); setEdit(null); })} />}
         <SBtn t="Save" kind="primary" onPress={saveEdit} />
       </View>
     </View>
@@ -112,15 +116,18 @@ export default function Planner() {
   const EventRow = ({ x }: { x: Ev }) => {
     const p = x.date.split('-'); const okd = p.length === 3;
     const late = !x.done && okd && x.date < today;
+    const dl = okd ? Math.round((new Date(+p[0], +p[1] - 1, +p[2]).getTime() - new Date(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10)).getTime()) / 86400000) : null;
+    const dc = dl == null ? null : dl < 0 ? '#ff6b81' : dl <= 7 ? '#ffd24a' : '#5ee7b5';
+    const dt = dl == null ? '' : dl < 0 ? (-dl === 1 ? 'Overdue 1 day' : 'Overdue ' + -dl + ' days') : dl === 0 ? 'Today' : dl === 1 ? '1 day left' : dl + ' days left';
     return (
-      <Pressable onPress={() => setD({ ...d, events: d.events.map((y) => (y.id === x.id ? { ...y, done: !y.done } : y)) })}>
+      <Pressable onPress={() => setD({ ...d, events: d.events.map((y) => (y.id === x.id ? { ...y, done: !y.done, doneAt: !y.done ? todayStr() : undefined } : y)) })}>
         <Raise c={x.done ? '#7df0a0' : '#8ea8ff'} dim={x.done}>
           <LinearGradient colors={x.done ? ['#2fae7a', '#5ee7b5'] : GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 48, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 10, fontWeight: '700' }}>{okd ? MON[+p[1] - 1] : 'NEW'}</Text><Text style={{ color: W, fontSize: 18, fontWeight: '800' }}>{okd ? p[2] : '--'}</Text>
           </LinearGradient>
-          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{(late ? 'Overdue · ' : '') + (x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind)}</Text></View>
+          <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 15.5, fontWeight: '700', textDecorationLine: x.done ? 'line-through' : 'none' }}>{x.name}</Text><Text style={{ color: late ? '#ffb3c0' : 'rgba(255,255,255,.72)', fontSize: 11.5, marginTop: 4 }}>{x.remind === 'None' ? 'No reminder' : 'Reminder: ' + x.remind}</Text>{!x.done && dc ? <View style={{ alignSelf: 'flex-start', marginTop: 6, paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999, backgroundColor: dc + '33', borderWidth: 1, borderColor: dc + '88' }}><Text style={{ color: dc, fontSize: 11.5, fontWeight: '800' }}>{dt}</Text></View> : null}</View>
           <Ic t="✎" label="Edit" onPress={() => setEdit({ id: x.id, kind: 'event', name: x.name, note: '', prio: 'Medium', date: x.date, remind: x.remind })} />
-          <Ic t="✕" label="Delete" onPress={() => { setD({ ...d, events: d.events.filter((y) => y.id !== x.id) }); setEdit(null); }} />
+          <Ic t="✕" label="Delete" onPress={() => confirmDelete('this event', () => { setD({ ...d, events: d.events.filter((y) => y.id !== x.id) }); setEdit(null); })} />
         </Raise>
       </Pressable>
     );
@@ -219,6 +226,7 @@ export default function Planner() {
             </View>
           )}
 
+          <Animated.View style={slide}>
           {tab === 'events' ? (
             <View style={{ gap: 8 }}>
               <Sec t={regionCountry().flag + ' ' + regionCountry().name + ' events'} hint="auto · official calendar" c="#ffd27d" n={my.length} />
@@ -273,13 +281,14 @@ export default function Planner() {
               <Sec t="Not Done Yet" hint="tap a task to start it" c="#b794ff" n={todo.length} />
               {todo.map((x) => <TaskRow key={x.id} x={x} />)}
               {ok && todo.length === 0 && <Empty t="All caught up. Nothing waiting." c="#b794ff" />}
-              <Sec t="Done" hint="tap to bring back" c="#7df0a0" n={done.length} right={done.length ? <Pressable onPress={() => setD({ ...d, tasks: d.tasks.filter((x) => !((x.cat || 'Tasks') === curCat && x.status === 'done')) })}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '700' }}>Clear</Text></Pressable> : null} />
+              <Sec t="Done" hint="tap to bring back" c="#7df0a0" n={done.length} right={done.length ? <Pressable onPress={() => confirmDelete('done tasks', () => setD({ ...d, tasks: d.tasks.filter((x) => !((x.cat || 'Tasks') === curCat && x.status === 'done')) }), { title: 'Clear done tasks?', message: 'All done tasks in this list are removed.', yes: 'Clear' })}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '700' }}>Clear</Text></Pressable> : null} />
               {done.map((x) => <TaskRow key={x.id} x={x} />)}
               {ok && done.length === 0 && <Empty t="Nothing done yet." c="#7df0a0" />}
               <Pressable onPress={openAdd} style={{ marginTop: 10 }}><View style={{ paddingVertical: 13, borderRadius: 18, alignItems: 'center', borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,.35)' }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>+ Add task</Text></View></Pressable>
-              {cat > 0 && <Pressable onPress={() => { const n = curCat; setD({ ...d, cats: d.cats.filter((c) => c !== n), tasks: d.tasks.filter((x) => (x.cat || 'Tasks') !== n) }); setCat(0); say('Category deleted'); }} style={{ alignSelf: 'center', marginTop: 8 }}><Text style={{ color: '#ffb3bf', fontSize: 12.5, fontWeight: '700' }}>Delete this category</Text></Pressable>}
+              {cat > 0 && <Pressable onPress={() => confirmDelete('this list', () => { const n = curCat; setD({ ...d, cats: d.cats.filter((c) => c !== n), tasks: d.tasks.filter((x) => (x.cat || 'Tasks') !== n) }); setCat(0); say('Category deleted'); }, { title: 'Delete this list?', message: 'All tasks in it are deleted too. This cannot be undone.' })} style={{ alignSelf: 'center', marginTop: 8 }}><Text style={{ color: '#ffb3bf', fontSize: 12.5, fontWeight: '700' }}>Delete this category</Text></Pressable>}
             </View>
           )}
+          </Animated.View>
         </ScrollView>
 
         {edit && <Sheet onClose={() => setEdit(null)}>{editBox(edit.kind)}</Sheet>}

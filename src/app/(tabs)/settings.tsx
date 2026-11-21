@@ -1,7 +1,9 @@
+import { SlidePills, EqPills } from '../../components/TabSlide';
 import React, { useState } from 'react';
 import { PageIn } from '../../components/PageIn';
 import { navScroll } from '../../lib/navbar';
-import { View, ScrollView, Pressable, TextInput, Modal, Animated, Easing, Linking, Platform, Keyboard } from 'react-native';
+import { View, ScrollView, TextInput, Modal, Animated, Easing, Linking, Platform, Keyboard } from 'react-native';
+import { Pressable } from '../../components/Press';
 import * as Notifications from 'expo-notifications';
 import { setup } from '../../lib/adhan';
 import { Text } from '../../components/Txt';
@@ -10,6 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Glass } from '../../components/Glass';
+import { MemoriesCard } from '../../components/MemoriesCard';
+import { DashCardPicks } from '../../components/DashCardPicks';
 import { Blob } from '../../components/Bg';
 import { SettingsBg } from '../../components/SettingsBg';
 import { useStored, clearMine, DEFAULT_NAME } from '../../lib/store';
@@ -33,6 +37,9 @@ import { useLock, setPin, patchLock, disableLock, bioReady, AFTER } from '../../
 import { PinDialog } from '../../components/LockScreen';
 import { useKb } from '../../lib/keyboard';
 import { storageInfo, clearTemp, fmtBytes, pickText, parseBackup, applyBackup, Backup } from '../../lib/storage';
+import { Toggle } from '../../components/Toggle';
+import { showAlert } from '../../lib/dialog';
+import { micAllowed, voiceOk } from '../../lib/voice';
 
 const W = '#fff', DIM = 'rgba(255,255,255,.7)';
 const G = ['#34d399', '#5ee7df'] as [string, string];
@@ -83,11 +90,7 @@ function Devices() {
   );
 }
 const Chev = () => <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 20 }}>›</Text>;
-const Sw = ({ on }: { on: boolean }) => (
-  <LinearGradient colors={on ? G : ['rgba(255,255,255,.22)', 'rgba(255,255,255,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 26, borderRadius: 13, padding: 3 }}>
-    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', marginLeft: on ? 18 : 0 }} />
-  </LinearGradient>
-);
+const Sw = ({ on }: { on: boolean }) => <Toggle on={on} colors={G} />;
 function Row({ ic, k, t, sub, right, onPress, last }: { ic?: string; k?: string; t: string; sub?: string; right?: React.ReactNode; onPress?: () => void; last?: boolean }) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: last ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
@@ -184,13 +187,17 @@ export default function Settings() {
   const [exact, setExact] = useState<boolean | null>(null);
   React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
   const askExact = async () => {
-    try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); say(r.granted ? 'Exact timing is on' : 'Not allowed yet. Turn on Alarms & reminders for My Life'); }
-    catch (e) { say('Could not open the setting. Open phone Settings, Apps, My Life, Alarms & reminders'); }
+    try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); say(r.granted ? 'Exact timing is on' : 'Not allowed yet. Turn on Alarms & reminders for My Life 1.0'); }
+    catch (e) { say('Could not open the setting. Open phone Settings, Apps, My Life 1.0, Alarms & reminders'); }
+  };
+  const openBattery = async () => {
+    try { await (Linking as any).sendIntent('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS'); }
+    catch (e) { try { await Linking.openSettings(); } catch (e2) { say('Open phone Settings, Apps, My Life 1.0, Battery, and choose Unrestricted'); } }
   };
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');
     try {
-      if (!(await setup())) return say('Allow notifications for My Life in your phone settings');
+      if (!(await setup(true))) return say('Allow notifications for My Life 1.0 in your phone settings');
       await Notifications.scheduleNotificationAsync({ identifier: 'test-now', content: { title: 'Test notification', body: 'Your reminders are working.', sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, channelId: 'prayer' } as any });
       say('Sent. It will appear in 3 seconds');
     } catch (e) { say('Could not send a test notification'); }
@@ -255,20 +262,14 @@ export default function Settings() {
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView ref={sref} onScroll={navScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16 + TOP, paddingBottom: 130 + kb }}>
           <Text style={{ color: W, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>Settings</Text>
-          <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 14 }}>
-            {['General', 'Security', 'About'].map((n, i) => (
-              <Pressable key={n} onPress={() => setTab(i)} style={{ flex: 1 }}>
-                {tab === i ? <LinearGradient colors={GP} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{n}</Text></LinearGradient>
-                  : <View style={{ paddingVertical: 8, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{n}</Text></View>}
-              </Pressable>
-            ))}
-          </View>
+          <View style={{ marginTop: 14 }}><EqPills tabs={['General', 'Security', 'About']} index={tab} onChange={setTab} colors={GP} fontSize={13} /></View>
 
           {tab === 0 && (
             <View style={{ gap: 12, marginTop: 14 }}>
               <Announcement />
               <RegionCard />
               <ModulesCard />
+              <DashCardPicks />
               {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
                 <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>
@@ -284,7 +285,8 @@ export default function Settings() {
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Notifications" />
                 {exact !== null ? <Text style={{ color: exact ? 'rgba(255,255,255,.72)' : '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{exact ? 'Exact timing is on. Reminders and prayer alerts arrive on the minute.' : 'Exact timing is off. Reminders and prayer alerts can arrive a few minutes late.'}</Text> : null}
-                <View style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}<Btn t="Send a test notification" onPress={testNotif} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /></View>
+                {Platform.OS === 'android' ? <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>Some phones (Samsung, Oppo, Xiaomi) stop apps to save battery, and then a reminder can be missed. Tap the button below, find My Life 1.0 and choose Unrestricted, or No restrictions.</Text> : null}
+                <View style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}{Platform.OS === 'android' ? <Btn t="Keep reminders from being stopped" onPress={openBattery} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}<Btn t="Send a test notification" onPress={testNotif} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /></View>
               </Glass>
 
               {isAdmin ? <Pressable onPress={() => router.push('/admin' as any)}>
@@ -349,8 +351,8 @@ export default function Settings() {
                 <Ttl t="Account and data" />
                 <Lbl t="Name shown on your Dashboard and in the assistant" style={{ marginBottom: 8 }} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Inp style={{ flex: 1 }} onFocus={() => setTimeout(() => sref.current?.scrollToEnd({ animated: true }), 350)} value={draft ?? name} onChangeText={(v: string) => { setDraft(v); setNameMsg(''); }} placeholder="Your name" maxLength={30} />
-                  <Btn t="Save" kind="primary" style={{ flex: 0, minWidth: 80 }} onPress={() => { const v = (draft ?? name).trim(); if (!v) return setNameMsg('Please enter a name.'); setName(v); setDraft(null); setNameMsg('Saved. It will show on your Dashboard and assistant.'); }} />
+                  <Inp style={{ flex: 1 }} onFocus={() => setTimeout(() => sref.current?.scrollToEnd({ animated: true }), 350)} bad={/^Please/.test(nameMsg) || undefined} value={draft ?? name} onChangeText={(v: string) => { setDraft(v); setNameMsg(''); }} placeholder="Your name" maxLength={30} />
+                  <Btn t="Save" kind="primary" style={{ flex: 0, minWidth: 80 }} onPress={() => { const v = (draft ?? name).trim(); if (!v) return setNameMsg('Please enter a name.'); if (!/[A-Za-z\u00C0-\u024F\u0400-\u04FF\u0600-\u06FF\u4E00-\u9FFF]/.test(v)) return setNameMsg('Please use letters in your name, not only numbers or symbols.'); setName(v); setDraft(null); setNameMsg('Saved. It will show on your Dashboard and assistant.'); }} />
                 </View>
                 {nameMsg ? <Text style={{ color: '#8fe9e2', fontSize: 12, marginTop: 6 }}>{nameMsg}</Text> : null}
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
@@ -383,14 +385,15 @@ export default function Settings() {
                 <Row t="Open-source licences" last onPress={() => setDlg('lic')} right={<Chev />} />
               </Glass>
               <Glass style={{ paddingHorizontal: 16 }}>
-                <Row t="How to use My Life" onPress={() => setDlg('howto')} right={<Chev />} />
+                <Row t="How to use My Life 1.0" onPress={() => setDlg('howto')} right={<Chev />} />
                 <Row t="Help and FAQ" onPress={() => setDlg('faq')} right={<Chev />} />
-                <Row t="Report a problem" onPress={() => mail('My Life: problem report', 'What happened?\n\n\nWhat did you expect?\n\n\n' + info)} right={<Chev />} />
-                <Row t="Send feedback" last onPress={() => mail('My Life: feedback', 'My idea or comment:\n\n\n' + info)} right={<Chev />} />
+                <Row t="Report a problem" onPress={() => mail('My Life 1.0: problem report', 'What happened?\n\n\nWhat did you expect?\n\n\n' + info)} right={<Chev />} />
+                <Row t="Send feedback" last onPress={() => mail('My Life 1.0: feedback', 'My idea or comment:\n\n\n' + info)} right={<Chev />} />
               </Glass>
+              <MemoriesCard />
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Storage" />
-                <Lbl t="What My Life uses on this phone" style={{ marginBottom: 10 }} />
+                <Lbl t="What My Life 1.0 uses on this phone" style={{ marginBottom: 10 }} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <View style={{ flex: 1, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{sto ? fmtBytes(sto.data) : '...'}</Text><Lbl t="Your data" /></View>
                   <View style={{ flex: 1, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{sto ? fmtBytes(sto.temp) : '...'}</Text><Lbl t="Temporary files" /></View>
@@ -405,7 +408,12 @@ export default function Settings() {
                   <View key={t} style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}><Text style={{ color: '#5ee7df', fontSize: 13 }}>✓</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18 }}>{t}</Text></View>
                 ))}
               </Glass>
-              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, textAlign: 'center' }}>Copyright (c) 2026 Adli Syahmi. All rights reserved.</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5 }}>Copyright </Text>
+                {/* The copyright sign is drawn here because some phones show the text character as a dark emoji. */}
+                <Svg width={12} height={12} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={9.5} stroke="rgba(255,255,255,.55)" strokeWidth={1.8} fill="none" /><Path d="M15.2 9.4A4.2 4.2 0 1 0 15.2 14.6" stroke="rgba(255,255,255,.55)" strokeWidth={1.8} fill="none" strokeLinecap="round" /></Svg>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5 }}> 2026 Adli Syahmi. All rights reserved.</Text>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -449,7 +457,7 @@ export default function Settings() {
             <View style={{ gap: 8, marginTop: 14 }}>
               <View style={{ flexDirection: 'row' }}><Btn t="Save a backup" kind="primary" onPress={() => { close(); router.push('/export' as any); }} /></View>
               <View style={{ flexDirection: 'row' }}><Btn t="Restore from a file" onPress={async () => {
-                try { const t = await pickText(); if (t == null) return; const b = parseBackup(t); if (!b) return setBkErr('That file is not a My Life backup. Choose the Backup (JSON) file you saved from Export. Excel, PDF and CSV files cannot be restored.'); setBk(b); setDlg('confirm'); }
+                try { const t = await pickText(); if (t == null) return; const b = parseBackup(t); if (!b) return setBkErr('That file is not a My Life 1.0 backup. Choose the Backup (JSON) file you saved from Export. Excel, PDF and CSV files cannot be restored.'); setBk(b); setDlg('confirm'); }
                 catch (e) { setBkErr('Could not open that file.'); }
               }} /></View>
               <View style={{ flexDirection: 'row' }}><Btn t="Cancel" onPress={close} /></View>
@@ -469,7 +477,7 @@ export default function Settings() {
             </View>
           </View></Overlay>
         )}
-        {dlg === 'howto' && <Doc title="How to use My Life" secs={HOWTO} onClose={close} />}
+        {dlg === 'howto' && <Doc title="How to use My Life 1.0" secs={HOWTO} onClose={close} />}
         {dlg === 'faq' && <Doc title="Help and FAQ" secs={FAQ} onClose={close} />}
         {dlg === 'lic' && <Doc title="Open-source licences" secs={LICENCES} onClose={close} />}
         {dlg === 'backup' && <Doc title="Encrypted backup & restore" secs={[{ h: 'Coming with sync', p: 'Backups will be encrypted and tied to your account. For now you can save a full copy with Export, using the Backup (JSON) format.' }]} onClose={close} />}
@@ -477,7 +485,7 @@ export default function Settings() {
 
         {dlg === 'out' && (
           <Overlay onClose={close}><View style={{ padding: 20, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
-            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Log out of My Life?</Text>
+            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Log out of My Life 1.0?</Text>
             <Text style={{ color: DIM, fontSize: 13, lineHeight: 19, marginTop: 6 }}>Your data is backed up first. You will need your email and password to sign back in on this device.</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}><Btn t="Cancel" onPress={close} /><Btn t="Log out" kind="danger" onPress={async () => { await syncNow(); close(); await signOut(); }} /></View>
           </View></Overlay>

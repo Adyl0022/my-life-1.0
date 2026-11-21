@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, Animated, Easing, AccessibilityInfo, Vibration, Platform } from 'react-native';
+import { View, ScrollView, Animated, Easing, AccessibilityInfo, Vibration, Platform } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
+import { useTabSlide, useTabPill } from '../components/TabSlide';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '../lib/haptics';
 import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { Blob } from '../components/Bg';
@@ -14,7 +16,7 @@ import { CardArt } from '../components/CardArt';
 import { PageArt } from '../components/PageArt';
 import { useStored } from '../lib/store';
 import { TOP } from '../lib/layout';
-import { HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
+import { weekOffs, HData, HEMPTY, fmtTime, dateOf, getDay } from '../lib/habit';
 import { BREATH, STYLES, LOOK, mins, fmtMin, weekMins, relaxStreak, recentSess, addSess, delSess, nowHM } from '../lib/relax';
 import { dayKind } from '../lib/cycle';
 import { scheduleRelaxEnd, cancelRelaxEnd } from '../lib/alerts';
@@ -134,17 +136,18 @@ export default function Relax() {
   const router = useRouter();
   const [h, setH] = useStored<HData>('ml_habit', HEMPTY);
   const [tab, setTab] = useState<'b' | 'm' | 'r'>('b');
+  const slide = useTabSlide(['b', 'm', 'r'].indexOf(tab));
   const [bk, setBk] = useState('box'); const [bl, setBl] = useState(180);
   const [mk, setMk] = useState('sit'); const [ml, setMl] = useState(10); const [cust, setCust] = useState(false); const [cm, setCm] = useState('');
   const [run, setRun] = useState<Run | null>(null); const [reduce, setReduce] = useState(false);
-  const [rem, setRem] = useState(''); const [remErr, setRemErr] = useState(''); const [delKey, setDelKey] = useState<string | null>(null);
+  const [rem, setRem] = useState(''); const [remErr, setRemErr] = useState(''); const [rN, setRN] = useState(0); const [delKey, setDelKey] = useState<string | null>(null);
   useEffect(() => { try { AccessibilityInfo.isReduceMotionEnabled().then(setReduce); } catch (e) {} }, []);
   const goal = h.rlGoal || 10; const bell = h.rlBell !== false;
   const today = mins(getDay(h, 0));
   const start = (r: Run) => setRun(r);
   const startM = () => { const m = cust ? Math.round(+cm) : ml; if (!(m >= 1 && m <= 90)) return; start({ kind: 'm', k: mk, total: m * 60 }); };
   const save = (sec: number) => setH(addSess(h, { k: run ? run.k : 'sit', s: Math.round(sec), at: nowHM() }));
-  const week = Array.from({ length: 7 }, (_, i) => { const off = i - 6; return { off, d: dateOf(off), m: mins(getDay(h, off)) }; });
+  const week = weekOffs().map((off) => { return { off, d: dateOf(off), m: mins(getDay(h, off)) }; });
   const mx = Math.max(10, ...week.map((x) => x.m));
   const Row = ({ ic, n, d, sel, onPress }: { ic: string; n: string; d: string; sel?: boolean; onPress?: () => void }) => (
     <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: sel ? 'rgba(94,231,223,.14)' : 'rgba(255,255,255,.09)', borderWidth: 2, borderColor: sel ? T : 'transparent' }}>
@@ -154,7 +157,7 @@ export default function Relax() {
   );
   const setRemind = () => {
     const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(rem);
-    if (!m) { setRemErr('Type the time as 24-hour, for example 07:00.'); return; }
+    if (!m) { setRemErr('Type the time as 24-hour, for example 07:00.'); setRN((n) => n + 1); return; }
     setRemErr(''); setH({ ...h, rlRem: String(+m[1]).padStart(2, '0') + ':' + m[2] }); setRem('');
   };
   return (
@@ -174,6 +177,7 @@ export default function Relax() {
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 14 }}>
                 <Chip on={tab === 'b'} t="Breathe" onPress={() => setTab('b')} /><Chip on={tab === 'm'} t="Meditate" onPress={() => setTab('m')} /><Chip on={tab === 'r'} t="Record" onPress={() => setTab('r')} />
               </View>
+              <Animated.View style={slide}>
               {tab === 'b' ? (
                 <>
                   {h.cyOn && dayKind(h, 0) !== 'other' ? <Glass radius={20} style={{ marginTop: 14, padding: 12 }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{dayKind(h, 0) === 'period' ? 'On your period?' : 'Your period may be close.'}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, lineHeight: 17, marginTop: 4 }}>Slow breathing such as Deep belly or Calm 4-7-8 can feel soothing. A warm drink, some water and a little rest help too.</Text></Glass> : null}
@@ -194,7 +198,7 @@ export default function Relax() {
                     {[5, 10, 15, 20].map((m) => <Chip key={m} on={!cust && ml === m} t={String(m)} onPress={() => { setCust(false); setMl(m); }} />)}
                     <Chip on={cust} t="Custom" onPress={() => setCust(true)} />
                   </View>
-                  {cust ? <Inp value={cm} onChangeText={(v: string) => setCm(v.replace(/\D/g, '').slice(0, 2))} placeholder="Minutes, 1 to 90" keyboardType="number-pad" style={{ marginTop: 10 }} /> : null}
+                  {cust ? <Inp min={1} max={90} value={cm} onChangeText={(v: string) => setCm(v.replace(/\D/g, '').slice(0, 2))} placeholder="Minutes, 1 to 90" keyboardType="number-pad" style={{ marginTop: 10 }} /> : null}
                   <Pressable onPress={() => setH({ ...h, rlBell: !bell })} style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: bell ? T : 'rgba(255,255,255,.4)', backgroundColor: bell ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{bell ? <Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>✓</Text> : null}</View>
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Soft bell when the timer ends</Text>
@@ -209,7 +213,7 @@ export default function Relax() {
                     {[[fmtMin(today), 'min today'], [fmtMin(weekMins(h)), 'min this week'], [String(relaxStreak(h)), 'day streak']].map((x) => <View key={x[1]} style={{ alignItems: 'center' }}><Text style={{ color: W, fontSize: 22, fontWeight: '800' }}>{x[0]}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 4 }}>{x[1]}</Text></View>)}
                   </Glass>
                   <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-                    <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Last 7 days</Text>
+                    <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>This week</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 90, marginTop: 10 }}>
                       {week.map((x) => <View key={x.off} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}><View style={{ width: '100%', height: Math.max(x.m > 0 ? 6 : 0, (x.m / mx) * 70), borderRadius: 8, backgroundColor: x.m >= goal ? T : 'rgba(94,231,223,.5)' }} /><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 10.5, marginTop: 4 }}>{['S', 'M', 'T', 'W', 'T', 'F', 'S'][x.d.getDay()]}</Text></View>)}
                     </View>
@@ -236,7 +240,7 @@ export default function Relax() {
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>{[5, 10, 15, 20].map((m) => <Chip key={m} on={goal === m} t={m + ' min'} onPress={() => setH({ ...h, rlGoal: m })} />)}</View>
                     <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 14 }}>{h.rlRem ? 'Reminder every day at ' + h.rlRem : 'Reminder: off'}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                      <View style={{ flex: 1 }}><Inp value={rem} onChangeText={(v: string) => setRem(fmtTime(v))} placeholder="24-hour, e.g. 07:00" keyboardType="number-pad" maxLength={5} /></View>
+                      <View style={{ flex: 1 }}><Inp value={rem} onChangeText={(v: string) => { setRem(fmtTime(v)); setRemErr(''); }} placeholder="24-hour, e.g. 07:00" keyboardType="number-pad" maxLength={5} bad={remErr ? rN : 0} /></View>
                       <Chip on t="Set" onPress={setRemind} />
                       {h.rlRem ? <Chip on={false} t="Clear" onPress={() => { const n = { ...h }; delete n.rlRem; setH(n); }} /> : null}
                     </View>
@@ -244,6 +248,7 @@ export default function Relax() {
                   </Glass>
                 </>
               ) : null}
+              </Animated.View>
             </>
           )}
         </ScrollView>

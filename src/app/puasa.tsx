@@ -1,5 +1,8 @@
+import { SlidePills, EqPills } from '../components/TabSlide';
+import { weekStart, weekBack } from '../lib/region';
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,12 +10,14 @@ import { useRouter } from 'expo-router';
 import { Glass } from '../components/Glass';
 import { IslamicBg, Header, Ic } from '../components/IslamicUi';
 import { Inp, W } from '../components/Ui';
+import { tryForm } from '../lib/num';
 import { FastMonths } from '../components/FastMonths';
 import { PuasaSky, RamadanHero, Crescent, Lantern, TipIcon, Bob } from '../components/PuasaArt';
 import { Rise, FillBar, GrowBar } from '../components/Anim';
 import { useStored } from '../lib/store';
 import { HEMPTY, HData, cupsGoal } from '../lib/habit';
 import { PUASA_EMPTY, PuasaData, FKind, ramadanState, ramadanOf, qadhaOwed, hijriText, hijriOf, hijriStart, HMON, DAYN, isHaram, sunatToday, sunatYear, sunatLabel, keyD, addDays, diffDays, parseK } from '../lib/fasting';
+import { QURAN_FONT, fixAr } from '../lib/islamic';
 
 const dim = 'rgba(255,255,255,.68)';
 const G = '#34d399';
@@ -83,7 +88,7 @@ export default function Puasa() {
   const at = (date: Date): FKind | undefined => { const k = keyD(date); return p.days[k] || (hd.days && hd.days[k] && hd.days[k].fast ? 's' : undefined); };
   const cycleRam = (date: Date) => { const v = p.days[keyD(date)]; mark(date, !v ? 'r' : v === 'r' ? 'x' : null); };
   const toggleLog = (date: Date) => { if (isHaram(date, off)) return; const v = p.days[keyD(date)]; mark(date, v === logAs ? null : logAs); };
-  const saveQ = () => { const n = parseInt(qIn, 10); if (n >= 0 && n <= 999) { const done = Object.keys(p.days).filter((k) => p.days[k] === 'q').length; const logged = owed + done - (p.qBase || 0); setP({ ...p, qBase: Math.max(0, n + done - logged) }); } setQEd(false); setQIn(''); };
+  const saveQ = () => { const n = parseInt(qIn, 10); if (!(n >= 0 && n <= 999)) tryForm('qdays'); if (n >= 0 && n <= 999) { const done = Object.keys(p.days).filter((k) => p.days[k] === 'q').length; const logged = owed + done - (p.qBase || 0); setP({ ...p, qBase: Math.max(0, n + done - logged) }); } setQEd(false); setQIn(''); };
   const setRam = (y: number, patch: { start?: string; len?: number }) => setP({ ...p, start: patch.start ? { ...p.start, [String(y)]: patch.start } : p.start, len: patch.len ? { ...p.len, [String(y)]: patch.len } : p.len });
 
   const sunToday = sunatToday(today, off);
@@ -122,14 +127,7 @@ export default function Puasa() {
       <PuasaSky />
       <SafeAreaView style={{ flex: 1 }}>
         <Header title="Fasting" sub={hijriText(today, off)} />
-        <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginHorizontal: 20, marginTop: 14 }}>
-          {['Ramadan', 'Sunnah', 'Tips'].map((n, i) => (
-            <Pressable key={n} onPress={() => setTab(i)} style={{ flex: 1 }}>
-              {tab === i ? <LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}><Text style={{ color: '#06281c', fontSize: 13, fontWeight: '800' }}>{n}</Text></LinearGradient>
-                : <View style={{ paddingVertical: 8, alignItems: 'center' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>{n}</Text></View>}
-            </Pressable>
-          ))}
-        </View>
+        <View style={{ marginHorizontal: 20, marginTop: 14 }}><EqPills tabs={['Ramadan', 'Sunnah', 'Tips']} index={tab} onChange={setTab} colors={['#34d399', '#5ee7df']} textOn="#06281c" fontSize={13} /></View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 50, gap: 12 }}>
           {tab === 0 && (<>
             {st.phase === 'during' ? (
@@ -206,7 +204,7 @@ export default function Puasa() {
               ) : <Text style={{ color: dim, fontSize: 12.5, marginTop: 8 }}>You have no missed fasts to make up. Alhamdulillah.</Text>}
               {qEd ? (
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                  <Inp style={{ flex: 1 }} keyboardType="number-pad" value={qIn} onChangeText={setQIn} placeholder="Days you owe now" onSubmitEditing={saveQ} />
+                  <Inp form="qdays" need="how many days you owe" zeroOk max={999} style={{ flex: 1 }} keyboardType="number-pad" value={qIn} onChangeText={setQIn} placeholder="Days you owe now" onSubmitEditing={saveQ} />
                   <Btn t="Save" on onPress={saveQ} />
                 </View>
               ) : <Pressable onPress={() => { setQEd(true); setQIn(String(owed)); }}><Text style={{ color: '#8fe9e2', fontSize: 12, fontWeight: '700', marginTop: 10 }}>Set how many days you owe from before ✎</Text></Pressable>}
@@ -268,7 +266,7 @@ export default function Puasa() {
               </View>
               {(() => {
                 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const dow = (today.getDay() + 6) % 7; const mon = addDays(today, -dow + wkOff * 7); const days = Array.from({ length: 7 }, (_, k) => addDays(mon, k));
+                const dow = weekBack(today); const mon = addDays(today, -dow + wkOff * 7); const days = Array.from({ length: 7 }, (_, k) => addDays(mon, k));
                 const a = days[0], z = days[6]; const label = a.getDate() + (a.getMonth() === z.getMonth() ? '' : ' ' + MN[a.getMonth()]) + ' – ' + z.getDate() + ' ' + MN[z.getMonth()] + (a.getFullYear() !== today.getFullYear() ? ' ' + z.getFullYear() : '');
                 const nav = (t: string, on: boolean, f: () => void) => <Pressable disabled={!on} onPress={f} hitSlop={8} style={{ width: 38, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center', opacity: on ? 1 : 0.35 }}><Text style={{ color: W, fontSize: 18, fontWeight: '800', marginTop: -2 }}>{t}</Text></Pressable>;
                 return (
@@ -279,7 +277,7 @@ export default function Puasa() {
                       {nav('›', wkOff < 0, () => setWkOff(wkOff + 1))}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 12 }}>
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((n) => <Text key={n} style={{ flex: 1, textAlign: 'center', color: dim, fontSize: 10.5, fontWeight: '700' }}>{n}</Text>)}
+                      {[0, 1, 2, 3, 4, 5, 6].map((k) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][(weekStart() + k) % 7]).map((n) => <Text key={n} style={{ flex: 1, textAlign: 'center', color: dim, fontSize: 10.5, fontWeight: '700' }}>{n}</Text>)}
                     </View>
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 5 }}>
                       {days.map((d, k) => {
@@ -346,7 +344,7 @@ export default function Puasa() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><H t="Why fasting is good" s="From the Quran" /><Bob><Crescent size={54} /></Bob></View>
               {VERSES.map((v) => (
                 <View key={v.ref} style={{ marginTop: 14 }}>
-                  <Text style={{ color: W, fontSize: 22, lineHeight: 38, textAlign: 'right', writingDirection: 'rtl' as any }}>{v.ar}</Text>
+                  <Text style={{ color: W, fontSize: 22, fontFamily: QURAN_FONT, lineHeight: 44, textAlign: 'right', writingDirection: 'rtl' as any }}>{fixAr(v.ar)}</Text>
                   <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 13, lineHeight: 20, marginTop: 8 }}>{v.ms}</Text>
                   <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, lineHeight: 19, marginTop: 6, fontStyle: 'italic' }}>{v.en}</Text>
                   <Text style={{ color: '#8fe9e2', fontSize: 11.5, fontWeight: '700', marginTop: 4 }}>{v.ref}</Text>

@@ -1,5 +1,7 @@
+import { SlidePills, EqPills } from '../components/TabSlide';
 import React, { Fragment, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { Pressable } from '../components/Press';
 import { KbScroll } from '../components/KbScroll';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -66,15 +68,7 @@ function FamilyEventsInner() {
         <Header title="Activities" sub="Plans the family does together" right={<NewBtn onPress={() => edit()} />} />
         <KbScroll contentContainerStyle={{ padding: 20, paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
           {e.offline ? <Note t={e.msg || "You are offline. Showing the last saved list."} /> : null}
-          <View style={{ flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,.3)', borderRadius: 999, padding: 3, borderWidth: 1, borderColor: 'rgba(255,255,255,.15)', marginBottom: 14 }}>
-            {(['list', 'cal'] as const).map((k) => (
-              <Pressable key={k} onPress={() => setTab(k)}>
-                {tab === k
-                  ? <LinearGradient colors={['#ff8fab', '#ffc46b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingVertical: 7, paddingHorizontal: 18, borderRadius: 999 }}><Text style={{ color: '#2a1740', fontSize: 13, fontWeight: '800' }}>{k === 'list' ? 'List' : 'Calendar'}</Text></LinearGradient>
-                  : <View style={{ paddingVertical: 7, paddingHorizontal: 18 }}><Text style={{ color: DIM, fontSize: 13 }}>{k === 'list' ? 'List' : 'Calendar'}</Text></View>}
-              </Pressable>
-            ))}
-          </View>
+          <SlidePills tabs={['List', 'Calendar']} index={tab === 'list' ? 0 : 1} onChange={(i) => setTab(i === 0 ? 'list' : 'cal')} colors={['#ff8fab', '#ffc46b']} textOn="#2a1740" padX={18} style={{ marginBottom: 14 }} />
           {tab === 'cal' ? <FamCalendar info={info} events={e.rows} tasks={tk.rows} onEvent={(id) => edit(id)} onTask={(id) => router.push({ pathname: '/family-task-edit', params: { id } } as any)} onNew={(d) => edit(undefined, d)} /> : null}
           {tab === 'list' ? <Rise>
             {next.length ? <><Label t="Coming up" />{next.map((x) => <Fragment key={x.id}>{Row({ x })}</Fragment>)}</> : null}

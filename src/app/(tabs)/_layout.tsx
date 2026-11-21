@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Animated, Easing, Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View, Animated, Easing, Platform } from 'react-native';
+import { Pressable } from '../../components/Press';
+import * as Haptics from '../../lib/haptics';
 import RA, { useSharedValue, useAnimatedStyle, withTiming, interpolate, Easing as REasing } from 'react-native-reanimated';
 import { subscribeNav, setNavCollapsed } from '../../lib/navbar';
 import { Text } from '../../components/Txt';

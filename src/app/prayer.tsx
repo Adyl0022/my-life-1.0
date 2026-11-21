@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Pressable, Platform } from 'react-native';
+import { View, ScrollView, Platform } from 'react-native';
+import { Pressable } from '../components/Press';
 import * as Location from 'expo-location';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -47,7 +48,7 @@ export default function Prayer() {
             </>) : (
               <View style={{ marginTop: 8 }}>
                 <Text style={{ color: W, fontSize: 15, fontWeight: '700' }}>{pr.status === 'loading' ? 'Finding your location…' : pr.status === 'denied' ? 'Location is off' : 'Could not load prayer times'}</Text>
-                {(pr.status === 'error' || pr.status === 'denied') && <><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>{pr.status === 'denied' ? 'Allow location so My Life can find your JAKIM zone, or choose your zone yourself.' : 'Check your internet connection. Times are saved for the month after the first successful load.'}</Text><View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}><SBtn t="Try again" kind="primary" onPress={pr.retry} /><SBtn t="Choose zone" onPress={() => setPick(true)} /></View></>}
+                {(pr.status === 'error' || pr.status === 'denied') && <><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>{pr.status === 'denied' ? 'Allow location so My Life 1.0 can find your JAKIM zone, or choose your zone yourself.' : 'Check your internet connection. Times are saved for the month after the first successful load.'}</Text><View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}><SBtn t="Try again" kind="primary" onPress={pr.retry} /><SBtn t="Choose zone" onPress={() => setPick(true)} /></View></>}
               </View>
             )}
           </Glass>
