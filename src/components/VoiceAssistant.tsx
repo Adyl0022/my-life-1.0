@@ -10,6 +10,7 @@ import { OrbLive } from './OrbLive';
 import { Blob } from './Bg';
 import { micAllowed, listen, speak, stopSpeaking, voiceCommand, VLANGS, vlang, voicesFor, voicePref, setVoicePref, sample, speechPack, VoiceOpt } from '../lib/voice';
 import { useLangPacks, xlText, flagOf } from '../lib/xlate';
+import { useName } from '../lib/store';
 
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -67,7 +68,7 @@ function Wave({ target, width }: { target: React.MutableRefObject<number>; width
 // The Assistant by voice. It talks to the same Assistant as the chat screen (chat.current), so everything it can do by typing it can do by voice,
 // and the whole talk is also kept in the chat afterwards.
 export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: boolean; chat: React.MutableRefObject<any>; onClose: () => void; onOpen: (route: string) => void }) {
-  const packs = useLangPacks();
+  const packs = useLangPacks(); const myName = (useName() || '').trim().split(' ')[0];
   const [phase, setPhase] = useState<Phase>('idle');
   const [heard, setHeard] = useState(''); const [reply, setReply] = useState(''); const [err, setErr] = useState('');
   const [vk, setVk] = useState('en'); const vkR = useRef('en');
@@ -93,7 +94,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
     const start = voicePref().lang || (C() && C().state && C().state.lang === 'ms' ? 'ms' : 'en');
     pickLang(start, true);
     setHeard(''); setReply(''); setErr(''); setPhase('idle'); setNote('');
-    begin();
+    greet();
     return () => { live.current = false; if (C()) C().voice = false; stopL.current(); stopSpeaking(); };
   }, [visible]);
   useEffect(() => {
@@ -110,6 +111,19 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
     if (c === 'language-not-supported' || c === 'service-not-allowed') return L('Speech recognition is not available for this language on your phone. Try getting the offline speech pack in the settings.', 'Pengecaman suara tiada untuk bahasa ini pada telefon awak. Cuba muat turun pek suara luar talian dalam tetapan.');
     if (c === 'network') return L('No internet for speech recognition. Connect and try again.', 'Tiada internet untuk pengecaman suara. Sambung internet dan cuba lagi.');
     return L('I could not hear you. Try again.', 'Saya tak dengar awak. Cuba lagi.');
+  };
+  // On opening, the screen settles for a moment, then the Assistant greets by name and starts listening.
+  const greet = async () => {
+    const t0 = Date.now(); setErr('');
+    if (!(await micAllowed())) { if (live.current) { setErr(errText('not-allowed')); setPhase('idle'); } return; }
+    const wait = 3500 - (Date.now() - t0); if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    if (!live.current) return;
+    if (isX() && !packs.ready(vkR.current)) { begin(); return; }
+    const nm = myName ? ' ' + myName : '';
+    const txt = await tr('Hi' + nm + ', how can I help you today?', 'Hai' + nm + ', apa yang boleh saya bantu hari ini?');
+    if (!live.current) return;
+    setReply(txt); setPhase('speaking');
+    speak(txt, outTag(), () => { if (live.current) { setReply(''); listenOnce(); } });
   };
   const begin = async () => {
     setErr('');
@@ -236,7 +250,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
             </Pressable>
           </View>
 
-          <View style={{ alignItems: 'center', marginTop: 24 }}>
+          <View style={{ alignItems: 'center', marginTop: 64 }}>
             <View style={{ width: 150, height: 150, alignItems: 'center', justifyContent: 'center' }}>
               <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, backgroundColor: phase === 'listening' ? 'rgba(255,143,171,.30)' : 'rgba(124,156,255,.28)', opacity: amp.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.95] }), transform: [{ scale: amp.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }] }} />
               <Animated.View style={{ transform: [{ scale: Animated.add(amp.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.14] }), glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.03] })) }] }}><OrbLive size={104} /></Animated.View>

@@ -1,6 +1,6 @@
 export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
-  { h: 'My Life Live', p: '•  New live voice screen: a moving wave while you talk and while it answers\n•  Chat about anything, pick a male or female sound, speed and how long it waits\n•  Talk in Chinese, Tamil, Arabic and 20 more languages with a language pack (about 30 MB)' },
+  { h: 'My Life Live', p: '•  New live voice screen: a moving wave while you talk and while it answers\n•  It greets you by name, then chat about anything. Pick a male or female sound, speed and how long it waits\n•  Talk in Chinese, Tamil, Arabic and 20 more languages with a language pack (about 30 MB)' },
   { h: 'Reminders on time', p: '•  Settings, Notifications has a new button that opens your phone\'s battery setting, so reminders are not stopped or late' },
   { h: 'More in Stats and Insights', p: '•  Stats, Money: your total money and your subscriptions each month and year\n•  Stats, Health: your pulse this week\n•  Insights now tells you when an account is below zero, a subscription or trial is about to charge, or your pulse stays high' },
   { h: 'Calmer heart log', p: '•  The watch now adds one pulse reading every 6 hours, so the notebook stays short and tidy\n•  The photo cut-out tells you to tap CROP at the top right to finish' },
