@@ -226,7 +226,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View pointerEvents="none" style={{ position: 'absolute', right: -30, top: -30, width: 150, height: 150, borderRadius: 75, backgroundColor: 'rgba(183,148,255,.30)' }} />
       <Animated.View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.07] }) }] }}><Orb size={60} badge={false} /></Animated.View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text numberOfLines={1} style={{ color: '#d9c9ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>MY LIFE LIVE</Text>
+        <Text numberOfLines={1} style={{ color: '#d9c9ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>MY LIFE ASSISTANT</Text>
         <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>Talk to your Assistant</Text>
         <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.92)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>Tap, then just ask or tell it what to do</Text>
       </View>
