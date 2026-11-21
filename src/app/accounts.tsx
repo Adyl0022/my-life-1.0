@@ -23,7 +23,7 @@ import { cs, useRegion } from '../lib/region';
 import { TransferDone, type TransferInfo } from '../components/TransferDone';
 import { takePhoto } from '../lib/photo';
 import { DEBT_EMPTY, DebtData, remaining } from '../lib/debts';
-import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
+import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, refOf, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -143,7 +143,7 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
       const fa = accs.find((a) => a.id === from), ta = accs.find((a) => a.id === to);
       const fb = fa ? balanceOf(fa, data, spends, feeds) : undefined; const tb = ta ? balanceOf(ta, data, spends, feeds) : undefined;
       const pay = !!(ta && isLiab(ta));
-      setDone({ amt: n, from: fa ? fa.name : '', to: ta ? ta.name : '', date: nice(date), ref: 'ML' + date.replace(/-/g, '').slice(2) + String(m.id).padStart(4, '0'), pay, fromC: fa ? groupOf(fa.g).c : undefined, toC: ta ? groupOf(ta.g).c : undefined, fromBal: fb, fromAfter: fb != null ? Math.round((fb - n) * 100) / 100 : undefined, toBal: tb, toAfter: tb != null ? Math.round((pay ? tb - n : tb + n) * 100) / 100 : undefined });
+      setDone({ amt: n, from: fa ? fa.name : '', to: ta ? ta.name : '', date: nice(date), ref: refOf(m), pay, fromC: fa ? groupOf(fa.g).c : undefined, toC: ta ? groupOf(ta.g).c : undefined, fromBal: fb, fromAfter: fb != null ? Math.round((fb - n) * 100) / 100 : undefined, toBal: tb, toAfter: tb != null ? Math.round((pay ? tb - n : tb + n) * 100) / 100 : undefined });
     } else onClose();
   };
   return (<>
@@ -170,7 +170,7 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
 
 // ---------- One account ----------
 function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; onClose: () => void; onEdit: () => void; onMove: (m: MoveMode) => void }) {
-  const { data, setData, spends, feeds } = ctx; const a = data.accs.find((x) => x.id === id); const [all, setAll] = useState(false);
+  const { data, setData, spends, feeds } = ctx; const a = data.accs.find((x) => x.id === id); const [all, setAll] = useState(false); const [ex, setEx] = useState('');
   if (!a) return null;
   const grp = groupOf(a.g); const liab = grp.liab; const b = balanceOf(a, data, spends, feeds); const ls = linesOf(a, data, spends, feeds); const shown = all ? ls : ls.slice(0, 8);
   return (
@@ -189,16 +189,36 @@ function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; on
       </View>
       <Lab t="WHAT CHANGED" />
       {ls.length === 0 ? <Text style={{ color: dim, fontSize: 13, lineHeight: 19 }}>Nothing yet. When you log spending and choose this account, or add money or a transfer, it shows here.</Text> : null}
-      {shown.map((l) => (
-        <View key={l.key} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)', gap: 10 }}>
-          <View style={{ flex: 1 }}>
+      {shown.map((l) => {
+        const mv = l.mv; const open = ex === l.key && !!mv; const nm = (x?: number) => (data.accs.find((y) => y.id === x) || { name: 'Another account' }).name;
+        return (<View key={l.key} style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 }}>
+          <Pressable disabled={!mv} onPress={() => setEx(open ? '' : l.key)} accessibilityLabel={mv ? 'Details of ' + l.text : l.text} style={{ flex: 1 }}>
             <Text numberOfLines={1} style={{ color: W, fontSize: 14, fontWeight: '700' }}>{l.text}</Text>
-            <Text style={{ color: dim, fontSize: 11.5, marginTop: 2 }}>{nice(l.date) + (l.kind === 'spend' ? ' · Spending Tracker' : l.kind === 'debt' ? ' · Commitments' : l.kind === 'income' ? ' · My Finance income' : '')}</Text>
-          </View>
+            <Text style={{ color: dim, fontSize: 11.5, marginTop: 2 }}>{nice(l.date) + (l.kind === 'spend' ? ' · Spending Tracker' : l.kind === 'debt' ? ' · Commitments' : l.kind === 'income' ? ' · My Finance income' : mv && mv.kind !== 'adjust' ? ' · Ref ' + refOf(mv) : '')}</Text>
+          </Pressable>
           <Text style={{ color: (liab ? l.delta > 0 : l.delta < 0) ? PINK : '#5ee7b5', fontSize: 14, fontWeight: '800' }}>{(l.delta > 0 ? '+' : '-') + cs() + money(Math.abs(l.delta))}</Text>
           {l.kind === 'move' ? <Pressable onPress={() => { buzz(); confirmDelete('this entry', () => setData({ ...data, moves: data.moves.filter((m) => m.id !== l.ref) })); }} hitSlop={8} accessibilityLabel="Delete entry"><Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 18, fontWeight: '800' }}>×</Text></Pressable> : null}
         </View>
-      ))}
+        {open && mv ? (
+          <View style={{ marginBottom: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
+            {([
+              ['Type', mv.kind === 'transfer' ? (liab ? (mv.to === a.id ? 'Payment' : 'Cash taken') : 'Transfer') : mv.kind === 'deposit' ? 'Money in' : 'Balance set'],
+              ...(mv.kind === 'transfer' ? [['From', nm(mv.from)], ['To', nm(mv.to)]] : [['Account', nm(mv.to)]]),
+              ['Amount', cs() + money(mv.amt)], ['Date', nice(mv.date)],
+              ...(mv.kind !== 'adjust' ? [['Reference', refOf(mv)]] : []),
+              ...(mv.note ? [['Note', mv.note]] : []),
+              ['Status', 'Successful'],
+            ] as string[][]).map(([k, v]) => (
+              <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 }}>
+                <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12.5 }}>{k}</Text>
+                <Text selectable style={{ color: k === 'Status' ? '#7df0c6' : '#fff', fontSize: 12.5, fontWeight: '700', textAlign: 'right', flexShrink: 1 }}>{v}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+        </View>);
+      })}
       {ls.length > 8 ? <Tap onPress={() => setAll(!all)} style={{ marginTop: 8, alignSelf: 'flex-start' }}><Text style={{ color: '#8fe9e2', fontSize: 13, fontWeight: '800' }}>{all ? 'Show fewer' : 'Show all ' + ls.length}</Text></Tap> : null}
       <Tap onPress={() => confirmDelete(a.name, () => { setData({ ...data, accs: data.accs.filter((x) => x.id !== a.id), moves: data.moves.filter((m) => m.from !== a.id && m.to !== a.id) }); onClose(); }, { message: 'The account and its money movements are removed. Your spending stays, but it is no longer linked to an account.' })} style={{ marginTop: 22, alignItems: 'center', paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,143,163,.5)' }}>
         <Text style={{ color: '#ff8fa3', fontSize: 13.5, fontWeight: '800' }}>Delete account</Text>
@@ -270,7 +290,7 @@ export default function Accounts() {
             const gs0 = GROUPS.filter((g) => g.liab === sec.liab && data.accs.some((a) => a.g === g.k));
             const posOf = (k: string) => { const i = gOrd.indexOf(k); return i < 0 ? 100 + GROUPS.findIndex((g) => g.k === k) : i; };
             const gs = [...gs0].sort((x, y) => sortI === 1 ? sumG(y.k) - sumG(x.k) : sortI === 2 ? sumG(x.k) - sumG(y.k) : sortI === 3 ? x.plural.localeCompare(y.plural) : posOf(x.k) - posOf(y.k));
-            const moveG = (k: string, d: number) => { const keys = gs.map((g) => g.k); const i = keys.indexOf(k); const j = i + d; if (i < 0 || j < 0 || j >= keys.length) return; const t2 = keys[i]; keys[i] = keys[j]; keys[j] = t2; setGOrd([...keys, ...gOrd.filter((x) => !keys.includes(x))]); }; const showCm = sec.liab && cms.length > 0; if (!gs.length && !showCm) return null;
+            const moveG = (k: string, d: number) => { const keys: string[] = gs.map((g) => g.k); const i = keys.indexOf(k); const j = i + d; if (i < 0 || j < 0 || j >= keys.length) return; const t2 = keys[i]; keys[i] = keys[j]; keys[j] = t2; setGOrd([...keys, ...gOrd.filter((x) => !keys.includes(x))]); }; const showCm = sec.liab && cms.length > 0; if (!gs.length && !showCm) return null;
             return (
               <Glass key={sec.title} radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
                 <LinearGradient colors={sec.tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
