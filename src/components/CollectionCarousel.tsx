@@ -10,7 +10,7 @@ import { EMPTY_COL, type ColStore, type Item, num, rm, dueOf, worthNow, photosOf
 import { validDate } from '../lib/documents';
 
 // Personal Collection top card: turns by itself every 10 seconds, swipe to change, hold to pause. Same behaviour as the My Record and Islamic Hub cards.
-const CH = 196;
+const CH = 224;
 function Glass({ children, style, radius = 22 }: { children: React.ReactNode; style?: any; radius?: number }) {
   return (
     <View style={[{ borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.18)', backgroundColor: 'rgba(255,255,255,.035)' }, style]}>
@@ -32,14 +32,15 @@ export function CollectionCarousel() {
   const loans = ((st && st.loans) || []).filter((l) => !l.done);
   const now = new Date(); const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
   const of = (c: string) => items.filter((x) => x.cat === c).sort((a, b) => b.id - a.id);
-  const gad = of('gadget'), lif = of('lifestyle'), prop = of('property');
+  const gad = of('gadget'), lif = of('lifestyle'), prop = of('property'), veh = of('vehicle');
   const spent = (l: Item[]) => l.reduce((s, x) => s + num(x.price), 0);
-  const gadWorth = gad.reduce((s, x) => { const w = worthNow(x, now); return s + (w != null ? w : num(x.price)); }, 0);
+  const worthSum = (l: Item[]) => l.reduce((s, x) => { const w = worthNow(x, now); return s + (w != null ? w : num(x.price)); }, 0);
+  const gadWorth = worthSum(gad), vehWorth = worthSum(veh);
   const war = gad.filter((x) => x.warranty && validDate(x.warranty)).map((x) => ({ x, n: dayN(x.warranty) - dayN(today) })).sort((a, b) => a.n - b.n);
   const lent = loans.filter((l) => l.dir === 'lent' && l.what === 'money').reduce((s, l) => s + num(l.amount), 0);
   const borrowed = loans.filter((l) => l.dir === 'borrowed' && l.what === 'money').reduce((s, l) => s + num(l.amount), 0);
   const loanRows = loans.map((l) => ({ l, d: dueOf(l, now) })).sort((a, b) => (a.d.hot === b.d.hot ? 0 : a.d.hot ? -1 : 1));
-  const valueOf = (x: Item) => { const w = x.cat === 'gadget' ? worthNow(x, now) : x.cat === 'property' && num(x.worth || '') > 0 ? num(x.worth || '') : null; return w != null ? w : num(x.price); };
+  const valueOf = (x: Item) => { const w = x.cat === 'gadget' || x.cat === 'vehicle' ? worthNow(x, now) : x.cat === 'property' && num(x.worth || '') > 0 ? num(x.worth || '') : null; return w != null ? w : num(x.price); };
   const total = items.reduce((s, x) => s + valueOf(x), 0);
   const top = items.slice().sort((a, b) => valueOf(b) - valueOf(a)).filter((x) => valueOf(x) > 0);
   const noPhoto = items.filter((x) => photosOf(x).length === 0).length; const noPrice = items.filter((x) => !(num(x.price) > 0)).length;
@@ -113,9 +114,10 @@ const kinds = ['all', 'need', 'top', 'ready', 'tip'];
               { l: 'Gadgets · ' + gad.length, r: rm(Math.round(gadWorth)), c: '#8ea8ff' },
               { l: 'Lifestyle · ' + lif.length, r: rm(Math.round(spent(lif))), c: '#ff8fab' },
               { l: 'Property · ' + prop.length, r: rm(Math.round(spent(prop))), c: '#8fe9e2' },
-              { l: 'Lend & Borrow · ' + loans.length, r: (lent > 0 ? 'Lent ' + rm(lent) : '') + (lent > 0 && borrowed > 0 ? ' · ' : '') + (borrowed > 0 ? 'Borrowed ' + rm(borrowed) : '') || 'None open', c: '#ffe3c2' },
+              { l: 'Vehicles · ' + veh.length, r: rm(Math.round(vehWorth)), c: '#ffb86b' },
+              { l: 'Lent & Borrowed · ' + loans.length, r: (lent > 0 ? 'Lent ' + rm(lent) : '') + (lent > 0 && borrowed > 0 ? ' · ' : '') + (borrowed > 0 ? 'Borrowed ' + rm(borrowed) : '') || 'None open', c: '#ffe3c2' },
             ] : []}
-            foot={[countOf(items.length, 'thing') + ' saved', 'About ' + rm(Math.round(total))]} empty={['Everything you own', 'Save your gadgets, lifestyle items and property, and what you lent or borrowed. A summary shows here.']} />
+            foot={[countOf(items.length, 'thing') + ' saved', 'About ' + rm(Math.round(total))]} empty={['Everything you own', 'Save your gadgets, lifestyle items, property and vehicles, and what you lent or borrowed. A summary shows here.']} />
         ) : cur === 'need' ? (
           <Slide label="NEEDS YOUR ATTENTION" rows={need}
             foot={[need.some((x) => x.c === '#ff6b81' || x.c === '#ff9aa9') ? 'Something is due' : 'Coming up soon', 'Open ›']} empty={['All good', 'No warranty ending soon and nothing to return. Nothing needs you right now.']} />

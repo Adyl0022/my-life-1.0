@@ -221,14 +221,14 @@ export function Commitments({ income }: { income: number }) {
       ) : null}
 
       {done.filter((x) => !x.fixed && x.bal > 0 && !(asked || []).includes(x.id)).slice(0, 1).map((x) => {
-        const vehicle = /motor|motosikal|kereta|car|bike|vehicle|van|lori|truck/i.test(x.name);
+        const vk = /motor|motosikal|bike|\bmotor/i.test(x.name) ? 'Motorcycle' : /lori|lorry|truck/i.test(x.name) ? 'Lorry' : /\bvan\b/i.test(x.name) ? 'Van' : /kereta|\bcar\b|vehicle|kenderaan/i.test(x.name) ? 'Car' : '';
         return (
           <Glass key={'asset' + x.id} radius={20} style={{ marginTop: 10, padding: 14 }}>
             <LinearGradient colors={['rgba(142,168,255,.3)', 'rgba(183,148,255,.18)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
             <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{x.name + ' is paid off'}</Text>
             <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Add it to Your things? The form opens already filled in. You check it, then tap Save. It then counts in Your assets in My Accounts.</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-              <Pressable onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setAsked([...(asked || []), x.id]); router.push({ pathname: '/collection-items', params: { c: 'lifestyle', n: x.name, p: String(x.bal), d: x.since + '-01', k: vehicle ? 'Vehicle' : 'Other' } } as any); }} accessibilityLabel={'Add ' + x.name + ' to Your things'} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+              <Pressable onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setAsked([...(asked || []), x.id]); router.push({ pathname: '/collection-items', params: { c: vk ? 'vehicle' : 'lifestyle', n: x.name, p: String(x.bal), d: x.since + '-01', k: vk || 'Other' } } as any); }} accessibilityLabel={'Add ' + x.name + ' to Your things'} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
                 <LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#10153a', fontSize: 14, fontWeight: '800' }}>Add</Text></LinearGradient>
               </Pressable>
               <Pressable onPress={() => setAsked([...(asked || []), x.id])} accessibilityLabel={'Not now for ' + x.name} style={({ pressed }) => ({ flex: 1, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', transform: [{ scale: pressed ? 0.97 : 1 }] })}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Not now</Text></Pressable>

@@ -10,7 +10,7 @@ async function photoSrc(u: string): Promise<string> {
 }
 
 export async function itemsPdf(items: Item[], name?: string): Promise<boolean> {
-  const order: ItemCat[] = ['gadget', 'lifestyle', 'property'];
+  const order: ItemCat[] = ['gadget', 'lifestyle', 'property', 'vehicle'];
   let paid = 0, worth = 0, guessed = false; let withPhoto = 0;
   let body = '';
   for (const cat of order) {

@@ -179,7 +179,7 @@ export async function syncColAlerts(col: { items?: any[]; loans?: any[] }, tg: T
       const what = l.what === 'money' ? cs() + Math.max(0, (parseFloat(String(l.amount).replace(',', '.')) || 0) - (l.pays || []).reduce((t: number, p: any) => t + (p.a > 0 ? p.a : 0), 0)) : l.title;
       const lead = l.remind === '3d' ? 3 : 0; const t = at9(l.due, lead); if (!t) return;
       const when = lead ? 'Due in 3 days' : 'Due today';
-      todo.push({ id: 'col-loan-' + l.id, at: t, title: l.dir === 'lent' ? when + ': ' + l.who + ' should return ' + what : when + ': return ' + what + ' to ' + l.who, body: 'Open Lend & Borrow to mark it returned.' });
+      todo.push({ id: 'col-loan-' + l.id, at: t, title: l.dir === 'lent' ? when + ': ' + l.who + ' should return ' + what : when + ': return ' + what + ' to ' + l.who, body: 'Open Lent & Borrowed to mark it returned.' });
     });
     ((col && col.items) || []).forEach((x) => {
       if (x.cat !== 'gadget' || !x.warranty) return; const t = at9(x.warranty, 30); if (!t) return;

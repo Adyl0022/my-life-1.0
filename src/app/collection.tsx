@@ -50,7 +50,10 @@ export default function Screen() {
         </View>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Card icon="prop" title={CATS.property.title} sub={CATS.property.sub} c={ACC.property} onPress={() => go('/collection-items?c=property')} />
-          <Card icon="lent" title="Lend & Borrow" sub="Money and things" c={ACC.loans} onPress={() => go('/loans')} />
+          <Card icon="car" title={CATS.vehicle.title} sub={CATS.vehicle.sub} c={ACC.vehicle} onPress={() => go('/collection-items?c=vehicle')} />
+        </View>
+        <View style={{ flexDirection: 'row' }}>
+          <Card wide icon="lent" title="Lent & Borrowed" sub="Money and things" c={ACC.loans} onPress={() => go('/loans')} />
         </View>
         <CollectionCarousel />
       </View>

@@ -31,7 +31,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
     <View style={{ flexDirection: 'row', gap: 8 }}>{[a, b].map(([k, t]) => <Pressable key={k} onPress={() => fn(k)} accessibilityLabel={t} style={{ flex: 1 }}><View style={chip(cur === k, ACC.loans)}><Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{t}</Text></View></Pressable>)}</View>
   );
   return (
-    <SheetFrame title={f.id ? 'Edit' : 'Add'} sub="Lend & Borrow" onClose={onClose}>
+    <SheetFrame title={f.id ? 'Edit' : 'Add'} sub="Lent & Borrowed" onClose={onClose}>
       <Lab t="WHO HAS IT?" />
       {two(['lent', 'I lent it'], ['borrowed', 'I borrowed it'], f.dir, (v) => set({ dir: v as any }))}
       <Lab t="WHAT" />
@@ -115,7 +115,7 @@ export default function Screen() {
   const what = (l: Loan) => (l.what === 'money' ? l.who : l.title);
   const sub = (l: Loan) => (l.what === 'money' ? (paidOf(l) > 0 ? rm(leftOf(l)) + ' left of ' + rm(num(l.amount)) : rm(num(l.amount))) + ' · ' + (l.dir === 'lent' ? 'lent ' : 'borrowed ') + dmy(l.date) : (l.dir === 'lent' ? 'Lent to ' : 'Borrowed from ') + l.who + ' · ' + dmy(l.date));
   return (
-    <RecordPage title="Lend & Borrow" sub={open.length + ' open'} right={plus} bg={<ColArt />}>
+    <RecordPage title="Lent & Borrowed" sub={open.length + ' open'} right={plus} bg={<ColArt />}>
       <Intro plain title="Never forget who has what" text="Money and things you lent or borrowed" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View onLayout={pill.onLayout} style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)', marginTop: 12 }}>
         {pill.indicator}

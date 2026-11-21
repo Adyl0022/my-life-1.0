@@ -242,11 +242,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Personal Collection",
-  "s": "Gadgets, lifestyle, property, lend and borrow",
+  "s": "Gadgets, lifestyle, property, vehicles, lent and borrowed",
   "m": "Record",
   "c": "#3df0ff",
   "h": "Record.dc.html",
-  "k": "life lesson pengajaran lesson of the day setiap hari dashboard card personal collection gadget gadgets phone laptop warranty waranti lifestyle shoes bag property house land rent lent borrowed pinjam hutang utang loan lessons life lesson pengajaran barang koleksi worth value nilai estimate anggaran condition keadaan like new good worn broken warranty days left baki hari waranti link papers receipt resit grid list view photos gambar whatsapp remind polite reminder history sejarah part payment bayar separa baki pdf insurance insurans senarai barang my things"
+  "k": "life lesson pengajaran lesson of the day setiap hari dashboard card personal collection gadget gadgets phone laptop warranty waranti lifestyle shoes bag vehicle vehicles motorcycle motosikal kereta car kenderaan property house land rent lent borrowed pinjam hutang utang loan lessons life lesson pengajaran barang koleksi worth value nilai estimate anggaran condition keadaan like new good worn broken warranty days left baki hari waranti link papers receipt resit grid list view photos gambar whatsapp remind polite reminder history sejarah part payment bayar separa baki pdf insurance insurans senarai barang my things"
  },
  {
   "t": "Spending from a sentence",
