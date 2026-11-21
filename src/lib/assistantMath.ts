@@ -36,7 +36,7 @@ export function mathReply(q: string, lang: string): string {
   if (t.length > 90 || !/\d/.test(t)) return '';
   if (/\d{1,4}[-/.]\d{1,2}[-/.]\d{2,4}/.test(t)) return ''; // a date, not a sum
   // square root: "punca kuasa dua 144", "square root of 144", "sqrt 144"
-  const sq = /(?:punca\s+kuasa\s+dua|punca\s+kuasa|square\s+root(?:\s+of)?|sqrt)\s*(?:bagi|untuk|of)?\s*(\d+(?:\.\d+)?)/.exec(t);
+  const sq = /(?:punca\s*kuasa\s*dua|punca\s*kuasa|punca\s*dua|akar\s*kuasa\s*dua|akar\s*dua|akar|square\s*root(?:\s+of)?|sq\s*root|sqrt|root(?:\s+of)?|√)\s*(?:bagi|untuk|of|\()?\s*(\d+(?:\.\d+)?)/.exec(t);
   if (sq) { const v = Math.sqrt(parseFloat(sq[1])); const a = fmt(v); return a ? (ms ? 'Punca kuasa dua ' + fmt(parseFloat(sq[1])) + ' = ' + a : 'The square root of ' + fmt(parseFloat(sq[1])) + ' = ' + a) : ''; }
   // percent: "15% daripada 200", "what is 15 percent of 200", "berapa 10 peratus dari 350"
   const pc = /(\d+(?:\.\d+)?)\s*(?:%|peratus|percent|per cent)\s*(?:of|dari|daripada|from)\s*(\d+(?:\.\d+)?)/.exec(t);
