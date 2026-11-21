@@ -39,7 +39,7 @@ export function CollectionCarousel() {
   const lent = loans.filter((l) => l.dir === 'lent' && l.what === 'money').reduce((s, l) => s + num(l.amount), 0);
   const borrowed = loans.filter((l) => l.dir === 'borrowed' && l.what === 'money').reduce((s, l) => s + num(l.amount), 0);
   const loanRows = loans.map((l) => ({ l, d: dueOf(l, now) })).sort((a, b) => (a.d.hot === b.d.hot ? 0 : a.d.hot ? -1 : 1));
-  const valueOf = (x: Item) => { const w = x.cat === 'gadget' ? worthNow(x, now) : null; return w != null ? w : num(x.price); };
+  const valueOf = (x: Item) => { const w = x.cat === 'gadget' ? worthNow(x, now) : x.cat === 'property' && num(x.worth || '') > 0 ? num(x.worth || '') : null; return w != null ? w : num(x.price); };
   const total = items.reduce((s, x) => s + valueOf(x), 0);
   const top = items.slice().sort((a, b) => valueOf(b) - valueOf(a)).filter((x) => valueOf(x) > 0);
   const noPhoto = items.filter((x) => photosOf(x).length === 0).length; const noPrice = items.filter((x) => !(num(x.price) > 0)).length;

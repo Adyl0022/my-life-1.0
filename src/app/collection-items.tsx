@@ -73,6 +73,10 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
         <Inp form="colitem" noCheck={false} zeroOk style={{ marginTop: 9 }} value={f.worth || ''} onChangeText={(x: string) => set({ worth: x })} keyboardType="decimal-pad" placeholder={'What it is worth now in ' + cu() + ' (optional)'} />
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Know the price it sells for now? Type it. If you leave it empty, My Life 1.0 makes a guess from the price, age, kind, brand and condition.</Text>
       </>) : null}
+      {f.cat === 'property' ? (<>
+        <Inp form="colitem" noCheck={false} zeroOk style={{ marginTop: 9 }} value={f.worth || ''} onChangeText={(x: string) => set({ worth: x })} keyboardType="decimal-pad" placeholder={'What it is worth now in ' + cu() + ' (optional)'} />
+        <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>Prices of houses and land often go up. Type what it is worth now, and My Accounts uses it. If you leave it empty, the price you paid is used.</Text>
+      </>) : null}
       <Lab t="DATE BOUGHT" />
       {check(f.noBought, "I do not remember the date", () => set({ noBought: !f.noBought }))}
       {!f.noBought ? <DateField value={f.bought} onChange={(v: string) => set({ bought: v })} past /> : null}
@@ -120,7 +124,7 @@ export default function Screen() {
   const openNew = () => setF(blank(cat));
   const openEdit = (x: Item) => setF({ ...x, cond: x.cond || 'good', worth: x.worth || '', photos: photosOf(x), docIds: (x.docIds || []).filter((i) => docs.some((d) => d.id === i)), noBought: !x.bought, noW: !x.warranty, bought: x.bought || ymd(new Date()), warranty: x.warranty || ymd(new Date(Date.now() + 365 * 86400000)) });
   const save = () => {
-    if (!f) return; const { noBought, noW, ...rest } = f; const it: Item = { ...rest, name: f.name.trim(), price: f.price.trim(), bought: noBought ? '' : f.bought, warranty: !C.warranty || noW ? '' : f.warranty, note: f.note.trim(), photos: (f.photos || []).slice(0, 5), photo: (f.photos || [])[0] || '', docIds: f.docIds || [], worth: C.warranty ? (f.worth || '').trim() : '', cond: C.warranty ? f.cond || 'good' : undefined };
+    if (!f) return; const { noBought, noW, ...rest } = f; const it: Item = { ...rest, name: f.name.trim(), price: f.price.trim(), bought: noBought ? '' : f.bought, warranty: !C.warranty || noW ? '' : f.warranty, note: f.note.trim(), photos: (f.photos || []).slice(0, 5), photo: (f.photos || [])[0] || '', docIds: f.docIds || [], worth: C.warranty || f.cat === 'property' ? (f.worth || '').trim() : '', cond: C.warranty ? f.cond || 'good' : undefined };
     if (it.id) setSt({ ...st, items: all.map((x) => (x.id === it.id ? it : x)) });
     else setSt({ ...st, items: [...all, { ...it, id: st.next }], next: st.next + 1 });
     setF(null);

@@ -401,7 +401,7 @@ export default function Accounts() {
               <LinearGradient colors={['rgba(142,168,255,.3)', 'rgba(183,148,255,.18)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
               <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR THINGS</Text>
               <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{'~ ' + rmC(tv.total)}</Text>
-              {[['Gadgets', tv.gadget, 'gets less valuable each year'], ['Lifestyle', tv.lifestyle, 'gets less valuable each year'], ['Property', tv.property, 'kept at the price you paid']].filter((r) => (r[1] as number) > 0).map((r) => (
+              {[['Gadgets', tv.gadget, 'gets less valuable each year'], ['Lifestyle', tv.lifestyle, 'gets less valuable each year'], ['Property', tv.property, 'your own worth, or the price you paid']].filter((r) => (r[1] as number) > 0).map((r) => (
                 <View key={r[0] as string} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)', marginTop: 6 }}>
                   <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{r[0] as string}</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{r[2] as string}</Text></View>
                   <Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{rmC(r[1] as number)}</Text>

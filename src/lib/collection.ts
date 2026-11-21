@@ -66,11 +66,11 @@ export function worthNow(x: Item, now = new Date()): number | null {
   return Math.round(Math.min(price, price * Math.max(0.12, base) * cf));
 }
 
-/** What a thing counts for in My Accounts. Gadgets use the worth-now guess. Lifestyle things lose value every year, down to 30 percent. Property keeps what you paid, because houses and land rarely go down. Rent is not owned, so it counts for nothing. Only a guess, not a market price. */
+/** What a thing counts for in My Accounts. Gadgets use the worth-now guess. Lifestyle things lose value every year, down to 30 percent. Property uses the worth you type, or what you paid, because houses and land rarely go down. Rent is not owned, so it counts for nothing. Only a guess, not a market price. */
 export function assetNow(x: Item, now = new Date()): number {
-  const price = num(x.price); if (!(price > 0)) return 0;
+  const price = num(x.price); if (x.cat === 'property' && num(x.worth || '') > 0 && x.kind !== 'Rent') return num(x.worth || ''); if (!(price > 0)) return 0;
   if (x.cat === 'gadget') { const w = worthNow(x, now); return w != null ? w : price; }
-  if (x.cat === 'property') return x.kind === 'Rent' ? 0 : price;
+  if (x.cat === 'property') { const w = num(x.worth || ''); return x.kind === 'Rent' ? 0 : w > 0 ? w : price; }
   const cf = (CONDS.find((c) => c.k === (x.cond || 'good')) || CONDS[1]).f;
   const yrs = x.bought && validDate(x.bought) ? Math.max(0, (dayN(ymd(now)) - dayN(x.bought)) / 365) : 0;
   return Math.round(Math.min(price, price * Math.max(0.3, 1 - 0.15 * yrs) * cf));
