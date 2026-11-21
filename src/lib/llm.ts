@@ -170,7 +170,7 @@ export async function smartRaw(user: string, sys: string): Promise<string> {
   } catch (e) { return ''; }
 }
 
-export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = [], onPart?: (t: string) => void, voice = false): Promise<string> {
+export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = [], onPart?: (t: string) => void, voice = false, ctx = ''): Promise<string> {
   if (!(smartOk || gemmaOk) || !READY) return '';
   const ms = lang === 'ms';
   const big = TIER === 'g' || TIER === 'q';
@@ -179,6 +179,7 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
     + 'Talk like a thoughtful friend: answer questions, explain things step by step, write and fix code (put code in a code block), give your own opinion with short reasons when asked, brainstorm, and chat naturally. '
     + 'Answer in ' + (ms ? 'Bahasa Malaysia' : 'the same language as the question') + '. '
     + KIND_RULE[kind]
+    + (ctx ? 'Below is the person\'s own saved data from the app. When the question is about them (money, spending, habits, tasks, plans, documents), answer ONLY from this data, quote the numbers exactly as written, do simple sums carefully, and if the answer is not in the data say you do not see it in their records. Never make up numbers. For any other question ignore it.\nDATA:\n' + ctx + '\nEND OF DATA.\n' : '')
     + (task || kind === 'code' || kind === 'chat' ? '' : (big ? 'Be thorough but not long-winded: a few short paragraphs or a short list is fine. ' : 'Keep it short and clear: up to 6 sentences. '))
     + (/\b(today|now|current|currently|latest|news|price|score|weather|president|prime minister|minister|sekarang|terkini|hari ini|harga|presiden|perdana menteri)\b/i.test(q) ? 'You have no internet and your facts may be out of date. Answer with what you know, and add one short note about that, only once. ' : '')
     + (voice ? 'This is a spoken conversation, so your words are read aloud: answer in one to three short, natural sentences, like a friend talking. No lists, no code, no headings and no marks such as asterisks. When asked for an opinion, give one with a short reason. ' : '')

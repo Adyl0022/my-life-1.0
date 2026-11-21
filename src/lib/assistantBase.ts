@@ -8,6 +8,8 @@ import { cs, cu, curCode, regionCC, regionCountry } from './region';
 import { modOn } from './hidden';
 import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
+import { mathReply } from './assistantMath';
+import { dataDigest } from './assistantDigest';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
@@ -301,6 +303,10 @@ export class AssistantBase extends React.Component<any, any> {
     const dnow = s.tasks.filter(t => t.s === 'done').length;
     const isAfford = /(mampu|afford|boleh ke|boleh saya beli|patut ke|should i buy|can i buy|worth it)/i.test(q);
     const act = isAfford ? null : this.parseAct(q, qf);
+    if (!act && !cmdWater) {
+      const mr = mathReply(q, lang);
+      if (mr) return { m: mk(mr), patch: {}, act: null };
+    }
     if (!act && !cmdWater) {
       const ch = chatReply(q, lang);
       if (ch) return { m: mk(ch), patch: {}, act: null };
@@ -692,7 +698,7 @@ export class AssistantBase extends React.Component<any, any> {
       if ((smartOk || gemmaOk) && smartReady()) {
         const hist = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
         this.liveShown = 0; this.liveTarget = '';
-        const a = await smartAsk(q, lang, vc ? hv : hist, (t: string) => this.setLive(t), vc);
+        const a = await smartAsk(q, lang, vc ? hv : hist, (t: string) => this.setLive(t), vc, dataDigest(this.R(), (smartModelName().indexOf('Gemma') >= 0 || smartModelName().indexOf('3.5') >= 0) ? 2600 : 900));
         await this.finishLive();
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0, src: 'device', mdl: smartModelName() }); return r; }
       } else if (vc && !onlineOn()) {
