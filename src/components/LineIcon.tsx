@@ -45,6 +45,7 @@ export function LineIcon({ name, c = '#fff', size = 24, w = 1.6 }: { name: strin
     case 'building': g = <><Rect x={5.5} y={3.5} width={13} height={17.5} rx={1.6} {...p} />{P('M9 7.5h1.5M13.5 7.5H15M9 11h1.5M13.5 11H15M10.5 21v-3.5h3V21')}</>; break;
     case 'money': g = <><Rect x={3} y={6.5} width={18} height={11} rx={2} {...p} /><Circle cx={12} cy={12} r={2.6} {...p} /></>; break;
     case 'tool': g = <>{P('M14.5 6.5a4 4 0 0 0-5.2 5L3.8 17a1.8 1.8 0 0 0 2.6 2.6l5.5-5.5a4 4 0 0 0 5-5.2l-2.6 2.6-2.4-.6-.6-2.4z')}</>; break;
+    case 'vehicle': g = <><Circle cx={6.5} cy={16.5} r={2.8} {...p} /><Circle cx={17.5} cy={16.5} r={2.8} {...p} />{P('M6.5 16.5 9 9h4.5l2.3 4.2')}{P('M13.5 9H16')}{P('M17.5 16.5 15.8 13.2H10')}</>; break;
     case 'swap': g = <>{P('M4 8h14.5')}{P('m15 4.5 3.7 3.5L15 11.5')}{P('M20 16H5.5')}{P('m9 12.5-3.7 3.5L9 19.5')}</>; break;
     case 'bulb': g = <>{P('M9.2 17.2c0-1.6-2.7-2.6-2.7-6a5.5 5.5 0 0 1 11 0c0 3.4-2.7 4.4-2.7 6z')}{P('M9.5 20.2h5M10.4 22.2h3.2')}</>; break;
     case 'play': g = <><Rect x={3} y={5} width={18} height={14} rx={3.2} {...p} />{P('M10.2 9.4l4.6 2.6-4.6 2.6z')}</>; break;

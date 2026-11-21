@@ -21,7 +21,7 @@ export const kindIcon = (cat: ItemCat, kind: string): KindIcon => (cat === 'life
 
 export const CATS: Record<ItemCat, { title: string; one: string; e: string; sub: string; text: string; kinds: [string, string][]; warranty: boolean }> = {
   gadget: { title: 'Gadgets', one: 'gadget', e: 'phone', sub: 'Phone, laptop, watch', text: 'Your devices, with their price and warranty', warranty: true, kinds: [['Phone', 'phone'], ['Laptop', 'laptop'], ['Watch', 'watch'], ['Audio', 'audio'], ['Camera', 'camera'], ['Other', 'plug']] },
-  lifestyle: { title: 'Lifestyle', one: 'item', e: 'shoes', sub: 'Shoes, bags, perfume', text: 'The nice things you own and what they cost', warranty: false, kinds: [['Shoes', 'shoes'], ['Bag', 'bag'], ['Clothes', 'shirt'], ['Perfume', 'perfume'], ['Jewellery', 'ring'], ['Other', 'gift']] },
+  lifestyle: { title: 'Lifestyle', one: 'item', e: 'shoes', sub: 'Shoes, bags, perfume', text: 'The nice things you own and what they cost', warranty: false, kinds: [['Shoes', 'shoes'], ['Bag', 'bag'], ['Clothes', 'shirt'], ['Perfume', 'perfume'], ['Jewellery', 'ring'], ['Vehicle', 'vehicle'], ['Other', 'gift']] },
   property: { title: 'Property', one: 'property', e: 'house', sub: 'House, land, rent', text: 'Houses, land and anything you rent', warranty: false, kinds: [['House', 'house'], ['Land', 'land'], ['Rent', 'rent'], ['Shop', 'shop'], ['Other', 'building']] },
 };
 export const kindEmoji = (cat: ItemCat, kind: string) => (CATS[cat].kinds.find((k) => k[0] === kind) || CATS[cat].kinds[CATS[cat].kinds.length - 1])[1];
@@ -66,7 +66,7 @@ export function worthNow(x: Item, now = new Date()): number | null {
   return Math.round(Math.min(price, price * Math.max(0.12, base) * cf));
 }
 
-/** What a thing counts for in My Accounts. Gadgets use the worth-now guess. Lifestyle things lose value every year, down to 30 percent. Property uses the worth you type, or what you paid, because houses and land rarely go down. Rent is not owned, so it counts for nothing. Only a guess, not a market price. */
+/** What a thing counts for in My Accounts. Gadgets use the worth-now guess. Lifestyle things, vehicles too, lose value every year, down to 30 percent. Property uses the worth you type, or what you paid, because houses and land rarely go down. Rent is not owned, so it counts for nothing. Only a guess, not a market price. */
 export function assetNow(x: Item, now = new Date()): number {
   const price = num(x.price); if (x.cat === 'property' && num(x.worth || '') > 0 && x.kind !== 'Rent') return num(x.worth || ''); if (!(price > 0)) return 0;
   if (x.cat === 'gadget') { const w = worthNow(x, now); return w != null ? w : price; }

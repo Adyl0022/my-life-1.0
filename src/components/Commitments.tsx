@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Glass } from './Glass';
 import { Inp, W } from './Ui';
 import { useStored } from '../lib/store';
+import { useRouter } from 'expo-router';
 import { SAV_EMPTY, SavData } from '../lib/savings';
 import { ACC_EMPTY, AccData, groupOf } from '../lib/accounts';
 import { DEBT_EMPTY, DebtData, Debt, remaining, monthsLeft, dueDay, isActive, amountDue, yearsMonths, payoffLabel, ymOf, syncDebtAlerts } from '../lib/debts';
@@ -27,6 +28,7 @@ const Stat = ({ l, v, c }: { l: string; v: string; c?: string }) => (
 const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => <Toggle on={on} onPress={() => set(!on)} label={label} colors="#ffc46b" thumbOn="#2a1030" />;
 
 export function Commitments({ income }: { income: number }) {
+  const router = useRouter(); const [asked, setAsked] = useStored<number[]>('ml_commit_asset', []);
   const [d, setD] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
   const [sav] = useStored<SavData>('ml_savings', SAV_EMPTY); const [gl, setGl] = useState(0); const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const [pf, setPf] = useState(0);
   const [adding, setAdding] = useState(false); const [edit, setEdit] = useState(0);
@@ -218,6 +220,22 @@ export function Commitments({ income }: { income: number }) {
         </View>
       ) : null}
 
+      {done.filter((x) => !x.fixed && x.bal > 0 && !(asked || []).includes(x.id)).slice(0, 1).map((x) => {
+        const vehicle = /motor|motosikal|kereta|car|bike|vehicle|van|lori|truck/i.test(x.name);
+        return (
+          <Glass key={'asset' + x.id} radius={20} style={{ marginTop: 10, padding: 14 }}>
+            <LinearGradient colors={['rgba(142,168,255,.3)', 'rgba(183,148,255,.18)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+            <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>{x.name + ' is paid off'}</Text>
+            <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Add it to Your things? The form opens already filled in. You check it, then tap Save. It then counts in Your assets in My Accounts.</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+              <Pressable onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setAsked([...(asked || []), x.id]); router.push({ pathname: '/collection-items', params: { c: 'lifestyle', n: x.name, p: String(x.bal), d: x.since + '-01', k: vehicle ? 'Vehicle' : 'Other' } } as any); }} accessibilityLabel={'Add ' + x.name + ' to Your things'} style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+                <LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#10153a', fontSize: 14, fontWeight: '800' }}>Add</Text></LinearGradient>
+              </Pressable>
+              <Pressable onPress={() => setAsked([...(asked || []), x.id])} accessibilityLabel={'Not now for ' + x.name} style={({ pressed }) => ({ flex: 1, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', transform: [{ scale: pressed ? 0.97 : 1 }] })}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Not now</Text></Pressable>
+            </View>
+          </Glass>
+        );
+      })}
       {done.length > 0 ? (
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{done.length + (done.length === 1 ? ' debt' : ' debts') + ' cleared: ' + done.map((x) => x.name).join(', ')}</Text>
       ) : null}

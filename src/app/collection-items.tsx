@@ -1,7 +1,7 @@
 import { LineIcon } from '../components/LineIcon';
 import { photoSyncOn } from '../lib/sync';
 import { cu, cs, useRegion } from '../lib/region';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Image, Platform } from 'react-native';
 import { Pressable } from '../components/Press';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -105,7 +105,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
 
 export default function Screen() {
   useRegion(); // follows the chosen currency
-  const { c } = useLocalSearchParams<{ c?: string }>();
+  const { c, n: pn, p: pp, d: pd, k: pk } = useLocalSearchParams<{ c?: string; n?: string; p?: string; d?: string; k?: string }>();
   const cat: ItemCat = c === 'lifestyle' || c === 'property' ? c : 'gadget';
   const C = CATS[cat]; const g = BTN; const ac = ACC[cat];
   const [st, setSt] = useStored<ColStore>('ml_collection', EMPTY_COL);
@@ -122,6 +122,8 @@ export default function Screen() {
   const missing = C.warranty ? mine.filter((x) => worthNow(x) == null).length : 0;
   const inW = mine.filter((x) => { const s = wStatus(x); return s && s.n != null && s.n >= 0; }).length;
   const openNew = () => setF(blank(cat));
+  // Coming from a paid-off commitment: the form opens already filled in, and nothing is saved until you tap Save.
+  useEffect(() => { if (pn) setF({ ...blank(cat), name: String(pn), price: pp ? String(pp) : '', kind: CATS[cat].kinds.some((k) => k[0] === pk) ? String(pk) : CATS[cat].kinds[0][0], bought: pd && validDate(String(pd)) ? String(pd) : ymd(new Date()), noBought: !(pd && validDate(String(pd))) }); }, [pn]);
   const openEdit = (x: Item) => setF({ ...x, cond: x.cond || 'good', worth: x.worth || '', photos: photosOf(x), docIds: (x.docIds || []).filter((i) => docs.some((d) => d.id === i)), noBought: !x.bought, noW: !x.warranty, bought: x.bought || ymd(new Date()), warranty: x.warranty || ymd(new Date(Date.now() + 365 * 86400000)) });
   const save = () => {
     if (!f) return; const { noBought, noW, ...rest } = f; const it: Item = { ...rest, name: f.name.trim(), price: f.price.trim(), bought: noBought ? '' : f.bought, warranty: !C.warranty || noW ? '' : f.warranty, note: f.note.trim(), photos: (f.photos || []).slice(0, 5), photo: (f.photos || [])[0] || '', docIds: f.docIds || [], worth: C.warranty || f.cat === 'property' ? (f.worth || '').trim() : '', cond: C.warranty ? f.cond || 'good' : undefined };
