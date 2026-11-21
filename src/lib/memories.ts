@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useStored } from './store';
 import { useSession } from './auth';
 import { HData, HEMPTY, bestStreakAll, MON } from './habit';
+import { expState } from './patterns';
 
 // "Your Memories with My Life 1.0": everything here is worked out on the phone from data the app already saves for the signed-in person.
 // Nothing is made up. Only two small things are stored: which memories the person chose to hide, and the day a badge was first seen unlocked.
@@ -72,6 +73,9 @@ export function useMemories(): Memories {
     const firstPlan = minOf(planDone.filter((e) => valid(e.doneAt)).map((e) => e.doneAt.slice(0, 10)));
     const days = start ? Math.max(1, Math.floor((parse(today).getTime() - parse(start).getTime()) / 86400000) + 1) : 0;
     const streak = bestStreakAll(h || HEMPTY);
+    const xs = ((h || HEMPTY).exps || []).filter((e) => e.ok); const xFirst = minOf(xs.filter((e) => e.okAt).map((e) => e.okAt as string));
+    const perfect = xs.filter((e) => { const st = expState(e, h || HEMPTY); return !!st && st.hit >= st.tpl.days; });
+    const xPerfect = minOf(perfect.filter((e) => e.okAt).map((e) => e.okAt as string));
     const B = (id: string, title: string, how: string, icon: string, color: string, cur: number, goal: number, at?: string): Badge => ({ id, title, how, icon, color, cur: Math.min(cur, goal), goal, ok: cur >= goal, at });
     const badges: Badge[] = [
       B('first-note', 'First Note', 'Write your first note', '📝', '#ffb45e', nums.notes, 1, firstNote),
@@ -81,6 +85,9 @@ export function useMemories(): Memories {
       B('first-plan', 'Plan Achieved', 'Mark an event as done', '🎯', '#8ea8ff', nums.plans, 1, firstPlan),
       B('habit-7', '7-Day Habit Streak', 'Reach 70% of your daily goal 7 days in a row', '🔥', '#ff8fab', streak, 7),
       B('habit-30', '30-Day Habit Streak', 'Reach 70% of your daily goal 30 days in a row', '🌟', '#b794ff', streak, 30),
+      B('exp-1', 'First Experiment', 'Finish an experiment and press OK', '🧪', '#8fe9e2', xs.length, 1, xFirst),
+      B('exp-5', '5 Experiments', 'Finish 5 experiments', '🔬', '#7c9cff', xs.length, 5),
+      B('exp-perfect', 'Perfect Experiment', 'Meet the target on every day of an experiment', '💯', '#7df0c6', perfect.length, 1, xPerfect),
       B('first-record', 'First Record', 'Save something in My Record', '🏍️', '#7df0c6', nums.records, 1, recFirst || undefined),
       B('records-50', '50 Records', 'Save 50 records', '📚', '#5ee7df', nums.records, 50),
       B('days-30', '30 Days with My Life 1.0', 'Use My Life 1.0 for 30 days', '🌱', '#7df0a0', days, 30, start ? addDays(start, 29) : undefined),

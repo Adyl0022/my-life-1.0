@@ -274,6 +274,23 @@ export async function syncRelaxAlert(time: string | undefined, on: boolean): Pro
     });
   } catch (e) { /* ignore */ }
 }
+// A daily nudge at 8:30 pm for each running experiment that has its reminder on, so a day is not forgotten.
+export async function syncExpAlerts(list: { id: string; title: string; day: number; days: number }[], on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await cancelPrefix('exp-rem');
+    if (!on || !list.length) return;
+    if (!(await setup())) return;
+    if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('experiments', { name: 'Experiment reminders', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#7df0c6' });
+    for (const x of list) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'exp-rem-' + x.id,
+        content: { title: 'Experiment: ' + x.title, body: 'Day ' + x.day + ' of ' + x.days + '. Log today in Habit & Health so it counts.', sound: false },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: 20, minute: 30, channelId: 'experiments' } as any,
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
 // A soft bell when a meditation ends, in case the screen has locked.
 export async function scheduleRelaxEnd(seconds: number): Promise<void> {
   if (Platform.OS === 'web') return;

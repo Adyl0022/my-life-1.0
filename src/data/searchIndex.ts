@@ -326,7 +326,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "experiment experiments challenge cabaran eksperimen before after sleep tidur steps water"
+  "k": "experiment experiments history run again note reminder own target share challenge cabaran eksperimen before after sleep tidur steps water"
  },
  {
   "t": "Relax",

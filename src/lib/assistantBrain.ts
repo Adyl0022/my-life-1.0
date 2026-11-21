@@ -416,7 +416,7 @@ export function think(A, q, lang) {
     }
     // Experiments: status when one is running, otherwise how to start
     if (has(['experiment', 'eksperimen'])) {
-      const sts = ((R.hd && R.hd.exps) || []).map((e) => expState(e, R.hd)).filter(Boolean);
+      const sts = ((R.hd && R.hd.exps) || []).filter((e: any) => !e.ok).map((e) => expState(e, R.hd)).filter(Boolean);
       const live = sts.filter((x) => !x.done); const fin = sts.filter((x) => x.done);
       const howto = has(['how', 'macam mana', 'cara', 'start', 'mula', 'new', 'baru', 'what is', 'apa itu', 'apa tu']) && !has(['going', 'doing', 'jalan', 'status', 'saya', 'my']);
       if (live.length && !howto) return done(mk(L('Your running experiment' + (live.length > 1 ? 's' : '') + ':\n', 'Eksperimen awak yang sedang berjalan:\n') + live.map((x) => L('• ' + x.tpl.title + ': day ' + x.dayNo + ' of ' + x.tpl.days + ', target met on ' + x.hit + ' of ' + x.logged + ' recorded days', '• ' + x.tpl.title + ': hari ' + x.dayNo + ' daripada ' + x.tpl.days + ', sasaran dicapai ' + x.hit + ' daripada ' + x.logged + ' hari direkod')).join('\n'), Object.assign({ big: live[0].hit + '/' + live[0].logged, bigLbl: L('days on target', 'hari capai sasaran'), color: '#5ee7df' }, open)), {}, null, { intent: 'experiments' });

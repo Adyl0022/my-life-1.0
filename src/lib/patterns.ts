@@ -107,13 +107,14 @@ export function avgRange(h: HData, from: number, to: number): Win {
 export const windowAvg = (h: HData, end: number): Win => avgRange(h, end - 6, end);
 
 // Experiments: small tests of the person's own habits. Only things the app already records can be counted.
-export type Ctx = { goal: number; cg: number; date: Date; meds: { id: string; days?: number[] }[] };
-export type Tpl = { id: string; cat: string; title: string; days: number; note: string; ok: (x: HDay, c: Ctx) => boolean | null };
+export type Ctx = { goal: number; cg: number; date: Date; meds: { id: string; days?: number[] }[]; t: number };
+/** `own` kinds let the person choose the number: from `min` to `max` in steps of `step`, starting at `def`, and `mk` writes the title. */
+export type Tpl = { id: string; cat: string; title: string; days: number; note: string; ok: (x: HDay, c: Ctx) => boolean | null; own?: { min: number; max: number; step: number; def: number; unit: string; mk: (n: number) => string } };
 const hm = (s?: string) => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ''); return m ? +m[1] * 60 + +m[2] : null; };
 // Bedtime counts as on time when it is between 6 pm and the limit. A time after midnight is late.
 const bedBy = (limit: number) => (x: HDay) => { const v = hm(x.bed); if (v == null) return null; if (v < 6 * 60) return false; return v >= 18 * 60 && v <= limit; };
 const wakeBy = (limit: number) => (x: HDay) => { const v = hm(x.wake); if (v == null) return null; return v <= limit; };
-export const CATS = ['Sleep', 'Move', 'Water', 'Mind', 'Habits'];
+export const CATS = ['Sleep', 'Move', 'Water', 'Mind', 'Habits', 'Your own number'];
 export const TPLS: Tpl[] = [
   { id: 'bed', cat: 'Sleep', title: 'Sleep before 11 pm', days: 7, note: 'Counted from the bedtime you log in Today', ok: bedBy(23 * 60) },
   { id: 'bed12', cat: 'Sleep', title: 'Sleep before midnight', days: 7, note: 'Counted from your bedtime', ok: bedBy(24 * 60) },
@@ -137,16 +138,21 @@ export const TPLS: Tpl[] = [
   { id: 'happy', cat: 'Mind', title: 'Mood Good or Great', days: 7, note: 'Counted from the mood you log', ok: (x) => (x.mood >= 0 ? x.mood >= 3 : null) },
   { id: 'goals80', cat: 'Habits', title: 'Reach 80% of your daily goals', days: 7, note: 'Water, sleep and steps together', ok: (x, c) => (x.cups > 0 || x.sleep > 0 || x.steps > 0 ? goalPctOf(x, c.goal, c.cg) >= 80 : null) },
   { id: 'logall', cat: 'Habits', title: 'Log water, sleep and steps', days: 7, note: 'All three recorded on the same day', ok: (x) => (x.cups > 0 || x.sleep > 0 || x.steps > 0 ? x.cups > 0 && x.sleep > 0 && x.steps > 0 : null) },
+  { id: 'osteps', cat: 'Your own number', title: 'Walk your own steps target', days: 7, note: 'You choose the steps, counted from your steps', ok: (x, c) => (x.steps > 0 ? x.steps >= c.t : null), own: { min: 1000, max: 30000, step: 500, def: 5000, unit: 'steps', mk: (n) => 'Walk ' + n.toLocaleString() + ' steps a day' } },
+  { id: 'osleep', cat: 'Your own number', title: 'Sleep your own hours', days: 7, note: 'You choose the hours, counted from your sleep record', ok: (x, c) => (x.sleep > 0 ? x.sleep >= c.t : null), own: { min: 4, max: 11, step: 0.5, def: 7, unit: 'hours', mk: (n) => 'Sleep ' + n + ' hours or more' } },
+  { id: 'owater', cat: 'Your own number', title: 'Drink your own glasses', days: 7, note: 'You choose the glasses, counted from your water', ok: (x, c) => (x.cups > 0 ? x.cups >= c.t : null), own: { min: 1, max: 20, step: 1, def: 6, unit: 'glasses', mk: (n) => 'Drink ' + n + ' glasses a day' } },
+  { id: 'orelax', cat: 'Your own number', title: 'Relax your own minutes', days: 7, note: 'You choose the minutes, counted from Relax', ok: (x, c) => { const m = (x.rl || []).reduce((a, r) => a + r.s, 0) / 60; return m >= c.t ? true : (x.rl || []).length || x.mood >= 0 || x.cups > 0 || x.steps > 0 || x.sleep > 0 ? false : null; }, own: { min: 1, max: 60, step: 1, def: 5, unit: 'minutes', mk: (n) => 'Relax ' + n + ' minutes a day' } },
   { id: 'meds', cat: 'Habits', title: 'Take every medicine on time', days: 7, note: 'Counted from your Medication ticks', ok: (x, c) => { const due = c.meds.filter((m) => medDue(m, c.date)); if (!due.length) return null; return due.every((m) => (x.med || []).includes(m.id)); } },
 ];
 export type ExpState = { tpl: Tpl; cells: ('hit' | 'miss' | 'none' | 'future')[]; hit: number; logged: number; dayNo: number; done: boolean; rows: { l: string; a: string; b: string }[] };
 export function expState(e: Exp, h: HData): ExpState | null {
-  const tpl = TPLS.find((t) => t.id === e.tpl); if (!tpl) return null;
+  const base = TPLS.find((t) => t.id === e.tpl); if (!base) return null;
+  const tv = base.own ? (e.goal != null ? e.goal : base.own.def) : 0; const tpl: Tpl = base.own ? { ...base, title: base.own.mk(tv) } : base;
   const startOff = Math.round((new Date(e.start + 'T12:00:00').getTime() - dateOf(0).getTime()) / 86400000);
   const cells: ExpState['cells'] = []; let hit = 0, logged = 0;
   for (let i = 0; i < tpl.days; i++) {
     const o = startOff + i; if (o > 0) { cells.push('future'); continue; }
-    const r = tpl.ok(getDay(h, o), { goal: h.goal || 8000, cg: cupsGoal(h), date: dateOf(o), meds: h.meds || [] }); if (r === null) cells.push('none'); else { logged++; if (r) hit++; cells.push(r ? 'hit' : 'miss'); }
+    const r = tpl.ok(getDay(h, o), { goal: h.goal || 8000, cg: cupsGoal(h), date: dateOf(o), meds: h.meds || [], t: tv }); if (r === null) cells.push('none'); else { logged++; if (r) hit++; cells.push(r ? 'hit' : 'miss'); }
   }
   const endOff = startOff + tpl.days - 1; const done = endOff < 0;
   const rows: ExpState['rows'] = [];
