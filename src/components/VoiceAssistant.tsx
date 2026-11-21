@@ -89,13 +89,13 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
   useEffect(() => {
     if (reply) {
       setShownReply(reply);
-      if (!hadReply.current) { hadReply.current = true; setMode('reply'); fade.setValue(0); lift.setValue(8); Animated.parallel([Animated.timing(fade, { toValue: 1, duration: 350, useNativeDriver: true }), Animated.timing(lift, { toValue: 0, duration: 350, useNativeDriver: true })]).start(); }
+      if (!hadReply.current) { hadReply.current = true; setMode('reply'); fade.setValue(0); lift.setValue(0); Animated.timing(fade, { toValue: 1, duration: 350, useNativeDriver: true }).start(); }
     } else if (hadReply.current) {
       hadReply.current = false;
       Animated.timing(fade, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(({ finished }) => {
         if (!finished || hadReply.current) return;
-        setMode('idle'); setShownReply(''); lift.setValue(16);
-        Animated.parallel([Animated.timing(fade, { toValue: 1, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true }), Animated.timing(lift, { toValue: 0, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true })]).start();
+        setMode('idle'); setShownReply(''); lift.setValue(0);
+        Animated.timing(fade, { toValue: 1, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
       });
     }
   }, [reply]); const [err, setErr] = useState('');
