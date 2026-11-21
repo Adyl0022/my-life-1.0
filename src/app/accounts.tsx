@@ -140,7 +140,9 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
     setData({ ...data, moves: [...data.moves, m], nextId: data.nextId + 1 });
     if (mv.mode === 'transfer') {
       const fa = accs.find((a) => a.id === from), ta = accs.find((a) => a.id === to);
-      setDone({ amt: n, from: fa ? fa.name : '', to: ta ? ta.name : '', date: nice(date), ref: 'ML' + date.replace(/-/g, '').slice(2) + String(m.id).padStart(4, '0'), pay: !!(ta && isLiab(ta)) });
+      const fb = fa ? balanceOf(fa, data, spends, feeds) : undefined; const tb = ta ? balanceOf(ta, data, spends, feeds) : undefined;
+      const pay = !!(ta && isLiab(ta));
+      setDone({ amt: n, from: fa ? fa.name : '', to: ta ? ta.name : '', date: nice(date), ref: 'ML' + date.replace(/-/g, '').slice(2) + String(m.id).padStart(4, '0'), pay, fromC: fa ? groupOf(fa.g).c : undefined, toC: ta ? groupOf(ta.g).c : undefined, fromBal: fb, fromAfter: fb != null ? Math.round((fb - n) * 100) / 100 : undefined, toBal: tb, toAfter: tb != null ? Math.round((pay ? tb - n : tb + n) * 100) / 100 : undefined });
     } else onClose();
   };
   return (<>
