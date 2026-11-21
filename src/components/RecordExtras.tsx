@@ -231,21 +231,22 @@ async function pickImage(): Promise<string | null> {
 export function DocsCard({ d, upd }: P<Ext>) {
   const [title, setTitle] = useState(''); const [view, setView] = useState<Dc | null>(null); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState('');
   const list = d.docs || [];
-  const add = async () => {
+  const add = async (camera = false) => {
     setBusy(true); setMsg('');
-    try { const uri = await pickImage(); if (uri) { upd((x) => ({ ...x, docs: [{ id: Date.now(), title: title.trim() || 'Receipt', date: todayStr(), uri }, ...(x.docs || [])] })); setTitle(''); } }
-    catch (e) { setMsg('Could not open your photos. Please allow photo access and try again.'); }
+    try { const uri = camera ? await (await import('../lib/photo')).scanDocument() : await pickImage(); if (uri) { upd((x) => ({ ...x, docs: [{ id: Date.now(), title: title.trim() || 'Receipt', date: todayStr(), uri }, ...(x.docs || [])] })); setTitle(''); } }
+    catch (e: any) { setMsg(e && e.message === 'camera' ? 'Camera access is off. Allow it in Settings, or choose a photo from your gallery.' : 'Could not open your photos. Please allow photo access and try again.'); }
     setBusy(false);
   };
   return (
     <Card title="Documents and Receipts" sub="Service receipts, grant and insurance photos">
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, alignItems: 'center' }}>
         <Inp style={{ flex: 1 }} value={title} onChangeText={setTitle} placeholder="Title, e.g. Oil change receipt" />
-        <Btn t={busy ? 'Opening…' : '+ Photo'} onPress={add} />
+        <Btn t={busy ? 'Opening…' : 'Scan'} onPress={() => add(true)} />
+        <Btn t={busy ? '…' : 'Gallery'} onPress={() => add(false)} />
       </View>
       {msg ? <Text style={{ color: '#ffb3c6', fontSize: 12, marginTop: 6 }}>{msg}</Text> : null}
       <Text style={{ marginTop: 10, color: dim, fontSize: 11.5, lineHeight: 16 }}>Photos stay on this phone and are not synced to a server. To keep them, save a backup in Settings (Backup JSON file). The backup carries up to 40 photos.</Text>
-      {list.length === 0 ? <Text style={{ marginTop: 10, color: dim, fontSize: 12 }}>No documents yet. Type a title, tap + Photo and pick a picture from your gallery.</Text> : null}
+      {list.length === 0 ? <Text style={{ marginTop: 10, color: dim, fontSize: 12 }}>No documents yet. Type a title, tap Scan to scan the paper with the camera, or Gallery to pick a photo and clean it up with the scanner.</Text> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
         {list.map((x) => (
           <Pressable key={x.id} onPress={() => setView(x)} style={{ width: '47%', flexGrow: 1 }}>
