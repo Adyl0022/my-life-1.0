@@ -17,7 +17,7 @@ import { LineIcon } from '../components/LineIcon';
 import { useStored } from '../lib/store';
 import { confirmDelete, showAlert } from '../lib/dialog';
 import { tryForm, pn, numberError } from '../lib/num';
-import { takePhoto, scanDocument } from '../lib/photo';
+import { takePhoto, scanDocument, docFromGallery } from '../lib/photo';
 import { scanPhoto } from '../lib/documents';
 import { onlineAsk, useOnlineAi } from '../lib/onlineAi';
 import { SUB_EMPTY, SUB_CATS, CYCLES, REM, SERVICES, STATUSES, PAYS, payName, live, unitOf, catOf, dueOf, monthlyTotal, monthly, detect, matchService, fromFound, readBill, curWarn, readAi, aiPrompt, rm, num, validDate, ymd, addCycle, type Sub, type SubStore, type Cycle, type Billed } from '../lib/subs';
@@ -53,7 +53,7 @@ function Sheet({ f, setF, onSave, onSaveNow, onDelete, onClose }: { f: Form; set
   const pick = async (camera: boolean) => {
     setBusy(true); setMsg('');
     try {
-      const uri = camera ? await scanDocument() : await takePhoto(false);
+      const uri = camera ? await scanDocument() : await docFromGallery();
       if (uri) {
         const text = Platform.OS === 'web' ? null : await scanPhoto(uri);
         if (text == null) setMsg(Platform.OS === 'web' ? 'Scanning works in the Android app. You can still type the details in.' : 'Scanning is not ready on this phone. You can still type the details in.');

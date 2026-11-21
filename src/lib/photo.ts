@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 // Picks or takes a photo and keeps a copy in the app's own storage. Camera permission is asked only when the camera is used.
 // With square: true the phone's own crop screen opens so you pick the square part (for a logo or icon), and the result is made small (192 px) so it stays light.
 export async function takePhoto(camera: boolean, o: { square?: boolean } = {}): Promise<string | null> {
@@ -32,7 +32,7 @@ async function keepCopy(uri: string): Promise<string> {
 }
 /** Scans a paper like a scanner app: the phone finds the edges, straightens and crops the page and clears up the colours.
  *  This is Google's document scanner and it works on the phone, nothing is uploaded. If it is not available (the web, or a phone without Google Play services), the normal camera opens instead. */
-export async function scanDocument(): Promise<string | null> {
+export async function scanDocument(gallery = false): Promise<string | null> {
   if (Platform.OS !== 'android') return takePhoto(true);
   let DS: any = null;
   try { DS = require('react-native-document-scanner-plugin').default; } catch (e) { DS = null; }
@@ -40,11 +40,23 @@ export async function scanDocument(): Promise<string | null> {
   const IP = await import('expo-image-picker');
   const p = await IP.requestCameraPermissionsAsync(); if (!p.granted) throw new Error('camera');
   let r: any;
-  try { r = await DS.scanDocument({ maxNumDocuments: 1, croppedImageQuality: 90 }); } catch (e) { return takePhoto(true); }
+  try { r = await DS.scanDocument({ maxNumDocuments: 1, croppedImageQuality: 90, galleryImport: gallery }); } catch (e) { return gallery ? takePhoto(false) : takePhoto(true); }
   if (!r || r.status === 'cancel' || !r.scannedImages || !r.scannedImages.length) return null;
   return keepCopy(String(r.scannedImages[0]));
 }
 
+/** One picture of a paper from the gallery. On Android the Google scanner opens with its gallery button, so the photo can be cropped, straightened and given a filter first.
+ *  "Add as they are" keeps the photo exactly as taken. On the web it is the normal photo picker. */
+export function docFromGallery(): Promise<string | null> {
+  if (Platform.OS !== 'android') return takePhoto(false);
+  return new Promise((resolve, reject) => {
+    Alert.alert('Photo from your gallery', 'The scanner opens next. Tap its gallery button to choose your photo, then crop it and pick a filter (Auto clean, Colour, Grey or Black and white).', [
+      { text: 'Open scanner', onPress: () => { scanDocument(true).then(resolve, reject); } },
+      { text: 'Add as it is', onPress: () => { takePhoto(false).then(resolve, reject); } },
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(null) },
+    ], { cancelable: true, onDismiss: () => resolve(null) });
+  });
+}
 /** Scans several pages in one go (up to 30). The phone's scanner shows the filters (auto clean, colour, grey, black and white) before the pages are kept.
  *  Without the scanner (the web or a phone without Google Play services) the camera or the gallery gives one picture at a time. */
 export async function scanPages(max = 30): Promise<string[]> {

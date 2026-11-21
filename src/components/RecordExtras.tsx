@@ -212,6 +212,7 @@ export function PartsCard({ d, upd, latest, addNow }: P<Ext> & { latest: number;
 
 // 5. Documents and receipts ----------------------------------------------------
 async function pickImage(): Promise<string | null> {
+  if (Platform.OS === 'android') { const { docFromGallery } = await import('../lib/photo'); return docFromGallery(); }
   const IP = await import('expo-image-picker');
   const r = await IP.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.4, base64: Platform.OS === 'web' });
   if (r.canceled || !r.assets || !r.assets[0]) return null;
