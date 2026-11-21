@@ -102,7 +102,7 @@ export function speak(text: string, tag: string, done: () => void): void {
 }
 // A short sample in the voice, speed and tone that are set now (an id can be given to try a voice before choosing it).
 export function sample(tag: string, id?: string) {
-  if (!SP) return; try { SP.stop(); SP.speak(tag.startsWith('ms') ? 'Hai, saya Sage. Beginilah bunyi suara saya.' : 'Hi, I am Sage. This is how I sound.', { language: tag, rate: PREF.rate, pitch: PREF.pitch, ...((id || PREF.v[tag]) ? { voice: id || PREF.v[tag] } : {}) }); } catch (e) { /* ignore */ }
+  if (!SP) return; try { SP.stop(); SP.speak(tag.startsWith('ms') ? 'Hai, saya Assistant My Life 1.0. Beginilah bunyi suara saya.' : 'Hi, I am the My Life 1.0 Assistant. This is how I sound.', { language: tag, rate: PREF.rate, pitch: PREF.pitch, ...((id || PREF.v[tag]) ? { voice: id || PREF.v[tag] } : {}) }); } catch (e) { /* ignore */ }
 }
 export function stopSpeaking() { try { if (SP) SP.stop(); } catch (e) { /* nothing is playing */ } }
 

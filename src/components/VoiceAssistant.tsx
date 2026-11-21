@@ -13,7 +13,7 @@ import { useLangPacks, xlText, flagOf } from '../lib/xlate';
 
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-const NAME = 'Sage Live';
+const NAME = 'My Life Live';
 // The live wave: soft ribbons of light that flow across the screen. They swell with the loudness of your voice while you talk,
 // flow calmly while the Assistant answers, and breathe slowly when it is quiet.
 const LAYERS = [
@@ -99,7 +99,10 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
   useEffect(() => {
     setAmp(phase === 'speaking' ? 0.6 : phase === 'thinking' ? 0.3 : phase === 'listening' ? 0.22 : 0.12, 320);
     const a = Animated.loop(Animated.sequence([Animated.timing(glow, { toValue: 1, duration: phase === 'idle' ? 2600 : 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(glow, { toValue: 0, duration: phase === 'idle' ? 2600 : 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]));
-    a.start(); return () => a.stop();
+    a.start();
+    // The orb and the wave follow the voice: the Assistant's own speech gives a natural pulse, thinking is a slow breath.
+    const iv = phase === 'speaking' ? setInterval(() => setAmp(0.3 + Math.random() * 0.55, 160), 170) : phase === 'thinking' ? setInterval(() => setAmp(ampT.current > 0.3 ? 0.2 : 0.42, 800), 900) : null;
+    return () => { a.stop(); if (iv) clearInterval(iv); };
   }, [phase]);
 
   const errText = (c: string) => {
@@ -233,8 +236,11 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
             </Pressable>
           </View>
 
-          <View style={{ alignItems: 'center', marginTop: 10 }}>
-            <OrbLive size={104} />
+          <View style={{ alignItems: 'center', marginTop: 24 }}>
+            <View style={{ width: 150, height: 150, alignItems: 'center', justifyContent: 'center' }}>
+              <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, backgroundColor: phase === 'listening' ? 'rgba(255,143,171,.30)' : 'rgba(124,156,255,.28)', opacity: amp.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.95] }), transform: [{ scale: amp.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }] }} />
+              <Animated.View style={{ transform: [{ scale: Animated.add(amp.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.14] }), glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.03] })) }] }}><OrbLive size={104} /></Animated.View>
+            </View>
             <View style={{ marginTop: 2, marginHorizontal: -20 }}><Wave target={ampT} width={sw} /></View>
             <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 15, fontWeight: '700' }}>{status}</Text>
           </View>

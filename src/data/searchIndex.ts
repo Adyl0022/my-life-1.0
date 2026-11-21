@@ -433,12 +433,12 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "language bahasa translate terjemah chinese arabic tamil hindi chat language pack ml kit"
  },
  {
-  "t": "Sage Live",
+  "t": "My Life Live",
   "s": "Chat by voice, pick a male or female voice, save spending, open pages",
   "m": "Assistant",
   "c": "#b794ff",
   "h": "Assistant.dc.html",
-  "k": "voice suara mic mikrofon microphone talk cakap speak bercakap assistant sage live voice assistant chat borak chinese cina tamil language pack bahasa lain gemini lelaki perempuan male female tone pitch speed"
+  "k": "voice suara mic mikrofon microphone talk cakap speak bercakap assistant my life live voice assistant chat borak chinese cina tamil language pack bahasa lain gemini lelaki perempuan male female tone pitch speed"
  },
  {
   "t": "Insights",
