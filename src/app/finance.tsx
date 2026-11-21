@@ -129,8 +129,8 @@ export default function Finance() {
     if (cnt === 0) { confirmDelete('the category ' + n, () => go(true), { title: 'Delete this category?', message: 'It has no spending in it.' }); return; }
     showAlert('Delete the category ' + n + '?', 'It has ' + cnt + (cnt === 1 ? ' spending' : ' spendings') + '. What should happen to ' + (cnt === 1 ? 'it' : 'them') + '?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Move to Other', onPress: () => go(true) },
       { text: 'Delete them too', style: 'destructive', onPress: () => go(false) },
+      { text: 'Move to Other', onPress: () => go(true) },
     ]);
   };
   const [hm, setHm] = useState(''); const [pickM, setPickM] = useState(false);
