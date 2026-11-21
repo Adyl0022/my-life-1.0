@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { listen, voiceOk, vlang } from './voice';
 
-// "Hai My Life": while Home is open and the person has switched it on, the phone's speech service listens for these words.
+// "Hey My Life": while Home is open and the person has switched it on, the phone's speech service listens for these words.
 // It stops by itself after 5 minutes without a touch, when you leave Home, and when the screen goes off. Nothing is saved.
 export const WAKE_KEY = 'ml_wake';
 const RE = /\b(hai|hi|hey|hello|helo|hae|hay|ai)\s+(my|mai|mei|mi|me)\s*(life|laif|lif|laiv|live|lives)\b/;
