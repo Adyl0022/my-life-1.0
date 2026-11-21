@@ -399,7 +399,7 @@ export default function Accounts() {
           {tv.n > 0 ? (
             <Glass radius={24} style={{ marginTop: 14, padding: 16 }}>
               <LinearGradient colors={['rgba(142,168,255,.3)', 'rgba(183,148,255,.18)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-              <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR THINGS</Text>
+              <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR ASSETS</Text>
               <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{'~ ' + rmC(tv.total)}</Text>
               {[['Gadgets', tv.gadget, 'gets less valuable each year'], ['Lifestyle', tv.lifestyle, 'gets less valuable each year'], ['Property', tv.property, 'your own worth, or the price you paid']].filter((r) => (r[1] as number) > 0).map((r) => (
                 <View key={r[0] as string} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)', marginTop: 6 }}>
@@ -410,7 +410,7 @@ export default function Accounts() {
               <View style={{ marginTop: 10 }}><EqPills tabs={['Count in total', 'Leave out']} index={withThings ? 0 : 1} onChange={(i) => setWithThings(i === 0 ? 1 : 0)} colors={['#7c9cff', '#b794ff']} /></View>
               {withThings ? (
                 <View style={{ marginTop: 12, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
-                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>Money + your things</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>Net worth · money and your things, after what you owe</Text>
                   <Text style={{ color: W, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{'~ ' + (t.total + tv.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total + tv.total))}</Text>
                 </View>
               ) : null}
