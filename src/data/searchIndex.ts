@@ -249,6 +249,14 @@ export const SEARCH_INDEX: SearchItem[] = [
   "k": "life lesson pengajaran lesson of the day setiap hari dashboard card personal collection gadget gadgets phone laptop warranty waranti lifestyle shoes bag property house land rent lent borrowed pinjam hutang utang loan lessons life lesson pengajaran barang koleksi worth value nilai estimate anggaran condition keadaan like new good worn broken warranty days left baki hari waranti link papers receipt resit grid list view photos gambar whatsapp remind polite reminder history sejarah part payment bayar separa baki pdf insurance insurans senarai barang my things"
  },
  {
+  "t": "Spending from a sentence",
+  "s": "Tell the Assistant your spending in your own words",
+  "m": "Assistant",
+  "c": "#ffc46b",
+  "h": "Assistant.dc.html",
+  "k": "ai spending sentence ayat makan tengah hari guna maybank account akaun paid from dibayar dari category kategori belanja assistant gemma qwen on phone confirm"
+ },
+ {
   "t": "Scan to PDF",
   "s": "Scan letters and papers into one clean PDF",
   "m": "Record",

@@ -12,6 +12,7 @@ import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
 import { xlText, xlMsg, scriptLang, xlLang, xlOk } from './xlate';
+import { looksLikeSpend, aiSpend } from './aiSpend';
 // Answer engine. It reads the real saved data of the app, handed in through this.props.real, and saves through this.props.persist.
 // A pasted text or a "summarise / rewrite" job is not a question about the person's own data. It goes straight to the AI,
 // so a word like "maintenance" or "medical" inside the text cannot trigger a written answer or a fixed reply.
@@ -141,7 +142,7 @@ export class AssistantBase extends React.Component<any, any> {
       m = this.mk(L('Saved to your Heart log. I only keep the numbers you type and cannot say whether a reading is good or bad. Please ask a doctor or nurse about your readings.', 'Disimpan dalam Heart log. Saya hanya simpan nombor yang awak taip dan tidak boleh kata sama ada bacaan itu baik atau tidak. Sila tanya doktor atau jururawat tentang bacaan awak.'), { label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
     } else if (p.type === 'spend') {
       const tdy = D.spendToday + (p.date === this.todayStr() ? p.amt : 0);
-      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
+      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + (p.accName ? ' from ' + p.accName : '') + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + (p.accName ? ' dari ' + p.accName : '') + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
     } else if (p.type === 'mtc') {
       patch.mtcMonth = s.mtcMonth + p.amt;
       let extra = '';
@@ -635,6 +636,8 @@ export class AssistantBase extends React.Component<any, any> {
       }
       const tt = textTask(q);
       if (tt || generalQ(q)) r = { m: noAnswer(this.hm(), lang), patch: {} };
+      r = await this.tagAccount(r, q, lang);
+      if (r.m && r.m.fb && !r.act && !tt) r = (await this.aiSpendReply(q, lang)) || r;
       if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r, tt);
       // Anything saved from here can be undone with one tap (or by typing "undo").
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }
@@ -642,6 +645,31 @@ export class AssistantBase extends React.Component<any, any> {
       if (r.act && this.props.persist) this.props.persist(r.act);
       this.scroll();
     }, 700);
+  }
+  // A spending the written rules understood, with an account named in the sentence ("... guna Maybank"): link it to that account.
+  async tagAccount(r, q, lang) {
+    try {
+      const p = r && r.patch && r.patch.pending; if (!p || p.type !== 'spend' || p.acc) return r;
+      const d: any = await getItem('ml_accounts', { accs: [] }); const ql = ' ' + q.toLowerCase() + ' ';
+      const hit = ((d && d.accs) || []).filter((a) => a.name && ql.indexOf(String(a.name).toLowerCase()) >= 0).sort((a, b) => String(b.name).length - String(a.name).length)[0];
+      if (!hit) return r;
+      r.patch = Object.assign({}, r.patch, { pending: Object.assign({}, p, { acc: hit.id, accName: hit.name }) });
+      r.m = Object.assign({}, r.m, { text: r.m.text.replace(/\n• (Date|Tarikh):/, (_x, w) => '\n• ' + (lang === 'ms' ? 'Dibayar dari: ' : 'Paid from: ') + hit.name + '\n• ' + w + ':') });
+    } catch (e) { /* keep it as it was */ }
+    return r;
+  }
+  // A sentence the written rules did not understand but that looks like money spent ("makan tengah hari 12 guna Maybank"):
+  // the AI on the phone reads it, and the person still has to confirm before anything is saved.
+  async aiSpendReply(q, lang) {
+    try {
+      if (!(smartOk || gemmaOk) || !smartReady() || !modOn('finance') || !looksLikeSpend(q)) return null;
+      const a = await aiSpend(q); if (!a) return null;
+      const L = (en, ms) => (lang === 'ms' ? ms : en);
+      const id = this.state.pid + 1; const d = new Date(); if (a.ydy) d.setDate(d.getDate() - 1);
+      const act = { type: 'spend', amt: a.amt, cat: a.cat, name: a.name, date: this.todayStr(d), ydy: a.ydy, acc: a.acc, accName: a.accName };
+      const m = this.mk(L('Got it. Save this spending?\n• ' + a.name + '\n• Category: ' + a.cat + (a.accName ? '\n• Paid from: ' + a.accName : '') + '\n• Date: ' + (a.ydy ? 'yesterday' : 'today') + '\n(Read by the AI on your phone. Please check it.)', 'Faham. Simpan perbelanjaan ini?\n• ' + a.name + '\n• Kategori: ' + a.cat + (a.accName ? '\n• Dibayar dari: ' + a.accName : '') + '\n• Tarikh: ' + (a.ydy ? 'semalam' : 'hari ini') + '\n(Dibaca oleh AI dalam telefon awak. Sila semak.)'), { pid: id, big: cs() + this.rm(a.amt), bigLbl: a.cat, color: '#ffc46b' });
+      return { m, patch: { pending: Object.assign({ id }, act), pid: id }, act: null };
+    } catch (e) { return null; }
   }
   // Questions with no written answer: a careful fixed reply for religion, health, law and money, then the small AI on the phone if it is downloaded,
   // otherwise an offer to get it.
@@ -722,6 +750,8 @@ export class AssistantBase extends React.Component<any, any> {
       }
       const tt = textTask(qe);
       if (tt || generalQ(qe)) r = { m: noAnswer(this.hm(), 'en'), patch: {} };
+      r = await this.tagAccount(r, qe, 'en');
+      if (r.m && r.m.fb && !r.act && !tt) r = (await this.aiSpendReply(qe, 'en')) || r;
       if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(qe, 'en', r, tt);
       try { r.m = await xlMsg(r.m, tl); } catch (e) { /* keep the English answer */ }
       if (r.act && this.props.persist) { const u = this.undoFor(r.act); if (u) { r.m.uid = Date.now(); r.patch = Object.assign({}, r.patch, { lastUndo: { id: r.m.uid, act: u } }); } else r.patch = Object.assign({}, r.patch, { lastUndo: null }); }

@@ -161,6 +161,15 @@ export function smartWarm() {
   (big ? gemWarm() : llmWarm()).then((ok) => { if (!ok) WARMED = ''; }).catch(() => { WARMED = ''; });
 }
 
+// Runs the AI on the phone with its own instructions and gives back the raw text. Used to read a spending out of a free sentence.
+export async function smartRaw(user: string, sys: string): Promise<string> {
+  if (!(smartOk || gemmaOk) || !READY) return '';
+  try {
+    if (TIER === 'g' || TIER === 'q') return String(await gemGenerate(user, sys) || '');
+    return String(await llmGenerate('<|im_start|>system\n' + sys + '<|im_end|>\n<|im_start|>user\n' + user + '<|im_end|>\n<|im_start|>assistant\n') || '');
+  } catch (e) { return ''; }
+}
+
 export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = [], onPart?: (t: string) => void, voice = false): Promise<string> {
   if (!(smartOk || gemmaOk) || !READY) return '';
   const ms = lang === 'ms';
