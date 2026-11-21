@@ -6,7 +6,7 @@ import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { W } from './Ui';
 import { useStored } from '../lib/store';
-import { EMPTY_COL, type ColStore, type Item, num, rm, dueOf, worthNow, CATS } from '../lib/collection';
+import { EMPTY_COL, type ColStore, type Item, num, rm, dueOf, worthNow, photosOf } from '../lib/collection';
 import { validDate } from '../lib/documents';
 
 // Personal Collection top card: turns by itself every 10 seconds, swipe to change, hold to pause. Same behaviour as the My Record and Islamic Hub cards.
@@ -39,8 +39,18 @@ export function CollectionCarousel() {
   const lent = loans.filter((l) => l.dir === 'lent' && l.what === 'money').reduce((s, l) => s + num(l.amount), 0);
   const borrowed = loans.filter((l) => l.dir === 'borrowed' && l.what === 'money').reduce((s, l) => s + num(l.amount), 0);
   const loanRows = loans.map((l) => ({ l, d: dueOf(l, now) })).sort((a, b) => (a.d.hot === b.d.hot ? 0 : a.d.hot ? -1 : 1));
+  const valueOf = (x: Item) => { const w = x.cat === 'gadget' ? worthNow(x, now) : null; return w != null ? w : num(x.price); };
+  const total = items.reduce((s, x) => s + valueOf(x), 0);
+  const top = items.slice().sort((a, b) => valueOf(b) - valueOf(a)).filter((x) => valueOf(x) > 0);
+  const noPhoto = items.filter((x) => photosOf(x).length === 0).length; const noPrice = items.filter((x) => !(num(x.price) > 0)).length;
+  const ready = items.length - items.filter((x) => photosOf(x).length === 0 || !(num(x.price) > 0)).length;
+  const need: { l: string; r: string; c: string; to: string }[] = [];
+  war.filter((w) => w.n <= 60).forEach((w) => need.push({ l: w.x.name, r: 'Warranty · ' + leftText(w.n), c: tone(w.n), to: '/collection-items?c=gadget' }));
+  loanRows.filter((x) => x.d.hot || /Due in/.test(x.d.txt)).forEach(({ l, d }) => need.push({ l: (l.dir === 'lent' ? 'To ' : 'From ') + (l.who || 'someone') + ' · ' + (l.what === 'money' ? rm(num(l.amount)) : l.title || 'thing'), r: d.txt, c: d.hot ? '#ff9aa9' : d.col, to: '/loans' }));
+  const TIPS = ['Keep the receipt of a gadget together with its warranty photo.', 'Take one clear photo of each valuable thing. It helps if you ever need to claim.', 'Write down who you lent to, with a due date, so nobody has to feel awkward.', 'Check the warranty dates of your gadgets every few months.'];
+  const tip = TIPS[Math.floor(dayN(today) % TIPS.length)];
 
-const kinds = ['gadget', 'lifestyle', 'property', 'loans'];
+const kinds = ['all', 'need', 'top', 'ready', 'tip'];
   const [slide, setSlide] = useState(0);
   const cur = kinds[Math.min(slide, kinds.length - 1)];
   const fade = useRef(new Animated.Value(1)).current;
@@ -86,10 +96,10 @@ const kinds = ['gadget', 'lifestyle', 'property', 'loans'];
   const Empty = ({ t, s }: { t: string; s: string }) => (
     <View style={{ flex: 1, justifyContent: 'center' }}><Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>{t}</Text><Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>{s}</Text></View>
   );
-  const Slide = ({ label, to, rows, foot, empty }: { label: string; to: string; rows: { l: string; r: string; c: string }[]; foot?: [string, string]; empty: [string, string] }) => (
-    <Pressable {...hold} onPress={() => go(to)}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
+  const Slide = ({ label, to, rows, foot, empty }: { label: string; to?: string; rows: { l: string; r: string; c: string; to?: string }[]; foot?: [string, string]; empty: [string, string] }) => (
+    <Pressable {...hold} onPress={to || rows[0]?.to ? () => go((to || rows[0]?.to) as string) : undefined}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
       <Text style={lab}>{label}</Text>
-      {rows.length ? rows.slice(0, 3).map((x, i) => <Row key={i} l={x.l} r={x.r} c={x.c} />) : <Empty t={empty[0]} s={empty[1]} />}
+      {rows.length ? rows.slice(0, 4).map((x, i) => <Row key={i} l={x.l} r={x.r} c={x.c} />) : <Empty t={empty[0]} s={empty[1]} />}
       {rows.length ? <View style={{ flex: 1 }} /> : null}
       {rows.length && foot ? <Foot l={foot[0]} r={foot[1]} /> : null}
     </Glass></Pressable>
@@ -97,22 +107,35 @@ const kinds = ['gadget', 'lifestyle', 'property', 'loans'];
   return (
     <View style={{ height: CH }}>
       <Animated.View {...pan.panHandlers} style={{ opacity: fade, transform: [{ translateX: tx }] }}>
-        {cur === 'gadget' ? (
-          <Slide label="GADGETS" to="/collection-items?c=gadget"
-            rows={war.length ? war.map((w) => ({ l: w.x.name, r: 'Warranty · ' + leftText(w.n), c: tone(w.n) })) : gad.map((x) => ({ l: x.name, r: num(x.price) > 0 ? rm(num(x.price)) : x.kind, c: '#8ea8ff' }))}
-            foot={[countOf(gad.length, 'gadget'), 'Worth about ' + rm(Math.round(gadWorth)) + ' ›']} empty={['Phone, laptop, watch', 'Keep your devices with their price and warranty date, so you never lose a receipt.']} />
-        ) : cur === 'lifestyle' ? (
-          <Slide label="LIFESTYLE" to="/collection-items?c=lifestyle"
-            rows={lif.map((x) => ({ l: x.name, r: num(x.price) > 0 ? rm(num(x.price)) : x.kind, c: '#ff8fab' }))}
-            foot={[countOf(lif.length, 'item'), 'Spent ' + rm(Math.round(spent(lif))) + ' ›']} empty={['Shoes, bags, perfume', 'Keep the nice things you own and what they cost.']} />
-        ) : cur === 'property' ? (
-          <Slide label="PROPERTY" to="/collection-items?c=property"
-            rows={prop.map((x) => ({ l: x.name, r: num(x.price) > 0 ? rm(num(x.price)) : x.kind, c: '#8fe9e2' }))}
-            foot={[countOf(prop.length, 'property').replace('propertys', 'properties'), 'Total ' + rm(Math.round(spent(prop))) + ' ›']} empty={['House, land, rent', 'Keep your houses, land and anything you rent in one place.']} />
+        {cur === 'all' ? (
+          <Slide label="YOUR THINGS"
+            rows={items.length || loans.length ? [
+              { l: 'Gadgets · ' + gad.length, r: rm(Math.round(gadWorth)), c: '#8ea8ff' },
+              { l: 'Lifestyle · ' + lif.length, r: rm(Math.round(spent(lif))), c: '#ff8fab' },
+              { l: 'Property · ' + prop.length, r: rm(Math.round(spent(prop))), c: '#8fe9e2' },
+              { l: 'Lent & Borrowed · ' + loans.length, r: (lent > 0 ? 'Lent ' + rm(lent) : '') + (lent > 0 && borrowed > 0 ? ' · ' : '') + (borrowed > 0 ? 'Borrowed ' + rm(borrowed) : '') || 'None open', c: '#ffe3c2' },
+            ] : []}
+            foot={[countOf(items.length, 'thing') + ' saved', 'About ' + rm(Math.round(total))]} empty={['Everything you own', 'Save your gadgets, lifestyle items and property, and what you lent or borrowed. A summary shows here.']} />
+        ) : cur === 'need' ? (
+          <Slide label="NEEDS YOUR ATTENTION" rows={need}
+            foot={[need.some((x) => x.c === '#ff6b81' || x.c === '#ff9aa9') ? 'Something is due' : 'Coming up soon', 'Open ›']} empty={['All good', 'No warranty ending soon and nothing to return. Nothing needs you right now.']} />
+        ) : cur === 'top' ? (
+          <Slide label="MOST VALUABLE" to="/collection-items?c=gadget"
+            rows={top.slice(0, 3).map((x) => ({ l: x.name, r: rm(Math.round(valueOf(x))), c: '#ffd593' }))}
+            foot={top.length ? [Math.round(top.slice(0, 3).reduce((s, x) => s + valueOf(x), 0) / Math.max(1, total) * 100) + '% of everything', 'Top ' + Math.min(3, top.length)] : undefined} empty={['Your biggest things', 'Add a price to your things and the most valuable ones show here.']} />
+        ) : cur === 'ready' ? (
+          <Slide label="READY FOR AN INSURANCE CLAIM" to="/collection-items?c=gadget"
+            rows={items.length ? [
+              { l: ready + ' of ' + items.length + ' have a photo and a price', r: ready === items.length ? 'Ready' : 'Almost', c: ready === items.length ? '#5ee7b5' : '#ffd593' },
+              { l: 'Without a photo', r: String(noPhoto), c: noPhoto ? '#ffd593' : '#5ee7b5' },
+              { l: 'Without a price', r: String(noPrice), c: noPrice ? '#ffd593' : '#5ee7b5' },
+            ] : []}
+            foot={['Photo and price help a claim', 'Open ›']} empty={['Be ready, just in case', 'A photo and a price for each thing make an insurance claim much easier.']} />
         ) : (
-          <Slide label="LENT & BORROWED" to="/loans"
-            rows={loanRows.map(({ l, d }) => ({ l: (l.dir === 'lent' ? 'To ' : 'From ') + (l.who || 'someone') + ' · ' + (l.what === 'money' ? rm(num(l.amount)) : l.title || 'thing'), r: d.txt, c: d.hot ? '#ff9aa9' : d.col }))}
-            foot={[lent > 0 ? 'Lent ' + rm(lent) : 'Nothing lent', borrowed > 0 ? 'Borrowed ' + rm(borrowed) + ' ›' : 'Open ›']} empty={['Money and things', 'Write down what you lent or borrowed, with a due date, and the app reminds you.']} />
+          <Pressable {...hold}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
+            <Text style={lab}>TIP OF THE DAY</Text>
+            <View style={{ flex: 1, justifyContent: 'center' }}><Text style={{ color: W, fontSize: 18, fontWeight: '800', lineHeight: 25 }}>{tip}</Text></View>
+          </Glass></Pressable>
         )}
       </Animated.View>
       <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 10, flexDirection: 'row', gap: 6 }}>{kinds.map((_k, i) => (<View key={i} style={{ flex: 1, height: 3, borderRadius: 2, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.2)' }}>{slide === i ? <Animated.View style={{ height: 3, borderRadius: 2, backgroundColor: '#5ee7df', width: prog.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} /> : null}</View>))}</View>
