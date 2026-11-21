@@ -118,7 +118,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
   const greet = async () => {
     const t0 = Date.now(); setErr('');
     if (!(await micAllowed())) { if (live.current) { setErr(errText('not-allowed')); setPhase('idle'); } return; }
-    const wait = 3500 - (Date.now() - t0); if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    const wait = 1100 - (Date.now() - t0); if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     if (!live.current) return;
     if (isX() && !packs.ready(vkR.current)) { begin(); return; }
     const nm = myName ? ' ' + myName : '';
