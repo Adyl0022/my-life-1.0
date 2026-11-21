@@ -454,7 +454,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#5ee7df",
   "h": "Settings.dc.html",
-  "k": "settings tetapan setting"
+  "k": "settings tetapan setting notification notifikasi reminder peringatan battery bateri exact timing late lewat"
  },
  {
   "t": "Country, currency and week start",

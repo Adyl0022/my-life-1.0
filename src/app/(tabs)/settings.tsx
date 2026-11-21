@@ -186,6 +186,10 @@ export default function Settings() {
     try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); say(r.granted ? 'Exact timing is on' : 'Not allowed yet. Turn on Alarms & reminders for My Life'); }
     catch (e) { say('Could not open the setting. Open phone Settings, Apps, My Life, Alarms & reminders'); }
   };
+  const openBattery = async () => {
+    try { await (Linking as any).sendIntent('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS'); }
+    catch (e) { try { await Linking.openSettings(); } catch (e2) { say('Open phone Settings, Apps, My Life 1.0, Battery, and choose Unrestricted'); } }
+  };
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');
     try {
@@ -277,7 +281,8 @@ export default function Settings() {
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Notifications" />
                 {exact !== null ? <Text style={{ color: exact ? 'rgba(255,255,255,.72)' : '#ffd593', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{exact ? 'Exact timing is on. Reminders and prayer alerts arrive on the minute.' : 'Exact timing is off. Reminders and prayer alerts can arrive a few minutes late.'}</Text> : null}
-                <View style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}<Btn t="Send a test notification" onPress={testNotif} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /></View>
+                {Platform.OS === 'android' ? <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>Some phones (Samsung, Oppo, Xiaomi) stop apps to save battery, and then a reminder can be missed. Tap the button below, find My Life 1.0 and choose Unrestricted, or No restrictions.</Text> : null}
+                <View style={{ flexDirection: 'column', gap: 10, marginTop: 12 }}>{exact === false ? <Btn t="Turn on exact timing" onPress={askExact} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}{Platform.OS === 'android' ? <Btn t="Keep reminders from being stopped" onPress={openBattery} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /> : null}<Btn t="Send a test notification" onPress={testNotif} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto', alignSelf: 'stretch' }} /></View>
               </Glass>
 
               {isAdmin ? <Pressable onPress={() => router.push('/admin' as any)}>
