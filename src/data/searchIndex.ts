@@ -242,7 +242,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Personal Collection",
-  "s": "Gadgets, lifestyle, property, lent, lessons",
+  "s": "Gadgets, lifestyle, property, lent and borrowed",
   "m": "Record",
   "c": "#3df0ff",
   "h": "Record.dc.html",
