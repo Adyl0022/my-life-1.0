@@ -109,7 +109,7 @@ export function EnergyBig({ en, est, week, month, onPick }: { en: number | undef
       <View style={{ marginTop: 14, padding: 14, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
         <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>{empty ? 'How is your energy?' : HEAD[lvl]}</Text>
         <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>{empty ? 'Log two things like sleep, water, steps or mood and an estimate appears here. Or tap how you feel below.' : TEXT[lvl]}</Text>
-        {est && !own ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{est.why + '.'}</Text> : null}
+        {est && !own ? <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 12, lineHeight: 18 }}>{est.why + '.'}</Text></View> : null}
       </View>
       <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1, marginTop: 16 }}>HOW DO YOU FEEL?</Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
@@ -123,7 +123,7 @@ export function EnergyBig({ en, est, week, month, onPick }: { en: number | undef
           );
         })}
       </View>
-      <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8, lineHeight: 15 }}>{own ? 'Tap your choice again to go back to the estimate.' : 'This is a guess from what you logged. Tap how you really feel to replace it.'}</Text>
+      <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 8, lineHeight: 15 }}>{own ? 'Tap your choice again to go back to the estimate.' : 'A rough estimate from what you logged, not a medical measurement. Tap how you really feel to replace it.'}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
         <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Energy trend</Text>
         <SlidePills tabs={['Week', 'Month']} index={tab} onChange={(i) => { buzz(); setTab(i); }} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={14} padY={6} />

@@ -25,18 +25,26 @@ export function restSignal(h: HData, key: string): { low: number; base: number }
 
 export function energyEstimate(x: HDay, cg: number, goal: number, rs?: { low: number; base: number } | null): { lvl: number; why: string } | null {
   const why: string[] = []; let s = 0, n = 0;
-  if (x.sleep > 0) { n++; s += x.sleep >= 7.5 ? 2 : x.sleep >= 6.5 ? 1 : x.sleep >= 5.5 ? 0 : x.sleep >= 4.5 ? -1 : -2; why.push(hrs(x.sleep) + ' sleep'); }
-  if (x.cups > 0) { n++; if (x.cups / cg >= 0.8) s += 1; why.push(x.cups + ' of ' + cg + ' glasses'); }
+  if (x.sleep > 0) { n++; s += x.sleep >= 7.5 ? 2 : x.sleep >= 6.5 ? 1 : x.sleep >= 5.5 ? 0 : x.sleep >= 4.5 ? -1 : -2; why.push(hrs(x.sleep) + ' of sleep'); }
+  if (x.cups > 0) { n++; if (x.cups / cg >= 0.8) s += 1; why.push(x.cups + ' of ' + cg + ' glasses of water'); }
   if (x.steps > 0) { n++; if (x.steps / goal >= 0.7) s += 1; why.push(Math.round(x.steps).toLocaleString() + ' steps'); }
-  if (x.mood >= 0) { n++; s += x.mood >= 3 ? 1 : x.mood <= 1 ? -1 : 0; why.push('mood ' + MOODS[x.mood][0].toLowerCase()); }
-  // A night pulse clearly above your usual can mean a tired body. It only ever lowers the guess, and only a little.
-  if (rs && rs.low - rs.base >= 6) { n++; s -= 1; why.push('night pulse ' + rs.low + ' bpm, higher than your usual ' + rs.base); }
+  if (x.mood >= 0) { n++; s += x.mood >= 3 ? 1 : x.mood <= 1 ? -1 : 0; why.push('your mood (' + MOODS[x.mood][0].toLowerCase() + ')'); }
+  // The lowest pulse read while you slept (your Heart log, including readings from Health Connect), compared with your own usual. A pulse clearly above your usual can go with a tired or strained body, a pulse clearly below can go with good recovery. It only nudges the guess by one step, and never counts as one of the two things needed.
+  let pulse = '';
+  if (rs) {
+    const dlt = rs.low - rs.base;
+    if (dlt >= 6) { s -= 1; pulse = 'a night pulse of ' + rs.low + ' bpm (higher than your usual ' + rs.base + ')'; }
+    else if (dlt <= -5) { s += 1; pulse = 'a night pulse of ' + rs.low + ' bpm (lower than your usual ' + rs.base + ')'; }
+    else pulse = 'a night pulse of ' + rs.low + ' bpm (close to your usual ' + rs.base + ')';
+  }
   if (n < 2) return null;
+  if (pulse) why.push(pulse);
   let lvl = s >= 3 ? 0 : s >= 0 ? 1 : s >= -2 ? 2 : 3;
   // Feeling tired or having a fever (noted in the Dashboard Quick log) lowers the guess by one step.
   const sick = (x.sy || []).filter((y) => /^(tired|fever)$/i.test(y)); let note = '';
   if (sick.length) { lvl = Math.min(3, lvl + 1); note = ' · ' + sick.join(' and ').toLowerCase() + ' noted'; }
-  return { lvl, why: 'From ' + why.join(', ') + note };
+  const body = why.length > 1 ? why.slice(0, -1).join(', ') + ' and ' + why[why.length - 1] : why[0];
+  return { lvl, why: 'Worked out from ' + body + note };
 }
 export const hasAny = (x: HDay) => x.steps > 0 || x.cups > 0 || x.sleep > 0 || x.mood >= 0 || (x.en ?? -1) >= 0;
 export const dayLevel = (x: HDay) => (x.steps > 0 ? 1 : 0) + (x.cups > 0 ? 1 : 0) + (x.sleep > 0 ? 1 : 0) + (x.mood >= 0 ? 1 : 0);
