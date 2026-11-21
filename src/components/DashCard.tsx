@@ -103,7 +103,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => {
     if (liveShown || !ok.live) return;
     liveShown = true; hold.current = true; setHoldTick((x) => x + 1);
-    const t = setTimeout(() => { hold.current = false; setSel('live'); nextRef.current(); }, 6000);
+    const t = setTimeout(() => { hold.current = false; nextRef.current(); }, 6000);
     return () => clearTimeout(t);
   }, [ok.live]); // eslint-disable-line react-hooks/exhaustive-deps
   const kind: Kind = hold.current && ok.live ? 'live' : sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
