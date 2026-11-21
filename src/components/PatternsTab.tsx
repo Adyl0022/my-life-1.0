@@ -10,7 +10,7 @@ import { HData, HDay, BLANK, getDay, dateOf, keyOfDate, MOODS, WD, MON, cupsGoal
 import { CardArt, IntelIcon } from './CardArt';
 import { TimeMachine } from './TimeMachine';
 import { cyclePatterns } from '../lib/cycle';
-import { ENERGY, energyEstimate, restSignal, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, CATS, expState } from '../lib/patterns';
+import { ENERGY, energyEstimate, restSignal, findPatterns, weekFacts, windowAvg, dayLevel, hasAny, MIN_DAYS, TPLS, CATS, expState, adviceOf } from '../lib/patterns';
 
 import { confirmDelete } from '../lib/dialog';
 const T = '#5ee7df';
@@ -45,6 +45,30 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
   const startExp = (tpl: string) => {
     if (active.some((x) => x.e.tpl === tpl) || active.length >= 3) return;
     setH({ ...h, exps: [...(h.exps || []), { id: String(Date.now()), tpl, start: keyOfDate(dateOf(0)) }] }); setNewOpen(false);
+  };
+  const [resId, setResId] = useState('');
+  const Result = ({ st }: { st: NonNullable<ReturnType<typeof expState>> }) => {
+    const a = adviceOf(st); const col = a.tone === 'great' ? '#7df0c6' : a.tone === 'good' ? '#ffd593' : '#ff9fb4';
+    const running = active.some((x) => x.e.tpl === (a.next ? a.next.id : ''));
+    return (
+      <View style={{ marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: 'rgba(0,0,0,.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,.14)' }}>
+        <Text style={{ color: col, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4 }}>YOUR RESULT</Text>
+        <Text style={{ color: W, fontSize: 16, fontWeight: '800', marginTop: 3 }}>{a.head}</Text>
+        <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{a.line}</Text>
+        {st.rows.length > 0 ? <View style={{ marginTop: 8 }}>
+          <View style={{ flexDirection: 'row' }}><Text style={{ flex: 1.2, color: 'rgba(255,255,255,.5)', fontSize: 10.5 }}> </Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.5)', fontSize: 10.5, fontWeight: '700' }}>BEFORE</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.5)', fontSize: 10.5, fontWeight: '700' }}>DURING</Text></View>
+          {st.rows.map((r) => <View key={r.l} style={{ flexDirection: 'row', paddingVertical: 3 }}><Text style={{ flex: 1.2, color: DIM, fontSize: 12 }}>{r.l}</Text><Text style={{ flex: 1, color: W, fontSize: 12, fontWeight: '700' }}>{r.a}</Text><Text style={{ flex: 1, color: W, fontSize: 12, fontWeight: '700' }}>{r.b}</Text></View>)}
+        </View> : null}
+        <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4, marginTop: 10 }}>HOW TO IMPROVE</Text>
+        {a.tips.map((x) => <Text key={x} style={{ color: 'rgba(255,255,255,.88)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{'•  ' + x}</Text>)}
+        {a.next ? (
+          <Pressable disabled={running || active.length >= 3} onPress={() => startExp(a.next!.id)} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(124,156,255,.45)', opacity: running || active.length >= 3 ? 0.45 : 1 }}>
+            <Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{(a.nextWhy || '') + 'Try: ' + a.next.title}</Text>
+          </Pressable>
+        ) : null}
+        <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>A personal observation from your own records, not clinical evidence or medical advice.{!st.done ? ' Today still counts, so the result can change tonight.' : ''}</Text>
+      </View>
+    );
   };
   const dropExp = (id: string) => setH({ ...h, exps: (h.exps || []).filter((x) => x.id !== id) });
 
@@ -107,17 +131,20 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
       <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Experiments</Text>
       <Text style={{ color: DIM, fontSize: 12 }}>Small tests of your own habits</Text>
-      {active.map(({ e, st }) => (
-        <View key={e.id} style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)' }}>
-          <Text style={{ color: T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4 }}>{'ACTIVE · DAY ' + st!.dayNo + ' OF ' + st!.tpl.days}</Text>
+      {active.map(({ e, st }) => { const ready = st!.dayNo >= st!.tpl.days && !st!.cells.includes('future'); const open = ready && resId === e.id; return (
+        <View key={e.id} style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)', borderWidth: ready ? 1 : 0, borderColor: 'rgba(125,240,198,.55)' }}>
+          <Pressable disabled={!ready} onPress={() => setResId(open ? '' : e.id)} accessibilityLabel={ready ? 'Show the result of ' + st!.tpl.title : st!.tpl.title}>
+          <Text style={{ color: ready ? '#7df0c6' : T, fontSize: 10.5, fontWeight: '800', letterSpacing: 1.4 }}>{ready ? 'COMPLETE · DAY ' + st!.dayNo + ' OF ' + st!.tpl.days + ' · TAP FOR YOUR RESULT' : 'ACTIVE · DAY ' + st!.dayNo + ' OF ' + st!.tpl.days}</Text>
           <Text style={{ color: W, fontSize: 14, fontWeight: '800', marginTop: 3 }}>{st!.tpl.title}</Text>
           <View style={{ flexDirection: 'row', gap: 4, marginTop: 8 }}>
             {st!.cells.map((c, i) => <View key={i} style={{ flex: 1, height: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: c === 'hit' ? T : c === 'miss' ? 'rgba(255,143,171,.55)' : 'rgba(255,255,255,.1)' }}><Text style={{ color: c === 'hit' ? '#06222a' : W, fontSize: 10, fontWeight: '800' }}>{c === 'hit' ? '✓' : c === 'miss' ? '✕' : ''}</Text></View>)}
           </View>
           <Text style={{ color: DIM, fontSize: 11.5, marginTop: 6 }}>{'Target met on ' + st!.hit + ' of ' + st!.logged + ' recorded days. ' + st!.tpl.note + '.'}</Text>
+          </Pressable>
+          {open ? <Result st={st!} /> : null}
           <Pressable onPress={() => confirmDelete('this entry', () => dropExp(e.id))} hitSlop={6} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.55)' }}><Text style={{ color: '#ff8fa0', fontSize: 12.5, fontWeight: '800' }}>Stop this experiment</Text></Pressable>
         </View>
-      ))}
+      ); })}
       {newOpen ? (
         <View style={{ marginTop: 10 }}>
           {CATS.map((cat) => (
@@ -147,7 +174,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
                 <View style={{ flexDirection: 'row' }}><Text style={{ flex: 1.2, color: 'rgba(255,255,255,.5)', fontSize: 10.5 }}> </Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.5)', fontSize: 10.5, fontWeight: '700' }}>BEFORE</Text><Text style={{ flex: 1, color: 'rgba(255,255,255,.5)', fontSize: 10.5, fontWeight: '700' }}>DURING</Text></View>
                 {st!.rows.map((r) => <View key={r.l} style={{ flexDirection: 'row', paddingVertical: 3 }}><Text style={{ flex: 1.2, color: DIM, fontSize: 12 }}>{r.l}</Text><Text style={{ flex: 1, color: W, fontSize: 12, fontWeight: '700' }}>{r.a}</Text><Text style={{ flex: 1, color: W, fontSize: 12, fontWeight: '800' }}>{r.b}</Text></View>)}
               </View> : null}
-              <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 6 }}>A personal observation from your own records, not clinical evidence.</Text>
+              <Result st={st!} />
               <Pressable onPress={() => dropExp(e.id)} hitSlop={8} style={{ marginTop: 6, alignSelf: 'flex-start' }}><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 12, fontWeight: '700' }}>Remove</Text></Pressable>
             </View>
           ))}

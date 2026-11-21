@@ -161,3 +161,43 @@ export function expState(e: Exp, h: HData): ExpState | null {
   return { tpl, cells, hit, logged, dayNo: Math.min(tpl.days, -startOff + 1), done, rows };
 }
 export { keyOfDate };
+
+// What an experiment tells you when it is over (or on its last day), and what to try next. Plain advice from your own records, never medical advice.
+export type Advice = { head: string; tone: 'great' | 'good' | 'low'; line: string; tips: string[]; next?: Tpl; nextWhy?: string };
+const HARDER: Record<string, string> = { bed: 'bed1030', bed12: 'bed', sleep7: 'sleep8', steps4: 'steps', steps: 'steps8', steps8: 'steps10', water6: 'water', water: 'water8', relax5: 'relax10' };
+const EASIER: Record<string, string> = { bed: 'bed12', bed1030: 'bed', sleep8: 'sleep7', steps10: 'steps8', steps8: 'steps', steps: 'steps4', water8: 'water', water: 'water6', relax10: 'relax5' };
+const TIPS: Record<string, { hi: string[]; lo: string[] }> = {
+  Sleep: {
+    hi: ['Keep the same bedtime on your days off too. It is the thing that helps most.', 'Keep the room dark and cool, and keep your phone away from the bed.'],
+    lo: ['Choose a wind-down time: screens off and lights low for 30 minutes before bed.', 'If you work shifts, protect one fixed sleep window instead of aiming for a perfect night.', 'Start with an easier target and build up from there.'],
+  },
+  Move: {
+    hi: ['Great consistency. A short walk after each meal makes the next target easy.', 'Keep your best walking time in your routine, for example after Maghrib.'],
+    lo: ['Split the goal: three short walks of 10 minutes add up quickly.', 'On busy days take the stairs or park a little further away.', 'Try the easier step goal first, then raise it.'],
+  },
+  Water: {
+    hi: ['Keep a bottle where you can see it. It is the easiest habit to hold on to.', 'Have a glass when you wake up and with every meal.'],
+    lo: ['Link a glass to things you already do: waking up, each meal, each prayer time.', 'Keep a filled bottle in your bag or on your desk.', 'Log each glass as you drink it so the count is right.'],
+  },
+  Mind: {
+    hi: ['Short sessions at the same time each day work best. Keep your time.', 'Notice what made your good days good and plan a little more of it.'],
+    lo: ['Attach it to a fixed moment, for example just before sleep.', 'Even 2 minutes counts. Start small so it feels easy.', 'If low days keep coming, talk to someone you trust.'],
+  },
+  Habits: {
+    hi: ['Keep the routine that worked and add one small thing at a time.', 'Plan the next week on the day before, so nothing is left to chance.'],
+    lo: ['Pick just one habit this week and do it at the same time each day.', 'Set a reminder, and tick it off as soon as it is done.', 'Make the goal smaller until it feels easy, then raise it.'],
+  },
+};
+export function adviceOf(st: ExpState): Advice {
+  const rate = st.logged > 0 ? st.hit / st.logged : 0; const pct = Math.round(rate * 100);
+  const tone: Advice['tone'] = rate >= 0.85 ? 'great' : rate >= 0.5 ? 'good' : 'low';
+  const head = tone === 'great' ? 'Great job' : tone === 'good' ? 'Good progress' : st.logged === 0 ? 'Not enough records' : 'A tough one, and that is okay';
+  let line = st.logged === 0 ? 'No days were recorded, so there is nothing to measure yet.' : 'You met the target on ' + st.hit + ' of ' + st.logged + ' recorded days (' + pct + '%).';
+  if (st.logged > 0 && st.logged < st.tpl.days) line += ' ' + (st.tpl.days - st.logged) + (st.tpl.days - st.logged === 1 ? ' day has' : ' days have') + ' no record. Log every day for a fairer result.';
+  const t = TIPS[st.tpl.cat] || TIPS.Habits; const tips = (tone === 'low' ? t.lo : t.hi).slice();
+  if (st.logged < st.tpl.days && st.logged > 0) tips.push('Log it every day, even on a day you missed. The result only counts what is recorded.');
+  const map = tone === 'great' ? HARDER : tone === 'low' ? EASIER : null;
+  const next = map && map[st.tpl.id] ? TPLS.find((x) => x.id === map[st.tpl.id]) : undefined;
+  const nextWhy = next ? (tone === 'great' ? 'Ready for a bigger step? ' : 'A smaller step can be a better start. ') : undefined;
+  return { head, tone, line, tips, next, nextWhy };
+}
