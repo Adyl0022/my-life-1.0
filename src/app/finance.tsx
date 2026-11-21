@@ -286,6 +286,7 @@ export default function Finance() {
           {/* Spending tracker */}
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending Tracker</Text>
+            <View style={SEC}>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               <Stat l="This month" v={cs() + rnd(gc)} />
               <Stat l="Last month" v={cs() + rnd(gp)} />
@@ -308,11 +309,11 @@ export default function Finance() {
               })}
             </View>
             <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 6 }}>Last 6 months, in {cu()}. Under each month: ▲ orange means you spent that much more than the month before, ▼ green means that much less.</Text>
-            </Glass>
+            </View>
 
-            {/* Add spending */}
-            <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-              <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Add Spending</Text>
+
+
+              <Text style={{ color: W, fontSize: 14, fontWeight: '700', marginTop: 22 }}>Add Spending</Text>
               <View style={SEC}>
                 <Text style={SECL}>WHAT AND HOW MUCH</Text>
                 <Inp value={fName} onChangeText={setFName} placeholder="What did you buy?" />
