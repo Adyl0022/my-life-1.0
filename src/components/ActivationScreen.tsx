@@ -34,7 +34,7 @@ export function ActivationScreen({ email, expired }: { email: string; expired: b
           <View style={{ borderRadius: 26, padding: 16, backgroundColor: '#3b3a7e', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.42)', borderBottomColor: 'rgba(0,0,0,.38)', borderBottomWidth: 2, overflow: 'hidden' }}>
             <LinearGradient colors={['rgba(255,255,255,.22)', 'rgba(255,255,255,0)']} pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 120 }} />
             <Animated.View style={{ opacity: enter, transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
-              <Text style={{ color: W, fontSize: 20, fontWeight: '800' }}>{expired ? 'Your access has ended' : 'Activate My Life'}</Text>
+              <Text style={{ color: W, fontSize: 20, fontWeight: '800' }}>{expired ? 'Your access has ended' : 'Activate My Life 1.0'}</Text>
               <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 12.5, marginTop: 2, marginBottom: 12, lineHeight: 17 }}>{expired ? 'Enter a new activation code to continue.' : 'Enter the activation code you received to unlock the app.'}</Text>
               <Text style={{ color: TEAL, fontSize: 12, fontWeight: '800', letterSpacing: 1.6, marginBottom: 8 }}>TYPE THE 8 CHARACTERS AFTER ML-</Text>
               <CodeBoxes value={code} onChange={setCode} length={8} kind="alnum" group={4} shake={err} />
@@ -45,7 +45,7 @@ export function ActivationScreen({ email, expired }: { email: string; expired: b
                 </LinearGradient>
               </Pressable>
               <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 14 }}>
-                {link('Get a code', () => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent('My Life activation code')))}
+                {link('Get a code', () => Linking.openURL('mailto:' + SUPPORT_EMAIL + '?cc=' + SUPPORT_EMAIL2 + '&subject=' + encodeURIComponent('My Life 1.0 activation code')))}
                 {link('Sign out', () => { signOut(); })}
               </View>
             </Animated.View>

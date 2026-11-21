@@ -43,7 +43,7 @@ export const bioReady = async () => {
   if (Platform.OS === 'web') return false;
   try { return (await LocalAuth.hasHardwareAsync()) && (await LocalAuth.isEnrolledAsync()); } catch (e) { return false; }
 };
-export async function bioAuth(msg = 'Unlock My Life'): Promise<boolean> {
+export async function bioAuth(msg = 'Unlock My Life 1.0'): Promise<boolean> {
   try { const r = await LocalAuth.authenticateAsync({ promptMessage: msg, cancelLabel: 'Use PIN', disableDeviceFallback: true }); return !!r.success; } catch (e) { return false; }
 }
 

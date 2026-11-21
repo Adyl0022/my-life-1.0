@@ -117,7 +117,7 @@ export default function TimeMachinePage() {
 
   const Future = () => {
     const ms = FMETRICS[reg];
-    if (reg === 'heart') return <View style={{ marginTop: 12 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Nothing to estimate</Text><Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>My Life does not guess pulse or blood pressure. A straight line through vital signs would not be honest or safe, so there is no estimate for this part. Ask a doctor or nurse about your readings.</Text></View>;
+    if (reg === 'heart') return <View style={{ marginTop: 12 }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Nothing to estimate</Text><Text style={{ color: DIM, fontSize: 12.5, lineHeight: 18, marginTop: 6 }}>My Life 1.0 does not guess pulse or blood pressure. A straight line through vital signs would not be honest or safe, so there is no estimate for this part. Ask a doctor or nurse about your readings.</Text></View>;
     const gs = ms.map((m) => ({ m, g: guess(h, m, hz) }));
     const wg = reg === 'body' ? weightGuess(h, hz) : null;
     const any = gs.some((x) => x.g) || !!wg;

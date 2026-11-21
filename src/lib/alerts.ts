@@ -204,7 +204,7 @@ export async function syncWeekAlert(tg: Toggles): Promise<void> {
     if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('week', { name: 'Weekly review', importance: Notifications.AndroidImportance.DEFAULT, lightColor: '#7c9cff' });
     await Notifications.scheduleNotificationAsync({
       identifier: 'week-review',
-      content: { title: 'Your week in My Life', body: 'See how your week went. Open Insights and tap Week.', sound: false },
+      content: { title: 'Your week in My Life 1.0', body: 'See how your week went. Open Insights and tap Week.', sound: false },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 20, minute: 0, channelId: 'week', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }
@@ -307,7 +307,7 @@ export async function syncCycleAlert(daysTo: number | null, on: boolean): Promis
     if (at.getTime() <= Date.now() + 5000) return;
     await Notifications.scheduleNotificationAsync({
       identifier: 'cyc-next',
-      content: { title: 'Reminder from My Life', body: 'Open My Life to see your reminder.', sound: false },
+      content: { title: 'Reminder from My Life 1.0', body: 'Open My Life 1.0 to see your reminder.', sound: false },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: 'cycle', delivery: 'alarmClock' } as any,
     });
   } catch (e) { /* ignore */ }

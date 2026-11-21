@@ -148,7 +148,7 @@ export default function Medicine() {
                 </View>
                 {err ? <Text style={{ color: '#ffb3bf', fontSize: 12, marginTop: 12 }}>{err}</Text> : null}
               </Glass>
-              <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>My Life does not give dose advice. Type what is on the label or in your doctor's note. You get a reminder at the time you set, and again an hour later if it is not ticked.</Text>
+              <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 10 }}>My Life 1.0 does not give dose advice. Type what is on the label or in your doctor's note. You get a reminder at the time you set, and again an hour later if it is not ticked.</Text>
               <Pressable onPress={save} style={{ marginTop: 14, alignSelf: 'flex-start' }}><LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 12, paddingHorizontal: 26, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{editId ? 'Save changes' : 'Save medicine'}</Text></LinearGradient></Pressable>
             </>
           ) : (

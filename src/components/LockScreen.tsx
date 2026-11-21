@@ -164,7 +164,7 @@ export function LockScreen() {
       ) : forgot === 'newpin' ? (
         <NewPin onDone={async (p) => { await setPin(p, cfg.bio); setForgot(''); }} />
       ) : (
-        <PinPad title="Enter your PIN" sub="My Life is locked" err={err} shake={shake} onDone={done}
+        <PinPad title="Enter your PIN" sub="My Life 1.0 is locked" err={err} shake={shake} onDone={done}
           onBio={bioOk ? () => bioAuth().then((ok) => ok && unlock()) : undefined}
           extra={<Pressable onPress={() => setForgot('menu')} style={{ marginTop: 6, paddingVertical: 9, paddingHorizontal: 20, borderRadius: 999, backgroundColor: 'rgba(143,233,226,.12)', borderWidth: 1, borderColor: 'rgba(143,233,226,.35)' }}><Text style={{ color: '#8fe9e2', fontSize: 13.5, fontWeight: '700' }}>Forgot PIN?</Text></Pressable>} />
       )}

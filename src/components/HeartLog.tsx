@@ -133,7 +133,7 @@ export function HeartLog({ h, setH, off = 0 }: { h: HData; setH: (v: HData) => v
           ) : null}
         </View>
       ) : null}
-      <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 12 }}>These are your own notes. My Life is not a medical device and does not diagnose, treat or advise. Talk to a doctor or nurse about your readings.</Text>
+      <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 16, marginTop: 12 }}>These are your own notes. My Life 1.0 is not a medical device and does not diagnose, treat or advise. Talk to a doctor or nurse about your readings.</Text>
     </View>
   );
 }

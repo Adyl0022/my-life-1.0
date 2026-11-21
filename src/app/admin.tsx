@@ -126,7 +126,7 @@ export default function Admin() {
     if (!r.ok) { if (r.err === 'admin_locked') { setGate('enter'); return; } setErr(r.err); return; }
     setErr(''); setTmp({ id, pw: r.data });
   };
-  const send = (code: string) => Share.share({ message: 'Your My Life activation code: ' + code + '\nOpen the app, sign in, then type the 8 characters after ML-.' });
+  const send = (code: string) => Share.share({ message: 'Your My Life 1.0 activation code: ' + code + '\nOpen the app, sign in, then type the 8 characters after ML-.' });
   return (
     <View style={{ flex: 1, backgroundColor: '#06100d', overflow: 'hidden' }}>
       <LinearGradient colors={['#06100d', '#0b1a16', '#090d14']} locations={[0, 0.5, 1]} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
@@ -264,7 +264,7 @@ export default function Admin() {
                     <Text style={{ color: dim, fontSize: 11.5 }}>Temporary password. They were signed out. Send it to them; they can change it in Settings.</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
                       <Text selectable style={{ flex: 1, color: '#cfe0ff', fontSize: 17, fontWeight: '800', letterSpacing: 1 }}>{tmp.pw}</Text>
-                      <Pressable onPress={() => Share.share({ message: 'Your temporary My Life password: ' + tmp.pw + '\nSign in with it, then change it in Settings > Change password.' })} hitSlop={8}><Text style={{ color: GOLD, fontWeight: '800' }}>Send</Text></Pressable>
+                      <Pressable onPress={() => Share.share({ message: 'Your temporary My Life 1.0 password: ' + tmp.pw + '\nSign in with it, then change it in Settings > Change password.' })} hitSlop={8}><Text style={{ color: GOLD, fontWeight: '800' }}>Send</Text></Pressable>
                     </View>
                   </View>
                 ) : null}

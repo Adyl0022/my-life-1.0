@@ -48,7 +48,7 @@ export default function FamilyJoin() {
           </Rise>
           <Rise i={2}>
             <View style={{ marginTop: 14 }}>
-              <Note warm t={lic.status === 'active' ? 'Joining needs an active My Life subscription, and you have one. Your own data stays separate from the family.' : 'You need an active My Life subscription to join a family.'} />
+              <Note warm t={lic.status === 'active' ? 'Joining needs an active My Life 1.0 subscription, and you have one. Your own data stays separate from the family.' : 'You need an active My Life 1.0 subscription to join a family.'} />
             </View>
           </Rise>
           {err ? <Text style={{ color: '#ffb3bf', fontSize: 12.5, marginTop: 12 }}>{err}</Text> : null}

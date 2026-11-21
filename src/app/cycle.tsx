@@ -103,7 +103,7 @@ export default function Cycle() {
           <Pressable onPress={() => setH({ ...h, cyRem: !rem })} style={{ marginTop: 12 }}>
             <Glass radius={24} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: rem ? T : 'rgba(255,255,255,.4)', backgroundColor: rem ? T : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{rem ? <Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 14 }}>✓</Text> : null}</View>
-              <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Reminder 2 days before</Text><Text style={{ color: DIM, fontSize: 11.5, lineHeight: 15, marginTop: 4 }}>The notification says only "Reminder from My Life", so nothing private shows on your lock screen.</Text></View>
+              <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Reminder 2 days before</Text><Text style={{ color: DIM, fontSize: 11.5, lineHeight: 15, marginTop: 4 }}>The notification says only "Reminder from My Life 1.0", so nothing private shows on your lock screen.</Text></View>
             </Glass>
           </Pressable>
 

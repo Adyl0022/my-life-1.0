@@ -215,7 +215,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     const ld = lessonOfDay(colS && colS.lessons);
     body = <Premium k="lesson" label={(ld.mine ? 'YOUR LESSON' : 'LIFE LESSON') + ' · ' + ld.tag.toUpperCase()} title={ld.title} sub={ld.text} />;
   } else if (kind === 'memories') {
-    body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life' : 'Your Memories'} sub="Every moment matters" />;
+    body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life 1.0' : 'Your Memories'} sub="Every moment matters" />;
   } else if (kind === 'score') {
     const sc = lifeScore(parts);
     const sorted = parts.slice().sort((a, b) => b.pct - a.pct); const warn = sorted.find(p => p.k === 'spend' && /(over budget|nearly used)$/.test(p.detail)); const top = warn ? [warn, ...sorted.filter(p => p !== warn).slice(0, 1)] : sorted.slice(0, 2);

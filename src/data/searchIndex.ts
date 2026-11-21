@@ -538,7 +538,7 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Terms of Use",
-  "s": "Using My Life",
+  "s": "Using My Life 1.0",
   "m": "System",
   "c": "#5ee7df",
   "h": "Settings.dc.html",

@@ -80,7 +80,7 @@ export function SmartChatSheet({ visible, onClose }: { visible: boolean; onClose
               </View>
               <Text style={{ color: 'rgba(255,255,255,.82)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>When this is on, questions the Assistant cannot answer itself are sent over the internet to an AI service (through our server). When it is off, or the daily limit is used up, the AI on your phone answers instead.</Text>
               <View style={{ marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: 'rgba(255,190,90,.12)', borderWidth: 1, borderColor: 'rgba(255,190,90,.4)' }}>
-                <Text style={{ color: '#ffd9a0', fontSize: 12.5, lineHeight: 18 }}>Please remember: what you ask leaves your phone, so do not type private details such as passwords, ID numbers or bank details. Your own data in My Life is never sent. The answer can be wrong or out of date, so check important facts with an official source. There is a daily limit, and you must be signed in.</Text>
+                <Text style={{ color: '#ffd9a0', fontSize: 12.5, lineHeight: 18 }}>Please remember: what you ask leaves your phone, so do not type private details such as passwords, ID numbers or bank details. Your own data in My Life 1.0 is never sent. The answer can be wrong or out of date, so check important facts with an official source. There is a daily limit, and you must be signed in.</Text>
               </View>
               {on && !sess ? <Text style={{ color: '#ffb3a0', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>You are not signed in, so Online AI cannot be used yet.</Text> : null}
             </View>

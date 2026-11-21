@@ -63,7 +63,7 @@ export default function Search() {
               </Pressable>
             ))}
           </ScrollView>
-          <Text style={{ marginTop: 14, color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700', letterSpacing: 1.2 }}>{ql ? (res.length + spRes.length) + ' result' + (res.length === 1 ? '' : 's') : 'Everything in My Life'}</Text>
+          <Text style={{ marginTop: 14, color: 'rgba(255,255,255,.65)', fontSize: 11.5, fontWeight: '700', letterSpacing: 1.2 }}>{ql ? (res.length + spRes.length) + ' result' + (res.length === 1 ? '' : 's') : 'Everything in My Life 1.0'}</Text>
         </View>
         <ScrollView style={{ marginTop: 8 }} contentContainerStyle={{ gap: 8, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           {spRes.map((x: any) => (

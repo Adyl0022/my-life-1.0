@@ -42,7 +42,7 @@ export default function IslamicSettings() {
             </View>
             {lead ? <Text style={{ color: DIM, fontSize: 12, marginTop: 8 }}>{'Rings ' + lead + ' minutes before each prayer'}</Text> : null}
           </Glass>
-          <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, paddingHorizontal: 4 }}>Alerts only ring when notifications are allowed for My Life. You can send a test notification from Settings.</Text>
+          <Text style={{ color: DIM, fontSize: 12, lineHeight: 17, paddingHorizontal: 4 }}>Alerts only ring when notifications are allowed for My Life 1.0. You can send a test notification from Settings.</Text>
         </ScrollView>
       </SafeAreaView>
     </View>

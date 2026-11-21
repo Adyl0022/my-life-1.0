@@ -23,7 +23,7 @@ export const isParent = (r?: FRole | null) => r === 'owner' || r === 'parent';
 const KEY = 'ml_family_cache';
 let mem: { uid: string; info: FInfo } | null = null; // last known family, so opening the screens again is instant
 const MSG: Record<string, string> = {
-  not_active: 'Family Planner needs an active My Life subscription.',
+  not_active: 'Family Planner needs an active My Life 1.0 subscription.',
   already_in_family: 'You are already in a family.',
   bad_name: 'Please type a name.',
   invalid_code: 'That code is not valid. Check it and try again.',

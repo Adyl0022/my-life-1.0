@@ -347,7 +347,7 @@ export function AuthScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 0, paddingBottom: 8, paddingLeft: 22, paddingRight: 70 }}>
             <View style={{ width: 96, height: 96, alignItems: 'center', justifyContent: 'center' }}><View style={{ width: 170, height: 170, transform: [{ scale: 0.52 }] }}><Logo /></View></View>
             <View style={{ marginLeft: 6 }}>
-              <Text style={{ color: W, fontSize: 28, fontWeight: '800', letterSpacing: 0.3 }}>My Life</Text>
+              <Text style={{ color: W, fontSize: 28, fontWeight: '800', letterSpacing: 0.3 }}>My Life 1.0</Text>
               <Text style={{ color: TEAL, fontSize: 11, fontWeight: '700', letterSpacing: 2.2, marginTop: 9 }}>YOUR DAY, ONE APP</Text>
             </View>
           </View>

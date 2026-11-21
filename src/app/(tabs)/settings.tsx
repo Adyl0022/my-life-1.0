@@ -183,8 +183,8 @@ export default function Settings() {
   const [exact, setExact] = useState<boolean | null>(null);
   React.useEffect(() => { if (Platform.OS !== 'android') return; Notifications.getExactAlarmPermissionsAsync().then((r: any) => setExact(!!r.granted)).catch(() => setExact(null)); }, []);
   const askExact = async () => {
-    try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); say(r.granted ? 'Exact timing is on' : 'Not allowed yet. Turn on Alarms & reminders for My Life'); }
-    catch (e) { say('Could not open the setting. Open phone Settings, Apps, My Life, Alarms & reminders'); }
+    try { const r: any = await Notifications.requestExactAlarmPermissionsAsync(); setExact(!!r.granted); say(r.granted ? 'Exact timing is on' : 'Not allowed yet. Turn on Alarms & reminders for My Life 1.0'); }
+    catch (e) { say('Could not open the setting. Open phone Settings, Apps, My Life 1.0, Alarms & reminders'); }
   };
   const openBattery = async () => {
     try { await (Linking as any).sendIntent('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS'); }
@@ -193,7 +193,7 @@ export default function Settings() {
   const testNotif = async () => {
     if (Platform.OS === 'web') return say('Notifications work in the phone app only');
     try {
-      if (!(await setup(true))) return say('Allow notifications for My Life in your phone settings');
+      if (!(await setup(true))) return say('Allow notifications for My Life 1.0 in your phone settings');
       await Notifications.scheduleNotificationAsync({ identifier: 'test-now', content: { title: 'Test notification', body: 'Your reminders are working.', sound: true }, trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, channelId: 'prayer' } as any });
       say('Sent. It will appear in 3 seconds');
     } catch (e) { say('Could not send a test notification'); }
@@ -380,15 +380,15 @@ export default function Settings() {
                 <Row t="Open-source licences" last onPress={() => setDlg('lic')} right={<Chev />} />
               </Glass>
               <Glass style={{ paddingHorizontal: 16 }}>
-                <Row t="How to use My Life" onPress={() => setDlg('howto')} right={<Chev />} />
+                <Row t="How to use My Life 1.0" onPress={() => setDlg('howto')} right={<Chev />} />
                 <Row t="Help and FAQ" onPress={() => setDlg('faq')} right={<Chev />} />
-                <Row t="Report a problem" onPress={() => mail('My Life: problem report', 'What happened?\n\n\nWhat did you expect?\n\n\n' + info)} right={<Chev />} />
-                <Row t="Send feedback" last onPress={() => mail('My Life: feedback', 'My idea or comment:\n\n\n' + info)} right={<Chev />} />
+                <Row t="Report a problem" onPress={() => mail('My Life 1.0: problem report', 'What happened?\n\n\nWhat did you expect?\n\n\n' + info)} right={<Chev />} />
+                <Row t="Send feedback" last onPress={() => mail('My Life 1.0: feedback', 'My idea or comment:\n\n\n' + info)} right={<Chev />} />
               </Glass>
               <MemoriesCard />
               <Glass style={{ padding: 16 }}>
                 <Ttl t="Storage" />
-                <Lbl t="What My Life uses on this phone" style={{ marginBottom: 10 }} />
+                <Lbl t="What My Life 1.0 uses on this phone" style={{ marginBottom: 10 }} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <View style={{ flex: 1, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{sto ? fmtBytes(sto.data) : '...'}</Text><Lbl t="Your data" /></View>
                   <View style={{ flex: 1, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 16, fontWeight: '800' }}>{sto ? fmtBytes(sto.temp) : '...'}</Text><Lbl t="Temporary files" /></View>
@@ -452,7 +452,7 @@ export default function Settings() {
             <View style={{ gap: 8, marginTop: 14 }}>
               <View style={{ flexDirection: 'row' }}><Btn t="Save a backup" kind="primary" onPress={() => { close(); router.push('/export' as any); }} /></View>
               <View style={{ flexDirection: 'row' }}><Btn t="Restore from a file" onPress={async () => {
-                try { const t = await pickText(); if (t == null) return; const b = parseBackup(t); if (!b) return setBkErr('That file is not a My Life backup. Choose the Backup (JSON) file you saved from Export. Excel, PDF and CSV files cannot be restored.'); setBk(b); setDlg('confirm'); }
+                try { const t = await pickText(); if (t == null) return; const b = parseBackup(t); if (!b) return setBkErr('That file is not a My Life 1.0 backup. Choose the Backup (JSON) file you saved from Export. Excel, PDF and CSV files cannot be restored.'); setBk(b); setDlg('confirm'); }
                 catch (e) { setBkErr('Could not open that file.'); }
               }} /></View>
               <View style={{ flexDirection: 'row' }}><Btn t="Cancel" onPress={close} /></View>
@@ -472,7 +472,7 @@ export default function Settings() {
             </View>
           </View></Overlay>
         )}
-        {dlg === 'howto' && <Doc title="How to use My Life" secs={HOWTO} onClose={close} />}
+        {dlg === 'howto' && <Doc title="How to use My Life 1.0" secs={HOWTO} onClose={close} />}
         {dlg === 'faq' && <Doc title="Help and FAQ" secs={FAQ} onClose={close} />}
         {dlg === 'lic' && <Doc title="Open-source licences" secs={LICENCES} onClose={close} />}
         {dlg === 'backup' && <Doc title="Encrypted backup & restore" secs={[{ h: 'Coming with sync', p: 'Backups will be encrypted and tied to your account. For now you can save a full copy with Export, using the Backup (JSON) format.' }]} onClose={close} />}
@@ -480,7 +480,7 @@ export default function Settings() {
 
         {dlg === 'out' && (
           <Overlay onClose={close}><View style={{ padding: 20, borderRadius: 26, backgroundColor: '#131845', borderWidth: 1, borderColor: 'rgba(255,255,255,.16)' }}>
-            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Log out of My Life?</Text>
+            <Text style={{ color: W, fontSize: 17, fontWeight: '800' }}>Log out of My Life 1.0?</Text>
             <Text style={{ color: DIM, fontSize: 13, lineHeight: 19, marginTop: 6 }}>Your data is backed up first. You will need your email and password to sign back in on this device.</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}><Btn t="Cancel" onPress={close} /><Btn t="Log out" kind="danger" onPress={async () => { await syncNow(); close(); await signOut(); }} /></View>
           </View></Overlay>
