@@ -53,15 +53,17 @@ function useTween(from: number, to: number, key: string): number {
   return v;
 }
 
-// The sound of coins dropping into a money box. It ends with the last coin as the tick appears.
+// The sound of coins dropping into a money box. The first coin lands the moment the first light reaches the orb, and the last one lands with the tick.
+// The sound is loaded as soon as the screen opens, so it starts at once when it is time and is not late.
 const COIN = require('../../assets/sounds/coin.wav');
-async function playCoin() {
+const COIN_AT = (ARRIVE0 - 0.1) * 1000; // the first light touches the orb a little before its middle
+async function loadCoin(): Promise<null | (() => void)> {
   try {
-    if (Platform.OS === 'web') { const src = (typeof COIN === 'string' ? COIN : (COIN && COIN.default) || COIN); const a = new (window as any).Audio(src); a.volume = 0.8; a.play().catch(() => {}); return; }
+    if (Platform.OS === 'web') { const src = (typeof COIN === 'string' ? COIN : (COIN && COIN.default) || COIN); const a = new (window as any).Audio(src); a.volume = 0.8; a.preload = 'auto'; return () => { a.play().catch(() => {}); }; }
     const A: any = await import('expo-audio');
-    const p = A.createAudioPlayer(COIN); p.volume = 0.8; p.play();
-    setTimeout(() => { try { p.remove(); } catch (e) { /* ignore */ } }, 4000);
-  } catch (e) { /* no sound is fine */ }
+    const p = A.createAudioPlayer(COIN); p.volume = 0.8;
+    return () => { try { p.seekTo(0); } catch (e) { /* ignore */ } try { p.play(); } catch (e) { /* ignore */ } setTimeout(() => { try { p.remove(); } catch (e) { /* ignore */ } }, 4500); };
+  } catch (e) { return null; }
 }
 
 /** A ring that fills clockwise from the top while v goes from 0 to 1. Made of two rotating half rings, so it moves on the native engine. */
@@ -110,7 +112,9 @@ export function TransferDone({ info, onClose }: { info: TransferInfo | null; onC
     twinkle.setValue(0); ring.setValue(0);
     loops.forEach((l) => l.start());
     let dead = false;
-    const snd = setTimeout(() => { if (!dead) playCoin(); }, TB * 1000 - 1050);
+    let go: null | (() => void) = null; let late = false;
+    loadCoin().then((f) => { go = f; if (f && late && !dead) f(); });
+    const snd = setTimeout(() => { late = true; if (go && !dead) go(); }, COIN_AT);
     const run = tm(T, TB, TB * 1000, Easing.linear);
     run.start(({ finished }) => {
       if (!finished || dead) return;
