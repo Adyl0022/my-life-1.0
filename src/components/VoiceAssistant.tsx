@@ -322,11 +322,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
             ) : (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 14 }}>
             {err ? <Text style={{ color: '#ffb3a0', fontSize: 13, lineHeight: 19, textAlign: 'center' }}>{err}</Text> : null}
-            {!heard && !reply && !err ? (
-              <View style={{ alignSelf: 'center', paddingVertical: 11, paddingHorizontal: 20, opacity: 0 }} pointerEvents="none">
-                <Text style={{ color: 'rgba(255,255,255,.92)', fontSize: 14, fontWeight: '600', textAlign: 'center' }}>{L('Ask me anything about your data', 'Tanya saya apa-apa tentang data awak')}</Text>
-              </View>
-            ) : null}
+            
             {!smartReady() && !onlineOn() && onAI ? (
               <Pane style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('AI needed to chat about anything', 'AI diperlukan untuk bersembang tentang apa-apa')}</Text>
