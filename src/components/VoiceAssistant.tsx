@@ -145,14 +145,10 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
       onError: (c) => { fatal = true; setErr(errText(c)); },
       onEnd: () => {
         if (!live.current) return;
-        if (pause.current || fatal) {
-          // Tapping the button while words are on the screen means "that is all": send what was heard instead of throwing it away.
-          const txt = (final || part).trim(); const send = pause.current && !fatal && txt.length > 1;
-          pause.current = false;
-          if (send) { quiet.current = 0; handle(txt); return; }
-          setPhase('idle'); return;
-        }
-        if (final) { quiet.current = 0; handle(final); return; }
+        // Some phones end the listening without marking the last words as final. Whatever words were heard are answered, so a question is never left unanswered on the screen.
+        const txt = (final || part).trim();
+        if (txt.length > 1) { pause.current = false; quiet.current = 0; handle(txt); return; }
+        if (pause.current || fatal) { pause.current = false; setPhase('idle'); return; }
         quiet.current += 1;
         if (quiet.current >= 2) setPhase('idle'); else listenOnce();
       },
