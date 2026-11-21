@@ -42,7 +42,7 @@ export default function Screen() {
   const pdf = async () => { if (busy) return; Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setBusy(true); try { const ok = await itemsPdf(items, nm); if (!ok) showAlert('Could not share', 'The PDF was made, but this phone has no way to share it.'); } catch (e) { showAlert('Could not make the PDF', 'Please try again.'); } setBusy(false); };
   return (
     <RecordPage title="Personal Collection" sub="Know what you own and what it is worth" bg={<ColArt />}>
-      <Intro plain title="Your things" text="Keep your gadgets, vehicles, property and more with photos, prices and warranties, and get reminded when something you lent is due back." colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
+      <Intro plain title="Your things" text="One home for your gadgets, lifestyle items, property and vehicles, with what each one is worth." colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ gap: 12, marginTop: 14 }}>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Card icon="gadget" title={CATS.gadget.title} sub={CATS.gadget.sub} c={ACC.gadget} onPress={() => go('/collection-items?c=gadget')} />
