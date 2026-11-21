@@ -11,6 +11,8 @@ import { Blob } from './Bg';
 import { micAllowed, listen, speak, stopSpeaking, voiceCommand, VLANGS, vlang, voicesFor, voicePref, setVoicePref, sample, speechPack, VoiceOpt } from '../lib/voice';
 import { useLangPacks, xlText, flagOf } from '../lib/xlate';
 import { useName } from '../lib/store';
+import { smartReady } from '../lib/llm';
+import { onlineOn } from '../lib/onlineAi';
 
 type Phase = 'ready' | 'idle' | 'listening' | 'thinking' | 'speaking';
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -67,7 +69,7 @@ function Wave({ target, width }: { target: React.MutableRefObject<number>; width
 
 // The Assistant by voice. It talks to the same Assistant as the chat screen (chat.current), so everything it can do by typing it can do by voice,
 // and the whole talk is also kept in the chat afterwards.
-export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: boolean; chat: React.MutableRefObject<any>; onClose: () => void; onOpen: (route: string) => void }) {
+export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visible: boolean; chat: React.MutableRefObject<any>; onClose: () => void; onOpen: (route: string) => void; onAI?: () => void }) {
   const packs = useLangPacks(); const myName = (useName() || '').trim().split(' ')[0];
   const [phase, setPhase] = useState<Phase>('idle');
   const [heard, setHeard] = useState(''); const [reply, setReply] = useState(''); const [err, setErr] = useState('');
@@ -120,7 +122,8 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
     if (!live.current) return;
     if (isX() && !packs.ready(vkR.current)) { begin(); return; }
     const nm = myName ? ' ' + myName : '';
-    const txt = await tr('Hi' + nm + ', how can I help you today?', 'Hai' + nm + ', apa yang boleh saya bantu hari ini?');
+    const noAI = !smartReady() && !onlineOn();
+    const txt = await tr('Hi' + nm + ', how can I help you today?' + (noAI ? ' To chat about anything, I need an AI first. Tap Set up AI to download it.' : ''), 'Hai' + nm + ', apa yang boleh saya bantu hari ini?' + (noAI ? ' Untuk bersembang tentang apa-apa, saya perlukan AI dahulu. Tekan Sediakan AI untuk memuat turunnya.' : ''));
     if (!live.current) return;
     setReply(txt); setPhase('speaking');
     speak(txt, outTag(), () => { if (live.current) { setReply(''); listenOnce(); } });
@@ -267,6 +270,15 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
           </View>
 
           <ScrollView style={{ flex: 1, marginTop: 12 }} contentContainerStyle={{ gap: 12, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
+            {!smartReady() && !onlineOn() && onAI ? (
+              <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('AI needed to chat about anything', 'AI diperlukan untuk bersembang tentang apa-apa')}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{L('Spending, pages and your own data already work. For opinions and general questions, download the AI on your phone (one time, no daily limit) or turn on Online AI (your question is sent over the internet).', 'Belanja, halaman dan data awak sendiri sudah berfungsi. Untuk pendapat dan soalan umum, muat turun AI dalam telefon (sekali sahaja, tiada had harian) atau hidupkan AI dalam talian (soalan dihantar melalui internet).')}</Text>
+                <Pressable onPress={() => { onClose(); onAI(); }} buzz accessibilityLabel="Set up AI">
+                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ marginTop: 10, paddingVertical: 11, borderRadius: 14, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('Set up AI', 'Sediakan AI')}</Text></LinearGradient>
+                </Pressable>
+              </Glass>
+            ) : null}
             {heard ? <Text style={{ color: '#fff', fontSize: 20, lineHeight: 28, textAlign: 'center', fontWeight: '600' }}>{'“' + heard + '”'}</Text> : null}
             {reply ? <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}><Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{reply}</Text></Glass> : null}
             {err ? <Text style={{ color: '#ffb3a0', fontSize: 13, lineHeight: 19, textAlign: 'center' }}>{err}</Text> : null}

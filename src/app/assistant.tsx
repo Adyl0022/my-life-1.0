@@ -299,7 +299,7 @@ export default function Assistant() {
       <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 12 + TOP }}>
         {last ? <PrayerFeed onTimes={setP} /> : null}
         {real.ready ? <Chat ref={chat} onVoice={() => setVoice(true)} tlang={tlang} onSmart={() => setSmart(true)} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
-        <VoiceAssistant visible={voice} chat={chat} onClose={() => setVoice(false)} onOpen={(r: string) => { setVoice(false); setTimeout(() => router.push(r as any), 250); }} />
+        <VoiceAssistant visible={voice} chat={chat} onClose={() => setVoice(false)} onAI={() => { setVoice(false); setTimeout(() => setSmart(true), 300); }} onOpen={(r: string) => { setVoice(false); setTimeout(() => router.push(r as any), 250); }} />
         <SmartChatSheet visible={smart} onClose={() => setSmart(false)} />
         <AssistLangSheet visible={sheet} auto={auto} onClose={() => { setSheet(false); setAuto(''); }} onPicked={(c: string) => setPicked(c)} />
         <LangPickedPopup code={picked} onHide={() => setPicked(null)} />
