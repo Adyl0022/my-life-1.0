@@ -12,7 +12,7 @@ import { micAllowed, listen, speak, stopSpeaking, voiceCommand, VLANGS, vlang, v
 import { useLangPacks, xlText, flagOf } from '../lib/xlate';
 import { useName } from '../lib/store';
 
-type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
+type Phase = 'ready' | 'idle' | 'listening' | 'thinking' | 'speaking';
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 const NAME = 'My Life Live';
 // The live wave: soft ribbons of light that flow across the screen. They swell with the loudness of your voice while you talk,
@@ -93,7 +93,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
     live.current = true; quiet.current = 0; pause.current = false; if (C()) C().voice = true; setSheet(false);
     const start = voicePref().lang || 'en';
     pickLang(start, true);
-    setHeard(''); setReply(''); setErr(''); setPhase('idle'); setNote('');
+    setHeard(''); setReply(''); setErr(''); setPhase('ready'); setNote('');
     greet();
     return () => { live.current = false; if (C()) C().voice = false; stopL.current(); stopSpeaking(); };
   }, [visible]);
@@ -216,7 +216,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
 
   const ms = msUi();
   const lg = vl();
-  const status = phase === 'listening' ? L('Listening…', 'Saya mendengar…') : phase === 'thinking' ? L('Thinking…', 'Sedang fikir…') : phase === 'speaking' ? L('Speaking…', 'Bercakap…') : L('Tap the microphone to talk', 'Tekan mikrofon untuk bercakap');
+  const status = phase === 'ready' ? L('Getting ready…', 'Bersedia…') : phase === 'listening' ? L('Just talk, I\'m listening', 'Cakap sahaja, saya mendengar') : phase === 'thinking' ? L('Thinking…', 'Sedang fikir…') : phase === 'speaking' ? L('Speaking…', 'Bercakap…') : L('Paused. Tap the microphone to talk', 'Dijeda. Tekan mikrofon untuk bercakap');
   const tries = ms ? ['"belanja makan 12 ringgit"', '"buka akaun"', '"apa pendapat awak pasal menyimpan dulu?"'] : ['"spent 12 ringgit on lunch"', '"open My Accounts"', '"what do you think about saving first?"'];
   const chip = (on: boolean) => ({ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.25)', backgroundColor: on ? 'rgba(183,148,255,.35)' : 'rgba(255,255,255,.06)' } as const);
   const box = { marginTop: 12, padding: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' } as const;
@@ -256,7 +256,14 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
               <Animated.View style={{ transform: [{ scale: Animated.add(amp.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.14] }), glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.03] })) }] }}><OrbLive size={104} /></Animated.View>
             </View>
             <View style={{ marginTop: 2, marginHorizontal: -20 }}><Wave target={ampT} width={sw} /></View>
-            <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 15, fontWeight: '700' }}>{status}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 15, fontWeight: '700' }}>{status}</Text>
+              {phase === 'listening' ? (
+                <View style={{ flexDirection: 'row', gap: 4 }}>
+                  {[[1, 0.25], [0.25, 1], [0.25, 0.25]].map((o, i) => <Animated.View key={i} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#8fe9e2', opacity: i === 2 ? glow.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.25, 0.25, 1] }) : glow.interpolate({ inputRange: [0, 1], outputRange: [o[0], o[1]] }) }} />)}
+                </View>
+              ) : null}
+            </View>
           </View>
 
           <ScrollView style={{ flex: 1, marginTop: 12 }} contentContainerStyle={{ gap: 12, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
@@ -272,15 +279,37 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
           </ScrollView>
 
           <View style={{ alignItems: 'center', paddingBottom: 6 }}>
-            <View style={{ width: 92, height: 92, alignItems: 'center', justifyContent: 'center' }}>
-              {phase === 'listening' ? <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 92, height: 92, borderRadius: 46, backgroundColor: 'rgba(124,156,255,.45)', opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.7] }), transform: [{ scale: amp.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.4] }) }] }} /> : null}
-              <Pressable onPress={tapMic} buzz accessibilityLabel={phase === 'listening' ? 'Stop listening' : 'Start listening'}>
-                <LinearGradient colors={phase === 'listening' ? ['#ff8fab', '#ffb36b'] : ['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center' }}>
-                  {phase === 'listening' ? <View style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: '#fff' }} /> : (
-                    <Svg width={32} height={32} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3" {...stroke} /></Svg>
-                  )}
-                </LinearGradient>
-              </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: 26, height: 112 }}>
+              {phase === 'idle' ? (
+                <View style={{ width: 92, height: 92, alignItems: 'center', justifyContent: 'center' }}>
+                  <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 92, height: 92, borderRadius: 46, backgroundColor: 'rgba(124,156,255,.45)', opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.7] }), transform: [{ scale: glow.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.3] }) }] }} />
+                  <Pressable onPress={tapMic} buzz accessibilityLabel="Tap to talk">
+                    <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center' }}>
+                      <Svg width={32} height={32} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3" {...stroke} /></Svg>
+                    </LinearGradient>
+                  </Pressable>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{L('Tap to talk', 'Tekan untuk cakap')}</Text>
+                </View>
+              ) : (
+                <View style={{ alignItems: 'center', paddingTop: 16 }}>
+                  <Pressable onPress={tapMic} buzz accessibilityLabel={phase === 'speaking' ? 'Skip the answer' : 'Pause listening'}>
+                    <Glass radius={30} style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
+                      <View>
+                        <Svg width={26} height={26} viewBox="0 0 24 24"><Path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3" {...stroke} /></Svg>
+                      </View>
+                    </Glass>
+                  </Pressable>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{phase === 'speaking' ? L('Skip', 'Langkau') : L('Pause', 'Jeda')}</Text>
+                </View>
+              )}
+              <View style={{ alignItems: 'center', paddingTop: 16 }}>
+                <Pressable onPress={onClose} buzz accessibilityLabel="End">
+                  <LinearGradient colors={['#ff6b81', '#ff8f6b']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}>
+                    <Svg width={24} height={24} viewBox="0 0 24 24"><Path d="M6 6l12 12M18 6L6 18" {...stroke} strokeWidth={2.4} /></Svg>
+                  </LinearGradient>
+                </Pressable>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, fontWeight: '600', marginTop: 4 }}>{L('End', 'Tamat')}</Text>
+              </View>
             </View>
             <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 16, textAlign: 'center', marginTop: 8, paddingHorizontal: 10 }}>{L('Your voice is turned into text by your phone\'s speech service (Google on most phones). My Life 1.0 does not keep any recording.', 'Suara awak ditukar kepada teks oleh perkhidmatan suara telefon (Google pada kebanyakan telefon). My Life 1.0 tidak menyimpan rakaman.')}</Text>
           </View>
