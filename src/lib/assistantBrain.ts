@@ -458,7 +458,7 @@ export function think(A, q, lang) {
     const v = calc(ex[1]); if (v !== null && isFinite(v)) return done(mk(L(ex[1].trim() + ' = ' + A.num(r2(v)), ex[1].trim() + ' = ' + A.num(r2(v))), { big: A.num(r2(v)), bigLbl: ex[1].trim(), color: '#8fe9e2' }));
   }
   // small talk
-  if (/^(apa khabar|how are you|how r u|you ok|awak ok|kau ok|sihat ke|apa cerita|how.s it going)/.test(ql)) {
+  if (/^((hi|hello|hey|hai|helo|hye|salam|assalamualaikum)\s+)?(apa khabar|how are you|how r u|you ok|awak ok|kau ok|sihat ke|apa cerita|how.s it going)/.test(ql)) {
     return done(mk(L('I am doing well, thank you for asking. I am ready whenever you need me. How is your day going, ' + A.fn() + '?', 'Saya baik, terima kasih tanya. Saya sedia bila-bila masa. Macam mana hari awak, ' + A.fn() + '?')));
   }
   if (/(selamat pagi|good morning|selamat tengah hari|selamat petang|good afternoon|good evening|selamat malam|good night)/.test(ql)) {

@@ -1,5 +1,6 @@
 export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
+  { h: 'Small touches', p: '•  Transfers in My Accounts now show a bank-style moment: money moving, a tick and a receipt\n•  Spending history is grouped by month, like Nov 2026\n•  The button in the Assistant that opens My Life Live has a wave icon, so it is not mistaken for typing by voice' },
   { h: 'Goals and limits', p: '•  A savings goal can now say which of your accounts the money is kept in\n•  Empty or wrong target weight and category limit boxes now show a message, and there is a Remove button to clear them' },
   { h: 'Spending from a sentence', p: '•  Tell the Assistant a normal sentence like "makan tengah hari 12 guna Maybank" and the AI on your phone reads it\n•  It picks the category and the account for you, and you tap to confirm before it is saved' },
   { h: 'Scan to PDF', p: '•  New Scans part in Documents, kept apart from your papers\n•  Scan many pages at once, pick Auto clean, Colour, Grey or Black and white, and choose sharp 2K quality\n•  Turn, reorder or delete pages, then make one PDF to share' },

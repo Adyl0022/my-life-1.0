@@ -380,8 +380,10 @@ export default function Finance() {
                 </View>
               ) : null}
             <View style={{ marginTop: 6 }}>
-              {byDate.map((p, i) => (
-                <View key={p.id} style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
+              {byDate.map((p, i) => { const ymP = (p.date || '').slice(0, 7); const first = i === 0 || ymP !== (byDate[i - 1].date || '').slice(0, 7); const inM = byDate.filter((x) => (x.date || '').slice(0, 7) === ymP).length; return (
+              <React.Fragment key={p.id}>
+              {first ? <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: i === 0 ? 4 : 14, marginBottom: 2, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12, backgroundColor: 'rgba(255,196,107,.14)', borderWidth: 1, borderColor: 'rgba(255,196,107,.35)' }}><Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>{ymP.length === 7 ? MON[parseInt(ymP.slice(5), 10) - 1] + ' ' + ymP.slice(0, 4) : 'No date'}</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{inM + (inM === 1 ? ' item' : ' items')}</Text></View> : null}
+                <View style={{ paddingVertical: 9, borderBottomWidth: i === byDate.length - 1 ? 0 : 1, borderBottomColor: 'rgba(255,255,255,.1)' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colorOf(p.cat) }} />
                     <Pressable disabled={p.src === 'record'} style={{ flex: 1, minWidth: 0 }} onPress={() => { if (remId === p.id) setRemId(0); else { setRemId(p.id); setRemF({ name: p.name || '', amt: String(p.amt), date: p.date || todayStr(), cat: p.cat, note: p.note || '', acc: p.acc || 0 }); } }}>
@@ -421,7 +423,8 @@ export default function Finance() {
                     </View>
                   ) : null}
                 </View>
-              ))}
+              </React.Fragment>
+              ); })}
               {all.length > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 8 }}>Tap an item to change anything in it.</Text> : null}
             </View>
             </View>

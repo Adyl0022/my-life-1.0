@@ -19,6 +19,7 @@ import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 import { cs, useRegion } from '../lib/region';
+import { TransferDone, type TransferInfo } from '../components/TransferDone';
 import { takePhoto } from '../lib/photo';
 import { DEBT_EMPTY, DebtData, remaining } from '../lib/debts';
 import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
@@ -117,6 +118,7 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
   const [from, setFrom] = useState<number>(mv.mode === 'transfer' ? (first && !isLiab(first) ? first.id : (accs.find((a) => !isLiab(a)) || first).id) : 0);
   const [to, setTo] = useState<number>(mv.mode === 'transfer' ? (first && isLiab(first) ? first.id : ((accs.find((a) => a.id !== (first || { id: 0 }).id) || first).id)) : mv.mode === 'deposit' ? (first && !isLiab(first) ? first.id : (accs.find((a) => !isLiab(a)) || first).id) : first.id);
   const [amt, setAmt] = useState(''); const [date, setDate] = useState(todayStr()); const [note, setNote] = useState(''); const [tried, setTried] = useState(false);
+  const [done, setDone] = useState<TransferInfo | null>(null);
   const target = accs.find((a) => a.id === to); const cur = target ? balanceOf(target, data, spends, feeds) : 0;
   const n = pn(amt);
   const title = mv.mode === 'transfer' ? (target && isLiab(target) ? 'Pay off' : 'Transfer') : mv.mode === 'deposit' ? 'Money in' : 'Set balance';
@@ -135,9 +137,14 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
     if (!(n > 0)) { tryForm('mov'); return; }
     if (mv.mode === 'transfer' && (!from || from === to)) return;
     const m: Move = mv.mode === 'deposit' ? { id: data.nextId, date, kind: 'deposit', to, amt: n, note: note.trim() || undefined } : { id: data.nextId, date, kind: 'transfer', from, to, amt: n, note: note.trim() || undefined };
-    setData({ ...data, moves: [...data.moves, m], nextId: data.nextId + 1 }); onClose();
+    setData({ ...data, moves: [...data.moves, m], nextId: data.nextId + 1 });
+    if (mv.mode === 'transfer') {
+      const fa = accs.find((a) => a.id === from), ta = accs.find((a) => a.id === to);
+      setDone({ amt: n, from: fa ? fa.name : '', to: ta ? ta.name : '', date: nice(date), ref: 'ML' + date.replace(/-/g, '').slice(2) + String(m.id).padStart(4, '0'), pay: !!(ta && isLiab(ta)) });
+    } else onClose();
   };
-  return (
+  return (<>
+    <TransferDone info={done} onClose={() => { setDone(null); onClose(); }} />
     <SheetFrame noNote finance title={title} sub={mv.mode === 'transfer' ? 'Move money between your accounts' : mv.mode === 'deposit' ? 'Salary, a gift, or any money you receive' : 'Match it to what your bank or wallet shows'} onClose={onClose}>
       <Sections>
         {mv.mode === 'transfer' ? (<><Lab t="FROM" />{pickChips(from, (id) => { setFrom(id); if (id === to) { const o = accs.find((a) => a.id !== id); if (o) setTo(o.id); } })}</>) : null}
@@ -155,7 +162,7 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
         <BigBtn t={mv.mode === 'adjust' ? 'Set balance' : mv.mode === 'deposit' ? 'Add money' : title} g={['#8ea8ff', '#b794ff']} onPress={save} />
       </Sections>
     </SheetFrame>
-  );
+  </>);
 }
 
 // ---------- One account ----------

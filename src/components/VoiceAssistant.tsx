@@ -76,7 +76,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
   const [vk, setVk] = useState('en'); const vkR = useRef('en');
   const [sheet, setSheet] = useState(false); const [vopts, setVopts] = useState<VoiceOpt[]>([]); const [pref, setPref] = useState(voicePref());
   const [note, setNote] = useState('');
-  const live = useRef(false); const stopL = useRef<() => void>(() => {}); const quiet = useRef(0); const pause = useRef(false);
+  const sc = useRef<any>(null); const live = useRef(false); const stopL = useRef<() => void>(() => {}); const quiet = useRef(0); const pause = useRef(false);
   const C = () => chat.current;
   const vl = () => vlang(vkR.current);
   const isX = () => vl().x;
@@ -253,10 +253,10 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
             </Pressable>
           </View>
 
-          <View style={{ alignItems: 'center', marginTop: 64 }}>
-            <View style={{ width: 150, height: 150, alignItems: 'center', justifyContent: 'center' }}>
-              <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, backgroundColor: phase === 'listening' ? 'rgba(255,143,171,.30)' : 'rgba(124,156,255,.28)', opacity: amp.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.95] }), transform: [{ scale: amp.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }] }} />
-              <Animated.View style={{ transform: [{ scale: Animated.add(amp.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.14] }), glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.03] })) }] }}><OrbLive size={104} /></Animated.View>
+          <View style={{ alignItems: 'center', marginTop: 30 }}>
+            <View style={{ width: 128, height: 128, alignItems: 'center', justifyContent: 'center' }}>
+              <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 128, height: 128, borderRadius: 64, backgroundColor: phase === 'listening' ? 'rgba(255,143,171,.30)' : 'rgba(124,156,255,.28)', opacity: amp.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.95] }), transform: [{ scale: amp.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }] }} />
+              <Animated.View style={{ transform: [{ scale: Animated.add(amp.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.14] }), glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.03] })) }] }}><OrbLive size={92} /></Animated.View>
             </View>
             <View style={{ marginTop: 2, marginHorizontal: -20 }}><Wave target={ampT} width={sw} /></View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -269,16 +269,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
             </View>
           </View>
 
-          <ScrollView style={{ flex: 1, marginTop: 12 }} contentContainerStyle={{ gap: 12, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
-            {!smartReady() && !onlineOn() && onAI ? (
-              <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('AI needed to chat about anything', 'AI diperlukan untuk bersembang tentang apa-apa')}</Text>
-                <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{L('Spending, pages and your own data already work. For opinions and general questions, download the AI on your phone (one time, no daily limit) or turn on Online AI (your question is sent over the internet).', 'Belanja, halaman dan data awak sendiri sudah berfungsi. Untuk pendapat dan soalan umum, muat turun AI dalam telefon (sekali sahaja, tiada had harian) atau hidupkan AI dalam talian (soalan dihantar melalui internet).')}</Text>
-                <Pressable onPress={() => { onClose(); onAI(); }} buzz accessibilityLabel="Set up AI">
-                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ marginTop: 10, paddingVertical: 11, borderRadius: 14, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('Set up AI', 'Sediakan AI')}</Text></LinearGradient>
-                </Pressable>
-              </Glass>
-            ) : null}
+          <ScrollView ref={sc} onContentSizeChange={() => sc.current && sc.current.scrollToEnd({ animated: true })} style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ gap: 12, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
             {heard ? <Text style={{ color: '#fff', fontSize: 20, lineHeight: 28, textAlign: 'center', fontWeight: '600' }}>{'“' + heard + '”'}</Text> : null}
             {reply ? <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}><Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{reply}</Text></Glass> : null}
             {err ? <Text style={{ color: '#ffb3a0', fontSize: 13, lineHeight: 19, textAlign: 'center' }}>{err}</Text> : null}
@@ -287,6 +278,15 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
                 <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5 }}>{L('Try saying or just chat:', 'Cuba sebut atau bersembang:')}</Text>
                 {tries.map((t) => <Text key={t} style={{ color: 'rgba(255,255,255,.9)', fontSize: 14, fontWeight: '600', textAlign: 'center' }}>{t}</Text>)}
               </View>
+            ) : null}
+            {!smartReady() && !onlineOn() && onAI ? (
+              <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('AI needed to chat about anything', 'AI diperlukan untuk bersembang tentang apa-apa')}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>{L('Spending, pages and your own data already work. For opinions and general questions, download the AI on your phone or turn on Online AI.', 'Belanja, halaman dan data awak sudah berfungsi. Untuk pendapat dan soalan umum, muat turun AI dalam telefon atau hidupkan AI dalam talian.')}</Text>
+                <Pressable onPress={() => { onClose(); onAI(); }} buzz accessibilityLabel="Set up AI">
+                  <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ marginTop: 10, paddingVertical: 11, borderRadius: 14, alignItems: 'center' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{L('Set up AI', 'Sediakan AI')}</Text></LinearGradient>
+                </Pressable>
+              </Glass>
             ) : null}
           </ScrollView>
 
