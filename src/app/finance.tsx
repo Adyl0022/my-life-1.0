@@ -155,7 +155,7 @@ export default function Finance() {
   };
   const removeLimit = (k: string) => confirmDelete('the limit for ' + k, () => { const lm = { ...(d.limits || {}) }; delete lm[k]; setD({ ...d, limits: lm }); setLimKey(''); setLimVal(''); });
   // Goal choices for the Savings category: ready-made goals first, your own in the middle, Wedding last.
-  const PRE = ['motor', 'car', 'house', 'emergency', 'medical', 'travel', 'hajj', 'other'];
+  const PRE = ['motor', 'car', 'house', 'emergency', 'medical', 'travel', 'other'];
   const opts: { key: string; id: number; name: string; kind: string }[] = [];
   PRE.forEach((k) => { const ex = sav.goals.filter((g) => g.kind === k); if (ex.length) ex.forEach((g) => opts.push({ key: 'g' + g.id, id: g.id, name: g.name, kind: k })); else opts.push({ key: 'p' + k, id: 0, name: kindOf(k).name || 'Other', kind: k }); });
   sav.goals.filter((g) => PRE.indexOf(g.kind) < 0 && g.kind !== 'wedding').forEach((g) => opts.push({ key: 'g' + g.id, id: g.id, name: g.name, kind: g.kind }));
