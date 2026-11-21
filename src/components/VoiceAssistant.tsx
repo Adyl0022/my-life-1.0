@@ -76,7 +76,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
   const [vk, setVk] = useState('en'); const vkR = useRef('en');
   const [sheet, setSheet] = useState(false); const [vopts, setVopts] = useState<VoiceOpt[]>([]); const [pref, setPref] = useState(voicePref());
   const [note, setNote] = useState('');
-  const sc = useRef<any>(null); const live = useRef(false); const stopL = useRef<() => void>(() => {}); const quiet = useRef(0); const pause = useRef(false);
+  const sc = useRef<any>(null); const dims = useRef({ ch: 0, vh: 0 }); const manual = useRef(false); const spokeAt = useRef(0); const live = useRef(false); const stopL = useRef<() => void>(() => {}); const quiet = useRef(0); const pause = useRef(false);
   const C = () => chat.current;
   const vl = () => vlang(vkR.current);
   const isX = () => vl().x;
@@ -221,6 +221,20 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
 
   const ms = msUi();
   const lg = vl();
+  // While the reply is spoken the box slowly follows the voice (about as fast as it is read), so long answers are never cut off. Touching the box stops the following.
+  useEffect(() => {
+    if (phase !== 'speaking' || !reply) return;
+    manual.current = false; spokeAt.current = Date.now();
+    const total = Math.max(1.5, reply.length / (14 * Math.max(0.6, voicePref().rate || 1)));
+    const id = setInterval(() => {
+      if (manual.current || !sc.current) return;
+      const max = Math.max(0, dims.current.ch - dims.current.vh);
+      if (max <= 0) return;
+      const f = Math.min(1, (Date.now() - spokeAt.current) / 1000 / total);
+      sc.current.scrollTo({ y: max * f, animated: false });
+    }, 90);
+    return () => clearInterval(id);
+  }, [phase, reply]);
   const status = phase === 'ready' ? L('Getting ready…', 'Bersedia…') : phase === 'listening' ? L('Just talk, I\'m listening', 'Cakap sahaja, saya mendengar') : phase === 'thinking' ? L('Thinking…', 'Sedang fikir…') : phase === 'speaking' ? L('Speaking…', 'Bercakap…') : L('Paused. Tap the microphone to talk', 'Dijeda. Tekan mikrofon untuk bercakap');
   const tries = ms ? ['"belanja makan 12 ringgit"', '"buka akaun"', '"apa pendapat awak pasal menyimpan dulu?"'] : ['"spent 12 ringgit on lunch"', '"open My Accounts"', '"what do you think about saving first?"'];
   const chip = (on: boolean) => ({ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.25)', backgroundColor: on ? 'rgba(183,148,255,.35)' : 'rgba(255,255,255,.06)' } as const);
@@ -271,7 +285,8 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
             </View>
           </View>
 
-          <ScrollView ref={sc} onContentSizeChange={() => sc.current && sc.current.scrollToEnd({ animated: true })} style={{ flex: 1, marginTop: 8 }} contentContainerStyle={{ gap: 12, paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
+          <View style={{ flex: 1, marginTop: 8 }}>
+          <ScrollView ref={sc} onLayout={(e) => { dims.current.vh = e.nativeEvent.layout.height; }} onScrollBeginDrag={() => { manual.current = true; }} onContentSizeChange={(_w, h) => { dims.current.ch = h; if (phase !== 'speaking' && sc.current) sc.current.scrollToEnd({ animated: true }); }} style={{ flex: 1 }} contentContainerStyle={{ gap: 12, paddingTop: 22, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
             {heard ? <Text style={{ color: '#fff', fontSize: 20, lineHeight: 28, textAlign: 'center', fontWeight: '600' }}>{'“' + heard + '”'}</Text> : null}
             {reply ? <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}><Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{reply}</Text></Glass> : null}
             {err ? <Text style={{ color: '#ffb3a0', fontSize: 13, lineHeight: 19, textAlign: 'center' }}>{err}</Text> : null}
@@ -291,6 +306,9 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
               </Glass>
             ) : null}
           </ScrollView>
+          <LinearGradient pointerEvents="none" colors={['#0a0e2a', 'rgba(10,14,42,0)']} style={{ position: 'absolute', left: -20, right: -20, top: 0, height: 26 }} />
+          <LinearGradient pointerEvents="none" colors={['rgba(11,32,64,0)', '#0b2040']} style={{ position: 'absolute', left: -20, right: -20, bottom: 0, height: 30 }} />
+          </View>
 
           <View style={{ alignItems: 'center', paddingBottom: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: 26, height: 112 }}>

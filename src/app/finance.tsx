@@ -47,9 +47,10 @@ const Coin = () => (
     <SvgText x="22" y="15" textAnchor="middle" fontSize="7" fontWeight="800" fill="#a86a00">{cu().slice(0, 3)}</SvgText>
   </Svg>
 );
-const Chip = ({ t, on, c, onPress }: { t: string; on: boolean; c?: string; onPress: () => void }) => (
-  <Pressable onPress={onPress} style={{ paddingVertical: 6, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: on ? (c || 'transparent') : 'rgba(255,255,255,.2)', backgroundColor: on ? (c || '#ffc46b') : 'rgba(255,255,255,.08)' }}>
+const Chip = ({ t, on, c, onPress, onDel }: { t: string; on: boolean; c?: string; onPress: () => void; onDel?: () => void }) => (
+  <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingLeft: 11, paddingRight: onDel ? 7 : 11, borderRadius: 999, borderWidth: 1, borderColor: on ? (c || 'transparent') : 'rgba(255,255,255,.2)', backgroundColor: on ? (c || '#ffc46b') : 'rgba(255,255,255,.08)' }}>
     <Text style={{ color: on ? '#2a1030' : W, fontSize: 12, fontWeight: '700' }}>{t}</Text>
+    {onDel ? <Pressable onPress={onDel} hitSlop={8} accessibilityLabel={'Delete category ' + t} style={{ width: 17, height: 17, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(42,16,48,.2)' : 'rgba(255,255,255,.16)' }}><Text style={{ color: on ? '#2a1030' : W, fontSize: 10, fontWeight: '900' }}>✕</Text></Pressable> : null}
   </Pressable>
 );
 const SEC = { marginTop: 12, padding: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' } as const;
@@ -356,7 +357,7 @@ export default function Finance() {
               <View style={SIN}>
                 <Text style={SECL}>CATEGORY</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  {cats.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} />)}
+                  {cats.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} onDel={(d.cats || []).some((x) => x[0] === n) ? () => removeCat(n) : undefined} />)}
                   <Chip t={newCatOn ? 'Cancel' : '+ New category'} on={false} onPress={() => { setNewCatOn(!newCatOn); setNewCat(''); setCatMsg(''); }} />
                 </View>
                 {newCatOn ? (

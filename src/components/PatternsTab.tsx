@@ -142,7 +142,11 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
           <Text style={{ color: DIM, fontSize: 11.5, marginTop: 6 }}>{'Target met on ' + st!.hit + ' of ' + st!.logged + ' recorded days. ' + st!.tpl.note + '.'}</Text>
           </Pressable>
           {open ? <Result st={st!} /> : null}
-          <Pressable onPress={() => confirmDelete('this entry', () => dropExp(e.id))} hitSlop={6} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.55)' }}><Text style={{ color: '#ff8fa0', fontSize: 12.5, fontWeight: '800' }}>Stop this experiment</Text></Pressable>
+          {ready ? (
+            <Pressable onPress={() => confirmDelete('this experiment', () => dropExp(e.id), { title: 'Finish this experiment?', message: 'It is marked as done and removed from your list. Open the result first if you still want to read it.', yes: 'OK, finish' })} accessibilityLabel={'Finish ' + st!.tpl.title} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 22, borderRadius: 999, backgroundColor: '#7df0c6' }}><Text style={{ color: '#06281d', fontSize: 13, fontWeight: '800' }}>OK</Text></Pressable>
+          ) : (
+            <Pressable onPress={() => confirmDelete('this entry', () => dropExp(e.id))} hitSlop={6} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,107,129,.16)', borderWidth: 1, borderColor: 'rgba(255,107,129,.55)' }}><Text style={{ color: '#ff8fa0', fontSize: 12.5, fontWeight: '800' }}>Stop this experiment</Text></Pressable>
+          )}
         </View>
       ); })}
       {newOpen ? (

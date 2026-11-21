@@ -22,7 +22,7 @@ import { pn, tryForm } from '../lib/num';
 import { cs, useRegion } from '../lib/region';
 import { TransferDone, type TransferInfo } from '../components/TransferDone';
 import { takePhoto } from '../lib/photo';
-import { DEBT_EMPTY, DebtData, remaining } from '../lib/debts';
+import { DEBT_EMPTY, DebtData, type Debt, remaining, monthsLeft, yearsMonths, payoffLabel, ymOf, dueDay } from '../lib/debts';
 import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, refOf, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -169,6 +169,43 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
 }
 
 // ---------- One account ----------
+/** What you can see about one commitment (a loan or instalment): how much is left, the monthly amount, the due day and roughly when it ends. Paying it is done in My Finance. */
+function CommitInfo({ d, accs, onClose, onFinance }: { d: Debt; accs: Acc[]; onClose: () => void; onFinance: () => void }) {
+  const left = remaining(d); const total = d.bal; const paid = Math.max(0, Math.round((total - left) * 100) / 100); const pct = total > 0 ? Math.round((paid / total) * 100) : 0;
+  const ml = monthsLeft(d); const now = new Date(); const ym = ymOf(now); const paidNow = ((d.paid || {})[ym] || 0) > 0;
+  const day = dueDay(d, now.getFullYear(), now.getMonth()); const pays = accs.find((a) => a.id === d.acc);
+  const rows: string[][] = [
+    ['Still to pay', cs() + money(left)], ['Original amount', cs() + money(total)], ['Paid so far', cs() + money(paid) + '  (' + pct + '%)'],
+    ['Monthly amount', d.monthly > 0 ? cs() + money(d.monthly) : 'Not set'], ['Due on day', String(day) + ' of each month'],
+    ['This month', paidNow ? 'Paid ' + cs() + money((d.paid || {})[ym]) : 'Not paid yet'],
+    ['Months left', d.monthly > 0 ? yearsMonths(ml) : 'Set a monthly amount to see this'],
+    ['Finishes about', d.monthly > 0 ? payoffLabel(ml, paidNow) : '-'],
+    ['Started', d.since ? nice(d.since + '-01') : '-'],
+    ['Paid from', pays ? pays.name : 'No account linked'],
+    ['Reminder', d.remind ? 'On' : 'Off'],
+  ];
+  return (
+    <SheetFrame noNote finance title={d.name} sub="Commitment" onClose={onClose}>
+      <View style={{ marginTop: 14, padding: 18, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', overflow: 'hidden' }}>
+        <LinearGradient colors={['rgba(183,148,255,.35)', 'rgba(255,255,255,.06)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
+        <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>YOU STILL OWE</Text>
+        <Text style={{ color: PINK, fontSize: 32, fontWeight: '800', marginTop: 4 }}>{cs() + money(left)}</Text>
+        <View style={{ marginTop: 12, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden' }}><View style={{ width: pct + '%', height: '100%', borderRadius: 4, backgroundColor: '#5ee7b5' }} /></View>
+        <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 6 }}>{pct + '% paid'}</Text>
+      </View>
+      <Lab t="DETAILS" />
+      {rows.map(([k, v]) => (
+        <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 9, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.08)' }}>
+          <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 13.5 }}>{k}</Text>
+          <Text style={{ color: W, fontSize: 13.5, fontWeight: '700', textAlign: 'right', flexShrink: 1 }}>{v}</Text>
+        </View>
+      ))}
+      <Text style={{ color: dim, fontSize: 12, lineHeight: 17, marginTop: 10 }}>This is only to look at. To pay or change it, open Commitments in My Finance.</Text>
+      <View style={{ marginTop: 12 }}><Act t="Open My Finance" c={BLUE} basis="100%" onPress={onFinance} /></View>
+    </SheetFrame>
+  );
+}
+
 function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; onClose: () => void; onEdit: () => void; onMove: (m: MoveMode) => void }) {
   const { data, setData, spends, feeds } = ctx; const a = data.accs.find((x) => x.id === id); const [all, setAll] = useState(false); const [ex, setEx] = useState('');
   if (!a) return null;
@@ -239,7 +276,7 @@ export default function Accounts() {
   const ctx: Ctx = { data, setData, spends, feeds };
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
   const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
-  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []);
+  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
   // Sort by: your own order (move groups up or down), most money first, least money first, or A to Z. It is kept on this phone.
   const SORTS = ['My order', 'Highest', 'Lowest', 'A to Z']; const [sortI, setSortI] = useStored<number>('ml_acc_sort', 0); const [gOrd, setGOrd] = useStored<string[]>('ml_acc_order', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
@@ -298,11 +335,11 @@ export default function Accounts() {
                   <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.3 }}>{sec.title}</Text>
                   <Text style={{ color: sec.liab ? PINK : '#9fb6ff', fontSize: 15, fontWeight: '800' }}>{cs() + money(sec.sum)}</Text>
                 </View>
-                {data.accs.filter((a) => groupOf(a.g).liab === sec.liab).length > 1 ? (
+                {data.accs.filter((a) => groupOf(a.g).liab === sec.liab).length + (sec.liab ? cms.length : 0) > 1 ? (
                   <View style={{ marginTop: 10 }}>
                     <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '700', marginBottom: 5 }}>Sort by</Text>
                     <EqPills tabs={SORTS} index={sortI} onChange={setSortI} colors={sec.liab ? ['#ff8fab', '#b794ff'] : ['#7c9cff', '#5ee7b5']} fontSize={12} />
-                    {sortI === 0 && gs.length > 1 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 5 }}>Use the arrows beside a group to move it up or down.</Text> : null}
+                    {sortI === 0 && (gs.length + (showCm ? 1 : 0)) > 1 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 5 }}>Use the arrows beside a group to move it up or down.</Text> : null}
                   </View>
                 ) : null}
                 {gs.map((g) => {
@@ -342,11 +379,12 @@ export default function Accounts() {
                       <FoldBtn shut={fold.includes('commit')} c="#b794ff" />
                     </Tap>
                     {fold.includes('commit') ? null : (<>
-                      {cms.map((x) => (
-                        <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
+                      {[...cms].sort((x, y) => sortI === 1 ? remaining(y) - remaining(x) : sortI === 2 ? remaining(x) - remaining(y) : sortI === 3 ? x.name.localeCompare(y.name) : 0).map((x) => (
+                        <Tap key={x.id} onPress={() => setCmInfo(x)} label={'Details of ' + x.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
                           <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{x.name}</Text>
                           <Text style={{ color: PINK, fontSize: 15, fontWeight: '800' }}>{cs() + money(remaining(x))}</Text>
-                        </View>
+                          <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>
+                        </Tap>
                       ))}
                       <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11.5, lineHeight: 16, paddingLeft: 17, paddingBottom: 4 }}>Taken from Commitments in My Finance. Pay them there and the balance goes down here.</Text>
                     </>)}
@@ -360,6 +398,7 @@ export default function Accounts() {
       </SafeAreaView>
       {form ? <AccountForm ctx={ctx} edit={form.edit} onClose={() => setForm(null)} /> : null}
       {mv ? <MoveSheet ctx={ctx} mv={mv} onClose={() => setMv(null)} /> : null}
+      {cmInfo ? <CommitInfo d={cmInfo} accs={data.accs} onClose={() => setCmInfo(null)} onFinance={() => { setCmInfo(null); router.push('/finance'); }} /> : null}
       {open ? <Detail ctx={ctx} id={open} onClose={() => setOpen(0)} onEdit={() => setForm({ edit: data.accs.find((a) => a.id === open) })} onMove={setMv} /> : null}
     </View>
   );
