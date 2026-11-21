@@ -17,6 +17,16 @@ export type TransferInfo = { amt: number; from: string; to: string; date: string
 // Only the small number texts count up, a few times a second.
 const ND = Platform.OS !== 'web';
 const FLOW_AT = 350, FLOW_MS = 2100;   // the light streams from one account to the other
+// The sound of coins dropping into a money box. It starts as the light begins to arrive and ends with the last coin as the tick appears.
+const COIN = require('../../assets/sounds/coin.wav');
+async function playCoin() {
+  try {
+    if (Platform.OS === 'web') { const src = (typeof COIN === 'string' ? COIN : (COIN && COIN.default) || COIN); const a = new (window as any).Audio(src); a.volume = 0.8; a.play().catch(() => {}); return; }
+    const A: any = await import('expo-audio');
+    const p = A.createAudioPlayer(COIN); p.volume = 0.8; p.play();
+    setTimeout(() => { try { p.remove(); } catch (e) { /* ignore */ } }, 4000);
+  } catch (e) { /* no sound is fine */ }
+}
 const eo = (x: number) => 1 - Math.pow(1 - x, 3);
 const rnd = (i: number) => { const v = Math.sin(i * 12.9898 + 1.7) * 43758.5453; return v - Math.floor(v); };
 const STARS = Array.from({ length: 34 }, (_, i) => ({ x: rnd(i + 1), y: rnd(i + 91), r: 0.7 + rnd(i + 7) * 1.4, g: i % 2 }));
@@ -76,6 +86,7 @@ export function TransferDone({ info, onClose }: { info: TransferInfo | null; onC
       tm(p, 1, FLOW_MS, Easing.inOut(Easing.quad)),
     ]);
     let dead = false;
+    const snd = setTimeout(() => { if (!dead) playCoin(); }, FLOW_AT + FLOW_MS * 0.5);
     run.start(({ finished }) => {
       if (!finished || dead) return;
       setBurst(true);
@@ -88,7 +99,7 @@ export function TransferDone({ info, onClose }: { info: TransferInfo | null; onC
         Animated.sequence([Animated.delay(1750), tm(bn, 1, 450)]),
       ]).start(() => { if (!dead) setReady(true); });
     });
-    return () => { dead = true; run.stop(); loops.forEach((l) => l.stop()); [p, b, tk, lift, rc, bn].forEach((v) => v.stopAnimation()); };
+    return () => { dead = true; clearTimeout(snd); run.stop(); loops.forEach((l) => l.stop()); [p, b, tk, lift, rc, bn].forEach((v) => v.stopAnimation()); };
   }, [info]);
 
   if (!info) return null;
