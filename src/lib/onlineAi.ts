@@ -21,11 +21,11 @@ export function useOnlineAi(): [boolean, (v: boolean) => void, boolean] {
 
 export type OnlineResult = { text: string } | { why: 'login' | 'user_limit' | 'global_limit' | 'busy' | 'offline' };
 
-export async function onlineAsk(q: string, lang: string): Promise<OnlineResult> {
+export async function onlineAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = [], voice = false): Promise<OnlineResult> {
   if (!ON) return { why: 'busy' };
   if (!getSession()) return { why: 'login' };
   try {
-    const { data, error } = await supabase.functions.invoke('ai-chat', { body: { q, lang } });
+    const { data, error } = await supabase.functions.invoke('ai-chat', { body: voice ? { q, lang, voice: true, hist: hist.slice(-6).map((x) => ({ me: !!x.me, text: String(x.text || '').slice(0, 300) })) } : { q, lang } });
     if (error || !data) return { why: 'offline' };
     if (data.ok && data.text) {
       const ms = lang === 'ms';

@@ -434,11 +434,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Talk to the Assistant",
-  "s": "Use your voice: ask, save spending and open pages",
+  "s": "Chat by voice, pick a male or female voice, save spending, open pages",
   "m": "Assistant",
   "c": "#b794ff",
   "h": "Assistant.dc.html",
-  "k": "voice suara mic mikrofon microphone talk cakap speak bercakap assistant voice assistant"
+  "k": "voice suara mic mikrofon microphone talk cakap speak bercakap assistant voice assistant chat borak gemini lelaki perempuan male female tone pitch speed"
  },
  {
   "t": "Insights",

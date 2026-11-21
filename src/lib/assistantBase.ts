@@ -23,6 +23,7 @@ const generalQ = (q: string) => /\b(what do you think|your opinion|do you think|
 const noAnswer = (hm: string, lang: string) => ({ me: false, time: hm, big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '', text: lang === 'ms' ? 'Maaf, saya tak dapat bantu itu sekarang.' : 'Sorry, I could not help with that right now.', fb: 1 });
 
 export class AssistantBase extends React.Component<any, any> {
+  voice = false; // true while the person is talking to the Assistant by voice
   render(): any { return null; }
   constructor(props) {
     super(props);
@@ -646,11 +647,14 @@ export class AssistantBase extends React.Component<any, any> {
   // otherwise an offer to get it.
   async fallbackAI(q, lang, r, tt = false) {
     try {
+      const hv = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Online AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
+      const devOk = (smartOk || gemmaOk) && smartReady(); const vc = !!this.voice;
       const sv = tt ? '' : sensitiveReply(q, lang);
       if (sv) { r.m = Object.assign({}, r.m, { text: sv, fb: 0 }); return r; }
       let note = '';
-      if (onlineOn()) {
-        const o: any = await onlineAsk(q, lang);
+      // Talking by voice: the AI on the phone goes first when it is ready (no daily limit, nothing leaves the phone), otherwise Online AI.
+      if (onlineOn() && !(vc && devOk)) {
+        const o: any = await onlineAsk(q, lang, hv, vc);
         if (o.text) { await this.typeOut(o.text); r.m = Object.assign({}, r.m, { text: o.text, fb: 0, src: 'online' }); return r; }
         note = onlineNote(o.why, lang);
         if (!note) note = lang === 'ms' ? 'AI dalam talian tak dapat dihubungi sekarang. Cuba lagi sebentar.' : 'Online AI could not be reached right now. Try again in a moment.';
@@ -660,9 +664,11 @@ export class AssistantBase extends React.Component<any, any> {
       if ((smartOk || gemmaOk) && smartReady()) {
         const hist = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
         this.liveShown = 0; this.liveTarget = '';
-        const a = await smartAsk(q, lang, hist, (t: string) => this.setLive(t));
+        const a = await smartAsk(q, lang, vc ? hv : hist, (t: string) => this.setLive(t), vc);
         await this.finishLive();
         if (a) { r.m = Object.assign({}, r.m, { text: (note ? note + '\n\n' : '') + a, fb: 0, src: 'device', mdl: smartModelName() }); return r; }
+      } else if (vc && !onlineOn()) {
+        r.m = Object.assign({}, r.m, { text: lang === 'ms' ? 'Untuk bersembang tentang apa-apa, hidupkan AI dahulu: tekan Language atau AI di skrin chat Assistant.' : 'To chat about anything, turn on AI first: tap Language or AI on the Assistant chat screen.' });
       } else if (!this.state.smNo && !onlineOn()) {
         const more = lang === 'ms' ? '\n\nSaya juga boleh jawab soalan umum dengan AI: AI kecil dalam telefon awak (muat turun sekali, lebih kurang 550 MB), atau AI dalam talian (soalan dihantar ke internet, awak pilih sendiri).' : '\n\nI can also answer general questions with AI: a small AI on your phone (one-time download of about 550 MB), or Online AI (your question is sent over the internet, and you choose whether to use it).';
         r.m = Object.assign({}, r.m, { text: r.m.text + more, sm: 1 });

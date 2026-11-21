@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from './Glass';
 import { OrbLive } from './OrbLive';
 import { Blob } from './Bg';
-import { micAllowed, listen, speak, stopSpeaking, voiceCommand, Lang } from '../lib/voice';
+import { micAllowed, listen, speak, stopSpeaking, voiceCommand, Lang, voicesFor, voicePref, setVoicePref, sample, VoiceOpt } from '../lib/voice';
 
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -24,7 +24,8 @@ const errText = (c: string, ms: boolean) => {
 export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: boolean; chat: React.MutableRefObject<any>; onClose: () => void; onOpen: (route: string) => void }) {
   const [phase, setPhase] = useState<Phase>('idle');
   const [heard, setHeard] = useState(''); const [reply, setReply] = useState(''); const [err, setErr] = useState('');
-  const [lang, setLang] = useState<Lang>('en');
+  const [lang, setLang] = useState<Lang>('en'); const [mix, setMix] = useState(false); const mixR = useRef(false);
+  const [panel, setPanel] = useState(false); const [vopts, setVopts] = useState<VoiceOpt[]>([]); const [pref, setPref] = useState(voicePref());
   const live = useRef(false); const stopL = useRef<() => void>(() => {}); const quiet = useRef(0); const pause = useRef(false);
   const C = () => chat.current;
   const curLang = (): Lang => (C() && C().state && C().state.lang === 'ms' ? 'ms' : 'en');
@@ -33,10 +34,10 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
 
   useEffect(() => {
     if (!visible) return;
-    live.current = true; quiet.current = 0; pause.current = false;
+    live.current = true; quiet.current = 0; pause.current = false; if (C()) C().voice = true; setPanel(false);
     setLang(curLang()); setHeard(''); setReply(''); setErr(''); setPhase('idle');
     begin();
-    return () => { live.current = false; stopL.current(); stopSpeaking(); };
+    return () => { live.current = false; if (C()) C().voice = false; stopL.current(); stopSpeaking(); };
   }, [visible]);
   useEffect(() => {
     if (phase !== 'listening') { pulse.setValue(0); return; }
@@ -64,7 +65,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
         quiet.current += 1;
         if (quiet.current >= 2) setPhase('idle'); else listenOnce();
       },
-    });
+    }, mixR.current);
   };
   const say = (text: string, after: () => void) => {
     setReply(text); setPhase('speaking');
@@ -94,10 +95,11 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
     setTimeout(wait, 400);
   };
   const answer = (m: any, s: any) => {
-    const text = String(m.text || '');
+    const online = m.src === 'online';
+    const text = String(m.text || '').replace(/\n\n\((An AI answer|Online AI answer|Jawapan AI)[\s\S]*$/, '').trim();
     const askSave = !!(s.pending && m.pid && s.pending.id === m.pid);
     const prompt = L('Shall I save it? Say yes or no.', 'Nak simpan? Cakap ya atau tidak.');
-    setReply(text + (askSave ? '\n\n' + prompt : '')); setPhase('speaking');
+    setReply(text + (online ? '\n\n' + L('Online AI: your question was sent over the internet.', 'AI dalam talian: soalan awak dihantar melalui internet.') : '') + (askSave ? '\n\n' + prompt : '')); setPhase('speaking');
     speak(text, curLang(), () => {
       if (!live.current) return;
       if (askSave) speak(prompt, curLang(), () => { if (live.current) listenOnce(); }); else listenOnce();
@@ -108,10 +110,17 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
     else if (phase === 'listening') { pause.current = true; stopL.current(); }
     else if (phase === 'speaking') { stopSpeaking(); }
   };
-  const pickLang = (l: Lang) => { setLang(l); if (C()) C().setState({ lang: l }); };
+  const pickLang = (l: Lang | 'mix') => {
+    stopSpeaking();
+    if (l === 'mix') { mixR.current = true; setMix(true); setLang('ms'); if (C()) C().setState({ lang: 'ms' }); return; }
+    mixR.current = false; setMix(false); setLang(l); if (C()) C().setState({ lang: l });
+  };
+  const openPanel = async () => { const o = await voicesFor(lang); setVopts(o); setPref(voicePref()); setPanel(true); };
+  const choose = (id: string) => { setVoicePref({ [lang]: id } as any); setPref(voicePref()); sample(lang, id); };
+  const tune = (k: 'rate' | 'pitch', v: number) => { setVoicePref({ [k]: v } as any); setPref(voicePref()); sample(lang); };
   const ms = lang === 'ms';
   const status = phase === 'listening' ? (ms ? 'Saya mendengar…' : 'Listening…') : phase === 'thinking' ? (ms ? 'Sedang fikir…' : 'Thinking…') : phase === 'speaking' ? (ms ? 'Bercakap…' : 'Speaking…') : (ms ? 'Tekan mikrofon untuk bercakap' : 'Tap the microphone to talk');
-  const tries = ms ? ['"belanja makan 12 ringgit"', '"buka akaun"', '"berapa belanja saya hari ini?"'] : ['"spent 12 ringgit on lunch"', '"open My Accounts"', '"how much did I spend today?"'];
+  const tries = ms ? ['"belanja makan 12 ringgit"', '"buka akaun"', '"berapa belanja saya hari ini?"'] : ['"spent 12 ringgit on lunch"', '"open My Accounts"', '"how much did I spend today?"', '"what do you think about saving first?"'];
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
@@ -128,9 +137,9 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
             </Pressable>
             <Text style={{ flex: 1, color: '#fff', fontSize: 18, fontWeight: '800' }}>{ms ? 'Suara Assistant' : 'Voice Assistant'}</Text>
             <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: 'rgba(0,0,0,.28)' }}>
-              {([['en', 'EN'], ['ms', 'BM']] as [Lang, string][]).map(([k, t]) => (
+              {([['en', 'EN'], ['ms', 'BM'], ['mix', 'BM+EN']] as [Lang | 'mix', string][]).map(([k, t]) => (
                 <Pressable key={k} onPress={() => pickLang(k)}>
-                  {lang === k ? (
+                  {(mix ? k === 'mix' : lang === k) ? (
                     <LinearGradient colors={['#7c9cff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999 }}><Text style={{ color: '#fff', fontSize: 11.5, fontWeight: '800' }}>{t}</Text></LinearGradient>
                   ) : (<View style={{ paddingVertical: 6, paddingHorizontal: 10 }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '600' }}>{t}</Text></View>)}
                 </Pressable>
@@ -149,12 +158,43 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
             {err ? <Text style={{ color: '#ffb3a0', fontSize: 13, lineHeight: 19, textAlign: 'center' }}>{err}</Text> : null}
             {!heard && !reply && !err ? (
               <View style={{ gap: 8, alignItems: 'center' }}>
-                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5 }}>{ms ? 'Cuba sebut:' : 'Try saying:'}</Text>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5 }}>{ms ? 'Cuba sebut atau bersembang:' : 'Try saying or just chat:'}</Text>
                 {tries.map((t) => <Text key={t} style={{ color: 'rgba(255,255,255,.9)', fontSize: 14, fontWeight: '600' }}>{t}</Text>)}
               </View>
             ) : null}
           </ScrollView>
 
+          <Pressable onPress={() => (panel ? setPanel(false) : openPanel())} accessibilityLabel="Choose the voice">
+            <View style={{ alignSelf: 'center', paddingVertical: 7, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', marginBottom: 8 }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{panel ? (ms ? 'Tutup pilihan suara' : 'Close voice options') : (ms ? 'Pilih suara' : 'Choose voice')}</Text></View>
+          </Pressable>
+          {panel ? (
+            <Glass radius={22} style={{ padding: 14, marginBottom: 8, maxHeight: 250 }}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6 }}>{(ms ? 'SUARA ' : 'VOICE ') + (lang === 'ms' ? 'BAHASA MELAYU' : 'ENGLISH')}</Text>
+                {vopts.length ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                    {vopts.map((o) => { const on = pref[lang] === o.id; return (
+                      <Pressable key={o.id} onPress={() => choose(o.id)}>
+                        <View style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.25)', backgroundColor: on ? 'rgba(183,148,255,.35)' : 'rgba(255,255,255,.06)' }}>
+                          <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: on ? '800' : '600' }}>{o.label + (o.gender === 'female' ? (ms ? ' · perempuan' : ' · female') : o.gender === 'male' ? (ms ? ' · lelaki' : ' · male') : '')}</Text>
+                        </View>
+                      </Pressable>); })}
+                  </View>
+                ) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, lineHeight: 18, marginTop: 8 }}>{ms ? 'Tiada senarai suara pada telefon ini. Guna Tona di bawah untuk suara lebih halus (perempuan) atau lebih dalam (lelaki).' : 'This phone gives no voice list. Use Tone below for a higher (female) or deeper (male) sound.'}</Text>}
+                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6, marginTop: 14 }}>{ms ? 'TONA' : 'TONE'}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  {([[ms ? 'Lelaki (dalam)' : 'Male (deep)', 0.7], [ms ? 'Biasa' : 'Normal', 1], [ms ? 'Perempuan (halus)' : 'Female (high)', 1.35]] as [string, number][]).map(([t, v]) => { const on = Math.abs(pref.pitch - v) < 0.05; return (
+                    <Pressable key={t} onPress={() => tune('pitch', v)}><View style={{ paddingVertical: 8, paddingHorizontal: 11, borderRadius: 14, borderWidth: 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.25)', backgroundColor: on ? 'rgba(183,148,255,.35)' : 'rgba(255,255,255,.06)' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: on ? '800' : '600' }}>{t}</Text></View></Pressable>); })}
+                </View>
+                <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.6, marginTop: 14 }}>{ms ? 'KELAJUAN' : 'SPEED'}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                  {([[ms ? 'Perlahan' : 'Slow', 0.8], [ms ? 'Biasa' : 'Normal', 1], [ms ? 'Laju' : 'Fast', 1.25]] as [string, number][]).map(([t, v]) => { const on = Math.abs(pref.rate - v) < 0.05; return (
+                    <Pressable key={t} onPress={() => tune('rate', v)}><View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.25)', backgroundColor: on ? 'rgba(183,148,255,.35)' : 'rgba(255,255,255,.06)' }}><Text style={{ color: '#fff', fontSize: 12, fontWeight: on ? '800' : '600' }}>{t}</Text></View></Pressable>); })}
+                </View>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, lineHeight: 16, marginTop: 12 }}>{ms ? 'Suara yang ada bergantung pada telefon awak. Tambah suara lain di Tetapan telefon > Pengurusan am > Teks ke pertuturan.' : 'The voices available depend on your phone. Add more in phone Settings > General management > Text-to-speech.'}</Text>
+              </ScrollView>
+            </Glass>
+          ) : null}
           <View style={{ alignItems: 'center', paddingBottom: 6 }}>
             <View style={{ width: 92, height: 92, alignItems: 'center', justifyContent: 'center' }}>
               {phase === 'listening' ? <Animated.View pointerEvents="none" style={{ position: 'absolute', width: 92, height: 92, borderRadius: 46, backgroundColor: 'rgba(124,156,255,.45)', opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.35] }) }] }} /> : null}

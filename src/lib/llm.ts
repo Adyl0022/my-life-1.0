@@ -161,7 +161,7 @@ export function smartWarm() {
   (big ? gemWarm() : llmWarm()).then((ok) => { if (!ok) WARMED = ''; }).catch(() => { WARMED = ''; });
 }
 
-export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = [], onPart?: (t: string) => void): Promise<string> {
+export async function smartAsk(q: string, lang: string, hist: { me: boolean; text: string }[] = [], onPart?: (t: string) => void, voice = false): Promise<string> {
   if (!(smartOk || gemmaOk) || !READY) return '';
   const ms = lang === 'ms';
   const big = TIER === 'g' || TIER === 'q';
@@ -172,12 +172,13 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
     + KIND_RULE[kind]
     + (task || kind === 'code' || kind === 'chat' ? '' : (big ? 'Be thorough but not long-winded: a few short paragraphs or a short list is fine. ' : 'Keep it short and clear: up to 6 sentences. '))
     + (/\b(today|now|current|currently|latest|news|price|score|weather|president|prime minister|minister|sekarang|terkini|hari ini|harga|presiden|perdana menteri)\b/i.test(q) ? 'You have no internet and your facts may be out of date. Answer with what you know, and add one short note about that, only once. ' : '')
+    + (voice ? 'This is a spoken conversation, so your words are read aloud: answer in one to three short, natural sentences, like a friend talking. No lists, no code, no headings and no marks such as asterisks. When asked for an opinion, give one with a short reason. ' : '')
     + 'Be honest. If you are not sure, say so once in a short sentence, then give what you do know. Never repeat yourself. Never invent facts, numbers, dates, names or sources. '
     + 'For religious rulings, medical, legal or investment decisions, give only general information and suggest asking a qualified person.';
   // Earlier messages are only given when this one looks like a follow-up. A new, self-contained question (or a pasted text) is answered on its own,
   // otherwise a small model mixes the old answer into the new one.
   const follow = q.length < 30 || /\b(it|that|this|those|them|again|more|else|also|itu|tu|ni|nie|tadi|lagi|dia|pasal|bukan|betul|salah|not what|i meant|maksud)\b/i.test(q);
-  const h = follow && !task ? (hist || []).slice(-2).map((x) => ({ me: x.me, text: x.text.slice(0, 220) })) : [];
+  const h = voice ? (hist || []).slice(-6).map((x) => ({ me: x.me, text: x.text.slice(0, 260) })) : follow && !task ? (hist || []).slice(-2).map((x) => ({ me: x.me, text: x.text.slice(0, 220) })) : [];
   const wrong = /\b(bukan|salah|not what|wrong|i meant|maksud saya|bukan tu)\b/i.test(q);
   // While the model writes, the app reads what it has so far, so the words appear one by one.
   let timer: any = 0; let last = '';
@@ -202,6 +203,7 @@ export async function smartAsk(q: string, lang: string, hist: { me: boolean; tex
   const out = clean(raw, big ? 6000 : 1400);
   if (!out) return '';
   const fact = !task && /\b(siapa|who|bila|when|berapa|how many|how much|tahun|year|kali pertama|first)\b/i.test(q);
+  if (voice) return out;
   return out + (ms
     ? '\n\n(Jawapan AI dalam telefon awak. Ia boleh tersilap' + (fact ? ', terutama tentang orang, tarikh dan angka' : '') + '. Semak fakta penting dengan sumber rasmi.)'
     : '\n\n(An AI answer made on your phone. It can be wrong' + (fact ? ', especially about people, dates and numbers' : '') + '. Check important facts with an official source.)');

@@ -26,6 +26,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const q = String(body.q || '').trim().slice(0, 4000);
     const lang = body.lang === 'ms' ? 'ms' : 'en';
+    const voice = body.voice === true;
+    const hist = (Array.isArray(body.hist) ? body.hist : []).slice(-6).map((x: any) => ({ role: x && x.me ? 'user' : 'assistant', content: String((x && x.text) || '').slice(0, 300) })).filter((x: any) => x.content);
     if (!q) return out({ ok: false, why: 'empty' }, 400);
 
     const ul = parseInt(Deno.env.get('AI_USER_DAILY') || '10', 10) || 10;
@@ -40,6 +42,7 @@ Deno.serve(async (req) => {
       + 'You have no live internet access and your knowledge may be out of date, so say so for news, prices, scores, weather or who holds a post now. '
       + 'Be honest. If you are not sure, say you are not sure. Never invent facts, numbers, dates, names or sources. '
       + 'Do not give religious rulings, medical diagnosis, legal advice or investment advice; tell the person to ask a qualified person instead.';
+    const spoken = voice ? ' This is a spoken conversation and your words are read aloud: reply in one to three short, natural sentences, like a friend talking, with no lists, headings or marks such as asterisks. When asked for your opinion on an everyday matter, give one with a short reason.' : '';
     const models = (Deno.env.get('OPENROUTER_MODELS') || 'openrouter/free').split(',').map((s) => s.trim()).filter(Boolean);
     for (const model of models) {
       const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 25000);
@@ -47,7 +50,7 @@ Deno.serve(async (req) => {
         const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST', signal: ctl.signal,
           headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://adyl0022.github.io/my-life-1.0/', 'X-Title': 'My Life' },
-          body: JSON.stringify({ model, max_tokens: 450, temperature: 0.4, messages: [{ role: 'system', content: sys }, { role: 'user', content: q }] }),
+          body: JSON.stringify({ model, max_tokens: 450, temperature: 0.4, messages: [{ role: 'system', content: sys + spoken }, ...hist, { role: 'user', content: q }] }),
         });
         clearTimeout(to);
         if (!r.ok) continue;
