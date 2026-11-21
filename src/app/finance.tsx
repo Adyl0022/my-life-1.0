@@ -24,7 +24,7 @@ import { useMergedSpends, useVehMode, VEH_CAT, VEH_COLOR } from '../lib/vehicleS
 import { TOP } from '../lib/layout';
 import { cs, cu, cw, useRegion } from '../lib/region';
 
-import { confirmDelete } from '../lib/dialog';
+import { confirmDelete, showAlert } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string; acc?: number };
 type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number>; cats?: [string, string][]; incAcc?: Record<string, { acc: number; date: string; name: string }> };
@@ -114,11 +114,21 @@ export default function Finance() {
     const col = CAT_COL[(d.cats || []).length % CAT_COL.length];
     setD({ ...d, cats: [...(d.cats || []), [nm, col]] }); setFCat(nm); setNewCat(''); setNewCatOn(false); setCatMsg('');
   };
-  const removeCat = (n: string) => confirmDelete('the category ' + n, () => {
-    const lm = { ...(d.limits || {}) }; delete lm[n];
-    setD({ ...d, cats: (d.cats || []).filter((c) => c[0] !== n), limits: lm, spends: d.spends.map((x) => x.cat === n ? { ...x, cat: 'Other' } : x) });
-    if (fCat === n) setFCat('Food'); setLimKey(''); setLimVal('');
-  }, { title: 'Delete this category?', message: 'Your spending in it is kept and moves to Other.' });
+  // The person chooses what happens to the spending inside: keep it (moved to Other) or delete it together with the category.
+  const removeCat = (n: string) => {
+    const cnt = d.spends.filter((x) => x.cat === n).length;
+    const go = (keep: boolean) => {
+      const lm = { ...(d.limits || {}) }; delete lm[n];
+      setD({ ...d, cats: (d.cats || []).filter((c) => c[0] !== n), limits: lm, spends: keep ? d.spends.map((x) => x.cat === n ? { ...x, cat: 'Other' } : x) : d.spends.filter((x) => x.cat !== n) });
+      if (fCat === n) setFCat('Food'); setLimKey(''); setLimVal('');
+    };
+    if (cnt === 0) { confirmDelete('the category ' + n, () => go(true), { title: 'Delete this category?', message: 'It has no spending in it.' }); return; }
+    showAlert('Delete the category ' + n + '?', 'It has ' + cnt + (cnt === 1 ? ' spending' : ' spendings') + '. What should happen to ' + (cnt === 1 ? 'it' : 'them') + '?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Move to Other', onPress: () => go(true) },
+      { text: 'Delete them too', style: 'destructive', onPress: () => go(false) },
+    ]);
+  };
   const [hm, setHm] = useState(''); const [pickM, setPickM] = useState(false);
   const curM = hm || ym;
   const addM = (k: string, d: number) => { const n = parseInt(k.slice(0, 4), 10) * 12 + parseInt(k.slice(5), 10) - 1 + d; return Math.floor(n / 12) + '-' + String((n % 12) + 1).padStart(2, '0'); };
