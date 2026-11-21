@@ -9,6 +9,8 @@ import { SearchField } from './Shine';
 import { Inp, W } from './Ui';
 import { EqPills } from './TabSlide';
 import { exportPdf } from './DocShare';
+import { openPaywall } from './Paywall';
+import { usePro } from '../lib/pro';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
 import { scanPages, pickPages, keepScan, dropScanFiles, picSize, SCAN_Q, type ScanQ } from '../lib/photo';
@@ -64,7 +66,7 @@ function Thumb({ uri, w, h, n, on, onPress }: { uri: string; w: number; h: numbe
 
 // Scans: kept apart from the papers of Documents. A paper here is just pages with a name, made into one PDF.
 export function DocScans() {
-  const { width: sw } = useWindowDimensions(); const gw = Math.floor((sw - 36 - 20) / 3);
+  const pro = usePro(); const { width: sw } = useWindowDimensions(); const gw = Math.floor((sw - 36 - 20) / 3);
   const [st, setSt] = useStored<ScanStore>('ml_scans', EMPTY);
   const [qk, setQk] = useStored<ScanQ>('ml_scan_q', 'hd');
   const [q, setQ] = useState(''); const [busy, setBusy] = useState(''); const [msg, setMsg] = useState('');
@@ -219,7 +221,7 @@ export function DocScans() {
             </View>
             <View style={{ marginTop: 8 }}><Btn danger label="Delete this page" onPress={() => delPage(cur)} /></View>
           </View>
-          <View style={{ marginTop: 14 }}><Btn main label="Make PDF and share" disabled={!!busy} onPress={() => setAsk({ s: cur, name: cur.title })} /></View>
+          <View style={{ marginTop: 14 }}><Btn main label={pro ? 'Make PDF and share' : 'Make PDF and share · PRO'} disabled={!!busy} onPress={() => { if (!pro) { openPaywall(); return; } setAsk({ s: cur, name: cur.title }); }} /></View>
           {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{msg}</Text> : null}
           <View style={{ marginTop: 10 }}><Btn danger label="Delete this scan" onPress={() => delScan(cur)} /></View>
           <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16, marginTop: 12 }}>The PDF is made on your phone with the file name you choose, and shared by you. Nothing is uploaded.</Text>

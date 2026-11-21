@@ -13,6 +13,8 @@ import { confirmDelete } from '../lib/dialog';
 import { useMemories, nice, Mem } from '../lib/memories';
 import { MON } from '../lib/habit';
 import { Toggle } from '../components/Toggle';
+import { Locked } from '../components/Paywall';
+import { usePro } from '../lib/pro';
 
 const DIM = 'rgba(255,255,255,.65)'; const nf = (n: number) => n.toLocaleString('en-GB');
 const RAISED = { backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' } as const;
@@ -36,7 +38,7 @@ const nextGoal = (n: number) => [5, 10, 25, 50, 100, 250, 500, 1000, 5000, 10000
 const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => <Toggle on={on} onPress={() => set(!on)} label={label} colors="#5ee7b5" thumbOn="#0d3a2c" />;
 
 export default function Memories() {
-  const router = useRouter(); const M = useMemories();
+  const router = useRouter(); const M = useMemories(); const pro = usePro();
   const [more, setMore] = useState(false);
   const [year, setYear] = useState<number | null>(null);
   const yr = year ?? (M.years.length ? M.years[M.years.length - 1] : new Date().getFullYear());
@@ -179,6 +181,7 @@ export default function Memories() {
           {/* 6. Your Year in Review */}
           <Rise i={sec++}>
             <Head t="Your Year in Review" s="A summary of the year, from dated moments" />
+            <Locked on={!pro} title="Your Year in Review">
             {M.years.length > 1 ? <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>{M.years.map((y) => <Pressable key={y} onPress={() => setYear(y)} style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999, backgroundColor: yr === y ? '#b794ff' : 'rgba(255,255,255,.12)' }}><Text style={{ color: yr === y ? '#0d1030' : W, fontWeight: '800', fontSize: 12.5 }}>{y}</Text></Pressable>)}</View> : null}
             <View style={{ borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderTopColor: 'rgba(255,255,255,.4)' }}>
               <LinearGradient colors={['rgba(255,180,94,.28)', 'rgba(255,111,145,.2)', 'rgba(124,156,255,.25)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 16 }}>
@@ -204,6 +207,7 @@ export default function Memories() {
                 </>)}
               </LinearGradient>
             </View>
+            </Locked>
             {M.undated > 0 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11.5, marginTop: 8, lineHeight: 17 }}>{M.undated + (M.undated === 1 ? ' older task, note or plan has' : ' older tasks, notes and plans have') + ' no date, so they count in your numbers but not in the timeline or this summary.'}</Text> : null}
           </Rise>
 

@@ -153,7 +153,8 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
     </Locked>
 
     <TimeMachine h={h} setH={setH} />
-    <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
+    <Locked on={!pro} title="Experiments" mt={12}>
+    <Glass radius={24} style={{ padding: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ flex: 1 }}>
           <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Experiments</Text>
@@ -274,5 +275,6 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
         </View>
       ) : null}
     </Glass>
+    </Locked>
   </>);
 }
