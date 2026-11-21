@@ -36,7 +36,6 @@ import { PinDialog } from '../../components/LockScreen';
 import { useKb } from '../../lib/keyboard';
 import { storageInfo, clearTemp, fmtBytes, pickText, parseBackup, applyBackup, Backup } from '../../lib/storage';
 import { Toggle } from '../../components/Toggle';
-import { WAKE_KEY } from '../../lib/wake';
 import { showAlert } from '../../lib/dialog';
 import { micAllowed, voiceOk } from '../../lib/voice';
 
@@ -156,8 +155,6 @@ export default function Settings() {
   const [nameMsg, setNameMsg] = useState('');
   const [hd, setHd] = useStored<any>('ml_habit', { goal: 8000, days: {}, kg: [] });
   const [tg, setTg] = useStored<Record<string, boolean>>('ml_toggles', { ev: true, pr: true, zk: true, qh: true });
-  const [wakeOn, setWakeOn] = useStored<boolean>(WAKE_KEY, false);
-  const toggleWake = async () => { if (wakeOn) { setWakeOn(false); return; } if (await micAllowed()) setWakeOn(true); else showAlert('Microphone needed', 'Allow the microphone for My Life 1.0 in your phone settings to use Say Hey My Life.'); };
   const kb = useKb(); const sref = React.useRef<any>(null);
   const dlgR = React.useRef(''); 
   React.useEffect(() => { if (kb > 0 && !dlgR.current) setTimeout(() => sref.current?.scrollToEnd({ animated: true }), 80); }, [kb]);
@@ -271,7 +268,6 @@ export default function Settings() {
               <RegionCard />
               <ModulesCard />
               <DashCardPicks />
-              {voiceOk ? <Glass style={{ paddingHorizontal: 16 }}><Row k="lang" t="Say Hey My Life" last sub={wakeOn ? 'On. Listens only while Home is open, and stops after 5 minutes without a touch.' : 'Open My Life Live by saying Hey My Life while Home is open'} onPress={toggleWake} right={<Sw on={!!wakeOn} />} /></Glass> : null}
               {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
                 <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>

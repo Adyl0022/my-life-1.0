@@ -11,6 +11,7 @@ import { W } from '../components/Ui';
 import { TOP } from '../lib/layout';
 import { DASH_PAGES, useDashPages } from '../components/DashCardPicks';
 import { Toggle } from '../components/Toggle';
+import { Orb } from '../components/Orb';
 
 const DIM = 'rgba(255,255,255,.65)';
 const RAISED = { backgroundColor: 'rgba(255,255,255,.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', borderTopColor: 'rgba(255,255,255,.36)' } as const;
@@ -20,7 +21,7 @@ const Rise = ({ i, children }: { i: number; children: React.ReactNode }) => {
   return <Animated.View style={{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>{children}</Animated.View>;
 };
 const Sw = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => <Toggle on={on} onPress={() => set(!on)} label={label} colors="#5ee7b5" thumbOn="#0d3a2c" w={46} h={28} />;
-const Tile = ({ e, c }: { e: string; c: string }) => <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: c + '30', borderWidth: 1, borderColor: c + '66' }}><Text style={{ fontSize: 21 }}>{e}</Text></View>;
+const Tile = ({ e, c, orb }: { e: string; c: string; orb?: boolean }) => <View style={{ width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: c + '30', borderWidth: 1, borderColor: c + '66' }}>{orb ? <Orb size={34} badge={false} /> : <Text style={{ fontSize: 21 }}>{e}</Text>}</View>;
 
 export default function DashCardScreen() {
   const router = useRouter(); const p = useDashPages();
@@ -65,7 +66,7 @@ export default function DashCardScreen() {
             {DASH_PAGES.map((x, i) => { const on = p.isOn(x.k); return (
               <Rise key={x.k} i={3 + i}>
                 <Pressable onPress={() => p.set(x.k, !on)} accessibilityLabel={(on ? 'Hide ' : 'Show ') + x.t + ' on the Dashboard card'} style={{ ...RAISED, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: on ? 1 : 0.62 }}>
-                  <Tile e={x.e} c={x.c} />
+                  <Tile e={x.e} c={x.c} orb={x.k === 'live'} />
                   <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>{x.t}</Text><Text style={{ color: DIM, fontSize: 12, marginTop: 1, lineHeight: 16 }}>{x.s}</Text></View>
                   <Sw on={on} set={(v) => p.set(x.k, v)} label={(on ? 'Hide ' : 'Show ') + x.t} />
                 </Pressable>

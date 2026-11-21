@@ -98,9 +98,15 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const ok: Record<Kind, boolean> = { live: voiceOk, prayer: !!ex.prayer, event: !!ex.event, calmix: !!ex.calmix, calgen: !!ex.calgen, subs: !!ex.subs, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
   const dp = useDashPages(); ORDER.forEach((k) => { if (k !== 'log' && !dp.isOn(k)) ok[k] = false; });
   const avail = ORDER.filter((k) => ok[k]);
-  // Each time the app is opened, the card starts on My Life Live (if it is on), then turns as usual.
-  React.useEffect(() => { if (!liveShown && ok.live) { liveShown = true; setSel('live'); } }, [ok.live]); // eslint-disable-line react-hooks/exhaustive-deps
-  const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
+  // Each time the app is opened, the card starts on My Life Assistant (if it is on) and stays there for 6 seconds, then turns as usual.
+  const hold = React.useRef(false); const [, setHoldTick] = React.useState(0);
+  React.useEffect(() => {
+    if (liveShown || !ok.live) return;
+    liveShown = true; hold.current = true; setHoldTick((x) => x + 1);
+    const t = setTimeout(() => { hold.current = false; setSel('live'); nextRef.current(); }, 6000);
+    return () => clearTimeout(t);
+  }, [ok.live]); // eslint-disable-line react-hooks/exhaustive-deps
+  const kind: Kind = hold.current && ok.live ? 'live' : sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
   const idx = avail.indexOf(kind);
 
   const goTo = (to: Kind) => {

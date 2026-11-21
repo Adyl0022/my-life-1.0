@@ -13,7 +13,6 @@ import { useHidden, useModOrder } from '../../lib/hidden';
 import { PlannerArt, IslamicArt, FinanceArt, RecordArt, HabitArt, HabitBanner, FamilyArt, ChipIcon, CARDS } from '../../components/dashArt';
 import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
-import { useWake, WAKE_KEY } from '../../lib/wake';
 import { useUsage } from '../../lib/usage';
 import { DashCard } from '../../components/DashCard';
 import { QuickRemind, SearchMenu, Bell } from '../../components/QuickRemind';
@@ -44,7 +43,6 @@ function Drift({ dur, delay = 0, children }: { dur: number; delay?: number; chil
 
 export default function Home() {
   const router = useRouter();
-  const [wakeOn] = useStored<boolean>(WAKE_KEY, false); const wake = useWake(!!wakeOn, () => router.push('/assistant?live=1' as any));
   const hid = useHidden(); const mord = useModOrder();
   const name = useName();
   const [hd] = useStored<HData>('ml_habit', HEMPTY); const ht = getDay(hd, 0); const hcg = cupsGoal(hd);
@@ -92,7 +90,7 @@ export default function Home() {
       <Drift dur={13000} delay={1500}><LinearGradient colors={['rgba(255,255,255,.35)', 'rgba(255,255,255,.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 316, top: 262, width: 58, height: 58, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' }} /></Drift>
       <Drift dur={15000} delay={3000}><LinearGradient colors={['rgba(255,255,255,.28)', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: 'absolute', left: 150, top: 300, width: 88, height: 28, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }} /></Drift>
       <PageIn i={0}>
-      <SafeAreaView edges={['left', 'right']} style={{ flex: 1 }} onTouchStart={wake.touch}>
+      <SafeAreaView edges={['left', 'right']} style={{ flex: 1 }}>
         <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: HEAD - UP, paddingBottom: 104 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flex: 1 }}>
