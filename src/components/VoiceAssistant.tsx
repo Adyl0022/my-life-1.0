@@ -91,7 +91,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
   useEffect(() => {
     if (!visible) return;
     live.current = true; quiet.current = 0; pause.current = false; if (C()) C().voice = true; setSheet(false);
-    const start = voicePref().lang || (C() && C().state && C().state.lang === 'ms' ? 'ms' : 'en');
+    const start = voicePref().lang || 'en';
     pickLang(start, true);
     setHeard(''); setReply(''); setErr(''); setPhase('idle'); setNote('');
     greet();
