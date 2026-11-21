@@ -10,6 +10,7 @@ import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
 import { mathReply } from './assistantMath';
 import { dataDigest } from './assistantDigest';
+import { balanceOf, totals, isLiab, groupOf, incomeFeed, commitTotal } from './accounts';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
@@ -642,6 +643,7 @@ export class AssistantBase extends React.Component<any, any> {
       }
       const tt = textTask(q);
       if (tt || generalQ(q)) r = { m: noAnswer(this.hm(), lang), patch: {} };
+      if (!r.act && !tt) { const ar = await this.accountReply(q, lang); if (ar) r = ar; }
       r = await this.tagAccount(r, q, lang);
       if (r.m && r.m.fb && !r.act && !tt) r = (await this.aiSpendReply(q, lang)) || r;
       if (r.m && r.m.fb && !r.act) r = await this.fallbackAI(q, lang, r, tt);
@@ -679,6 +681,31 @@ export class AssistantBase extends React.Component<any, any> {
   }
   // Questions with no written answer: a careful fixed reply for religion, health, law and money, then the small AI on the phone if it is downloaded,
   // otherwise an offer to get it.
+  // "How much is in my account?" and "add my mileage": answered from the saved accounts and odometer.
+  async accountReply(q, lang) {
+    try {
+      const ms = lang === 'ms'; const L = (e, b) => (ms ? b : e);
+      const ql = ' ' + q.toLowerCase().replace(/[?!.,]+/g, ' ').replace(/\s+/g, ' ') + ' ';
+      if (/\b(tambah|add|update|kemas\s?kini|rekod|record|set|masuk|masukkan|isi)\b/.test(ql) && /\b(mileage|milage|odometer|odo|meter|batu|jarak|km)\b/.test(ql) && !/\d{4,}/.test(ql.replace(/,/g, ''))) {
+        const s = this.state; const o = s.odo || 0;
+        const text = L('What is the reading on your odometer now?' + (o ? ' The last one I have is ' + this.num(o) + ' km.' : '') + ' Say it like this: "odometer 45200".', 'Berapa bacaan odometer awak sekarang?' + (o ? ' Yang terakhir saya ada ialah ' + this.num(o) + ' km.' : '') + ' Sebut macam ni: "odometer 45200".');
+        return { m: this.mk(text), patch: {}, act: null };
+      }
+      if (!modOn('finance')) return null;
+      const askBal = /\b(baki|balance|berapa|how much|total|jumlah|ada|tinggal|left)\b/.test(ql) && /\b(akaun|account|accounts|bank|e-?wallet|tunai|cash|simpanan|savings|kad kredit|credit card|net worth)\b/.test(ql) && !/\b(how|macam mana|cara|where|mana nak|add|tambah akaun|set up|buat akaun)\b/.test(ql) && !/\d/.test(ql);
+      if (!askBal) return null;
+      const d = await getItem('ml_accounts', { accs: [], moves: [], nextId: 1 }); const fin = (await getItem('ml_finance', {})) || {}; const dbt = (await getItem('ml_debts', { debts: [] })) || { debts: [] };
+      const accs = (d && d.accs) || [];
+      if (!accs.length) return { m: this.mk(L('You have no accounts yet. Open My Finance, tap the My Accounts card, then Add account.', 'Awak belum ada akaun. Buka My Finance, tekan kad My Accounts, kemudian Add account.')), patch: {}, act: null };
+      const feeds = { debts: dbt.debts || [], incomes: incomeFeed(fin.inc || {}, fin.incAcc) }; const sp = fin.spends || [];
+      const named = accs.filter((a) => a.name && ql.indexOf(String(a.name).toLowerCase()) >= 0).sort((a, b) => String(b.name).length - String(a.name).length)[0];
+      const fm = (n) => cs() + this.rm(Math.abs(n)) + (n < 0 ? ' (minus)' : '');
+      if (named) { const b = balanceOf(named, d, sp, feeds); const lb = isLiab(named); return { m: this.mk(L(named.name + (lb ? ': you owe ' : ' has ') + fm(b) + '.', named.name + (lb ? ': awak berhutang ' : ' ada ') + fm(b) + '.'), { big: fm(b), bigLbl: named.name }), patch: {}, act: null }; }
+      const lines = accs.map((a) => '• ' + a.name + ' (' + groupOf(a.g).t + '): ' + fm(balanceOf(a, d, sp, feeds)) + (isLiab(a) ? L(' owed', ' hutang') : ''));
+      const t = totals(d, sp, 0, feeds);
+      return { m: this.mk(lines.join('\n') + '\n\n' + L('Money you have: ', 'Wang yang awak ada: ') + fm(t.assets) + (t.liab > 0 ? '\n' + L('Cards and loans owed: ', 'Kad dan pinjaman yang terhutang: ') + fm(t.liab) : '') + '\n' + L('Net: ', 'Bersih: ') + fm(t.total)), patch: {}, act: null };
+    } catch (e) { return null; }
+  }
   async fallbackAI(q, lang, r, tt = false) {
     try {
       const hv = (this.state.msgs || []).slice(-7, -1).map((m: any) => ({ me: !!m.me, text: String(m.text || '').replace(/\n\n\((An AI answer|Online AI answer|Jawapan AI)[\s\S]*$/, '').slice(0, 300) })).filter((x: any) => x.text);
