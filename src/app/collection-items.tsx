@@ -18,7 +18,7 @@ import { tryForm, numberError } from '../lib/num';
 import { takePhoto } from '../lib/photo';
 import { statusOf, validDate, ymd, typeOf, EMPTY_DOCS, type DocStore } from '../lib/documents';
 import { ColArt } from '../components/ColArt';
-import { CATS, ACC, BTN, EMPTY_COL, hasWorth, kindIcon, num, rm, dmy, photosOf, worthNow, worthMine, warrantyBar, CONDS, type ColStore, type Item, type ItemCat } from '../lib/collection';
+import { CATS, ACC, BTN, EMPTY_COL, hasWorth, kindIcon, kindEmoji, num, rm, dmy, photosOf, worthNow, worthMine, warrantyBar, CONDS, type ColStore, type Item, type ItemCat } from '../lib/collection';
 
 type Form = Omit<Item, 'id'> & { id: number; noBought: boolean; noW: boolean };
 const blank = (cat: ItemCat): Form => ({ id: 0, cat, kind: CATS[cat].kinds[0][0], name: '', price: '', bought: ymd(new Date()), warranty: ymd(new Date(Date.now() + 365 * 86400000)), photo: '', photos: [], docIds: [], worth: '', cond: 'good', note: '', noBought: true, noW: true });
@@ -147,16 +147,16 @@ export default function Screen() {
       {mine.length ? <View style={{ marginTop: 12 }}><EqPills tabs={['List', 'Grid']} index={grid ? 1 : 0} onChange={(i) => setViews({ ...(views || {}), [cat]: i ? 'grid' : 'list' })} colors={['#7c9cff', '#b794ff']} fontSize={13} width={190} /></View> : null}
       {list.length ? (grid ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-          {list.map((x) => { const s = wStatus(x); return <GridCard key={x.id} a11y={'Open ' + x.name} tile={<Tile icon={kindIcon(cat, x.kind)} c={ac} />} photo={photosOf(x)[0]} label={x.kind.toUpperCase()} title={x.name} sub={x.price ? rm(num(x.price)) : undefined}
+          {list.map((x) => { const s = wStatus(x); return <GridCard key={x.id} a11y={'Open ' + x.name} tile={<Tile icon={kindIcon(cat, x.kind)} line={kindEmoji(cat, x.kind) as any} c={ac} />} photo={photosOf(x)[0]} label={x.kind.toUpperCase()} title={x.name} sub={x.price ? rm(num(x.price)) : undefined}
             status={C.warranty && s ? (s.n != null && s.n < 0 ? 'Warranty ended' : 'Warranty ' + s.txt) : undefined} statusCol={s ? s.col : undefined} onPress={() => setDet(x.id)} />; })}
         </View>
       ) : list.map((x) => {
         const s = wStatus(x);
-        return <ItemRow key={x.id} a11y={'Open ' + x.name} tile={<Tile icon={kindIcon(cat, x.kind)} c={ac} />} photo={photosOf(x)[0]} label={x.kind.toUpperCase()} title={x.name} sub={[x.bought ? 'Bought ' + dmy(x.bought) : '', x.price ? rm(num(x.price)) : ''].filter(Boolean).join(' · ') || undefined}
+        return <ItemRow key={x.id} a11y={'Open ' + x.name} tile={<Tile icon={kindIcon(cat, x.kind)} line={kindEmoji(cat, x.kind) as any} c={ac} />} photo={photosOf(x)[0]} label={x.kind.toUpperCase()} title={x.name} sub={[x.bought ? 'Bought ' + dmy(x.bought) : '', x.price ? rm(num(x.price)) : ''].filter(Boolean).join(' · ') || undefined}
           status={C.warranty && s ? (s.n != null && s.n < 0 ? 'Warranty ended' : 'Warranty ' + s.txt) : undefined} statusCol={s ? s.col : undefined} onPress={() => setDet(x.id)} />;
       })) : <Empty e={q.trim() ? 'search' : C.e} t={q.trim() ? 'Nothing found' : 'Nothing here yet'} s={q.trim() ? 'Try another word.' : 'Tap + to add your first ' + C.one + '.'} />}
       {cur && !f ? (
-        <Detail label={cur.kind.toUpperCase()} title={cur.name} tile={<Tile icon={kindIcon(cat, cur.kind)} c={ac} size={84} />} photo={photosOf(cur)[0]}
+        <Detail label={cur.kind.toUpperCase()} title={cur.name} tile={<Tile icon={kindIcon(cat, cur.kind)} line={kindEmoji(cat, cur.kind) as any} c={ac} size={84} />} photo={photosOf(cur)[0]}
           lines={[...(cur.price ? [['Price', rm(num(cur.price))] as [string, string]] : []), ...(cur.bought ? [['Bought', dmy(cur.bought)] as [string, string]] : []), ...(C.warranty ? [['Warranty ends', cur.warranty ? dmy(cur.warranty) : 'No warranty'] as [string, string]] : []), ...(cur.note ? [['Note', cur.note] as [string, string]] : [])]}
           status={C.warranty && ws ? (ws.n != null && ws.n < 0 ? 'Warranty ended' : 'Warranty ' + ws.txt) : undefined} statusCol={ws ? ws.col : undefined} hot={!!(ws && ws.hot)} onClose={() => setDet(0)}>
           <PhotoStrip photos={photosOf(cur)} />

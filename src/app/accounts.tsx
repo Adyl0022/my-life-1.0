@@ -410,8 +410,14 @@ export default function Accounts() {
               <View style={{ marginTop: 10 }}><EqPills tabs={['Count in total', 'Leave out']} index={withThings ? 0 : 1} onChange={(i) => setWithThings(i === 0 ? 1 : 0)} colors={['#7c9cff', '#b794ff']} /></View>
               {withThings ? (
                 <View style={{ marginTop: 12, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
-                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>Net worth · money and your things, after what you owe</Text>
-                  <Text style={{ color: W, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{'~ ' + (t.total + tv.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total + tv.total))}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>Net worth</Text>
+                  <Text style={{ color: t.total + tv.total < 0 ? PINK : W, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{'~ ' + (t.total + tv.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total + tv.total))}</Text>
+                  {[['Money in your accounts', t.assets, '+'], ['What you owe (cards, loans and commitments)', t.liab, '-'], ['Your assets', tv.total, '+']].map((r) => (
+                    <View key={r[0] as string} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+                      <Text style={{ flex: 1, color: 'rgba(255,255,255,.72)', fontSize: 12, lineHeight: 16 }}>{(r[2] as string) + ' ' + (r[0] as string)}</Text>
+                      <Text style={{ color: r[2] === '-' ? PINK : W, fontSize: 12.5, fontWeight: '700', marginLeft: 8 }}>{(r[2] as string) + cs() + money(r[1] as number)}</Text>
+                    </View>
+                  ))}
                 </View>
               ) : null}
               <Tap onPress={() => router.push('/collection')} label="Open Personal Collection" style={{ marginTop: 10 }}><Text style={{ color: '#b9c8ff', fontSize: 13, fontWeight: '700' }}>Open Personal Collection ›</Text></Tap>
