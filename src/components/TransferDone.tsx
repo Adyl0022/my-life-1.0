@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Modal, Platform, Animated, Easing, useWindowDimensions } from 'react-native';
-import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from './Txt';
@@ -29,9 +29,11 @@ async function playCoin() {
 }
 const eo = (x: number) => 1 - Math.pow(1 - x, 3);
 const rnd = (i: number) => { const v = Math.sin(i * 12.9898 + 1.7) * 43758.5453; return v - Math.floor(v); };
-const STARS = Array.from({ length: 34 }, (_, i) => ({ x: rnd(i + 1), y: rnd(i + 91), r: 0.7 + rnd(i + 7) * 1.4, g: i % 2 }));
-const SPARKS = Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * 6.2832 + rnd(i) * 0.4, v: 80 + rnd(i + 21) * 90, r: 2 + rnd(i + 41) * 2.4, c: ['#8fe9e2', '#b794ff', '#ffd593', '#ffffff', '#5ee7b5'][i % 5] }));
-const PULSES = [0, 1, 2, 3, 4, 5, 6].map((i) => ({ at: i * 0.075, c: i % 3 === 0 ? '#ffd593' : i % 2 ? '#b794ff' : '#8fe9e2', k: i % 2 ? 1 : -1 }));
+const STARS = Array.from({ length: 46 }, (_, i) => ({ x: rnd(i + 1), y: rnd(i + 91), r: 0.7 + rnd(i + 7) * 1.4, g: i % 2 }));
+// Confetti that bursts from the receiving card: small bars and diamonds, never dots
+const CONF = Array.from({ length: 22 }, (_, i) => ({ a: -Math.PI + (i / 22) * Math.PI + (rnd(i) - 0.5) * 0.35, v: 90 + rnd(i + 21) * 120, w: 4 + rnd(i + 41) * 5, h: 9 + rnd(i + 5) * 8, c: ['#8fe9e2', '#b794ff', '#ffd593', '#ffffff', '#5ee7b5'][i % 5], r: (rnd(i + 9) - 0.5) * 720 }));
+// The stream of light: slim streaks with a diamond head, braided in two strands
+const PULSES = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => ({ at: i * 0.06, c: i % 3 === 0 ? '#ffd593' : i % 2 ? '#b794ff' : '#8fe9e2', k: i % 2 ? 1 : -1 }));
 
 /** A number that counts up or down while the light flows. It redraws only this small text, about 16 times a second. */
 function useTween(from: number, to: number, key: string): number {
@@ -103,25 +105,10 @@ export function TransferDone({ info, onClose }: { info: TransferInfo | null; onC
   }, [info]);
 
   if (!info) return null;
-  const W = Math.min(sw - 24, 360); const H = 230;
-  const ax = 64, bx = W - 64, cy = 112, R = 33; const span = bx - ax;
+  const W = Math.min(sw - 24, 360); const H = 300;
+  const CW = Math.min(W - 40, 236), CH = 84, CX = (W - CW) / 2; const GAP0 = CH, GAP1 = H - CH; const mid = W / 2;
   const fc = info.fromC || '#7c9cff', tc = info.toC || '#5ee7df';
   const word = info.pay ? 'Payment' : 'Transfer';
-  const rg = (id: string, c: string, c2: string) => (
-    <RadialGradient id={id} cx="38%" cy="32%" r="75%"><Stop offset="0" stopColor="#ffffff" stopOpacity={0.95} /><Stop offset="0.45" stopColor={c} stopOpacity={1} /><Stop offset="1" stopColor={c2} stopOpacity={0.7} /></RadialGradient>
-  );
-  const halo = (id: string, c: string) => (
-    <RadialGradient id={id} cx="50%" cy="50%" r="50%"><Stop offset="0.35" stopColor={c} stopOpacity={0.6} /><Stop offset="1" stopColor={c} stopOpacity={0} /></RadialGradient>
-  );
-  const OS = (R + 26) * 2; // size of an orb with its glow
-  const orb = (id: string, c: string, c2: string) => (
-    <Svg width={OS} height={OS}>
-      <Defs>{rg(id, c, c2)}{halo(id + 'h', c)}</Defs>
-      <Circle cx={OS / 2} cy={OS / 2} r={R + 26} fill={`url(#${id}h)`} />
-      <Circle cx={OS / 2} cy={OS / 2} r={R} fill={`url(#${id})`} />
-      <Circle cx={OS / 2} cy={OS / 2} r={R} fill="none" stroke="rgba(255,255,255,.45)" strokeWidth={1.2} />
-    </Svg>
-  );
   const abs = { position: 'absolute' as const };
   const Row = ({ k, v, sub }: { k: string; v: string; sub?: string }) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, gap: 12 }}>
@@ -132,86 +119,97 @@ export function TransferDone({ info, onClose }: { info: TransferInfo | null; onC
       </View>
     </View>
   );
-  const drX = drift.interpolate({ inputRange: [0, 1], outputRange: [0, -W] });
+  // One account card. It shows the account name and its balance, in the colour of its kind of account.
+  const Card = ({ label, name, bal, col, tint, w }: { label: string; name: string; bal: number | null; col: string; tint?: boolean; w: number }) => (
+    <View style={{ width: w, height: CH, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.4)' }}>
+      <LinearGradient colors={tint ? ['#2fd9a0', '#128f72'] : [col, col + '88', '#1b1f55']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ ...abs, left: 0, top: 0, right: 0, bottom: 0 }} />
+      <LinearGradient colors={['rgba(255,255,255,.34)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 0.9 }} style={{ ...abs, left: 0, top: 0, right: 0, bottom: 0 }} />
+      <View style={{ ...abs, left: 16, top: 14, width: 30, height: 22, borderRadius: 6, overflow: 'hidden' }}>
+        <LinearGradient colors={['#ffe9a8', '#d8a94a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }} />
+        <View style={{ ...abs, left: 0, right: 0, top: 10, height: 1.2, backgroundColor: 'rgba(120,80,10,.45)' }} />
+        <View style={{ ...abs, top: 0, bottom: 0, left: 14, width: 1.2, backgroundColor: 'rgba(120,80,10,.45)' }} />
+      </View>
+      <Text style={{ ...abs, left: 54, top: 19, color: 'rgba(255,255,255,.85)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.6 }}>{label}</Text>
+      <View style={{ ...abs, left: 16, right: 16, bottom: 11, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+        <Text numberOfLines={1} style={{ flex: 1, color: '#fff', fontSize: 15, fontWeight: '800' }}>{name}</Text>
+        {bal != null ? <Text style={{ color: 'rgba(255,255,255,.92)', fontSize: 13, fontWeight: '700' }}>{cs() + money(bal)}</Text> : null}
+      </View>
+    </View>
+  );
+  const lay = { left: CX, width: CW };
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={burst ? onClose : undefined}>
       <View style={{ flex: 1, backgroundColor: '#070a22' }}>
         <LinearGradient colors={['#070a22', '#150d3e', '#0a2848']} locations={[0, 0.5, 1]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ ...abs, left: 0, top: 0, right: 0, bottom: 0 }} />
-        {/* aurora: big soft colour bands that drift slowly */}
-        <Animated.View pointerEvents="none" style={{ ...abs, left: -sw * 0.3, top: sh * 0.08, width: sw * 1.6, height: sh * 0.42, opacity: 0.9, transform: [{ translateX: drift.interpolate({ inputRange: [0, 0.5, 1], outputRange: [-30, 30, -30] }) }, { rotate: '-8deg' }, { scaleY: twinkle.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.12] }) }] }}>
-          <LinearGradient colors={['rgba(94,231,223,0)', 'rgba(94,231,223,.2)', 'rgba(183,148,255,.26)', 'rgba(124,156,255,.14)', 'rgba(124,156,255,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ flex: 1 }} />
-        </Animated.View>
-        <Animated.View pointerEvents="none" style={{ ...abs, left: -sw * 0.2, top: sh * 0.5, width: sw * 1.4, height: sh * 0.34, opacity: 0.8, transform: [{ translateX: drift.interpolate({ inputRange: [0, 0.5, 1], outputRange: [40, -40, 40] }) }, { rotate: '6deg' }, { scaleY: twinkle.interpolate({ inputRange: [0, 1], outputRange: [1.1, 0.9] }) }] }}>
-          <LinearGradient colors={['rgba(183,148,255,0)', 'rgba(183,148,255,.2)', 'rgba(94,231,223,.22)', 'rgba(94,231,223,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ flex: 1 }} />
-        </Animated.View>
-        <Blob size={340} color="rgba(183,148,255,.3)" style={{ right: -110, top: -50 }} />
-        <Blob size={360} color="rgba(94,231,223,.2)" style={{ left: -130, bottom: 40 }} />
-        {/* stars: two groups that twinkle in turn */}
+        <Blob size={340} color="rgba(183,148,255,.45)" style={{ right: -110, top: -50 }} />
+        <Blob size={360} color="rgba(94,231,223,.28)" style={{ left: -130, bottom: 40 }} />
         {[0, 1].map((g) => (
           <Animated.View key={g} pointerEvents="none" style={{ ...abs, left: 0, top: 0, width: sw, height: sh, opacity: twinkle.interpolate({ inputRange: [0, 1], outputRange: g ? [0.9, 0.35] : [0.35, 0.9] }) }}>
-            {STARS.filter((s) => s.g === g).map((s, i) => <View key={i} style={{ ...abs, left: s.x * sw, top: s.y * sh, width: s.r * 2, height: s.r * 2, borderRadius: s.r, backgroundColor: '#fff' }} />)}
+            {STARS.filter((q) => q.g === g).map((q, i) => <View key={i} style={{ ...abs, left: q.x * sw, top: q.y * sh, width: q.r * 2, height: q.r * 2, borderRadius: q.r, backgroundColor: '#fff' }} />)}
           </Animated.View>
         ))}
-        {/* slow rings spreading out behind the stage */}
-        {[0, 1, 2].map((i) => {
-          const d = (i / 3);
-          return <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: sw / 2 - 150, top: sh * 0.36 - 150, width: 300, height: 300, borderRadius: 150, borderWidth: 1.2, borderColor: '#8fe9e2', opacity: ring.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.2 - d * 0.1, 0] }), transform: [{ scale: ring.interpolate({ inputRange: [0, 1], outputRange: [0.25 + d * 0.5, 1.5 + d * 0.5] }) }] }} />;
-        })}
+        {[0, 1, 2].map((i) => (
+          <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: sw / 2 - 150, top: sh * 0.4 - 150, width: 300, height: 300, borderRadius: 150, borderWidth: 1.2, borderColor: '#8fe9e2', opacity: ring.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.2 - i * 0.05, 0] }), transform: [{ scale: ring.interpolate({ inputRange: [0, 1], outputRange: [0.25 + i * 0.5, 1.5 + i * 0.5] }) }] }} />
+        ))}
         <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 40 }}>
-          <Animated.View style={{ alignItems: 'center', transform: [{ translateY: lift.interpolate({ inputRange: [0, 1], outputRange: [0, -86] }) }, { scale: lift.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] }) }] }}>
+          <Animated.View style={{ alignItems: 'center', transform: [{ translateY: lift.interpolate({ inputRange: [0, 1], outputRange: [0, -128] }) }, { scale: lift.interpolate({ inputRange: [0, 1], outputRange: [1, 0.78] }) }] }}>
             <View style={{ height: 20, width: W, alignItems: 'center', justifyContent: 'center' }}>
               <Animated.View style={{ ...abs, opacity: b.interpolate({ inputRange: [0, 0.2], outputRange: [1, 0], extrapolate: 'clamp' }) }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 14, fontWeight: '800', letterSpacing: 1.6 }}>{(word === 'Payment' ? 'PAYING' : 'SENDING') + '...'}</Text></Animated.View>
               <Animated.View style={{ ...abs, opacity: b.interpolate({ inputRange: [0.1, 0.4], outputRange: [0, 1], extrapolate: 'clamp' }) }}><Text style={{ color: '#7df0c6', fontSize: 14, fontWeight: '800', letterSpacing: 1.6 }}>{word.toUpperCase() + ' SUCCESSFUL'}</Text></Animated.View>
             </View>
             <Text style={{ color: '#fff', fontSize: 40, fontWeight: '800', marginTop: 6, letterSpacing: 0.4 }}>{cs() + money(burst ? amt : shown)}</Text>
-            <View style={{ width: W, height: H, marginTop: 2 }}>
-              {/* the aurora ribbon the light travels along */}
-              <Animated.View pointerEvents="none" style={{ ...abs, left: ax + R, top: cy - 20, width: span - R * 2, height: 40, overflow: 'hidden', opacity: p.interpolate({ inputRange: [0, 0.15, 0.85, 1], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }) }}>
-                <Animated.View style={{ width: (span - R * 2) * 2, height: 40, transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -(span - R * 2)] }) }] }}>
-                  <LinearGradient colors={['rgba(143,233,226,0)', 'rgba(143,233,226,.3)', 'rgba(183,148,255,.34)', 'rgba(143,233,226,.3)', 'rgba(183,148,255,.34)', 'rgba(143,233,226,.3)', 'rgba(143,233,226,0)']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1, borderRadius: 20 }} />
+            <View style={{ width: W, height: H, marginTop: 10 }}>
+              {/* a soft beam of colour down the middle that the light travels along */}
+              <Animated.View pointerEvents="none" style={{ ...abs, left: mid - 34, top: GAP0 - 6, width: 68, height: GAP1 - GAP0 + 12, overflow: 'hidden', opacity: p.interpolate({ inputRange: [0, 0.15, 0.85, 1], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }) }}>
+                <Animated.View style={{ width: 68, height: (GAP1 - GAP0) * 2, transform: [{ translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -(GAP1 - GAP0)] }) }] }}>
+                  <LinearGradient colors={['rgba(143,233,226,0)', 'rgba(143,233,226,.28)', 'rgba(183,148,255,.3)', 'rgba(143,233,226,.28)', 'rgba(183,148,255,.3)', 'rgba(143,233,226,.28)', 'rgba(143,233,226,0)']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ flex: 1 }} />
                 </Animated.View>
               </Animated.View>
-              {/* the light: soft comets that flow from the first account into the second, in a gentle braid */}
+              {/* the light: slim streaks with a diamond head, braided in two strands from the first card to the second */}
               {PULSES.map((q, i) => {
                 const a = q.at, z = Math.min(1, a + 0.55);
                 const xr = [a, z], yr = [a, a + (z - a) * 0.25, a + (z - a) * 0.5, a + (z - a) * 0.75, z];
                 return (
-                  <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: ax + R - 30, top: cy - 6, width: 60, height: 12, opacity: p.interpolate({ inputRange: [a, a + 0.06, z - 0.1, z], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }), transform: [
-                    { translateX: p.interpolate({ inputRange: xr, outputRange: [0, span - R * 2], easing: Easing.inOut(Easing.quad), extrapolate: 'clamp' }) },
-                    { translateY: p.interpolate({ inputRange: yr, outputRange: [0, q.k * -20, 0, q.k * 20, 0], extrapolate: 'clamp' }) },
+                  <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: mid - 3, top: GAP0 - 54, width: 6, height: 54, opacity: p.interpolate({ inputRange: [a, a + 0.06, z - 0.1, z], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }), transform: [
+                    { translateY: p.interpolate({ inputRange: xr, outputRange: [0, GAP1 - GAP0 + 54], easing: Easing.inOut(Easing.quad), extrapolate: 'clamp' }) },
+                    { translateX: p.interpolate({ inputRange: yr, outputRange: [0, q.k * -26, 0, q.k * 26, 0], extrapolate: 'clamp' }) },
                   ] }}>
-                    <LinearGradient colors={[q.c + '00', q.c]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1, borderRadius: 6 }} />
-                    <View style={{ ...abs, right: 0, top: 1, width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff', opacity: 0.95 }} />
+                    <LinearGradient colors={[q.c + '00', q.c]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={{ flex: 1, borderRadius: 3 }} />
+                    <View style={{ ...abs, bottom: -2, left: -1, width: 8, height: 8, backgroundColor: '#fff', transform: [{ rotate: '45deg' }], opacity: 0.95 }} />
                   </Animated.View>
                 );
               })}
-              {/* the sender orb gives light away, shrinking a little */}
-              <Animated.View pointerEvents="none" style={{ ...abs, left: ax - OS / 2, top: cy - OS / 2, transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0.9] }) }] }}>{orb('oA', fc, fc)}</Animated.View>
-              {/* the receiver orb pulls the light in: it glows and grows as it fills */}
-              <Animated.View pointerEvents="none" style={{ ...abs, left: bx - OS / 2, top: cy - OS / 2, transform: [{ scale: p.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 1.04, 1.16] }) }] }}>{orb('oB', tc, tc)}</Animated.View>
-              <Animated.View pointerEvents="none" style={{ ...abs, left: bx - OS / 2, top: cy - OS / 2, opacity: b.interpolate({ inputRange: [0, 0.35], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: b.interpolate({ inputRange: [0, 0.3, 1], outputRange: [1.16, 1.3, 1.06] }) }] }}>{orb('oC', '#5ee7b5', '#2fbf8f')}</Animated.View>
-              {/* the glow that opens as the light arrives, then the ripples */}
+              {/* the first card gives its light away and dims a little */}
+              <Animated.View pointerEvents="none" style={{ ...abs, ...lay, top: 0, opacity: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0.78] }), transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0.95] }) }] }}>
+                <Card label="FROM" name={info.from} bal={info.fromBal != null ? (burst ? f1 : fromShown) : null} col={fc} w={CW} />
+              </Animated.View>
+              {/* the second card pulls the light in: it brightens and grows as it fills, then turns green */}
               {[0, 0.12, 0.26].map((d, i) => (
-                <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: bx - 40, top: cy - 40, width: 80, height: 80, borderRadius: 40, borderWidth: 2.4, borderColor: i === 1 ? '#8fe9e2' : '#5ee7b5', opacity: b.interpolate({ inputRange: [d, d + 0.08, 1], outputRange: [0, 0.75, 0], extrapolate: 'clamp' }), transform: [{ scale: b.interpolate({ inputRange: [d, 1], outputRange: [0.6, 3.1], extrapolate: 'clamp' }) }] }} />
+                <Animated.View key={i} pointerEvents="none" style={{ ...abs, ...lay, top: GAP1, height: CH, borderRadius: 20, borderWidth: 2.2, borderColor: i === 1 ? '#8fe9e2' : '#5ee7b5', opacity: b.interpolate({ inputRange: [d, d + 0.08, 1], outputRange: [0, 0.8, 0], extrapolate: 'clamp' }), transform: [{ scale: b.interpolate({ inputRange: [d, 1], outputRange: [1, 1.55], extrapolate: 'clamp' }) }] }} />
               ))}
-              {SPARKS.map((s, i) => (
-                <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: bx - s.r, top: cy - s.r, width: s.r * 2, height: s.r * 2, borderRadius: s.r, backgroundColor: s.c, opacity: b.interpolate({ inputRange: [0, 0.05, 0.7, 1], outputRange: [0, 1, 0.8, 0], extrapolate: 'clamp' }), transform: [
-                  { translateX: b.interpolate({ inputRange: [0, 1], outputRange: [0, Math.cos(s.a) * s.v] }) },
-                  { translateY: b.interpolate({ inputRange: [0, 1], outputRange: [0, Math.sin(s.a) * s.v + 50] }) },
-                  { scale: b.interpolate({ inputRange: [0, 1], outputRange: [1, 0.3] }) },
+              <Animated.View pointerEvents="none" style={{ ...abs, ...lay, top: GAP1, transform: [{ scale: p.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 1.02, 1.07] }) }] }}>
+                <Card label={info.pay ? 'PAID TO' : 'TO'} name={info.to} bal={info.toBal != null ? (burst ? t1 : toShown) : null} col={tc} w={CW} />
+                <Animated.View style={{ ...abs, left: 0, top: 0, opacity: b.interpolate({ inputRange: [0, 0.35], outputRange: [0, 1], extrapolate: 'clamp' }) }}>
+                  <Card label={info.pay ? 'PAID TO' : 'TO'} name={info.to} bal={info.toBal != null ? (burst ? t1 : toShown) : null} col={tc} tint w={CW} />
+                </Animated.View>
+                {/* a band of light sweeps across the card when the money arrives */}
+                <View pointerEvents="none" style={{ ...abs, left: 0, top: 0, width: CW, height: CH, borderRadius: 20, overflow: 'hidden' }}>
+                  <Animated.View style={{ ...abs, top: -20, width: 70, height: CH + 40, transform: [{ translateX: b.interpolate({ inputRange: [0, 0.8], outputRange: [-90, CW + 30], extrapolate: 'clamp' }) }, { rotate: '18deg' }], opacity: b.interpolate({ inputRange: [0, 0.1, 0.7, 0.8], outputRange: [0, 0.9, 0.9, 0], extrapolate: 'clamp' }) }}>
+                    <LinearGradient colors={['rgba(255,255,255,0)', 'rgba(255,255,255,.55)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ flex: 1 }} />
+                  </Animated.View>
+                </View>
+              </Animated.View>
+              {CONF.map((c, i) => (
+                <Animated.View key={i} pointerEvents="none" style={{ ...abs, left: mid - c.w / 2, top: GAP1 + CH / 2, width: c.w, height: c.h, borderRadius: 2, backgroundColor: c.c, opacity: b.interpolate({ inputRange: [0, 0.05, 0.7, 1], outputRange: [0, 1, 0.85, 0], extrapolate: 'clamp' }), transform: [
+                  { translateX: b.interpolate({ inputRange: [0, 1], outputRange: [0, Math.cos(c.a) * c.v * 1.3] }) },
+                  { translateY: b.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, Math.sin(c.a) * c.v, Math.sin(c.a) * c.v + 90] }) },
+                  { rotate: b.interpolate({ inputRange: [0, 1], outputRange: ['0deg', c.r + 'deg'] }) },
                 ] }} />
               ))}
-              <Animated.View pointerEvents="none" style={{ ...abs, left: bx - 26, top: cy - 26, width: 52, height: 52, alignItems: 'center', justifyContent: 'center', opacity: tk.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: tk.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }] }}>
-                <Svg width={52} height={52}><Path d="M13 27 L23 37 L40 15" stroke="#fff" strokeWidth={5.5} strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>
+              {/* the tick sits in a rounded badge on the second card */}
+              <Animated.View pointerEvents="none" style={{ ...abs, left: CX + CW - 22, top: GAP1 - 18, width: 44, height: 44, borderRadius: 14, backgroundColor: '#1fbf8a', borderWidth: 2, borderColor: 'rgba(255,255,255,.85)', alignItems: 'center', justifyContent: 'center', opacity: tk.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: 'clamp' }), transform: [{ scale: tk.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] }) }, { rotate: tk.interpolate({ inputRange: [0, 1], outputRange: ['-25deg', '0deg'] }) }] }}>
+                <Svg width={28} height={28}><Path d="M6 15 L12 21 L23 8" stroke="#fff" strokeWidth={4.2} strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>
               </Animated.View>
-              <View pointerEvents="none" style={{ ...abs, left: ax - 48, top: cy + R + 24, width: 96, alignItems: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>{info.from}</Text>
-                {info.fromBal != null ? <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{cs() + money(burst ? f1 : fromShown)}</Text> : null}
-              </View>
-              <View pointerEvents="none" style={{ ...abs, left: bx - 48, top: cy + R + 24, width: 96, alignItems: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>{info.to}</Text>
-                {info.toBal != null ? <Text style={{ color: burst ? '#9af3d2' : 'rgba(255,255,255,.7)', fontSize: 11.5, marginTop: 2 }}>{cs() + money(burst ? t1 : toShown)}</Text> : null}
-              </View>
             </View>
           </Animated.View>
           <Animated.View style={{ ...abs, left: 24, right: 24, bottom: 0, paddingBottom: 26, opacity: rc, transform: [{ translateY: rc.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] }} pointerEvents={burst ? 'auto' : 'none'}>
