@@ -12,6 +12,8 @@ import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
 import { Inp } from './Ui';
 import { useDashPages, DASH_PAGES } from './DashCardPicks';
+import { Orb } from './Orb';
+import { voiceOk } from '../lib/voice';
 import { useCycleSave } from '../lib/cycleHook';
 import { cycleInfo } from '../lib/cycle';
 import { addSleepTile } from '../../modules/step-counter';
@@ -28,8 +30,8 @@ import { EnergyRow } from './EnergyUi';
 import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf, keyOfDate, hoursBetween, medDue, to12, HData, HDay, HEMPTY } from '../lib/habit';
 
 // The card at the bottom of the Dashboard. Tap opens the page, tap a bar segment to jump, long-press for the next one. Quick log keeps its own buttons.
-type Kind = 'log' | 'usage' | 'streak' | 'score' | 'tip' | 'lesson' | 'memories' | 'prayer' | 'event' | 'calmix' | 'calgen' | 'subs' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
-const ORDER: Kind[] = ['log', 'prayer', 'tasks', 'event', 'calmix', 'calgen', 'subs', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'lesson', 'memories'];
+type Kind = 'log' | 'live' | 'usage' | 'streak' | 'score' | 'tip' | 'lesson' | 'memories' | 'prayer' | 'event' | 'calmix' | 'calgen' | 'subs' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
+const ORDER: Kind[] = ['log', 'live', 'prayer', 'tasks', 'event', 'calmix', 'calgen', 'subs', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'lesson', 'memories'];
 const EXK = ['prayer', 'event', 'calmix', 'calgen', 'subs', 'job', 'money', 'tasks', 'renew', 'debt'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -86,11 +88,13 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   React.useEffect(() => { if (!sleeping) return; const i = setInterval(() => setTick((x) => x + 1), 30000); return () => clearInterval(i); }, [sleeping]);
   const v = React.useRef(new Animated.Value(1)).current;
   const ty = React.useRef(new Animated.Value(0)).current;
+  const pulse = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => { const a = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 1600, useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 1600, useNativeDriver: true })])); a.start(); return () => a.stop(); }, [pulse]);
 
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
   const ex = useDashExtras(core, { islamic: hid.on('islamic'), planner: hid.on('planner'), record: hid.on('record'), finance: hid.on('finance') });
-  const ok: Record<Kind, boolean> = { prayer: !!ex.prayer, event: !!ex.event, calmix: !!ex.calmix, calgen: !!ex.calgen, subs: !!ex.subs, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
+  const ok: Record<Kind, boolean> = { live: voiceOk, prayer: !!ex.prayer, event: !!ex.event, calmix: !!ex.calmix, calgen: !!ex.calgen, subs: !!ex.subs, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
   const dp = useDashPages(); ORDER.forEach((k) => { if (k !== 'log' && !dp.isOn(k)) ok[k] = false; });
   const avail = ORDER.filter((k) => ok[k]);
   const kind: Kind = sleeping && ok.log ? 'log' : (ORDER as string[]).indexOf(sel) >= 0 && ok[sel as Kind] ? (sel as Kind) : (ok.log ? 'log' : avail[0] || 'log');
@@ -104,7 +108,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     });
   };
   const next = () => goTo(avail[(idx + 1) % avail.length]);
-  const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'memories' ? '/memories' : kind === 'lesson' ? '/lessons' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
+  const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'live' ? '/assistant?live=1' : kind === 'memories' ? '/memories' : kind === 'lesson' ? '/lessons' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   nextRef.current = next;
   // Coming back from another page: the card must keep turning, and must never be left half faded.
@@ -214,6 +218,17 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   } else if (kind === 'lesson') {
     const ld = lessonOfDay(colS && colS.lessons);
     body = <Premium k="lesson" label={(ld.mine ? 'YOUR LESSON' : 'LIFE LESSON') + ' · ' + ld.tag.toUpperCase()} title={ld.title} sub={ld.text} />;
+  } else if (kind === 'live') {
+    body = (<>
+      <View pointerEvents="none" style={{ position: 'absolute', right: -30, top: -30, width: 150, height: 150, borderRadius: 75, backgroundColor: 'rgba(183,148,255,.30)' }} />
+      <Animated.View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1.07] }) }] }}><Orb size={60} badge={false} /></Animated.View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text numberOfLines={1} style={{ color: '#d9c9ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>MY LIFE LIVE</Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>Talk to your Assistant</Text>
+        <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.92)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>Tap, then just ask or tell it what to do</Text>
+      </View>
+      <View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.34)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>Talk</Text></View>
+    </>);
   } else if (kind === 'memories') {
     body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life 1.0' : 'Your Memories'} sub="Every moment matters" />;
   } else if (kind === 'score') {

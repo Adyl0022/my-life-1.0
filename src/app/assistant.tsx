@@ -6,7 +6,7 @@ import { View, TextInput, ScrollView, Keyboard, Platform } from 'react-native';
 import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Glass } from '../components/Glass';
@@ -277,7 +277,10 @@ export default function Assistant() {
   const [xl] = useAssistLang(); const packs = useLangPacks();
   // The chosen language is used only when its pack is on the phone, otherwise the Assistant keeps to English or Bahasa Malaysia.
   const tlang = xlOk && xl && packs.ready(xl) ? xl : '';
+  const { live } = useLocalSearchParams<{ live?: string }>(); const liveStart = React.useRef(false); const fromDash = live === '1';
   const [voice, setVoice] = React.useState(false); const [smart, setSmart] = React.useState(false); const [sheet, setSheet] = React.useState(false); const [auto, setAuto] = React.useState('');
+  // Opened from the Home card: go straight to the talking screen once the Assistant is ready.
+  React.useEffect(() => { if (fromDash && real.ready && voiceOk && !liveStart.current) { liveStart.current = true; setTimeout(() => setVoice(true), 350); } }, [fromDash, real.ready]);
   const go = (h: string) => {
     const r = ROUTES[h];
     if (r) router.push(r as any); else { setNote('This screen is being built and will open here soon.'); setTimeout(() => setNote(''), 2200); }
@@ -299,7 +302,7 @@ export default function Assistant() {
       <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 12 + TOP }}>
         {last ? <PrayerFeed onTimes={setP} /> : null}
         {real.ready ? <Chat ref={chat} onVoice={() => setVoice(true)} tlang={tlang} onSmart={() => setSmart(true)} onMore={() => { setAuto(''); setSheet(true); }} onXl={(c: string) => { setAuto(c); setSheet(true); }} real={real} persist={persist} userName={name} onBack={() => router.back()} go={go} onScroll={() => chat.current?.scrollRef?.scrollToEnd({ animated: true })} /> : null}
-        <VoiceAssistant visible={voice} chat={chat} onClose={() => setVoice(false)} onAI={() => { setVoice(false); setTimeout(() => setSmart(true), 300); }} onOpen={(r: string) => { setVoice(false); setTimeout(() => router.push(r as any), 250); }} />
+        <VoiceAssistant visible={voice} chat={chat} onClose={() => { setVoice(false); if (fromDash) router.back(); }} onAI={() => { setVoice(false); setTimeout(() => setSmart(true), 300); }} onOpen={(r: string) => { setVoice(false); setTimeout(() => router.push(r as any), 250); }} />
         <SmartChatSheet visible={smart} onClose={() => setSmart(false)} />
         <AssistLangSheet visible={sheet} auto={auto} onClose={() => { setSheet(false); setAuto(''); }} onPicked={(c: string) => setPicked(c)} />
         <LangPickedPopup code={picked} onHide={() => setPicked(null)} />
