@@ -27,7 +27,7 @@ import { cs, cu, cw, useRegion } from '../lib/region';
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string; acc?: number };
-type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number>; incAcc?: Record<string, { acc: number; date: string; name: string }> };
+type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number>; cats?: [string, string][]; incAcc?: Record<string, { acc: number; date: string; name: string }> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DEFS: [string, string, string][] = [['salary', 'Basic salary', '#7c9cff'], ['overtime', 'Overtime', '#ffc46b'], ['claim', 'Claim', '#8fe9e2'], ['sunday', 'Sunday work', '#b794ff'], ['holiday', 'Public holiday work', '#ff8fab'], ['other', 'Other', '#5ee7b5']];
@@ -37,7 +37,7 @@ const CATS: [string, string][] = [['Food', '#ffc46b'], ['Petrol', '#7c9cff'], ['
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
 const keyOf = (y: number, m: number) => y + '-' + String(m + 1).padStart(2, '0');
-const colorOf = (n: string) => n === VEH_CAT ? VEH_COLOR : (CATS.find((c) => c[0] === n) || CATS[CATS.length - 1])[1];
+const CAT_COL = ['#ffa86b', '#6bd6ff', '#c3ff7a', '#ff7ad9', '#ffe36b', '#7affc8', '#a58bff', '#ff9a7a'];
 const WARM = ['#ffc46b', '#ff8fab'] as [string, string];
 
 const Coin = () => (
@@ -100,6 +100,24 @@ export default function Finance() {
   // The list follows the Sort by choice: newest date first (default), oldest date first, or the order the entries were added.
   const [sortBy, setSortBy] = useStored<'new' | 'old' | 'add'>('ml_spend_sort', 'new');
   const byDate = [...all].sort((a, b) => sortBy === 'add' ? b.id - a.id : sortBy === 'old' ? (a.date || '').localeCompare(b.date || '') || a.id - b.id : (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  // Categories: the ready-made ones plus your own. One list feeds the Add spending form, the edit form and Spending by Category, and Other stays last.
+  const cats: [string, string][] = [...CATS.slice(0, -1), ...(d.cats || []), CATS[CATS.length - 1]];
+  const colorOf = (n: string) => n === VEH_CAT ? VEH_COLOR : (cats.find((c) => c[0] === n) || cats[cats.length - 1])[1];
+  const [newCatOn, setNewCatOn] = useState(false); const [newCat, setNewCat] = useState(''); const [catMsg, setCatMsg] = useState('');
+  const addCat = () => {
+    const nm = newCat.trim().replace(/\s+/g, ' ');
+    if (!nm) { tryForm('cat'); setCatMsg('Please type a name for the category.'); return; }
+    if (nm.length > 20) { setCatMsg('Keep the name to 20 letters or fewer.'); return; }
+    if (cats.some((c) => c[0].toLowerCase() === nm.toLowerCase()) || nm.toLowerCase() === VEH_CAT.toLowerCase()) { setCatMsg('You already have a category called ' + nm + '.'); return; }
+    if ((d.cats || []).length >= 12) { setCatMsg('You can add up to 12 of your own categories.'); return; }
+    const col = CAT_COL[(d.cats || []).length % CAT_COL.length];
+    setD({ ...d, cats: [...(d.cats || []), [nm, col]] }); setFCat(nm); setNewCat(''); setNewCatOn(false); setCatMsg('');
+  };
+  const removeCat = (n: string) => confirmDelete('the category ' + n, () => {
+    const lm = { ...(d.limits || {}) }; delete lm[n];
+    setD({ ...d, cats: (d.cats || []).filter((c) => c[0] !== n), limits: lm, spends: d.spends.map((x) => x.cat === n ? { ...x, cat: 'Other' } : x) });
+    if (fCat === n) setFCat('Food'); setLimKey(''); setLimVal('');
+  }, { title: 'Delete this category?', message: 'Your spending in it is kept and moves to Other.' });
   const [hm, setHm] = useState(''); const [pickM, setPickM] = useState(false);
   const curM = hm || ym;
   const addM = (k: string, d: number) => { const n = parseInt(k.slice(0, 4), 10) * 12 + parseInt(k.slice(5), 10) - 1 + d; return Math.floor(n / 12) + '-' + String((n % 12) + 1).padStart(2, '0'); };
@@ -338,8 +356,19 @@ export default function Finance() {
               <View style={SIN}>
                 <Text style={SECL}>CATEGORY</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  {CATS.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} />)}
+                  {cats.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} />)}
+                  <Chip t={newCatOn ? 'Cancel' : '+ New category'} on={false} onPress={() => { setNewCatOn(!newCatOn); setNewCat(''); setCatMsg(''); }} />
                 </View>
+                {newCatOn ? (
+                  <View style={{ marginTop: 10 }}>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <Inp style={{ flex: 1 }} autoFocus form="cat" need="a category name" value={newCat} onChangeText={(t: string) => { setNewCat(t); setCatMsg(''); }} placeholder="Category name, e.g. Gifts" maxLength={20} onSubmitEditing={addCat} />
+                      <Pressable onPress={addCat}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>Add</Text></LinearGradient></Pressable>
+                    </View>
+                    {catMsg ? <Text style={{ color: '#ffb3c6', fontSize: 12, marginTop: 6 }}>{catMsg}</Text> : null}
+                    <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>It also appears in Spending by Category, where you can set a monthly limit for it.</Text>
+                  </View>
+                ) : null}
                 {fCat === 'Savings' ? (
                   <View style={{ marginTop: 10 }}>
                     <Text style={{ color: dim, fontSize: 11.5 }}>Which savings goal is this for?</Text>
@@ -431,7 +460,7 @@ export default function Finance() {
                       <Inp form="spendEdit" need="an amount" style={{ marginTop: 8 }} value={remF.amt} onChangeText={(v: string) => setRemF({ ...remF, amt: v })} keyboardType="decimal-pad" placeholder={'Amount (' + cu() + ')'} />
                       {p.cat !== 'Savings' ? (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                          {CATS.filter((x) => x[0] !== 'Savings').map(([n, c]) => <Chip key={n} t={n} on={remF.cat === n} c={c} onPress={() => setRemF({ ...remF, cat: n })} />)}
+                          {cats.filter((x) => x[0] !== 'Savings').map(([n, c]) => <Chip key={n} t={n} on={remF.cat === n} c={c} onPress={() => setRemF({ ...remF, cat: n })} />)}
                         </View>
                       ) : null}
                       {accD.accs.length ? (
@@ -473,7 +502,7 @@ export default function Finance() {
             </View>
             <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>Set a monthly limit for a category. The bar turns yellow when you are close and red when you go over.</Text>
             <View style={{ marginTop: 12, gap: 14 }}>
-              {[...CATS.filter((x) => x[0] !== 'Savings'), ...(vmode === 'yes' ? [[VEH_CAT, VEH_COLOR] as [string, string]] : [])].map(([n, c]) => {
+              {[...cats.filter((x) => x[0] !== 'Savings'), ...(vmode === 'yes' ? [[VEH_CAT, VEH_COLOR] as [string, string]] : [])].map(([n, c]) => {
                 const t = all.filter((p) => p.cat === n && (p.date || '').slice(0, 7) === ym).reduce((a, p) => a + p.amt, 0);
                 const lim = (d.limits || {})[n] || 0; const ratio = lim > 0 ? t / lim : 0;
                 const col = lim > 0 ? (ratio > 1 ? '#ff7a8a' : ratio >= 0.8 ? '#ffd24a' : c) : c;
@@ -492,7 +521,10 @@ export default function Finance() {
                         <Pressable onPress={() => saveLimit(n)}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
                         <Pressable accessibilityLabel="Cancel" onPress={() => { setLimKey(''); setLimVal(''); }} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14 }}>✕</Text></Pressable>
                       </View>
-                      {lim > 0 ? <Pressable onPress={() => removeLimit(n)} style={{ alignSelf: 'flex-start', marginTop: 8 }}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Remove limit</Text></Pressable> : null}
+                      <View style={{ flexDirection: 'row', gap: 18, marginTop: 8 }}>
+                        {lim > 0 ? <Pressable onPress={() => removeLimit(n)}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Remove limit</Text></Pressable> : null}
+                        {(d.cats || []).some((c) => c[0] === n) ? <Pressable onPress={() => removeCat(n)}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Delete category</Text></Pressable> : null}
+                      </View>
                     </>) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5 }}>
                         <Text style={{ color: lim > 0 ? (ratio > 1 ? '#ff9aa9' : ratio >= 0.8 ? '#ffd24a' : dim) : dim, fontSize: 11.5, fontWeight: lim > 0 ? '700' : '400' }}>
