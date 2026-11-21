@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Modal, ScrollView, Animated, Easing } from 'react-native';
+import { View, Modal, ScrollView, Animated, Easing, useWindowDimensions } from 'react-native';
 import { Pressable } from './Press';
 import { Text } from './Txt';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient as SvgGrad, Stop } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glass } from './Glass';
 import { OrbLive } from './OrbLive';
@@ -14,22 +14,53 @@ import { useLangPacks, xlText, flagOf } from '../lib/xlate';
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
 const stroke = { stroke: '#fff', strokeWidth: 2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 const NAME = 'Sage Live';
-const BARS = 31;
-const barColor = (i: number) => { const t = i / (BARS - 1); const a = [94, 231, 223], b = [183, 148, 255], c = [255, 143, 171]; const [p, q, u] = t < 0.5 ? [a, b, t * 2] : [b, c, (t - 0.5) * 2]; return 'rgb(' + p.map((v, k) => Math.round(v + (q[k] - v) * u)).join(',') + ')'; };
-
-// The live wave. It moves with the loudness of your voice while you talk and with a calm flow while the Assistant talks.
-function Wave({ amp }: { amp: Animated.Value }) {
-  const bars = useRef(Array.from({ length: BARS }, (_, i) => ({ w: new Animated.Value(Math.random()), ms: 520 + ((i * 97) % 480), env: 0.28 + 0.72 * Math.pow(Math.sin(((i + 0.5) / BARS) * Math.PI), 1.3) }))).current;
+// The live wave: soft ribbons of light that flow across the screen. They swell with the loudness of your voice while you talk,
+// flow calmly while the Assistant answers, and breathe slowly when it is quiet.
+const LAYERS = [
+  { f: 0.012, sp: 1.5, ph: 0, a: 1, w: 3, o: 0.95, g: 0 },
+  { f: 0.017, sp: -1.1, ph: 1.7, a: 0.78, w: 2.4, o: 0.75, g: 1 },
+  { f: 0.009, sp: 0.8, ph: 3.2, a: 0.6, w: 2, o: 0.6, g: 2 },
+  { f: 0.022, sp: -1.9, ph: 4.6, a: 0.42, w: 1.6, o: 0.5, g: 0 },
+];
+function Wave({ target, width }: { target: React.MutableRefObject<number>; width: number }) {
+  const H = 170; const [d, setD] = useState<string[]>(LAYERS.map(() => ''));
   useEffect(() => {
-    const ls = bars.map((b, i) => { const l = Animated.loop(Animated.sequence([Animated.timing(b.w, { toValue: 1, duration: b.ms, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(b.w, { toValue: 0.12, duration: b.ms, easing: Easing.inOut(Easing.sin), useNativeDriver: true })])); l.start(); return l; });
-    return () => ls.forEach((l) => l.stop());
-  }, []);
+    let raf = 0; let cur = 0.1; let t0 = Date.now(); let last = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const now = Date.now(); if (now - last < 33) return; last = now;
+      const t = (now - t0) / 1000; cur += (target.current - cur) * 0.18;
+      setD(LAYERS.map((L) => {
+        let p = '';
+        for (let x = 0; x <= width; x += 5) {
+          const env = Math.pow(Math.sin((x / width) * Math.PI), 2);
+          const y = H / 2 + (Math.sin(x * L.f * 2 + t * L.sp + L.ph) * 0.65 + Math.sin(x * L.f * 3.1 - t * L.sp * 0.7) * 0.35) * (H * 0.46) * L.a * cur * env;
+          p += (x === 0 ? 'M' : 'L') + x + ' ' + y.toFixed(1) + ' ';
+        }
+        return p;
+      }));
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [width]);
+  const gid = ['wa', 'wb', 'wc'];
+  const cols = [['#5ee7df', '#7c9cff', '#b794ff'], ['#b794ff', '#ff8fab', '#ffb36b'], ['#7c9cff', '#5ee7df', '#b794ff']];
   return (
-    <View style={{ height: 130, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      {bars.map((b, i) => (
-        <Animated.View key={i} style={{ width: 6, height: 120, borderRadius: 3, backgroundColor: barColor(i), opacity: 0.95, transform: [{ scaleY: Animated.multiply(b.w, amp).interpolate({ inputRange: [0, 1], outputRange: [0.09, b.env] }) }] }} />
-      ))}
-    </View>
+    <Svg width={width} height={H}>
+      <Defs>
+        {cols.map((c, i) => (
+          <SvgGrad key={i} id={gid[i]} x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor={c[0]} stopOpacity="0" /><Stop offset="0.25" stopColor={c[0]} stopOpacity="1" /><Stop offset="0.55" stopColor={c[1]} stopOpacity="1" /><Stop offset="0.8" stopColor={c[2]} stopOpacity="1" /><Stop offset="1" stopColor={c[2]} stopOpacity="0" />
+          </SvgGrad>
+        ))}
+      </Defs>
+      {LAYERS.map((L, i) => d[i] ? (
+        <React.Fragment key={i}>
+          <Path d={d[i]} stroke={'url(#' + gid[L.g] + ')'} strokeWidth={L.w * 5} strokeOpacity={0.16} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <Path d={d[i]} stroke={'url(#' + gid[L.g] + ')'} strokeWidth={L.w} strokeOpacity={L.o} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </React.Fragment>
+      ) : null)}
+    </Svg>
   );
 }
 
@@ -51,9 +82,10 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
   // The tag the Assistant speaks with: English or Malay follows the language of the answer, any other language is the chosen one.
   const outTag = () => (isX() ? vl().tag : (C() && C().state && C().state.lang === 'ms' ? 'ms-MY' : 'en-US'));
   const tr = async (en: string, ms: string) => { if (!isX()) return L(en, ms); try { return await xlText(en, 'en', vkR.current); } catch (e) { return en; } };
-  const amp = useRef(new Animated.Value(0.08)).current;
+  const { width: sw } = useWindowDimensions();
+  const amp = useRef(new Animated.Value(0.08)).current; const ampT = useRef(0.1);
   const glow = useRef(new Animated.Value(0)).current;
-  const setAmp = (v: number, ms = 220) => Animated.timing(amp, { toValue: v, duration: ms, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  const setAmp = (v: number, ms = 220) => { ampT.current = v; Animated.timing(amp, { toValue: v, duration: ms, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(); };
 
   useEffect(() => {
     if (!visible) return;
@@ -65,7 +97,7 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
     return () => { live.current = false; if (C()) C().voice = false; stopL.current(); stopSpeaking(); };
   }, [visible]);
   useEffect(() => {
-    setAmp(phase === 'speaking' ? 0.62 : phase === 'thinking' ? 0.26 : phase === 'listening' ? 0.2 : 0.07, 320);
+    setAmp(phase === 'speaking' ? 0.6 : phase === 'thinking' ? 0.3 : phase === 'listening' ? 0.22 : 0.12, 320);
     const a = Animated.loop(Animated.sequence([Animated.timing(glow, { toValue: 1, duration: phase === 'idle' ? 2600 : 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }), Animated.timing(glow, { toValue: 0, duration: phase === 'idle' ? 2600 : 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true })]));
     a.start(); return () => a.stop();
   }, [phase]);
@@ -202,9 +234,8 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen }: { visible: bo
           </View>
 
           <View style={{ alignItems: 'center', marginTop: 10 }}>
-            <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 6, width: 230, height: 230, borderRadius: 115, backgroundColor: 'rgba(124,156,255,.16)', opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.9] }), transform: [{ scale: Animated.add(glow.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.08] }), amp.interpolate({ inputRange: [0, 1], outputRange: [0, 0.35] })) }] }} />
-            <OrbLive size={118} />
-            <View style={{ marginTop: 4 }}><Wave amp={amp} /></View>
+            <OrbLive size={104} />
+            <View style={{ marginTop: 2, marginHorizontal: -20 }}><Wave target={ampT} width={sw} /></View>
             <Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 15, fontWeight: '700' }}>{status}</Text>
           </View>
 
