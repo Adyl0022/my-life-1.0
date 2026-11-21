@@ -20,6 +20,7 @@ import { Toggle } from '../components/Toggle';
 import { EqPills } from '../components/TabSlide';
 import { CopyRow, ShareSheet, exportPdf } from '../components/DocShare';
 import { RenewGuideSheet } from '../components/RenewGuideSheet';
+import { DocScans } from '../components/DocScans';
 import { useDocLock, setDocLock, askUnlock } from '../lib/docLock';
 import * as Haptics from '../lib/haptics';
 import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, guessType, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
@@ -257,7 +258,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
 export default function Documents() {
   const [st, setSt] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
   const docs = (st && st.docs) || [];
-  const lk = useDocLock(); const [lmsg, setLmsg] = useState('');
+  const lk = useDocLock(); const [lmsg, setLmsg] = useState(''); const [mode, setMode] = useState(0);
   useEffect(() => { if (lk.loaded && lk.locked) askUnlock(); }, [lk.loaded, lk.locked]);
   const [tab, setTab] = useState<DocTab>('identity'); const [q, setQ] = useState(''); const [f, setF] = useState<Form | null>(null); const [det, setDet] = useState(0);
   const order = TABS.map((x) => x.k); const [pw, setPw] = useState(0);
@@ -301,10 +302,23 @@ export default function Documents() {
       </RecordPage>
     );
   }
+  const modeSwitch = (
+    <View style={{ marginTop: 12 }}><EqPills tabs={['Papers', 'Scans']} index={mode} onChange={setMode} colors={['#7c9cff', '#b794ff']} fontSize={13} /></View>
+  );
+  if (mode === 1) {
+    return (
+      <RecordPage title="Documents" sub="Scans" bg={<DocArt />}>
+        <Intro title="Your scans" text="Letters and other papers, kept apart from your documents" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
+        {modeSwitch}
+        <View style={{ marginTop: 8 }}><DocScans /></View>
+      </RecordPage>
+    );
+  }
   const soon = docs.filter((d) => d.expiry && validDate(d.expiry)).map((d) => ({ d, s: statusOf(d) })).filter((x) => x.s.n != null && (x.s.n as number) <= 180 && (x.s.n as number) >= -90).sort((a, b) => (a.s.n as number) - (b.s.n as number)).slice(0, 3);
   return (
     <RecordPage title="Documents" sub={docs.length + ' saved'} right={plus} bg={<DocArt />}>
       <Animated.View style={slide}><Intro title={info.title} text={info.text} colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} /></Animated.View>
+      {modeSwitch}
       {soon.length ? (
         <View style={{ marginTop: 12, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: soon[0].s.hot ? 'rgba(255,107,129,.55)' : 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' }}>
           <Text style={{ color: soon[0].s.hot ? '#ffb3c6' : '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4 }}>RENEWING SOON</Text>
