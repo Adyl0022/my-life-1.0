@@ -46,7 +46,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
   const live = exps.filter((x) => !x.e.ok);
   const active = live.filter((x) => !x.st!.done), finished = live.filter((x) => x.st!.done).reverse();
   const hist = exps.filter((x) => x.e.ok).sort((p, q) => ((q.e.okAt || '') > (p.e.okAt || '') ? 1 : -1));
-  const [tg, setTg] = useState<Record<string, number>>({}); const [histAll, setHistAll] = useState(false);
+  const [tg, setTg] = useState<Record<string, number>>({}); const [histAll, setHistAll] = useState(false); const [histOpen, setHistOpen] = useState(false);
   const [noteFor, setNoteFor] = useState(''); const [noteTxt, setNoteTxt] = useState('');
   const startExp = (tpl: string, goal?: number) => {
     if (active.some((x) => x.e.tpl === tpl && x.e.goal === goal) || active.length >= 3) return;
@@ -149,8 +149,21 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
 
     <TimeMachine h={h} setH={setH} />
     <Glass radius={24} style={{ marginTop: 12, padding: 14 }}>
-      <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Experiments</Text>
-      <Text style={{ color: DIM, fontSize: 12 }}>Small tests of your own habits</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>Experiments</Text>
+          <Text style={{ color: DIM, fontSize: 12 }}>Small tests of your own habits</Text>
+        </View>
+        {hist.length > 0 ? (
+          <Pressable onPress={() => setHistOpen(!histOpen)} accessibilityLabel={histOpen ? 'Hide history' : 'Show history'}>
+            <LinearGradient colors={histOpen ? ['#7c9cff', '#b794ff'] : ['rgba(124,156,255,.4)', 'rgba(183,148,255,.4)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 8, paddingLeft: 14, paddingRight: 11, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.28)' }}>
+              <Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>History</Text>
+              <View style={{ minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.28)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '800' }}>{hist.length}</Text></View>
+              <Text style={{ color: W, fontSize: 11, fontWeight: '800' }}>{histOpen ? '▲' : '▼'}</Text>
+            </LinearGradient>
+          </Pressable>
+        ) : null}
+      </View>
       {active.map(({ e, st }) => { const ready = st!.dayNo >= st!.tpl.days && !st!.cells.includes('future'); const open = ready && resId === e.id; const tr = trend(e, st!); return (
         <View key={e.id} style={{ marginTop: 10, padding: 12, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.09)', borderWidth: ready ? 1 : 0, borderColor: 'rgba(125,240,198,.55)' }}>
           <Pressable disabled={!ready} onPress={() => setResId(open ? '' : e.id)} accessibilityLabel={ready ? 'Show the result of ' + st!.tpl.title : st!.tpl.title}>
@@ -234,7 +247,7 @@ export function PatternsTab({ h, setH, onToday }: { h: HData; setH: (v: HData) =
           ))}
         </View>
       ) : null}
-      {hist.length > 0 ? (
+      {hist.length > 0 && histOpen ? (
         <View style={{ marginTop: 14 }}>
           <Text style={{ color: DIM, fontSize: 11.5, fontWeight: '700' }}>HISTORY</Text>
           {(histAll ? hist : hist.slice(0, 4)).map(({ e, st }) => { const op = resId === 'h' + e.id; const tr = trend(e, st!); return (

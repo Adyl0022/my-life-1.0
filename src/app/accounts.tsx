@@ -278,7 +278,7 @@ export default function Accounts() {
   const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
   const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
   // Sort by: your own order (move groups up or down), most money first, least money first, or A to Z. It is kept on this phone.
-  const SORTS = ['My order', 'Highest', 'Lowest', 'A to Z']; const [sortI, setSortI] = useStored<number>('ml_acc_sort', 0); const [gOrd, setGOrd] = useStored<string[]>('ml_acc_order', []);
+  const SORTS = ['My order', 'Highest', 'Lowest', 'A to Z']; const [sortI, setSortI] = useStored<number>('ml_acc_sort', 0); const [sortL, setSortL] = useStored<number>('ml_acc_sort_owe', 0); const [gOrd, setGOrd] = useStored<string[]>('ml_acc_order', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
     <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,.08)' }}>
       <Text style={{ color: 'rgba(255,255,255,.68)', fontSize: 10.5 }}>{l}</Text><Text style={{ color: vc || W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{v}</Text>
@@ -324,9 +324,10 @@ export default function Accounts() {
 
           {[{ title: 'MONEY YOU HAVE', liab: false, tint: ['rgba(124,156,255,.22)', 'rgba(94,231,181,.1)'] as [string, string], sum: t.assets }, { title: 'WHAT YOU OWE', liab: true, tint: ['rgba(255,143,171,.22)', 'rgba(183,148,255,.12)'] as [string, string], sum: t.liab }].map((sec) => {
             const sumG = (k: AccGroup) => data.accs.filter((a) => a.g === k).reduce((x, a) => x + balanceOf(a, data, spends, feeds), 0);
+            const sI = sec.liab ? sortL : sortI;
             const gs0 = GROUPS.filter((g) => g.liab === sec.liab && data.accs.some((a) => a.g === g.k));
             const posOf = (k: string) => { const i = gOrd.indexOf(k); return i < 0 ? 100 + GROUPS.findIndex((g) => g.k === k) : i; };
-            const gs = [...gs0].sort((x, y) => sortI === 1 ? sumG(y.k) - sumG(x.k) : sortI === 2 ? sumG(x.k) - sumG(y.k) : sortI === 3 ? x.plural.localeCompare(y.plural) : posOf(x.k) - posOf(y.k));
+            const gs = [...gs0].sort((x, y) => sI === 1 ? sumG(y.k) - sumG(x.k) : sI === 2 ? sumG(x.k) - sumG(y.k) : sI === 3 ? x.plural.localeCompare(y.plural) : posOf(x.k) - posOf(y.k));
             const moveG = (k: string, d: number) => { const keys: string[] = gs.map((g) => g.k); const i = keys.indexOf(k); const j = i + d; if (i < 0 || j < 0 || j >= keys.length) return; const t2 = keys[i]; keys[i] = keys[j]; keys[j] = t2; setGOrd([...keys, ...gOrd.filter((x) => !keys.includes(x))]); }; const showCm = sec.liab && cms.length > 0; if (!gs.length && !showCm) return null;
             return (
               <Glass key={sec.title} radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
@@ -338,19 +339,19 @@ export default function Accounts() {
                 {data.accs.filter((a) => groupOf(a.g).liab === sec.liab).length + (sec.liab ? cms.length : 0) > 1 ? (
                   <View style={{ marginTop: 10 }}>
                     <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11, fontWeight: '700', marginBottom: 5 }}>Sort by</Text>
-                    <EqPills tabs={SORTS} index={sortI} onChange={setSortI} colors={sec.liab ? ['#ff8fab', '#b794ff'] : ['#7c9cff', '#5ee7b5']} fontSize={12} />
-                    {sortI === 0 && (gs.length + (showCm ? 1 : 0)) > 1 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 5 }}>Use the arrows beside a group to move it up or down.</Text> : null}
+                    <EqPills tabs={SORTS} index={sI} onChange={sec.liab ? setSortL : setSortI} colors={sec.liab ? ['#ff8fab', '#b794ff'] : ['#7c9cff', '#5ee7b5']} fontSize={12} />
+                    {sI === 0 && (gs.length + (showCm ? 1 : 0)) > 1 ? <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, marginTop: 5 }}>Use the arrows beside a group to move it up or down.</Text> : null}
                   </View>
                 ) : null}
                 {gs.map((g) => {
-                  const list = data.accs.filter((a) => a.g === g.k).sort((x, y) => sortI === 1 ? balanceOf(y, data, spends, feeds) - balanceOf(x, data, spends, feeds) : sortI === 2 ? balanceOf(x, data, spends, feeds) - balanceOf(y, data, spends, feeds) : sortI === 3 ? x.name.localeCompare(y.name) : 0); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends, feeds), 0); const shut = fold.includes(g.k);
+                  const list = data.accs.filter((a) => a.g === g.k).sort((x, y) => sI === 1 ? balanceOf(y, data, spends, feeds) - balanceOf(x, data, spends, feeds) : sI === 2 ? balanceOf(x, data, spends, feeds) - balanceOf(y, data, spends, feeds) : sI === 3 ? x.name.localeCompare(y.name) : 0); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends, feeds), 0); const shut = fold.includes(g.k);
                   return (
                     <View key={g.k} style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
                       <Tap onPress={() => setFold(shut ? fold.filter((x) => x !== g.k) : [...fold, g.k])} label={(shut ? 'Open ' : 'Close ') + g.plural} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: shut ? 2 : 4 }}>
                         <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
                         <Text numberOfLines={1} style={{ flex: 1, color: g.c, fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{g.plural.toUpperCase() + (shut ? '  ·  ' + list.length : '')}</Text>
                         {list.length > 1 || shut ? <Text style={{ color: g.liab ? PINK : 'rgba(255,255,255,.75)', fontSize: 12.5, fontWeight: '800', flexShrink: 0 }}>{cs() + money(sub)}</Text> : null}
-                        {sortI === 0 && gs.length > 1 ? (<>
+                        {sI === 0 && gs.length > 1 ? (<>
                           <Pressable accessibilityLabel={'Move ' + g.plural + ' up'} onPress={() => moveG(g.k, -1)} hitSlop={6} style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center', opacity: gs[0].k === g.k ? 0.3 : 1 }}><Text style={{ color: W, fontSize: 11 }}>▲</Text></Pressable>
                           <Pressable accessibilityLabel={'Move ' + g.plural + ' down'} onPress={() => moveG(g.k, 1)} hitSlop={6} style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center', opacity: gs[gs.length - 1].k === g.k ? 0.3 : 1 }}><Text style={{ color: W, fontSize: 11 }}>▼</Text></Pressable>
                         </>) : null}
@@ -379,7 +380,7 @@ export default function Accounts() {
                       <FoldBtn shut={fold.includes('commit')} c="#b794ff" />
                     </Tap>
                     {fold.includes('commit') ? null : (<>
-                      {[...cms].sort((x, y) => sortI === 1 ? remaining(y) - remaining(x) : sortI === 2 ? remaining(x) - remaining(y) : sortI === 3 ? x.name.localeCompare(y.name) : 0).map((x) => (
+                      {[...cms].sort((x, y) => sI === 1 ? remaining(y) - remaining(x) : sI === 2 ? remaining(x) - remaining(y) : sI === 3 ? x.name.localeCompare(y.name) : 0).map((x) => (
                         <Tap key={x.id} onPress={() => setCmInfo(x)} label={'Details of ' + x.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
                           <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{x.name}</Text>
                           <Text style={{ color: PINK, fontSize: 15, fontWeight: '800' }}>{cs() + money(remaining(x))}</Text>

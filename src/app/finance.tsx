@@ -4,7 +4,7 @@ import { SubChargeCard } from '../components/SubChargeCard';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import { ACC_EMPTY, AccData, commitTotal, groupOf, incomeFeed, isLiab, totals } from '../lib/accounts';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Pressable } from '../components/Press';
 import { Text } from '../components/Txt';
@@ -27,7 +27,7 @@ import { cs, cu, cw, useRegion } from '../lib/region';
 import { confirmDelete, showAlert } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
 type Sp = { id: number; name: string; cat: string; amt: number; date: string; goal?: number; note?: string; acc?: number };
-type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number>; cats?: [string, string][]; incAcc?: Record<string, { acc: number; date: string; name: string }> };
+type Data = { inc: Record<string, Record<string, number>>; cnt: Record<string, Record<string, number>>; spends: Sp[]; nextId: number; limits?: Record<string, number>; hideCats?: string[]; cats?: [string, string][]; incAcc?: Record<string, { acc: number; date: string; name: string }> };
 const EMPTY: Data = { inc: {}, cnt: {}, spends: [], nextId: 1 };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DEFS: [string, string, string][] = [['salary', 'Basic salary', '#7c9cff'], ['overtime', 'Overtime', '#ffc46b'], ['claim', 'Claim', '#8fe9e2'], ['sunday', 'Sunday work', '#b794ff'], ['holiday', 'Public holiday work', '#ff8fab'], ['other', 'Other', '#5ee7b5']];
@@ -102,7 +102,9 @@ export default function Finance() {
   const [sortBy, setSortBy] = useStored<'new' | 'old' | 'add'>('ml_spend_sort', 'new');
   const byDate = [...all].sort((a, b) => sortBy === 'add' ? b.id - a.id : sortBy === 'old' ? (a.date || '').localeCompare(b.date || '') || a.id - b.id : (b.date || '').localeCompare(a.date || '') || b.id - a.id);
   // Categories: the ready-made ones plus your own. One list feeds the Add spending form, the edit form and Spending by Category, and Other stays last.
-  const cats: [string, string][] = [...CATS.slice(0, -1), ...(d.cats || []), CATS[CATS.length - 1]];
+  const cats: [string, string][] = [...CATS.slice(0, -1).filter((c) => !(d.hideCats || []).includes(c[0])), ...(d.cats || []), CATS[CATS.length - 1]];
+  const isDefault = (n: string) => CATS.some((c) => c[0] === n);
+  useEffect(() => { if (!cats.some((c) => c[0] === fCat)) setFCat('Other'); }, [JSON.stringify(cats)]); // eslint-disable-line react-hooks/exhaustive-deps
   const colorOf = (n: string) => n === VEH_CAT ? VEH_COLOR : (cats.find((c) => c[0] === n) || cats[cats.length - 1])[1];
   const [newCatOn, setNewCatOn] = useState(false); const [newCat, setNewCat] = useState(''); const [catMsg, setCatMsg] = useState('');
   const addCat = () => {
@@ -111,6 +113,8 @@ export default function Finance() {
     if (nm.length > 20) { setCatMsg('Keep the name to 20 letters or fewer.'); return; }
     if (cats.some((c) => c[0].toLowerCase() === nm.toLowerCase()) || nm.toLowerCase() === VEH_CAT.toLowerCase()) { setCatMsg('You already have a category called ' + nm + '.'); return; }
     if ((d.cats || []).length >= 12) { setCatMsg('You can add up to 12 of your own categories.'); return; }
+    const back = CATS.find((c) => c[0].toLowerCase() === nm.toLowerCase() && (d.hideCats || []).includes(c[0]));
+    if (back) { setD({ ...d, hideCats: (d.hideCats || []).filter((x) => x !== back[0]) }); setFCat(back[0]); setNewCat(''); setNewCatOn(false); setCatMsg(''); return; }
     const col = CAT_COL[(d.cats || []).length % CAT_COL.length];
     setD({ ...d, cats: [...(d.cats || []), [nm, col]] }); setFCat(nm); setNewCat(''); setNewCatOn(false); setCatMsg('');
   };
@@ -119,8 +123,8 @@ export default function Finance() {
     const cnt = d.spends.filter((x) => x.cat === n).length;
     const go = (keep: boolean) => {
       const lm = { ...(d.limits || {}) }; delete lm[n];
-      setD({ ...d, cats: (d.cats || []).filter((c) => c[0] !== n), limits: lm, spends: keep ? d.spends.map((x) => x.cat === n ? { ...x, cat: 'Other' } : x) : d.spends.filter((x) => x.cat !== n) });
-      if (fCat === n) setFCat('Food'); setLimKey(''); setLimVal('');
+      setD({ ...d, cats: (d.cats || []).filter((c) => c[0] !== n), hideCats: isDefault(n) ? [...(d.hideCats || []), n] : d.hideCats, limits: lm, spends: keep ? d.spends.map((x) => x.cat === n ? { ...x, cat: 'Other' } : x) : d.spends.filter((x) => x.cat !== n) });
+      if (fCat === n) setFCat('Other'); setLimKey(''); setLimVal('');
     };
     if (cnt === 0) { confirmDelete('the category ' + n, () => go(true), { title: 'Delete this category?', message: 'It has no spending in it.' }); return; }
     showAlert('Delete the category ' + n + '?', 'It has ' + cnt + (cnt === 1 ? ' spending' : ' spendings') + '. What should happen to ' + (cnt === 1 ? 'it' : 'them') + '?', [
@@ -367,7 +371,7 @@ export default function Finance() {
               <View style={SIN}>
                 <Text style={SECL}>CATEGORY</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  {cats.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} onDel={(d.cats || []).some((x) => x[0] === n) ? () => removeCat(n) : undefined} />)}
+                  {cats.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} onDel={n !== 'Other' ? () => removeCat(n) : undefined} />)}
                   <Chip t={newCatOn ? 'Cancel' : '+ New category'} on={false} onPress={() => { setNewCatOn(!newCatOn); setNewCat(''); setCatMsg(''); }} />
                 </View>
                 {newCatOn ? (
@@ -534,7 +538,7 @@ export default function Finance() {
                       </View>
                       <View style={{ flexDirection: 'row', gap: 18, marginTop: 8 }}>
                         {lim > 0 ? <Pressable onPress={() => removeLimit(n)}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Remove limit</Text></Pressable> : null}
-                        {(d.cats || []).some((c) => c[0] === n) ? <Pressable onPress={() => removeCat(n)}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Delete category</Text></Pressable> : null}
+                        {n !== 'Other' ? <Pressable onPress={() => removeCat(n)}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Delete category</Text></Pressable> : null}
                       </View>
                     </>) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5 }}>

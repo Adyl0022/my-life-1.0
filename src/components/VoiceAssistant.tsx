@@ -286,9 +286,15 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
           </View>
 
           <View style={{ flex: 1, marginTop: 8 }}>
-          <ScrollView ref={sc} onLayout={(e) => { dims.current.vh = e.nativeEvent.layout.height; }} onScrollBeginDrag={() => { manual.current = true; }} onContentSizeChange={(_w, h) => { dims.current.ch = h; if (phase !== 'speaking' && sc.current) sc.current.scrollToEnd({ animated: true }); }} style={{ flex: 1 }} contentContainerStyle={{ gap: 12, paddingTop: 22, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-            {heard ? <Text style={{ color: '#fff', fontSize: 20, lineHeight: 28, textAlign: 'center', fontWeight: '600' }}>{'“' + heard + '”'}</Text> : null}
-            {reply ? <Glass radius={22} style={{ paddingVertical: 14, paddingHorizontal: 16 }}><Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{reply}</Text></Glass> : null}
+            {heard ? <Text style={{ color: '#fff', fontSize: 20, lineHeight: 28, textAlign: 'center', fontWeight: '600', marginBottom: 10 }} numberOfLines={3}>{'“' + heard + '”'}</Text> : null}
+            {reply ? (
+              <Glass radius={22} style={{ flexShrink: 1, marginBottom: 10 }}>
+                <ScrollView ref={sc} onLayout={(e) => { dims.current.vh = e.nativeEvent.layout.height; }} onScrollBeginDrag={() => { manual.current = true; }} onContentSizeChange={(_w, h) => { dims.current.ch = h; if (phase !== 'speaking' && sc.current) sc.current.scrollToEnd({ animated: true }); }} style={{ flexGrow: 0, flexShrink: 1 }} contentContainerStyle={{ gap: 12, paddingVertical: 14, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+                  <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{reply}</Text>
+                </ScrollView>
+              </Glass>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 14 }}>
             {err ? <Text style={{ color: '#ffb3a0', fontSize: 13, lineHeight: 19, textAlign: 'center' }}>{err}</Text> : null}
             {!heard && !reply && !err ? (
               <View style={{ gap: 8, alignItems: 'center' }}>
@@ -305,9 +311,9 @@ export function VoiceAssistant({ visible, chat, onClose, onOpen, onAI }: { visib
                 </Pressable>
               </Glass>
             ) : null}
-          </ScrollView>
-          <LinearGradient pointerEvents="none" colors={['#0a0e2a', 'rgba(10,14,42,0)']} style={{ position: 'absolute', left: -20, right: -20, top: 0, height: 26 }} />
-          <LinearGradient pointerEvents="none" colors={['rgba(11,32,64,0)', '#0b2040']} style={{ position: 'absolute', left: -20, right: -20, bottom: 0, height: 30 }} />
+          
+              </ScrollView>
+            )}
           </View>
 
           <View style={{ alignItems: 'center', paddingBottom: 6 }}>
