@@ -94,6 +94,7 @@
         }
       ],
       "./plugins/withReleaseSigning",
+      "./plugins/withScannerGallery",
       "react-native-document-scanner-plugin",
       [
         "expo-speech-recognition",

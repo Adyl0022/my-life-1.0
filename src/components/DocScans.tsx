@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Modal, ScrollView, Image, ActivityIndicator, Platform } from 'react-native';
+import { View, Modal, ScrollView, Image, ActivityIndicator, Platform, Alert } from 'react-native';
 import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -11,7 +11,7 @@ import { EqPills } from './TabSlide';
 import { exportPdf } from './DocShare';
 import { useStored } from '../lib/store';
 import { confirmDelete } from '../lib/dialog';
-import { scanPages, pickPages, keepScan, dropScanFiles, SCAN_Q, type ScanQ } from '../lib/photo';
+import { scanPages, pickPages, keepScan, dropScanFiles, picSize, SCAN_Q, type ScanQ } from '../lib/photo';
 import * as Haptics from '../lib/haptics';
 
 export type Scan = { id: number; title: string; pages: string[]; at: number; q: ScanQ };
@@ -68,6 +68,8 @@ export function DocScans() {
   const [qk, setQk] = useStored<ScanQ>('ml_scan_q', 'hd');
   const [q, setQ] = useState(''); const [busy, setBusy] = useState(''); const [msg, setMsg] = useState('');
   const [draft, setDraft] = useState<{ uris: string[]; title: string } | null>(null);
+  const [big, setBig] = useState(0);
+  React.useEffect(() => { let on = true; setBig(0); if (draft && draft.uris.length) Promise.all(draft.uris.slice(0, 8).map((u) => picSize(u))).then((r) => { if (on) setBig(Math.max(0, ...r.map((x) => (x ? Math.max(x.w, x.h) : 0)))); }); return () => { on = false; }; }, [draft ? draft.uris.join('|') : '']);
   const [open, setOpen] = useState(0); const [sel, setSel] = useState(0); const [ask, setAsk] = useState<{ s: Scan; name: string } | null>(null);
   const scans = (st && st.scans) || [];
   const qi = Math.max(0, SCAN_Q.findIndex((x) => x.k === qk));
@@ -76,6 +78,16 @@ export function DocScans() {
   const update = (id: number, f: (s: Scan) => Scan) => setSt({ ...st, scans: scans.map((s) => (s.id === id ? f(s) : s)) });
   const defTitle = () => 'Scan ' + dstr(Date.now());
 
+  // "From gallery": on Android the Google scanner opens with a gallery button, so the photos can be cropped and cleaned with filters first.
+  // "Add as they are" keeps the photos exactly as taken.
+  const fromGallery = (addTo = 0) => {
+    if (Platform.OS !== 'android') { get('gallery', addTo); return; }
+    Alert.alert('Photos from your gallery', 'The scanner opens next. Tap its gallery button to choose your photos, then crop them and pick a filter (Auto clean, Colour, Grey or Black and white).', [
+      { text: 'Open scanner', onPress: () => get('scan', addTo) },
+      { text: 'Add as they are', onPress: () => get('gallery', addTo) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
   const get = async (how: 'scan' | 'gallery', addTo = 0) => {
     setMsg('');
     try {
@@ -133,9 +145,10 @@ export function DocScans() {
         <Text style={{ ...LAB, marginTop: 14, marginBottom: 8 }}>QUALITY</Text>
         <EqPills tabs={SCAN_Q.map((x) => x.n)} index={qi} onChange={(i) => setQk(SCAN_Q[i].k)} colors={['#7c9cff', '#b794ff']} fontSize={12.5} />
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{SCAN_Q[qi].note + '. The long side of each page is ' + SCAN_Q[qi].px + ' pixels' + (SCAN_Q[qi].k === 'hd' ? ' (2K).' : '.')}</Text>
+
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
           <Btn main flex label="Scan pages" onPress={() => get('scan')} />
-          <Btn flex label="From gallery" onPress={() => get('gallery')} />
+          <Btn flex label="From gallery" onPress={() => fromGallery()} />
         </View>
         <Text style={{ color: dim, fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>The scanner finds the edges, straightens the page and lets you pick Auto clean, Colour, Grey or Black and white before you keep it.</Text>
         {msg ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 8 }}>{msg}</Text> : null}
@@ -174,6 +187,8 @@ export function DocScans() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 8 }}>{draft.uris.map((u, i) => <Thumb key={u + i} uri={u} w={72} h={96} n={i + 1} />)}</ScrollView>
             <Text style={{ ...LAB, marginTop: 16, marginBottom: 8 }}>QUALITY</Text>
             <EqPills tabs={SCAN_Q.map((x) => x.n)} index={qi} onChange={(i) => setQk(SCAN_Q[i].k)} colors={['#7c9cff', '#b794ff']} fontSize={12.5} />
+            <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>{SCAN_Q[qi].note + '. The long side of each page is ' + SCAN_Q[qi].px + ' pixels.'}</Text>
+            {big > 0 ? <Text style={{ color: dim, fontSize: 11.5, marginTop: 4 }}>{big <= SCAN_Q[qi].px ? 'Your photo is ' + big + ' pixels on its long side, already at or below this quality, so it stays as it is. Quality only shrinks bigger photos.' : 'Your photo is ' + big + ' pixels on its long side. It will be shrunk to ' + SCAN_Q[qi].px + '.'}</Text> : null}
           </View>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
             <Btn flex label="Cancel" disabled={!!busy} onPress={() => confirmDelete('these pages', () => { setDraft(null); }, { title: 'Discard these pages?', message: 'The scanned pages that are not saved will be removed.', yes: 'Discard' })} />
@@ -199,7 +214,7 @@ export function DocScans() {
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
               <Btn flex label="Add by scan" onPress={() => get('scan', cur.id)} />
-              <Btn flex label="Add from gallery" onPress={() => get('gallery', cur.id)} />
+              <Btn flex label="Add from gallery" onPress={() => fromGallery(cur.id)} />
             </View>
             <View style={{ marginTop: 8 }}><Btn danger label="Delete this page" onPress={() => delPage(cur)} /></View>
           </View>

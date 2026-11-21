@@ -55,7 +55,7 @@ export async function scanPages(max = 30): Promise<string[]> {
       const IP = await import('expo-image-picker');
       const p = await IP.requestCameraPermissionsAsync(); if (!p.granted) throw new Error('camera');
       try {
-        const r: any = await DS.scanDocument({ maxNumDocuments: max, croppedImageQuality: 100 });
+        const r: any = await DS.scanDocument({ maxNumDocuments: max, croppedImageQuality: 100, galleryImport: true });
         if (!r || r.status === 'cancel' || !r.scannedImages) return [];
         return (r.scannedImages as string[]).map(String);
       } catch (e) { /* fall through to the camera */ }
@@ -70,6 +70,10 @@ export async function pickPages(): Promise<string[]> {
   const r: any = await IP.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 30, quality: 1, base64: Platform.OS === 'web' });
   if (r.canceled || !r.assets) return [];
   return r.assets.map((a: any) => (Platform.OS === 'web' ? (a.base64 ? 'data:' + (a.mimeType || 'image/jpeg') + ';base64,' + a.base64 : a.uri) : a.uri));
+}
+/** The size of a picture in pixels, or null when it cannot be read. */
+export async function picSize(uri: string): Promise<{ w: number; h: number } | null> {
+  try { const RN = await import('react-native'); return await new Promise((res) => RN.Image.getSize(uri, (w, h) => res({ w, h }), () => res(null))); } catch (e) { return null; }
 }
 export type ScanQ = 'std' | 'hd' | 'max';
 export const SCAN_Q: { k: ScanQ; n: string; px: number; note: string }[] = [
