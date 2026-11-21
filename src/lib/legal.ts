@@ -1,5 +1,6 @@
 export type Sec = { h: string; p: string };
 export const WHATS_NEW: Sec[] = [
+  { h: 'Goals and limits', p: '•  A savings goal can now say which of your accounts the money is kept in\n•  Empty or wrong target weight and category limit boxes now show a message, and there is a Remove button to clear them' },
   { h: 'Spending from a sentence', p: '•  Tell the Assistant a normal sentence like "makan tengah hari 12 guna Maybank" and the AI on your phone reads it\n•  It picks the category and the account for you, and you tap to confirm before it is saved' },
   { h: 'Scan to PDF', p: '•  New Scans part in Documents, kept apart from your papers\n•  Scan many pages at once, pick Auto clean, Colour, Grey or Black and white, and choose sharp 2K quality\n•  Turn, reorder or delete pages, then make one PDF to share' },
   { h: 'My Life Live', p: '•  New live voice screen: a moving wave while you talk and while it answers\n•  It greets you by name, then chat about anything. Pick a male or female sound, speed and how long it waits\n•  Talk in Chinese, Tamil, Arabic and 20 more languages with a language pack (about 30 MB)' },

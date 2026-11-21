@@ -14,6 +14,7 @@ import { useReveal } from '../lib/keyboard';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import { SAV_EMPTY, SavData, Goal, KINDS, kindOf, goalLines, goalSaved, perMonth, monthsUntil } from '../lib/savings';
 import { cs, cu, useRegion } from '../lib/region';
+import { ACC_EMPTY, AccData, groupOf } from '../lib/accounts';
 
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
@@ -46,6 +47,20 @@ export default function Savings() {
   const [debts, setDebts] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
   const spends = (fin && fin.spends) || [];
   const goals = sv.goals || [];
+  const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const accs = (accD && accD.accs) || [];
+  const [acc, setAcc] = useState(0); const [eAcc, setEAcc] = useState(0);
+  const accName = (g: Goal) => { const a = g.acc ? accs.find((x) => x.id === g.acc) : null; return a ? a.name : ''; };
+  const AccPick = (p: { v: number; set: (n: number) => void }) => accs.length ? (
+    <View style={{ marginTop: 10 }}>
+      <Text style={{ color: dimC, fontSize: 11.5, fontWeight: '800', letterSpacing: 1, marginBottom: 6 }}>KEPT IN ACCOUNT (OPTIONAL)</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        {[{ id: 0, name: 'Not linked', c: '' }, ...accs.map((a) => ({ id: a.id, name: a.name, c: groupOf(a.g).c }))].map((o) => (
+          <Pressable key={o.id} onPress={() => p.set(o.id)} accessibilityLabel={o.name} style={({ pressed }) => ({ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: p.v === o.id ? (o.c || '#5ee7b5') : 'rgba(255,255,255,.2)', backgroundColor: p.v === o.id ? (o.c || '#5ee7b5') + '40' : 'rgba(255,255,255,.08)', transform: [{ scale: pressed ? 0.95 : 1 }] })}><Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{o.name}</Text></Pressable>
+        ))}
+      </View>
+      <Text style={{ color: dimC, fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>Only a label so you can see where this money is kept. It does not change the account balance.</Text>
+    </View>
+  ) : null;
 
   // new goal form
   const [adding, setAdding] = useState(false);
@@ -66,11 +81,11 @@ export default function Savings() {
   const create = () => {
     const t = num(target); const st = num(start) > 0 ? num(start) : 0;
     if (!name.trim() || !(t > 0)) { tryForm('goalNew'); setMsg('Give the goal a name and a target amount.'); return; }
-    const g: Goal = { id: sv.nextId, name: name.trim(), kind, target: t, place: place.trim(), due, start: st, out: [], made: todayStr() };
+    const g: Goal = { id: sv.nextId, name: name.trim(), kind, target: t, place: place.trim(), due, start: st, out: [], made: todayStr(), ...(acc ? { acc } : {}) };
     setSv({ goals: [...goals, g], nextId: sv.nextId + 1 });
-    setAdding(false); setMsg(''); setTarget(''); setPlace(''); setStart(''); setDue(''); setOpen(g.id); setMode('');
+    setAdding(false); setMsg(''); setAcc(0); setTarget(''); setPlace(''); setStart(''); setDue(''); setOpen(g.id); setMode('');
   };
-  const openMode = (g: Goal, m: typeof mode) => { setOk(''); if (open === g.id && mode === m) { setMode(''); return; } setOpen(g.id); setMode(m); setAmt(''); setNote(''); setDt(todayStr()); if (m === 'edit') { setEName(g.name); setEPlace(g.place); setETarget(String(g.target)); setEDue(g.due); } };
+  const openMode = (g: Goal, m: typeof mode) => { setOk(''); if (open === g.id && mode === m) { setMode(''); return; } setOpen(g.id); setMode(m); setAmt(''); setNote(''); setDt(todayStr()); if (m === 'edit') { setEName(g.name); setEPlace(g.place); setETarget(String(g.target)); setEDue(g.due); setEAcc(g.acc && accs.some((x) => x.id === g.acc) ? g.acc : 0); } };
   const addMoney = (g: Goal) => {
     const n = num(amt); if (!(n > 0)) { tryForm('goalMoney'); return; }
     const id = (fin && fin.nextId) || 1;
@@ -85,7 +100,7 @@ export default function Savings() {
   };
   const saveEdit = (g: Goal) => {
     const t = num(eTarget); if (!eName.trim() || !(t > 0)) { tryForm('goalEdit'); return; }
-    setSv({ ...sv, goals: goals.map((x) => (x.id === g.id ? { ...x, name: eName.trim(), place: ePlace.trim(), target: t, due: eDue } : x)) });
+    setSv({ ...sv, goals: goals.map((x) => (x.id === g.id ? { ...x, name: eName.trim(), place: ePlace.trim(), target: t, due: eDue, acc: eAcc || undefined } : x)) });
     setMode(''); setOk('Saved.');
   };
   const del = (g: Goal) => {
@@ -130,6 +145,7 @@ export default function Savings() {
               <Inp onFocus={reveal} style={{ marginTop: 10 }} value={name} onChangeText={setName} placeholder="Name your goal, for example Wedding fund" />
               <Inp form="goalNew" need="a target amount" onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={target} onChangeText={setTarget} placeholder={'Target (' + cu() + ')'} />
               <Inp onFocus={reveal} style={{ marginTop: 8 }} value={place} onChangeText={setPlace} placeholder="Kept in, e.g. Bank account" />
+              <AccPick v={acc} set={setAcc} />
               <Inp onFocus={reveal} style={{ marginTop: 8 }} keyboardType="decimal-pad" value={start} onChangeText={setStart} placeholder={'Already saved (' + cu() + '), optional'} />
               <Text style={{ color: dimC, fontSize: 11.5, marginTop: 10 }}>Target date (optional)</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
@@ -156,7 +172,7 @@ export default function Savings() {
                   <View style={{ width: 46, height: 46, borderRadius: 16, backgroundColor: k.color + '40', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>{ICON[g.kind] || '⭐'}</Text></View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: W, fontSize: 16, fontWeight: '800' }} numberOfLines={2}>{g.name}</Text>
-                    <Text style={{ color: dimC, fontSize: 12, marginTop: 1 }}>{g.place ? 'Kept in ' + g.place : 'No place set'}{g.due ? ' · by ' + nice(g.due) : ''}</Text>
+                    <Text style={{ color: dimC, fontSize: 12, marginTop: 1 }}>{accName(g) ? 'Kept in ' + accName(g) : g.place ? 'Kept in ' + g.place : 'No place set'}{g.due ? ' · by ' + nice(g.due) : ''}</Text>
                   </View>
                   {noT ? null : done ? <View style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: '#5ee7b5' }}><Text style={{ color: '#0c2a28', fontSize: 11, fontWeight: '800' }}>Reached</Text></View> : <Text style={{ color: k.color, fontSize: 16, fontWeight: '800' }}>{pct}%</Text>}
                 </View>
@@ -193,6 +209,7 @@ export default function Savings() {
                     <Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Edit goal</Text>
                     <Inp onFocus={reveal} value={eName} onChangeText={setEName} placeholder="Goal name" />
                     <Inp onFocus={reveal} value={ePlace} onChangeText={setEPlace} placeholder="Kept in, e.g. Bank account" />
+                    <AccPick v={eAcc} set={setEAcc} />
                     <Inp form="goalEdit" need="a target amount" onFocus={reveal} keyboardType="decimal-pad" value={eTarget} onChangeText={setETarget} placeholder={'Target (' + cu() + ')'} />
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ flex: 1 }}><DateField value={eDue || todayStr()} onChange={setEDue} /></View>

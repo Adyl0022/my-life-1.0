@@ -30,7 +30,8 @@ export function WeightGoal({ h, setH }: { h: HData; setH: (v: HData) => void }) 
   const goal = h.goalKg || 0;
   const pts = list.filter((x) => x.d >= daysAgoKey(rng));
   const startW = list.length ? list[0].v : kg;
-  const save = () => { const v = pn(gin); setH({ ...h, goalKg: v >= 20 && v <= 300 ? r1(v) : 0 }); setGin(''); setEditing(false); };
+  const save = () => { const v = pn(gin); if (!(v >= 20 && v <= 300)) { tryForm('goalKg'); return; } setH({ ...h, goalKg: r1(v) }); setGin(''); setEditing(false); };
+  const removeGoal = () => confirmDelete('your target weight', () => { setH({ ...h, goalKg: 0 }); setGin(''); setEditing(false); });
   // change over the last 30 days
   const cutK = daysAgoKey(30); const before = list.filter((x) => x.d <= cutK); const base30 = before.length ? before[before.length - 1].v : (list.length > 1 ? list[0].v : 0);
   const base30d = before.length ? 30 : list.length > 1 ? Math.max(1, Math.round((new Date(list[list.length - 1].d).getTime() - new Date(list[0].d).getTime()) / 86400000)) : 0;
@@ -58,10 +59,11 @@ export function WeightGoal({ h, setH }: { h: HData; setH: (v: HData) => void }) 
       </View>
       {editing ? (
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
-          <Inp min={20} max={300} style={{ flex: 1 }} keyboardType="decimal-pad" value={gin} onChangeText={setGin} placeholder="Target weight (kg)" onSubmitEditing={save} />
+          <Inp min={20} max={300} form="goalKg" need="a target weight" style={{ flex: 1 }} keyboardType="decimal-pad" value={gin} onChangeText={setGin} placeholder="Target weight (kg)" onSubmitEditing={save} />
           <Pressable onPress={save} style={{ paddingVertical: 11, paddingHorizontal: 16, borderRadius: 14, backgroundColor: T }}><Text style={{ color: '#0d1030', fontWeight: '800', fontSize: 13 }}>Save</Text></Pressable>
         </View>
       ) : null}
+      {editing && goal > 0 ? <Pressable onPress={removeGoal} style={{ alignSelf: 'flex-start', marginTop: 8 }}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Remove target</Text></Pressable> : null}
       {hi > 0 ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>Healthy range for your height: {r1(lo)} to {r1(hi)} kg</Text> : <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>Add your height in the weight card above to see your healthy range.</Text>}
       {lowGoal ? <Text style={{ color: '#ffc46b', fontSize: 12, marginTop: 6, lineHeight: 17 }}>This target is below the healthy range for your height. Please talk to a doctor before aiming this low.</Text> : null}
       {kg > 0 ? (

@@ -3,7 +3,7 @@
 import type { DebtData } from './debts';
 
 export type Out = { id: number; amt: number; date: string; note: string };
-export type Goal = { id: number; name: string; kind: string; target: number; place: string; due: string; start: number; out: Out[]; made: string };
+export type Goal = { id: number; name: string; kind: string; target: number; place: string; due: string; start: number; out: Out[]; made: string; acc?: number };
 export type SavData = { goals: Goal[]; nextId: number };
 export const SAV_EMPTY: SavData = { goals: [], nextId: 1 };
 

@@ -105,9 +105,11 @@ export default function Finance() {
   const maxT = Math.max(...tr.map((x) => x.t), 1);
   const saveLimit = (k: string) => {
     const n = pn(limVal); const lm = { ...(d.limits || {}) };
-    if (n > 0) lm[k] = n; else delete lm[k];
+    if (!(n > 0)) { tryForm('limit'); return; }
+    lm[k] = n;
     setD({ ...d, limits: lm }); setLimKey(''); setLimVal('');
   };
+  const removeLimit = (k: string) => confirmDelete('the limit for ' + k, () => { const lm = { ...(d.limits || {}) }; delete lm[k]; setD({ ...d, limits: lm }); setLimKey(''); setLimVal(''); });
   // Goal choices for the Savings category: ready-made goals first, your own in the middle, Wedding last.
   const PRE = ['motor', 'car', 'house', 'emergency', 'medical', 'travel', 'hajj', 'other'];
   const opts: { key: string; id: number; name: string; kind: string }[] = [];
@@ -446,13 +448,14 @@ export default function Finance() {
                       <Text style={{ color: lim > 0 && ratio > 1 ? '#ff9aa9' : 'rgba(255,255,255,.8)', fontSize: 12, fontWeight: '600' }}>{cs() + money(t) + (lim > 0 ? ' of ' + cs() + rnd(lim) : '')}</Text>
                     </View>
                     <View style={{ marginTop: 5, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.12)', overflow: 'hidden' }}><View style={{ width: w + '%', height: '100%', borderRadius: 4, backgroundColor: col }} /></View>
-                    {editing ? (
+                    {editing ? (<>
                       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8 }}>
-                        <Inp style={{ flex: 1 }} autoFocus keyboardType="decimal-pad" value={limVal} onChangeText={setLimVal} placeholder={n + ' limit per month (' + cu() + ')'} onSubmitEditing={() => saveLimit(n)} />
+                        <Inp style={{ flex: 1 }} autoFocus form="limit" need="a monthly limit" keyboardType="decimal-pad" value={limVal} onChangeText={setLimVal} placeholder={n + ' limit per month (' + cu() + ')'} onSubmitEditing={() => saveLimit(n)} />
                         <Pressable onPress={() => saveLimit(n)}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999 }}><Text style={{ color: '#2a1030', fontSize: 12, fontWeight: '800' }}>Save</Text></LinearGradient></Pressable>
                         <Pressable accessibilityLabel="Cancel" onPress={() => { setLimKey(''); setLimVal(''); }} style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 14 }}>✕</Text></Pressable>
                       </View>
-                    ) : (
+                      {lim > 0 ? <Pressable onPress={() => removeLimit(n)} style={{ alignSelf: 'flex-start', marginTop: 8 }}><Text style={{ color: '#ff9aa9', fontSize: 12, fontWeight: '800' }}>Remove limit</Text></Pressable> : null}
+                    </>) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5 }}>
                         <Text style={{ color: lim > 0 ? (ratio > 1 ? '#ff9aa9' : ratio >= 0.8 ? '#ffd24a' : dim) : dim, fontSize: 11.5, fontWeight: lim > 0 ? '700' : '400' }}>
                           {lim > 0 ? (ratio > 1 ? cs() + rnd(t - lim) + ' over the limit' : ratio >= 0.8 ? 'Close to the limit, ' + cs() + rnd(lim - t) + ' left' : cs() + rnd(lim - t) + ' left · ' + Math.round(ratio * 100) + '% used') : (monthSpent > 0 ? w + '% of this month' : 'No limit set')}
