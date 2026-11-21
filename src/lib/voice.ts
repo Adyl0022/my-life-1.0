@@ -13,21 +13,35 @@ const MOD = () => (SR && SR.ExpoSpeechRecognitionModule) || null;
 export const voiceOk = !!MOD() || preview;
 
 export type Lang = 'en' | 'ms';
+import { XLANGS } from './xlate';
 
-// The voice the person picked (kept on this phone only).
-export type VPref = { ms?: string; en?: string; rate: number; pitch: number };
-let PREF: VPref = { rate: 1, pitch: 1 };
-getItem('ml_voice_pref', null).then((v: any) => { if (v && typeof v === 'object') PREF = { rate: Number(v.rate) || 1, pitch: Number(v.pitch) || 1, ms: v.ms || undefined, en: v.en || undefined }; });
+// The languages that can be spoken. English and Bahasa Malaysia are built in. Every other language is heard by the phone's speech service,
+// translated to English on the phone, answered by the Assistant, translated back and read aloud (needs the language pack of that language).
+export type VLang = { key: string; tag: string; name: string; native: string; x: boolean };
+const TAGS: Record<string, string> = { id: 'id-ID', zh: 'zh-CN', ar: 'ar-SA', th: 'th-TH', vi: 'vi-VN', tl: 'fil-PH', hi: 'hi-IN', ta: 'ta-IN', bn: 'bn-BD', ur: 'ur-PK', ja: 'ja-JP', ko: 'ko-KR', tr: 'tr-TR', fa: 'fa-IR', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', pt: 'pt-PT', ru: 'ru-RU', it: 'it-IT', nl: 'nl-NL', sw: 'sw-KE' };
+export const VLANGS: VLang[] = [
+  { key: 'en', tag: 'en-US', name: 'English', native: 'English', x: false },
+  { key: 'ms', tag: 'ms-MY', name: 'Bahasa Malaysia', native: 'Bahasa Malaysia', x: false },
+  { key: 'mix', tag: 'ms-MY', name: 'Malay + English mixed', native: 'BM + EN', x: false },
+  ...XLANGS.filter((x) => TAGS[x.code]).map((x) => ({ key: x.code, tag: TAGS[x.code], name: x.name, native: x.native, x: true })),
+];
+export const vlang = (key: string): VLang => VLANGS.find((l) => l.key === key) || VLANGS[0];
+
+// What the person set on the voice screen (kept on this phone only).
+export type VPref = { v: Record<string, string>; rate: number; pitch: number; lang: string; pause: number; talk: boolean };
+const DEF: VPref = { v: {}, rate: 1, pitch: 1, lang: '', pause: 2600, talk: true };
+let PREF: VPref = { ...DEF };
+getItem('ml_voice_pref', null).then((o: any) => { if (o && typeof o === 'object') PREF = { ...DEF, ...o, v: { ...(o.v || {}) } }; });
 export const voicePref = (): VPref => PREF;
 export function setVoicePref(p: Partial<VPref>) { PREF = { ...PREF, ...p }; setItem('ml_voice_pref', PREF); }
 export type VoiceOpt = { id: string; label: string; gender: 'female' | 'male' | '' };
-// The voices installed on the phone for a language. Android does not say if a voice is a woman or a man, so that is only shown when the voice name says it.
-export async function voicesFor(lang: Lang): Promise<VoiceOpt[]> {
+// The voices installed on the phone for a speech tag. Android does not say if a voice is a woman or a man, so that is only shown when the voice name says it.
+export async function voicesFor(tag: string): Promise<VoiceOpt[]> {
   if (!SP || !SP.getAvailableVoicesAsync) return [];
   try {
     const all: any[] = await SP.getAvailableVoicesAsync();
-    const pre = lang === 'ms' ? 'ms' : 'en';
-    const list = (all || []).filter((v) => String(v.language || '').toLowerCase().replace('_', '-').startsWith(pre)).sort((a, b) => String(a.identifier).localeCompare(String(b.identifier)));
+    const pre = tag.split('-')[0].toLowerCase();
+    const list = (all || []).filter((v) => String(v.language || '').toLowerCase().replace('_', '-').split('-')[0] === pre || (pre === 'fil' && String(v.language || '').toLowerCase().startsWith('tl'))).sort((a, b) => String(a.identifier).localeCompare(String(b.identifier)));
     return list.slice(0, 16).map((v, i) => {
       const n = (String(v.identifier || '') + ' ' + String(v.name || '')).toLowerCase();
       const gender: 'female' | 'male' | '' = /female|perempuan|wanita|#f\b|_f_/.test(n) ? 'female' : /(^|[^a-z])male|lelaki|#m\b|_m_/.test(n) ? 'male' : '';
@@ -35,17 +49,21 @@ export async function voicesFor(lang: Lang): Promise<VoiceOpt[]> {
     });
   } catch (e) { return []; }
 }
+// Asks the phone to download the offline speech pack for a language (Android 13 and above). Not needed when the phone is online.
+export async function speechPack(tag: string): Promise<string> {
+  const m = MOD(); if (!m || !m.androidTriggerOfflineModelDownload) return 'none';
+  try { const r = await m.androidTriggerOfflineModelDownload({ locale: tag }); return String((r && r.status) || 'ok'); } catch (e) { return 'none'; }
+}
 const MIX_WORDS = ['ringgit', 'lunch', 'dinner', 'breakfast', 'petrol', 'grab', 'parking', 'toll', 'shopping', 'bills', 'savings', 'Maybank', 'CIMB', 'Touch n Go', 'GrabPay', 'ShopeePay', 'cash', 'e-wallet', 'transfer', 'task', 'reminder', 'water', 'sleep', 'steps', 'my spending', 'My Accounts', 'subscription', 'Netflix', 'Spotify'];
-const tag = (l: Lang) => (l === 'ms' ? 'ms-MY' : 'en-US');
 
 export async function micAllowed(): Promise<boolean> {
   const m = MOD(); if (!m) return preview;
   try { const r = await m.requestPermissionsAsync(); return !!(r && r.granted); } catch (e) { return false; }
 }
 
-export type Handlers = { onPartial: (t: string) => void; onFinal: (t: string) => void; onEnd: (gotText: boolean) => void; onError: (code: string) => void };
-// Starts one round of listening. It ends by itself when the person stops talking.
-export function listen(lang: Lang, h: Handlers, mix = false): () => void {
+export type Handlers = { onPartial: (t: string) => void; onFinal: (t: string) => void; onEnd: (gotText: boolean) => void; onError: (code: string) => void; onLevel?: (v: number) => void };
+// Starts one round of listening. It ends by itself when the person stops talking. onLevel gives the loudness of the voice (0 to 1) for the live wave.
+export function listen(tag: string, h: Handlers, mix = false): () => void {
   const m = MOD(); if (!m) { setTimeout(() => h.onEnd(false), 50); return () => {}; }
   const subs: any[] = []; let got = false, done = false;
   const finish = () => { if (done) return; done = true; subs.forEach((s) => { try { s.remove(); } catch (e) { /* already removed */ } }); h.onEnd(got); };
@@ -56,8 +74,10 @@ export function listen(lang: Lang, h: Handlers, mix = false): () => void {
   }));
   subs.push(m.addListener('error', (e: any) => { const c = String((e && e.error) || 'unknown'); if (c !== 'no-speech' && c !== 'aborted') h.onError(c); }));
   subs.push(m.addListener('end', finish));
+  if (h.onLevel) subs.push(m.addListener('volumechange', (e: any) => { const v = Number(e && e.value); h.onLevel!(Math.max(0, Math.min(1, (v + 2) / 12))); }));
+  const sil = PREF.pause || 2600;
   // A longer pause is allowed before it stops, so a sentence with breaths in it is not cut. A Malay and English mix is heard as Malay with the English words added.
-  try { m.start({ lang: tag(mix ? 'ms' : lang), interimResults: true, continuous: false, maxAlternatives: 1, ...(mix ? { contextualStrings: MIX_WORDS } : {}), androidIntentOptions: { EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: 2600, EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: 2600, EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS: 1500 } }); } catch (e) { h.onError('start-failed'); finish(); }
+  try { m.start({ lang: tag, interimResults: true, continuous: false, maxAlternatives: 1, ...(mix ? { contextualStrings: MIX_WORDS } : {}), ...(h.onLevel ? { volumeChangeEventOptions: { enabled: true, intervalMillis: 90 } } : {}), androidIntentOptions: { EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS: sil, EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS: sil, EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS: 1500 } }); } catch (e) { h.onError('start-failed'); finish(); }
   return () => { try { m.abort(); } catch (e) { /* not running */ } };
 }
 
@@ -74,15 +94,15 @@ export function speechText(t: string): string {
   if (s.length > 420) { const cut = s.slice(0, 420); const i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? ')); s = i > 120 ? cut.slice(0, i + 1) : cut; }
   return s;
 }
-export function speak(text: string, lang: Lang, done: () => void): void {
+export function speak(text: string, tag: string, done: () => void): void {
   const t = speechText(text);
-  if (!SP || !t) { setTimeout(done, 50); return; }
+  if (!SP || !t || !PREF.talk) { setTimeout(done, 50); return; }
   let fired = false; const once = () => { if (!fired) { fired = true; done(); } };
-  try { SP.speak(t, { language: tag(lang), rate: PREF.rate, pitch: PREF.pitch, ...(PREF[lang] ? { voice: PREF[lang] } : {}), onDone: once, onStopped: once, onError: once }); } catch (e) { once(); }
+  try { SP.speak(t, { language: tag, rate: PREF.rate, pitch: PREF.pitch, ...(PREF.v[tag] ? { voice: PREF.v[tag] } : {}), onDone: once, onStopped: once, onError: once }); } catch (e) { once(); }
 }
 // A short sample in the voice, speed and tone that are set now (an id can be given to try a voice before choosing it).
-export function sample(lang: Lang, id?: string) {
-  if (!SP) return; try { SP.stop(); SP.speak(lang === 'ms' ? 'Hai, saya Assistant My Life. Beginilah bunyi suara saya.' : 'Hi, I am My Life Assistant. This is how I sound.', { language: tag(lang), rate: PREF.rate, pitch: PREF.pitch, ...((id || PREF[lang]) ? { voice: id || PREF[lang] } : {}) }); } catch (e) { /* ignore */ }
+export function sample(tag: string, id?: string) {
+  if (!SP) return; try { SP.stop(); SP.speak(tag.startsWith('ms') ? 'Hai, saya Sage. Beginilah bunyi suara saya.' : 'Hi, I am Sage. This is how I sound.', { language: tag, rate: PREF.rate, pitch: PREF.pitch, ...((id || PREF.v[tag]) ? { voice: id || PREF.v[tag] } : {}) }); } catch (e) { /* ignore */ }
 }
 export function stopSpeaking() { try { if (SP) SP.stop(); } catch (e) { /* nothing is playing */ } }
 
