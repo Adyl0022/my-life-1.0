@@ -53,6 +53,7 @@ const Chip = ({ t, on, c, onPress }: { t: string; on: boolean; c?: string; onPre
   </Pressable>
 );
 const SEC = { marginTop: 12, padding: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' } as const;
+const SIN = { marginTop: 16 } as const;
 const SECL = { color: 'rgba(255,255,255,.65)', fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 8 } as const;
 const Stat = ({ l, v, bg, vc }: { l: string; v: string; bg?: string; vc?: string }) => (
   <View style={{ flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: bg || 'rgba(255,255,255,.08)' }}>
@@ -287,7 +288,8 @@ export default function Finance() {
           <Glass radius={24} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending Tracker</Text>
             <View style={SEC}>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+            <Text style={SECL}>THIS MONTH AND LAST 6 MONTHS</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
               <Stat l="This month" v={cs() + rnd(gc)} />
               <Stat l="Last month" v={cs() + rnd(gp)} />
               <Stat l="Change" v={diffTxt} vc={gd > 0 ? '#ffb3a0' : gd < 0 ? '#7df0c6' : W} bg={gd > 0 ? 'rgba(255,143,107,.16)' : gd < 0 ? 'rgba(94,231,181,.16)' : undefined} />
@@ -313,13 +315,14 @@ export default function Finance() {
 
 
 
-              <Text style={{ color: W, fontSize: 14, fontWeight: '700', marginTop: 22 }}>Add Spending</Text>
               <View style={SEC}>
+              <Text style={SECL}>ADD SPENDING</Text>
+              <View style={SIN}>
                 <Text style={SECL}>WHAT AND HOW MUCH</Text>
                 <Inp value={fName} onChangeText={setFName} placeholder="What did you buy?" />
                 <Inp form="spend" need="an amount" style={{ marginTop: 8 }} keyboardType="decimal-pad" value={fAmt} onChangeText={setFAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={addSpend} />
               </View>
-              <View style={SEC}>
+              <View style={SIN}>
                 <Text style={SECL}>CATEGORY</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {CATS.map(([n, c]) => <Chip key={n} t={n} on={fCat === n} c={c} onPress={() => setFCat(n)} />)}
@@ -333,7 +336,7 @@ export default function Finance() {
                   </View>
                 ) : null}
               </View>
-              <View style={SEC}>
+              <View style={SIN}>
                 <Text style={SECL}>DATE AND REMARK (OPTIONAL)</Text>
                 <DateField value={fDate} onChange={setFDate} />
                 <Inp style={{ marginTop: 8 }} value={fNote} onChangeText={setFNote} placeholder="Remark (optional)" />
@@ -344,7 +347,7 @@ export default function Finance() {
                 </View>
               </View>
               {accD.accs.length ? (
-                <View style={SEC}>
+                <View style={SIN}>
                   <Text style={SECL}>PAID FROM (OPTIONAL)</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                     <Chip t="Not linked" on={!fAcc} onPress={() => setFAcc(0)} />
@@ -353,11 +356,12 @@ export default function Finance() {
                 </View>
               ) : null}
               <Pressable onPress={addSpend} style={{ marginTop: 12 }}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 14, fontWeight: '800' }}>+ Add spending</Text></LinearGradient></Pressable>
+              </View>
 
             {/* Spending history */}
-            <View style={{ ...SEC, marginTop: 22 }}>
+            <View style={SEC}>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                <Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>Spending History</Text>
+                <Text style={{ ...SECL, marginBottom: 0 }}>SPENDING HISTORY</Text>
                 <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12 }}>{all.length + (all.length === 1 ? ' item' : ' items')}</Text>
               </View>
               {all.length === 0 ? (
