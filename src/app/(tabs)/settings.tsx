@@ -271,6 +271,7 @@ export default function Settings() {
               <RegionCard />
               <ModulesCard />
               <DashCardPicks />
+              {voiceOk ? <Glass style={{ paddingHorizontal: 16 }}><Row k="lang" t="Say Hai My Life" last sub={wakeOn ? 'On. Listens only while Home is open, and stops after 5 minutes without a touch.' : 'Open My Life Live by saying Hai My Life while Home is open'} onPress={toggleWake} right={<Sw on={!!wakeOn} />} /></Glass> : null}
               {hid.on('habit') ? <Glass style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
                 <Pressable onPress={() => setHd({ ...hd, cyOn: !hd.cyOn })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ flex: 1 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Cycle & Wellbeing</Text><Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, marginTop: 5, lineHeight: 17 }}>Off by default. Turn on to see a private Cycle & Wellbeing card in Habit & Health. Your marks stay when you turn it off.</Text></View>
@@ -306,7 +307,6 @@ export default function Settings() {
                 </Glass>
               </Pressable>
 
-              {voiceOk ? <Glass style={{ paddingHorizontal: 16 }}><Row k="lang" t="Say Hai My Life" last sub={wakeOn ? 'On. Listens only while Home is open, and stops after 5 minutes without a touch.' : 'Open My Life Live by saying Hai My Life while Home is open'} onPress={toggleWake} right={<Sw on={!!wakeOn} />} /></Glass> : null}
               <Glass style={{ paddingHorizontal: 16 }}><Row k="lang" t="Language" last right={<Text style={{ color: DIM, fontSize: 12.5 }}>English</Text>} /></Glass>
               <Pressable onPress={() => setDlg('out')}><Glass style={{ paddingVertical: 14, alignItems: 'center' }}><Text style={{ color: '#ffb3bf', fontSize: 14, fontWeight: '700' }}>Log out</Text></Glass></Pressable>
             </View>
