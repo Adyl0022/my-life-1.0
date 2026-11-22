@@ -1,4 +1,5 @@
 import { Toggle } from './Toggle';
+import { SafeImage } from './SafeImage';
 import { fileStamp } from '../lib/exporter';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Modal, Image, Platform, ScrollView, useWindowDimensions } from 'react-native';
@@ -85,11 +86,11 @@ export function ShareSheet({ pages, title, onClose }: { pages: string[]; title: 
           </View>
           {pages.length > 1 ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-              {pages.map((p, k) => (<Pressable key={k} onPress={() => { buzz(); setI(k); }} accessibilityLabel={'Page ' + (k + 1)}><Image source={{ uri: p }} style={{ width: 52, height: 52, borderRadius: 10, borderWidth: 2, borderColor: k === i ? '#8ea8ff' : 'rgba(255,255,255,.2)' }} /></Pressable>))}
+              {pages.map((p, k) => (<Pressable key={k} onPress={() => { buzz(); setI(k); }} accessibilityLabel={'Page ' + (k + 1)}><SafeImage source={{ uri: p }} style={{ width: 52, height: 52, borderRadius: 10, borderWidth: 2, borderColor: k === i ? '#8ea8ff' : 'rgba(255,255,255,.2)' }} /></Pressable>))}
             </View>
           ) : null}
           <View ref={ref} collapsable={false} style={{ marginTop: 16, width: w, height: h, alignSelf: 'center', borderRadius: 14, overflow: 'hidden', backgroundColor: '#0d0a18' }}>
-            <Image source={{ uri }} style={{ width: w, height: h }} resizeMode="cover" />
+            <SafeImage source={{ uri }} style={{ width: w, height: h }} resizeMode="cover" />
             <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, overflow: 'hidden' }}>
               {mark ? <>{/* One bar across the top-left corner, like the tip from Jabatan Pendaftaran Negara: two straight lines with the purpose written between them. */}
               <View style={{ position: 'absolute', left: bar.cx - bar.len, width: bar.len * 2, top: bar.cy - 15, height: 30, justifyContent: 'center', transform: [{ rotate: bar.deg + 'deg' }], borderTopWidth: 1.5, borderBottomWidth: 1.5, borderColor: 'rgba(255,255,255,.92)', backgroundColor: 'rgba(0,0,0,.22)' }}>

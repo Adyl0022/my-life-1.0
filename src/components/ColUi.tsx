@@ -1,4 +1,5 @@
 import { LineIcon, type LineName } from './LineIcon';
+import { SafeImage } from './SafeImage';
 import { photoSyncOn } from '../lib/sync';
 import { useSession } from '../lib/auth';
 import React, { useState } from 'react';
@@ -45,7 +46,7 @@ export function ItemRow({ tile, label, title, sub, status, statusCol, hot, photo
       <View style={{ borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: hot ? 'rgba(255,107,129,.6)' : 'rgba(255,255,255,.2)' }}>
         <LinearGradient colors={hot ? ['rgba(255,107,129,.3)', 'rgba(255,107,129,.08)'] : ['rgba(255,255,255,.12)', 'rgba(255,255,255,.03)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13 }}>
-          {photo ? <Image source={{ uri: photo }} style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : tile}
+          {photo ? <SafeImage source={{ uri: photo }} style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : tile}
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#8fe9e2', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.1 }}>{label}</Text>
             <Text numberOfLines={1} style={{ color: W, fontSize: 16.5, fontWeight: '800', marginTop: 2 }}>{title}</Text>
@@ -168,7 +169,7 @@ export function Detail({ label, title, tile, photo, lines, status, statusCol, ho
           </View>
           {photo ? (
             <Pressable onPress={() => setBig(true)} accessibilityLabel="View photo" style={{ marginTop: 20 }}>
-              <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.06)' }}><Image source={{ uri: photo }} style={{ width: '100%', aspectRatio: 1.4 }} resizeMode="contain" /></View>
+              <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.06)' }}><SafeImage source={{ uri: photo }} style={{ width: '100%', aspectRatio: 1.4 }} resizeMode="contain" /></View>
               <Text style={{ color: dim, fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>Tap the photo to see it full screen</Text>
             </Pressable>
           ) : <View style={{ alignItems: 'center', marginTop: 22 }}>{tile}</View>}
@@ -184,7 +185,7 @@ export function Detail({ label, title, tile, photo, lines, status, statusCol, ho
         </ScrollView>
         {big && photo ? (
           <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setBig(false)}>
-            <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: photo }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
+            <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><SafeImage source={{ uri: photo }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
           </Modal>
         ) : null}
       </View>
@@ -202,14 +203,14 @@ export function PhotoStrip({ photos }: { photos: string[] }) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {photos.map((u, i) => (
           <Pressable key={u + i} onPress={() => setBig(i)} accessibilityLabel={'View photo ' + (i + 1)} style={({ pressed }) => ({ marginRight: 8, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
-            <Image source={{ uri: u }} style={{ width: 78, height: 78, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }} resizeMode="cover" />
+            <SafeImage source={{ uri: u }} style={{ width: 78, height: 78, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)' }} resizeMode="cover" />
           </Pressable>
         ))}
       </ScrollView>
       {big >= 0 ? (
         <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setBig(-1)}>
           <Pressable onPress={() => setBig(-1)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}>
-            <Image source={{ uri: photos[big] }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
+            <SafeImage source={{ uri: photos[big] }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
             <Text style={{ color: dim, fontSize: 12, textAlign: 'center', marginTop: 10 }}>{(big + 1) + ' of ' + photos.length + ' · tap to close'}</Text>
           </Pressable>
         </Modal>
@@ -223,7 +224,7 @@ export function GridCard({ tile, photo, label, title, sub, status, statusCol, on
   return (
     <Pressable onPress={onPress} accessibilityLabel={a11y} style={({ pressed }) => ({ width: '48.5%', marginTop: 10, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
       <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.06)' }}>
-        {photo ? <Image source={{ uri: photo }} style={{ width: '100%', height: 110, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : <View style={{ height: 110, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.05)' }}>{tile}</View>}
+        {photo ? <SafeImage source={{ uri: photo }} style={{ width: '100%', height: 110, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /> : <View style={{ height: 110, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.05)' }}>{tile}</View>}
         <View style={{ padding: 11 }}>
           <Text style={{ color: '#8fe9e2', fontSize: 9, fontWeight: '800', letterSpacing: 1 }}>{label}</Text>
           <Text numberOfLines={1} style={{ color: W, fontSize: 14.5, fontWeight: '800', marginTop: 2 }}>{title}</Text>

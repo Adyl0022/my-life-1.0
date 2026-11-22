@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { SafeImage } from '../components/SafeImage';
 import { photoSyncOn } from '../lib/sync';
 import { View, Platform, ScrollView, Image } from 'react-native';
 import { Pressable } from '../components/Press';
@@ -207,7 +208,7 @@ function Row({ s, today, onPress }: { s: Sub; today: string; onPress: () => void
 function TileL({ name, cat, photo, size = 44 }: { name: string; cat: string; photo?: string; size?: number }) {
   const c = catOf(cat).c;
   return <View style={{ width: size, height: size, borderRadius: size * 0.32, backgroundColor: c + '30', borderWidth: 1, borderColor: c + 'aa', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-    {photo ? <Image source={{ uri: photo }} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: deep(c), fontSize: size * 0.38, fontWeight: '800' }}>{initials(name)}</Text>}
+    {photo ? <SafeImage source={{ uri: photo }} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: deep(c), fontSize: size * 0.38, fontWeight: '800' }}>{initials(name)}</Text>}
   </View>;
 }
 const MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

@@ -1,4 +1,5 @@
 import { LineIcon } from '../components/LineIcon';
+import { SafeImage } from '../components/SafeImage';
 import { photoSyncOn } from '../lib/sync';
 import { cu, cs, useRegion } from '../lib/region';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -49,7 +50,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose, docs }: { docs: DocStore['d
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
           {(f.photos || []).map((u, i) => (
             <View key={u + i} style={{ width: 78 }}>
-              <Image source={{ uri: u }} style={{ width: 78, height: 78, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" />
+              <SafeImage source={{ uri: u }} style={{ width: 78, height: 78, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" />
               <Pressable onPress={() => confirmDelete('this photo', () => set({ photos: (f.photos || []).filter((_, k) => k !== i) }), { title: 'Remove this photo?', message: 'The photo will be removed from this phone.' })} accessibilityLabel={'Remove photo ' + (i + 1)} style={{ marginTop: 4 }}><Text style={{ color: '#ff9aa9', fontSize: 11.5, fontWeight: '700', textAlign: 'center' }}>Remove</Text></Pressable>
             </View>
           ))}

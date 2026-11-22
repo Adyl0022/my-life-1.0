@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { SafeImage } from './SafeImage';
 import { View, Modal, ScrollView, Image, ActivityIndicator, Platform, Alert, useWindowDimensions } from 'react-native';
 import { Pressable } from './Press';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -55,7 +56,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
 function Thumb({ uri, w, h, n, on, onPress }: { uri: string; w: number; h: number; n?: number; on?: boolean; onPress?: () => void }) {
   const body = (
     <View style={{ width: w, height: h, borderRadius: 10, overflow: 'hidden', backgroundColor: '#fff', borderWidth: on ? 2.5 : 1, borderColor: on ? '#b794ff' : 'rgba(255,255,255,.3)' }}>
-      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+      <SafeImage source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
       {n ? <View style={{ position: 'absolute', right: 4, bottom: 4, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8, backgroundColor: 'rgba(0,0,0,.6)' }}><Text style={{ color: '#fff', fontSize: 10.5, fontWeight: '800' }}>{n}</Text></View> : null}
     </View>
   );
@@ -229,7 +230,7 @@ export function DocScans() {
       {look ? (
         <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setLook('')}>
           <Pressable onPress={() => setLook('')} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}>
-            <Image source={{ uri: look }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
+            <SafeImage source={{ uri: look }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
             <Text style={{ color: dim, fontSize: 12.5, textAlign: 'center', marginTop: 10 }}>Tap anywhere to close</Text>
           </Pressable>
         </Modal>

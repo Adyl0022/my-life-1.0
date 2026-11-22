@@ -33,13 +33,19 @@ async function toIcon(uri: string): Promise<string> {
 }
 // Keeps a copy of a picture in the app's own storage, so it is still there after the camera clears its cache.
 async function keepCopy(uri: string): Promise<string> {
-  try {
-    const FS = await import('expo-file-system/legacy');
-    const dir = (FS.documentDirectory || '') + 'docs/';
-    await FS.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
-    const to = dir + Date.now() + '.' + ((uri.split('.').pop() || 'jpg').split('?')[0]);
-    await FS.copyAsync({ from: uri, to }); return to;
-  } catch (e) { return uri; }
+  const FS = await import('expo-file-system/legacy');
+  const dir = (FS.documentDirectory || '') + 'docs/';
+  const to = dir + Date.now() + '.' + ((uri.split('.').pop() || 'jpg').split('?')[0]);
+  // The copy is checked after it is made. If it cannot be kept, you are told, so a picture never quietly sits in a temporary place where the phone can clear it.
+  for (let i = 0; i < 2; i++) {
+    try {
+      await FS.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
+      await FS.copyAsync({ from: uri, to });
+      const info: any = await FS.getInfoAsync(to);
+      if (info && info.exists && (info.size == null || info.size > 0)) return to;
+    } catch (e) {}
+  }
+  throw new Error('keep');
 }
 /** Scans a paper like a scanner app: the phone finds the edges, straightens and crops the page and clears up the colours.
  *  This is Google's document scanner and it works on the phone, nothing is uploaded. If it is not available (the web, or a phone without Google Play services), the normal camera opens instead. */
