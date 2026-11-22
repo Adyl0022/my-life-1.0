@@ -290,7 +290,7 @@ export default function Accounts() {
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
   const [col] = useStored<ColStore>('ml_collection', EMPTY_COL); const [withThings, setWithThings] = useStored<number>('ml_acc_things', 1); const tv = thingsValue((col && col.items) || []);
   const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
-  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [availView, setAvailView] = useStored<number>('ml_acc_avail', 0); const [nwOpen, setNwOpen] = useStored<number>('ml_acc_nw', 0); const resv = reservedTotal(data); const shownTotal = availView === 1 && resv > 0 ? t.total - resv : t.total; const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
+  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [availView, setAvailView] = useStored<number>('ml_acc_avail', 0); const [nwOpen, setNwOpen] = useStored<number>('ml_acc_nw', 0); const [keepOpen, setKeepOpen] = useState(false); const resv = reservedTotal(data); const shownTotal = availView === 1 && resv > 0 ? t.total - resv : t.total; const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
   // Sort by: your own order (move groups up or down), most money first, least money first, or A to Z. It is kept on this phone.
   const SORTS = ['My order', 'Highest', 'Lowest', 'A to Z']; const [sortI, setSortI] = useStored<number>('ml_acc_sort', 0); const [sortL, setSortL] = useStored<number>('ml_acc_sort_owe', 0); const [gOrd, setGOrd] = useStored<string[]>('ml_acc_order', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
@@ -316,11 +316,14 @@ export default function Accounts() {
             <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
             <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>TOTAL MONEY</Text>
             <Text style={{ color: shownTotal < 0 ? PINK : W, fontSize: 30, fontWeight: '800', marginTop: 4 }}>{(shownTotal < 0 ? '-' : '') + cs() + money(Math.abs(shownTotal))}</Text>
-            {resv > 0 ? <View style={{ marginTop: 10 }}><EqPills tabs={['With minimum', 'After minimum']} index={availView === 1 ? 1 : 0} onChange={(i) => setAvailView(i)} colors={['#ffc46b', '#ff8fab']} fontSize={12} /></View> : null}
+            {resv > 0 ? <View style={{ marginTop: 10 }}><EqPills tabs={['All my money', 'Can spend']} index={availView === 1 ? 1 : 0} onChange={(i) => setAvailView(i)} colors={['#ffc46b', '#ff8fab']} fontSize={12} /></View> : null}
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Stat l="Assets" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} />
             </View>
-            {resv > 0 ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{(availView === 1 ? 'After ' : 'Includes ') + cs() + money(resv) + ' your banks need you to keep'}</Text> : null}
+            {resv > 0 ? (() => { const kl = data.accs.filter((a) => keepOf(a) > 0); const nm = kl.length === 1 ? kl[0].name : kl.length === 2 ? kl[0].name + ' and ' + kl[1].name : kl.length + ' accounts'; return (<View style={{ marginTop: 8 }}>
+              <Tap onPress={() => setKeepOpen(!keepOpen)} label={keepOpen ? 'Hide the minimum balances' : 'Show the minimum balances'}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12, lineHeight: 17 }}>{(availView === 1 ? 'Takes off ' : 'Includes ') + cs() + money(resv) + ' kept in ' + nm + (keepOpen ? '  ˄' : '  ˅')}</Text></Tap>
+              {keepOpen ? kl.map((a) => (<View key={a.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, paddingLeft: 8 }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{a.name}</Text><Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: '700' }}>{cs() + money(keepOf(a))}</Text></View>)) : null}
+            </View>); })() : null}
           </Glass>
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
