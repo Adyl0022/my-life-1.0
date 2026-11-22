@@ -470,7 +470,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#5ee7df",
   "h": "Stats.dc.html",
-  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang total money akaun subscription langganan pulse nadi heart rate"
+  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang total money akaun subscription langganan pulse nadi heart rate spending by account belanja ikut akaun savings pace goal berapa bulan energy estimate anggaran dashed"
  },
  {
   "t": "Settings",
@@ -558,7 +558,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Finance.dc.html",
-  "k": "money left baki tinggal duit left to spend gaji income belanja sehari per day month end projection akhir bulan"
+  "k": "money left baki tinggal duit left to spend gaji income belanja sehari per day month end projection akhir bulan careful can spend more than accounts amaran boleh belanja akaun"
  },
  {
   "t": "Subscriptions",
@@ -582,7 +582,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Savings.dc.html",
-  "k": "savings goals tabung simpanan matlamat goal kahwin wedding motor motorcycle kereta car rumah house travel emergency medical hospital hajj umrah maybank"
+  "k": "savings goals tabung simpanan matlamat goal kahwin wedding motor motorcycle kereta car rumah house travel emergency medical hospital hajj umrah maybank take off account put back akaun ambil dari akaun masukkan semula"
  },
  {
   "t": "Add money to a savings goal",
@@ -702,7 +702,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "sleep timer tidur going to sleep i'm awake bangun quick settings tile jam tidur bedtime sleep schedule jadual tidur 30 days last night notification"
+  "k": "sleep timer tidur going to sleep i'm awake bangun quick settings tile jam tidur bedtime sleep schedule jadual tidur 30 days last night notification habit and health sleep card bottom bawah kad tidur add to quick settings"
  },
  {
   "t": "Vehicle score and maintenance jobs",
