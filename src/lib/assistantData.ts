@@ -116,7 +116,7 @@ export async function persist(a: any): Promise<void> {
   if (a.type === 'spend') {
     const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const nid = f.nextId || 1;
-    await setItem('ml_finance', { ...f, spends: [{ id: nid, name: a.name, cat: a.cat, amt: a.amt, date: a.date || today, ...(a.acc ? { acc: a.acc } : {}) }, ...(f.spends || [])], nextId: nid + 1 });
+    await setItem('ml_finance', { ...f, spends: [{ id: nid, name: a.name, cat: a.cat, amt: a.amt, date: a.date || today, ...(a.note ? { note: a.note } : {}), ...(a.acc ? { acc: a.acc } : {}) }, ...(f.spends || [])], nextId: nid + 1 });
   } else if (a.type === 'inc') {
     const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const ym = ymOf(new Date()); const inc = { ...(f.inc || {}) }; const row = { ...(inc[ym] || {}) };

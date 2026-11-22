@@ -12,6 +12,7 @@ import { mathReply } from './assistantMath';
 import { dataDigest } from './assistantDigest';
 import { balanceOf, totals, isLiab, groupOf, incomeFeed, commitTotal } from './accounts';
 import { thingsValue } from './collection';
+import { flowTurn } from './assistantFlow';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
@@ -146,7 +147,8 @@ export class AssistantBase extends React.Component<any, any> {
       m = this.mk(L('Saved to your Heart log. I only keep the numbers you type and cannot say whether a reading is good or bad. Please ask a doctor or nurse about your readings.', 'Disimpan dalam Heart log. Saya hanya simpan nombor yang awak taip dan tidak boleh kata sama ada bacaan itu baik atau tidak. Sila tanya doktor atau jururawat tentang bacaan awak.'), { label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
     } else if (p.type === 'spend') {
       const tdy = D.spendToday + (p.date === this.todayStr() ? p.amt : 0);
-      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + (p.accName ? ' from ' + p.accName : '') + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + (p.accName ? ' dari ' + p.accName : '') + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
+      const mon = D.spendMonth + (String(p.date || '').slice(0, 7) === this.todayStr().slice(0, 7) ? p.amt : 0);
+      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + (p.accName ? ' from ' + p.accName : '') + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today and ' + cs() + this.rm(mon) + ' this month.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + (p.accName ? ' dari ' + p.accName : '') + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini dan ' + cs() + this.rm(mon) + ' bulan ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
     } else if (p.type === 'mtc') {
       patch.mtcMonth = s.mtcMonth + p.amt;
       let extra = '';
@@ -638,7 +640,10 @@ export class AssistantBase extends React.Component<any, any> {
     this.setState({ msgs: this.state.msgs.concat([{ me: true, text: shown, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
     setTimeout(async () => {
-      let r;
+      let r; let fr = null;
+      try { fr = await flowTurn(this, q, lang); } catch (e) { fr = null; if (this.state.flow) this.setState({ flow: null }); }
+      if (fr) { this.setState(Object.assign({ msgs: this.state.msgs.concat([fr.m]), typing: false, live: '' }, fr.patch)); this.scroll(); return; }
+      if (this.state.flow) this.setState({ flow: null });
       try { r = this.reply(q, lang); } catch (e) {
         r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }

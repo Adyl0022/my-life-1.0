@@ -250,11 +250,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Spending from a sentence",
-  "s": "Tell the Assistant your spending in your own words",
+  "s": "Tell the Assistant your spending in your own words, or say add my spending and it asks step by step",
   "m": "Assistant",
   "c": "#ffc46b",
   "h": "Assistant.dc.html",
-  "k": "ai spending sentence ayat makan tengah hari guna maybank account akaun paid from dibayar dari category kategori belanja assistant gemma qwen on phone confirm"
+  "k": "guided spending isi perbelanjaan berpandu tanya satu satu step by step ai spending sentence ayat makan tengah hari guna maybank account akaun paid from dibayar dari category kategori belanja assistant gemma qwen on phone confirm"
  },
  {
   "t": "Scan to PDF",
