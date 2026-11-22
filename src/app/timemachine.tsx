@@ -231,7 +231,7 @@ export default function TimeMachinePage() {
                 <Text style={{ color: DIM, fontSize: 12 }}>{R.sub}</Text>
               </View>
               {mode === 'past' ? Panel() : Future()}
-              {mode === 'future' ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>These are estimates from your own recent records, a simple straight-line guess. They are not medical predictions and nothing is guaranteed.</Text> : null}
+              {mode === 'future' ? <Text style={{ color: '#ffd593', fontSize: 11.5, lineHeight: 16, marginTop: 10 }}>These are estimates from the last 28 days of your own records. Today is left out, and the trend fades a little each week. They are not medical predictions and nothing is guaranteed.</Text> : null}
             </Glass>
           </Animated.View>
           <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 11, lineHeight: 15, textAlign: 'center', marginTop: 12 }}>Only records you or your phone saved are shown. It all stays on your phone and your backup.</Text>
