@@ -120,6 +120,19 @@ export function parseCat(text: string, cats: string[]): string | null {
 export const SKIP = /^(tiada|takde|tak ada|tak de|xde|x de|tidak ada|tidak|tak|no|none|nope|nothing|skip|langkau|kosong|tak perlu|tak payah|tidak perlu|tiada apa|takda|nope thanks|no thanks|no remark|tiada remark|tak ada remark)$/;
 export const CANCEL = /^(batal|cancel|tak jadi|tidak jadi|lupakan|forget it|never ?mind|abaikan|berhenti|stop)$/;
 
+// What past spending says: if a word the person used (like "kopi") was saved before, suggest the category it went under most.
+export function learnCat(text: string, spends: { name: string; cat: string }[], cats: string[]): { cat: string; word: string } | null {
+  const t = norm(text); const cnt: Record<string, number> = {}; let word = '';
+  for (const x of spends) {
+    const nm = x.name.replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (nm.length < 3 || nm === 'spending' || nm === x.cat.toLowerCase() || !cats.includes(x.cat)) continue;
+    if (t.indexOf(' ' + nm + ' ') >= 0) { cnt[x.cat] = (cnt[x.cat] || 0) + 1; if (nm.length > word.length) word = nm; }
+  }
+  const top = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+  return top ? { cat: top, word: cap1(word) } : null;
+}
+const cap1 = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+
 export function isFlowActive(host: any): boolean { return !!(host && host.state && host.state.flow); }
 
 const need = (f: Flow): Flow['step'] | null => {
@@ -132,7 +145,7 @@ const need = (f: Flow): Flow['step'] | null => {
   return null;
 };
 
-type Ctx = { cats: string[]; accs: { id: number; name: string }[]; L: (en: string, ms: string) => string };
+type Ctx = { spends: { name: string; cat: string }[]; cats: string[]; accs: { id: number; name: string }[]; L: (en: string, ms: string) => string };
 
 async function load(host: any, lang: string): Promise<Ctx> {
   const L = (en: string, ms: string) => (lang === 'ms' ? ms : en);
@@ -142,7 +155,8 @@ async function load(host: any, lang: string): Promise<Ctx> {
   const cats = [...base.filter((c) => c !== 'Other'), ...custom, 'Other'];
   const a: any = await getItem('ml_accounts', { accs: [] });
   const accs = ((a && a.accs) || []).filter((x: any) => x && x.name).map((x: any) => ({ id: x.id, name: String(x.name) }));
-  return { cats, accs, L };
+  const spends = ((f && f.spends) || []).filter((x: any) => x && x.name && x.cat).slice(-600).map((x: any) => ({ name: String(x.name).toLowerCase().trim(), cat: String(x.cat) }));
+  return { spends, cats, accs, L };
 }
 
 // Short names people say for the same bank or wallet.
@@ -275,7 +289,19 @@ export async function flowTurn(host: any, q: string, lang: string): Promise<any 
     if (QUESTION.test(t.toLowerCase()) && !/^\d/.test(n) && f.step !== 'note') return null;
     const step = need(f);
     if (step === 'cat') {
-      fill(f, t, c, ['cat', 'date', 'acc']);
+      const sg = (f.d as any).sugg as string | undefined;
+      if (sg) {
+        // Answering "Is it X?": yes keeps it, no or another category changes it.
+        if (/^(ya|yes|yep|yup|betul|boleh|ok|okay|setuju|sah|haah|ha|yelah|ye|sure|correct|right)\b/.test(n)) { f.d.cat = sg; (f.d as any).sugg = undefined; }
+        else if (/^(tidak|tak|bukan|no|nope|x|salah|tak betul|tidak betul|not)\b/.test(n) && !parseCat(t, c.cats)) { (f.d as any).sugg = undefined; (f.d as any).noSugg = true; return out(L('Okay. Which category then? ' + c.cats.join(', ') + '.', 'Baik. Kategori apa pula? ' + c.cats.join(', ') + '.'), f); }
+        else { (f.d as any).sugg = undefined; }
+      }
+      if (!f.d.cat && !(f.d as any).noSugg) {
+        const g = learnCat(t, c.spends, c.cats);
+        const own = c.cats.some((x) => norm(t).indexOf(' ' + x.toLowerCase() + ' ') >= 0);
+        if (g && !own) { (f.d as any).sugg = g.cat; return out(L('"' + g.word + '" is usually under ' + g.cat + ' for you. Is that right? Say yes, or say another category.', '"' + g.word + '" biasanya awak letak bawah ' + g.cat + '. Betul? Sebut ya, atau sebut kategori lain.'), f); }
+      }
+      if (!f.d.cat) fill(f, t, c, ['cat', 'date', 'acc']);
       if (!f.d.cat) { f.tries++; return out(L('I did not catch the category. Please pick one: ' + c.cats.join(', ') + '.', 'Saya tak dapat tangkap kategori itu. Sila pilih satu: ' + c.cats.join(', ') + '.'), f); }
     } else if (step === 'date') {
       const x = parseDate(t);
