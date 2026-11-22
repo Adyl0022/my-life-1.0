@@ -408,20 +408,39 @@ export default function Accounts() {
                 </View>
               ))}
               <View style={{ marginTop: 10 }}><EqPills tabs={['Count in total', 'Leave out']} index={withThings ? 0 : 1} onChange={(i) => setWithThings(i === 0 ? 1 : 0)} colors={['#7c9cff', '#b794ff']} /></View>
-              {withThings ? (
-                <View style={{ marginTop: 12, borderRadius: 14, padding: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
-                  <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>Net worth</Text>
-                  <Text style={{ color: t.total + tv.total < 0 ? PINK : W, fontSize: 20, fontWeight: '800', marginTop: 2 }}>{'~ ' + (t.total + tv.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total + tv.total))}</Text>
-                  {[['Money in your accounts', t.assets, '+'], ['What you owe (cards, loans and commitments)', t.liab, '-'], ['Your assets', tv.total, '+']].map((r) => (
-                    <View key={r[0] as string} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-                      <Text style={{ flex: 1, color: 'rgba(255,255,255,.72)', fontSize: 12, lineHeight: 16 }}>{(r[2] as string) + ' ' + (r[0] as string)}</Text>
-                      <Text style={{ color: r[2] === '-' ? PINK : W, fontSize: 12.5, fontWeight: '700', marginLeft: 8 }}>{(r[2] as string) + cs() + money(r[1] as number)}</Text>
+              {withThings ? (() => {
+                const have = t.assets + tv.total, owe = t.liab, net = have - owe, tot = Math.max(1, have + owe);
+                const Row = ({ l, sub, v, col, onPress }: { l: string; sub?: string; v: string; col?: string; onPress?: () => void }) => {
+                  const inner = (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: W, fontSize: 13.5, fontWeight: '700' }}>{l}</Text>
+                        {sub ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{sub}</Text> : null}
+                      </View>
+                      <Text style={{ color: col || W, fontSize: 13.5, fontWeight: '800', marginLeft: 8 }}>{v}</Text>
+                      {onPress ? <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 16, marginLeft: 6 }}>›</Text> : null}
                     </View>
-                  ))}
-                </View>
-              ) : null}
+                  );
+                  return onPress ? <Tap onPress={onPress} label={'Open ' + l}>{inner}</Tap> : inner;
+                };
+                return (
+                  <View style={{ marginTop: 12, borderRadius: 16, padding: 14, backgroundColor: 'rgba(255,255,255,.1)' }}>
+                    <Row l="Money in accounts" sub="Cash, banks and wallets" v={cs() + money(t.assets)} />
+                    <Row l="Your things" sub="A guess, from the card above" v={'~ ' + cs() + money(tv.total)} />
+                    <Row l="What you owe" sub="Cards, loans and commitments" v={'- ' + cs() + money(owe)} col={PINK} onPress={() => router.push('/finance')} />
+                    <View style={{ flexDirection: 'row', height: 7, borderRadius: 4, overflow: 'hidden', marginTop: 8, backgroundColor: 'rgba(255,255,255,.1)' }}>
+                      <View style={{ flex: Math.max(0.0001, have / tot), backgroundColor: BLUE }} />
+                      <View style={{ flex: Math.max(0.0001, owe / tot), backgroundColor: PINK }} />
+                    </View>
+                    <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{net < 0 ? 'What you owe is more than your money and things.' : 'Your money and things are more than what you owe.'}</Text>
+                    <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 10 }} />
+                    <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1 }}>NET WORTH</Text>
+                    <Text style={{ color: net < 0 ? PINK : W, fontSize: 24, fontWeight: '800', marginTop: 2 }}>{'~ ' + (net < 0 ? '- ' : '') + cs() + money(Math.abs(net))}</Text>
+                  </View>
+                );
+              })() : null}
               <Tap onPress={() => router.push('/collection')} label="Open Personal Collection" style={{ marginTop: 10 }}><Text style={{ color: '#b9c8ff', fontSize: 13, fontWeight: '700' }}>Open Personal Collection ›</Text></Tap>
-              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>A guess from the prices and dates you entered, not a market price. It stays separate from your account balances above. Rent is not counted.</Text>
+              <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>Things are a guess from the prices and dates you entered. Net worth is money plus things, minus what you owe. Rent is not counted.</Text>
             </Glass>
           ) : null}
           <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone from what you enter and from the spending you link to an account. They are saved with your My Life 1.0 data and synced to your account like your other finance entries. My Life 1.0 never connects to your bank.</Text>
