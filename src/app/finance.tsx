@@ -203,9 +203,9 @@ export default function Finance() {
                 <Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '800' }}>{accD.accs.length ? 'Manage ›' : 'Add ›'}</Text>
               </View>
               {accD.accs.length ? (<>
-                <Text style={{ color: accTot.total < 0 ? '#ff8fab' : W, fontSize: 28, fontWeight: '800', marginTop: 4 }}>{(accTot.total < 0 ? '-' : '') + cs()}{money(Math.abs(accTot.total))}</Text>
+                <Text style={{ color: accTot.assets < 0 ? '#ff8fab' : W, fontSize: 28, fontWeight: '800', marginTop: 4 }}>{(accTot.assets < 0 ? '-' : '') + cs()}{money(Math.abs(accTot.assets))}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                  <Stat l="Assets" v={cs() + money(accTot.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(accTot.liab)} vc="#ff8fab" />
+                  <Stat l="Liabilities" v={cs() + money(accTot.liab)} vc="#ff8fab" /><Stat l="After debts" v={(accTot.total < 0 ? '-' : '') + cs() + money(Math.abs(accTot.total))} vc={accTot.total < 0 ? '#ff8fab' : '#9fb6ff'} />
                 </View>
                 {reservedTotal(accD) > 0 ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{'Available to spend ' + cs() + money(Math.max(0, accTot.assets - reservedTotal(accD)))}</Text> : null}
               </>) : (
