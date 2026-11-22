@@ -5,7 +5,7 @@ import { useStored } from './store';
 import { cs, cu, curCode } from './region';
 export type Cycle = 'week' | 'month' | 'quarter' | 'half' | 'year';
 export type Status = 'active' | 'paused' | 'cancelled';
-export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string; status?: Status; pay?: string; rec?: string };
+export type Sub = { id: number; name: string; cat: string; price: string; cycle: Cycle; next: string; remind: number; trial: boolean; note: string; photo?: string; status?: Status; pay?: string; rec?: string; acc?: number };
 /** A subscription that still charges you. Paused and cancelled ones stay in the list but are left out of totals, reminders and Money Left. */
 export const live = (s: { status?: string }) => !s.status || s.status === 'active';
 export type SubStore = { subs: Sub[]; next: number; no: string[] };
