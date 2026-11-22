@@ -3,7 +3,7 @@ import { LineIcon } from '../components/LineIcon';
 import { SubChargeCard } from '../components/SubChargeCard';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
-import { ACC_EMPTY, AccData, commitTotal, groupOf, incomeFeed, isLiab, totals } from '../lib/accounts';
+import { ACC_EMPTY, AccData, balanceOf, commitTotal, groupOf, incomeFeed, isLiab, keepOf, reservedTotal, totals } from '../lib/accounts';
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Pressable } from '../components/Press';
@@ -207,6 +207,7 @@ export default function Finance() {
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                   <Stat l="Assets" v={cs() + money(accTot.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(accTot.liab)} vc="#ff8fab" />
                 </View>
+                {reservedTotal(accD) > 0 ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{'Available to spend ' + cs() + money(Math.max(0, accTot.assets - reservedTotal(accD)))}</Text> : null}
               </>) : (
                 <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>Add your cash, bank, wallet and cards to see your total money. Balances go up and down when you log spending.</Text>
               )}
@@ -410,6 +411,7 @@ export default function Finance() {
                     <Chip t="Not linked" on={!fAcc} onPress={() => setFAcc(0)} />
                     {accD.accs.filter((a) => a.g !== 'loan').map((a) => <Chip key={a.id} t={a.name} on={fAcc === a.id} c={groupOf(a.g).c} onPress={() => setFAcc(fAcc === a.id ? 0 : a.id)} />)}
                   </View>
+                  {(() => { const fa = accD.accs.find((a) => a.id === fAcc); const am = parseFloat(String(fAmt).replace(',', '.')); if (!fa || !(am > 0) || keepOf(fa) <= 0) return null; const left = balanceOf(fa, accD, d.spends as any, { debts: dbt.debts as any, incomes: incomeFeed(d.inc, d.incAcc) }) - am; return left < keepOf(fa) ? <Text style={{ color: '#ffc46b', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{'Careful: this leaves ' + cs() + money(Math.max(0, left)) + ' in ' + fa.name + ', below the ' + cs() + money(keepOf(fa)) + ' you keep in it. You can still add it.'}</Text> : null; })()}
                 </View>
               ) : null}
               <Pressable onPress={addSpend} style={{ marginTop: 12 }}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 14, fontWeight: '800' }}>+ Add spending</Text></LinearGradient></Pressable>

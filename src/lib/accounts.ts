@@ -12,7 +12,7 @@ export const GROUPS: { k: AccGroup; t: string; plural: string; liab: boolean; c:
 ];
 export const groupOf = (k: AccGroup) => GROUPS.find((g) => g.k === k) || GROUPS[0];
 
-export type Acc = { id: number; name: string; g: AccGroup; start: number; since: string; photo?: string };
+export type Acc = { id: number; name: string; g: AccGroup; start: number; since: string; photo?: string; keep?: number };
 export type Move = { id: number; date: string; kind: 'transfer' | 'deposit' | 'adjust'; from?: number; to?: number; amt: number; note?: string };
 export type AccData = { accs: Acc[]; moves: Move[]; nextId: number };
 export const ACC_EMPTY: AccData = { accs: [], moves: [], nextId: 1 };
@@ -47,10 +47,16 @@ export function linesOf(a: Acc, data: AccData, spends: AccSpend[], feeds: Feeds 
   (feeds.debts || []).forEach((d) => { if (d.acc !== a.id) return; Object.keys(d.paid || {}).forEach((ym) => { const amt = (d.paid || {})[ym]; if (!(amt > 0) || ym < (d.accSince || d.since)) return; const date = dueDate(ym, d.due); if (date < a.since) return; out.push({ key: 'd' + d.id + ym, date, text: d.name + ' payment', delta: liab ? amt : -amt, kind: 'debt', ref: d.id }); }); });
   return out.sort((x, y) => (y.date || '').localeCompare(x.date || '') || y.key.localeCompare(x.key));
 }
+/** The minimum your bank wants left in an account (not for cards and loans). It is not money you can spend. */
+export const keepOf = (a: Acc) => (isLiab(a) ? 0 : Math.max(0, a.keep || 0));
+export const reservedTotal = (data: AccData) => r2(data.accs.reduce((s, a) => s + keepOf(a), 0));
 export const balanceOf = (a: Acc, data: AccData, spends: AccSpend[], feeds: Feeds = {}) => r2(a.start + linesOf(a, data, spends, feeds).reduce((s, l) => s + l.delta, 0));
 
 /** What you still owe in Commitments (ansuran and other debts with a balance). Bills with no balance are left out. */
 export const commitTotal = (debts: { bal: number; paid?: Record<string, number>; fixed?: boolean }[]) => r2((debts || []).reduce((a, d) => a + (d.fixed ? 0 : Math.max(0, d.bal - Object.values(d.paid || {}).reduce((x, y) => x + y, 0))), 0));
+
+/** Balance minus the minimum you keep. Can be below zero when the balance is already under the minimum. */
+export const availOf = (a: Acc, data: AccData, spends: AccSpend[], feeds: Feeds = {}) => r2(balanceOf(a, data, spends, feeds) - keepOf(a));
 
 export function totals(data: AccData, spends: AccSpend[], commit = 0, feeds: Feeds = {}) {
   let assets = 0, liab = commit;

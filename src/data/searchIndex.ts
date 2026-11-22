@@ -570,11 +570,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "My Accounts",
-  "s": "Cash, banks, wallets and cards with balances, plus what your things are worth",
+  "s": "Cash, banks, wallets and cards with balances, the minimum to keep and what you can spend, plus what your things are worth",
   "m": "Finance",
   "c": "#7c9cff",
   "h": "Finance.dc.html",
-  "k": "accounts akaun logo icon ikon gambar gallery baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
+  "k": "minimum balance reserved available baki minimum simpan tersedia accounts akaun logo icon ikon gambar gallery baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
  },
  {
   "t": "Savings Goals",

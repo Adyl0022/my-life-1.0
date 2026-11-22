@@ -3,6 +3,7 @@
 // Anything the person already said ("makan semalam guna Maybank") is not asked again. Nothing is saved until they confirm.
 import { getItem } from './store';
 import { cs } from './region';
+import { keepWarn } from './assistantKeep';
 
 export type Flow = { kind: 'spend' | 'inc' | 'mtc' | 'odo'; step: 'cat' | 'date' | 'note' | 'acc' | 'amt' | 'odo'; d: { odo?: number; cat?: string; date?: string; ydy?: boolean; note?: string; acc?: number; accName?: string; amt?: number; noAcc?: boolean; noteDone?: boolean }; tries: number };
 
@@ -328,5 +329,5 @@ export async function flowTurn(host: any, q: string, lang: string): Promise<any 
   const d = f.d; const id = (s.pid || 0) + 1;
   const act = { type: 'spend', amt: d.amt, cat: d.cat, name: d.cat, date: d.date, ydy: !!d.ydy, ...(d.acc ? { acc: d.acc, accName: d.accName } : {}), ...(d.note ? { note: d.note } : {}) };
   const lines = L('Got it. Save this spending?', 'Faham. Simpan perbelanjaan ini?') + '\n• ' + (L('Category: ', 'Kategori: ') + d.cat) + (d.accName ? '\n• ' + L('Paid from: ', 'Dibayar dari: ') + d.accName : '') + '\n• ' + L('Date: ', 'Tarikh: ') + dateWords(f, L) + (d.note ? '\n• ' + L('Remark: ', 'Catatan: ') + d.note : '');
-  return { m: mk(lines, { pid: id, big: cs() + String(Math.round((d.amt || 0) * 100) / 100), bigLbl: d.cat, color: '#ffc46b' }), patch: { flow: null, pending: Object.assign({ id }, act), pid: id }, act: null };
+  return { m: mk(lines + (await keepWarn(d.acc, d.amt || 0, lang)), { pid: id, big: cs() + String(Math.round((d.amt || 0) * 100) / 100), bigLbl: d.cat, color: '#ffc46b' }), patch: { flow: null, pending: Object.assign({ id }, act), pid: id }, act: null };
 }

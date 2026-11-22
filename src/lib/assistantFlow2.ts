@@ -2,6 +2,7 @@
 // The same idea as assistantFlow.ts: ask one thing at a time, show a summary, save only after the person says yes.
 import { getItem } from './store';
 import { cs } from './region';
+import { keepWarn } from './assistantKeep';
 import { bl, norm, hasW, QUESTION, START_VERB, SKIP, CANCEL, dstr, parseAmount, parseAcc, parseDate } from './assistantFlow';
 
 type Kind = 'task' | 'event' | 'xfer' | 'sub' | 'loan';
@@ -141,5 +142,6 @@ export async function genTurn(host: any, q: string, lang: string): Promise<any |
   else if (f.kind === 'sub') { p = { type: 'sub', name: d.name, price: d.price, cycle: d.cycle, next: d.next }; text = L('Got it. Add this subscription?\n• ' + d.name + '\n• ' + CYC_LAB[d.cycle][0] + '\n• Next charge: ' + d.next, 'Faham. Tambah langganan ini?\n• ' + d.name + '\n• ' + CYC_LAB[d.cycle][1] + '\n• Bayaran seterusnya: ' + d.next); p.doneEn = 'Done. I added ' + d.name + ' (' + cs() + d.price.toFixed(2) + ' ' + CYC_LAB[d.cycle][0] + ') to Subscriptions.'; p.doneMs = 'Siap. Saya dah tambah ' + d.name + ' (' + cs() + d.price.toFixed(2) + ' ' + CYC_LAB[d.cycle][1] + ') dalam Subscriptions.'; p.lbl = ['Open Subscriptions', 'Buka Subscriptions']; p.href = 'Subscriptions.dc.html'; big = cs() + d.price.toFixed(2); bigLbl = d.name; color = '#b794ff'; }
   else { const what = d.what === 'money' ? cs() + d.amt.toFixed(2) : d.title; p = { type: 'loan', dir: d.dir, what: d.what, who: d.who, title: d.what === 'money' ? '' : d.title, amount: d.what === 'money' ? String(d.amt) : '', due: d.due || '' }; text = L('Got it. Note this down?\n• ' + (d.dir === 'lent' ? 'You lent ' : 'You borrowed ') + what + (d.dir === 'lent' ? ' to ' : ' from ') + d.who + '\n• Return by: ' + dw(d.due), 'Faham. Catat ini?\n• Awak ' + (d.dir === 'lent' ? 'pinjamkan ' : 'meminjam ') + what + (d.dir === 'lent' ? ' kepada ' : ' daripada ') + d.who + '\n• Pulangkan pada: ' + dw(d.due)); p.doneEn = 'Done. Noted: you ' + (d.dir === 'lent' ? 'lent ' : 'borrowed ') + what + (d.dir === 'lent' ? ' to ' : ' from ') + d.who + '.'; p.doneMs = 'Siap. Dah dicatat: awak ' + (d.dir === 'lent' ? 'pinjamkan ' : 'meminjam ') + what + (d.dir === 'lent' ? ' kepada ' : ' daripada ') + d.who + '.'; p.lbl = ['Open Lent & Borrowed', 'Buka Lent & Borrowed']; p.href = 'Collection.dc.html'; big = d.what === 'money' ? cs() + d.amt.toFixed(2) : ''; bigLbl = d.who; color = '#ffb86b'; }
   p.id = id; p.name = p.name || d.who;
+  if (f.kind === 'xfer') text += await keepWarn(d.from, d.amt, lang);
   return { m: mk(text, { pid: id, big, bigLbl, color }), patch: { flow: null, pending: p, pid: id }, act: null };
 }

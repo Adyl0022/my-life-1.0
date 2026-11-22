@@ -24,7 +24,7 @@ import { cs, useRegion } from '../lib/region';
 import { TransferDone, type TransferInfo } from '../components/TransferDone';
 import { takePhoto } from '../lib/photo';
 import { DEBT_EMPTY, DebtData, type Debt, remaining, monthsLeft, yearsMonths, payoffLabel, ymOf, dueDay } from '../lib/debts';
-import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, refOf, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
+import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, refOf, balanceOf, keepOf, reservedTotal, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -73,12 +73,13 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
   const { data, setData } = ctx;
   const [name, setName] = useState(edit ? edit.name : ''); const [g, setG] = useState<AccGroup>(edit ? edit.g : 'bank');
   const [photo, setPhoto] = useState(edit && edit.photo ? edit.photo : ''); const [pmsg, setPmsg] = useState('');
-  const [start, setStart] = useState(edit ? String(edit.start || '') : ''); const [since, setSince] = useState(edit ? edit.since : todayStr()); const [tried, setTried] = useState(false);
+  const [keep, setKeep] = useState(edit && edit.keep ? String(edit.keep) : ''); const [start, setStart] = useState(edit ? String(edit.start || '') : ''); const [since, setSince] = useState(edit ? edit.since : todayStr()); const [tried, setTried] = useState(false);
   const liab = groupOf(g).liab; const n = start.trim() === '' ? 0 : pn(start);
   const save = () => {
     setTried(true); if (!name.trim()) return; if (start.trim() !== '' && !(n >= 0)) { tryForm('acc'); return; }
-    if (edit) setData({ ...data, accs: data.accs.map((a) => a.id === edit.id ? { ...a, name: name.trim(), g, start: n, since, photo: photo || undefined } : a) });
-    else setData({ ...data, accs: [...data.accs, { id: data.nextId, name: name.trim(), g, start: n, since, photo: photo || undefined }], nextId: data.nextId + 1 });
+    const kp = liab || keep.trim() === '' ? 0 : pn(keep); if (!liab && keep.trim() !== '' && !(kp >= 0)) { tryForm('acc'); return; }
+    if (edit) setData({ ...data, accs: data.accs.map((a) => a.id === edit.id ? { ...a, name: name.trim(), g, start: n, since, photo: photo || undefined, keep: kp > 0 ? kp : undefined } : a) });
+    else setData({ ...data, accs: [...data.accs, { id: data.nextId, name: name.trim(), g, start: n, since, photo: photo || undefined, ...(kp > 0 ? { keep: kp } : {}) }], nextId: data.nextId + 1 });
     onClose();
   };
   return (
@@ -106,6 +107,11 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
         <Inp form="acc" need="an amount" zeroOk value={start} onChangeText={setStart} keyboardType="decimal-pad" placeholder={liab ? 'Amount owed in ' + cs() + ' (0 if none)' : 'Balance in ' + cs() + ' (0 if empty)'} />
         <Lab t="AS OF" />
         <DateField value={since} onChange={setSince} />
+        {!liab ? (<>
+          <Lab t="MINIMUM TO KEEP (OPTIONAL)" />
+          <Inp form="acc" need="an amount" zeroOk value={keep} onChangeText={setKeep} keyboardType="decimal-pad" placeholder={'Amount your bank wants left, in ' + cs() + ' (leave empty if none)'} />
+          <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>Many banks need a small amount to stay in the account. It is kept out of the money you can spend, and you will see it as Reserved. Each bank is different, so type the amount your bank asks for. Saved with your account data and synced like your other finance entries.</Text>
+        </>) : null}
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{'The balance above is how much it was on this date. Spending, money in and transfers after it change the balance by themselves. Saved with your account data and synced like your other finance entries.'}</Text>
         <BigBtn t={edit ? 'Save changes' : 'Add account'} g={['#8ea8ff', '#b794ff']} onPress={save} />
       </Sections>
@@ -156,6 +162,7 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
         {pickChips(to, setTo, mv.mode === 'transfer' ? from : undefined, mv.mode === 'deposit' ? (a) => !isLiab(a) : undefined)}
         {mv.mode === 'transfer' && target && isLiab(target) ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>This lowers what you owe on {target.name}.</Text> : null}
         {mv.mode === 'transfer' && tried && from === to ? <Err t="Pick two different accounts." /> : null}
+        {mv.mode === 'transfer' && (() => { const fa = accs.find((a) => a.id === from); if (!fa || !(n > 0) || keepOf(fa) <= 0) return null; const left = balanceOf(fa, data, spends, feeds) - n; return left < keepOf(fa) ? <Text style={{ color: '#ffc46b', fontSize: 12.5, lineHeight: 18, marginTop: 8 }}>{'Careful: this leaves ' + cs() + money(Math.max(0, left)) + ' in ' + fa.name + ', below the ' + cs() + money(keepOf(fa)) + ' you keep in it. You can still continue.'}</Text> : null; })()}
         <Lab t={mv.mode === 'adjust' ? 'BALANCE NOW' : 'AMOUNT'} />
         <Inp form="mov" need="an amount" zeroOk={mv.mode === 'adjust'} value={amt} onChangeText={setAmt} keyboardType="decimal-pad" placeholder={mv.mode === 'adjust' ? 'What it should be, in ' + cs() : 'Amount in ' + cs()} />
         {mv.mode === 'adjust' && target ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>{'My Life 1.0 shows ' + cs() + money(cur) + ' now.' + (amt && n >= 0 ? ' This ' + (n - cur >= 0 ? 'adds ' : 'takes off ') + cs() + money(Math.abs(n - cur)) + '.' : '')}</Text> : null}
@@ -218,6 +225,11 @@ function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; on
         <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{liab ? 'YOU OWE' : 'BALANCE'}</Text>
         <Text style={{ color: liab ? PINK : '#fff', fontSize: 32, fontWeight: '800', marginTop: 4 }}>{cs() + money(b)}</Text>
         <View style={{ position: 'absolute', right: 16, top: 16 }}><AccTile a={a} size={46} /></View>
+        {!liab && keepOf(a) > 0 ? (<View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}><Text style={{ color: dim, fontSize: 13.5 }}>Account Balance</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs() + money(b)}</Text></View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}><Text style={{ color: dim, fontSize: 13.5 }}>Reserved Balance</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs() + money(keepOf(a))}</Text></View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Available Balance</Text><Text style={{ color: b - keepOf(a) < 0 ? PINK : '#5ee7b5', fontSize: 20, fontWeight: '800' }}>{(b - keepOf(a) < 0 ? '-' : '') + cs() + money(Math.abs(b - keepOf(a)))}</Text></View>
+        </View>) : null}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
         {liab ? <Act t="Pay off" c={PINK} onPress={() => { onClose(); onMove({ mode: 'transfer', acc: a.id }); }} /> : <Act t="Money in" c="#5ee7b5" onPress={() => { onClose(); onMove({ mode: 'deposit', acc: a.id }); }} />}
@@ -307,6 +319,7 @@ export default function Accounts() {
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Stat l="Assets" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} />
             </View>
+            {reservedTotal(data) > 0 ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>{'Available to spend ' + cs() + money(Math.max(0, t.assets - reservedTotal(data))) + ', after ' + cs() + money(reservedTotal(data)) + ' your banks need you to keep.'}</Text> : null}
           </Glass>
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
