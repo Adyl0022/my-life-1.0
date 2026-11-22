@@ -33,7 +33,7 @@ import { goalSaved } from '../../lib/savings';
 import { healthMonths } from '../../components/BodyCards';
 import { sunatYear, qadhaOwed, ramadanState } from '../../lib/fasting';
 import { cs, useRegion } from '../../lib/region';
-import { ACC_EMPTY, AccData, totals, commitTotal, incomeFeed } from '../../lib/accounts';
+import { ACC_EMPTY, AccData, totals, commitTotal, incomeFeed, reservedTotal } from '../../lib/accounts';
 import { SUB_EMPTY, SubStore, monthlyTotal, live } from '../../lib/subs';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -483,12 +483,13 @@ export default function Stats() {
               const act = subS.subs.filter(live); const mt = monthlyTotal(subS.subs);
               return (<>
                 {accD.accs.length > 0 && (<>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Money now</Text>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Money now, after debts</Text>
                   <Text style={{ color: at.total < 0 ? '#ff9aa9' : '#7df0c6', fontSize: 22, fontWeight: '800', marginTop: 6 }}>{at.total < 0 ? '-' : ''}{fm(at.total)}</Text>
                   <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, marginTop: 2 }}>What you have, minus what you owe, across {accD.accs.length} {accD.accs.length === 1 ? 'account' : 'accounts'}.</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Assets</Text><Text style={{ color: '#9fb6ff', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.assets)}</Text></View>
+                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>All my money</Text><Text style={{ color: '#9fb6ff', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.assets)}</Text></View>
                     <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Liabilities</Text><Text style={{ color: '#ff8fab', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.liab)}</Text></View>
+                    {reservedTotal(accD) > 0 ? <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Can spend</Text><Text style={{ color: '#7df0c6', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(Math.max(0, at.assets - reservedTotal(accD)))}</Text></View> : null}
                   </View>
                 </>)}
                 {act.length > 0 && (<>
