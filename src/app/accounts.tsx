@@ -305,7 +305,7 @@ export default function Accounts() {
             <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>TOTAL MONEY</Text>
             <Text style={{ color: t.total < 0 ? PINK : W, fontSize: 30, fontWeight: '800', marginTop: 4 }}>{(t.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total))}</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-              <Stat l="Assets" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} />
+              <Stat l="Money in accounts" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="What you owe" v={cs() + money(t.liab)} vc={PINK} />
             </View>
           </Glass>
 
