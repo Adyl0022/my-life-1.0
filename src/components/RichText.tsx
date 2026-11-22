@@ -1,10 +1,10 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from './Txt';
 
 // Shows an AI answer with simple formatting: **bold**, `code`, code blocks, bullet points and numbered points.
 // Text with none of these marks is shown exactly as plain text, so written answers look the same as before.
-const MARKS = /```|\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`|^\s*([-*•]|\d+[.)])\s+|^#{1,4}\s/m;
+const MARKS = /^▸ |```|\*\*|\*[^*\s][^*\n]*\*|`[^`\n]+`|^\s*([-*•]|\d+[.)])\s+|^#{1,4}\s/m;
 const C = '#fff';
 
 // Markers that make the last words of a still-growing answer appear softly (see LiveText): \uE001 = faintest, \uE002 = medium, \uE003 = almost full.
@@ -30,13 +30,18 @@ function inline(s: string, key: string) {
   return parts;
 }
 
-export function RichText({ text }: { text: string }) {
+export function RichText({ text, onPick }: { text: string; onPick?: (t: string) => void }) {
   const base = { color: C, fontSize: 14.5, lineHeight: 22 } as const;
   if (!MARKS.test(text) && !/[\uE001-\uE010]/.test(text)) return <Text style={base}>{text}</Text>;
   const lines = text.split('\n');
   const out: React.ReactNode[] = [];
+  let chips: string[] = [];
+  const flush = (k: string) => { if (!chips.length) return; const cs = chips; chips = []; out.push(<View key={'o' + k} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, marginBottom: 4 }}>{cs.map((c) => (<Pressable key={c} disabled={!onPick} onPress={() => onPick && onPick(c)} accessibilityLabel={c} style={({ pressed }) => ({ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(143,233,226,.55)', backgroundColor: 'rgba(143,233,226,.16)', opacity: onPick ? 1 : 0.7, transform: [{ scale: pressed ? 0.95 : 1 }] })}><Text style={{ color: '#d9fffb', fontSize: 13.5, fontWeight: '700' }}>{c}</Text></Pressable>))}</View>); };
   const st: { code: string[] | null } = { code: null };
   lines.forEach((ln, i) => {
+    const ch = ln.match(/^▸ (.+)$/);
+    if (ch) { chips.push(ch[1].trim()); return; }
+    flush(String(i));
     if (/^\s*```/.test(ln)) {
       if (st.code) { out.push(<View key={'c' + i} style={{ marginVertical: 6, padding: 10, borderRadius: 12, backgroundColor: 'rgba(0,0,0,.35)' }}><Text style={{ color: '#d7f7f1', fontFamily: 'monospace', fontSize: 12.5, lineHeight: 18 }}>{st.code.join('\n')}</Text></View>); st.code = null; }
       else st.code = [];
@@ -55,6 +60,7 @@ export function RichText({ text }: { text: string }) {
     } else if (h) out.push(<Text key={'h' + i} style={{ ...base, fontWeight: '800', marginTop: 4 }}>{inline(h[1], 'h' + i)}</Text>);
     else out.push(<Text key={'p' + i} style={base}>{inline(ln, 'p' + i)}</Text>);
   });
+  flush('end');
   // A code block that was never closed (the answer is still being written) is shown as it is.
   if (st.code) out.push(<View key="cx" style={{ marginVertical: 6, padding: 10, borderRadius: 12, backgroundColor: 'rgba(0,0,0,.35)' }}><Text style={{ color: '#d7f7f1', fontFamily: 'monospace', fontSize: 12.5, lineHeight: 18 }}>{st.code.join('\n')}</Text></View>);
   return <View>{out}</View>;

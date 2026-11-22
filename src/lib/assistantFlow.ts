@@ -19,7 +19,8 @@ const SYN: Record<string, string[]> = {
 };
 
 // One name per line, so a long list is easy to read.
-export const bl = (xs: string[]) => '\n' + xs.map((x) => '• ' + x).join('\n');
+// Option lists start with ▸ so the chat shows them as tappable chips (see RichText).
+export const bl = (xs: string[]) => '\n' + xs.map((x) => '▸ ' + x).join('\n');
 export const norm = (s: string) => ' ' + String(s || '').toLowerCase().replace(/[^a-z0-9À-ɏ/.:,\- ]+/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
 export const hasW = (t: string, w: string) => t.indexOf(' ' + w + ' ') >= 0 || t.indexOf(' ' + w) >= 0 && w.length >= 4 && t.indexOf(' ' + w) >= 0;
 

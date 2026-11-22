@@ -328,21 +328,6 @@ export default function Stats() {
                 </Rise>
               ) : null}
 
-              {en30 > 0 ? (
-                <Rise i={4}>
-                <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HeadIcon k="energy" size={24} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>Energy</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 30 days</Text></View>
-                  <Text style={{ color: '#ffd593', fontSize: 15, fontWeight: '800', marginTop: 10 }}>{ENERGY[Math.max(0, Math.min(3, 3 - Math.round(enSum / en30)))][0]} on average</Text>
-                  {ENERGY.map((e, i) => (
-                    <View key={e[0]} style={{ marginTop: 10 }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '600' }}>{e[0]}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{el[i]} {el[i] === 1 ? 'day' : 'days'}</Text></View>
-                      <View style={{ marginTop: 5 }}><FillBar p={Math.round((el[i] / en30) * 100)} color={e[1]} delay={i * 80} dep={el.join()} /></View>
-                    </View>
-                  ))}
-                  <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 10, lineHeight: 16 }}>Only the energy you rated yourself is counted, never the estimate.</Text>
-                </Glass>
-                </Rise>
-              ) : null}
 
               {ci ? (
                 <Rise i={4}>
