@@ -37,6 +37,7 @@ export function statusText(c: CycleInfo): string {
   if (d > 1) return 'Next period in about ' + d + ' days (estimate)';
   if (d === 1) return 'Next period expected tomorrow (estimate)';
   if (d === 0) return 'Period expected today (estimate)';
+  if (d < -14) return 'Your last marked period was ' + (-d + c.avgCycle) + ' days ago. Mark a new one when it starts.';
   return 'Period is about ' + -d + (d === -1 ? ' day' : ' days') + ' late (estimate)';
 }
 

@@ -272,14 +272,14 @@ export function tips(c: Core, week: boolean): Tip[] {
   if (soon.length) { const d = daysTo(soon[0].date); add({ id: 'event', title: soon[0].name + (d === 0 ? ' is today' : d === 1 ? ' is tomorrow' : ' is in 2 days'), sub: soon.length > 1 ? 'And ' + (soon.length - 1) + ' more coming up.' : 'Open Daily Planner for details.', why: 'Shows events in the next 2 days that are not marked done.', go: '/planner', k: 'week', pri: 82 }); }
   // Finance
   const mk = todayK.slice(0, 7), pk = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
-  const sm = spends(c).filter((x) => (x.date || '').slice(0, 7) === mk), sp = spends(c).filter((x) => (x.date || '').slice(0, 7) === pk);
+  const sm = spends(c).filter((x) => (x.date || '').slice(0, 7) === mk), sp = spends(c).filter((x) => (x.date || '').slice(0, 7) === pk && Number((x.date || '').slice(8, 10)) <= now.getDate()); // last month only up to the same day, so a part month is never set against a whole one
   const tm = sm.reduce((a, b) => a + (b.amt || 0), 0), tp = sp.reduce((a, b) => a + (b.amt || 0), 0);
   if (sm.length >= 3) {
     const cat: Record<string, number> = {}; sm.forEach((x) => { const k = x.cat || 'Other'; cat[k] = (cat[k] || 0) + (x.amt || 0); });
     const top = Object.keys(cat).sort((a, b) => cat[b] - cat[a])[0];
     add({ id: 'topcat', title: top + ' is your biggest spending', sub: rmf(cat[top]) + ' this month, ' + Math.round((cat[top] / tm) * 100) + '% of what you spent.', why: 'Based on the spending you added in My Finance this month.', go: '/finance', k: 'goal', pri: 50 });
   }
-  if (tp > 0 && tm > 0) { const d = Math.round(((tm - tp) / tp) * 100); if (Math.abs(d) >= 10) add({ id: 'mom', title: 'Spending is ' + (d > 0 ? 'up ' : 'down ') + Math.abs(d) + '% on last month', sub: rmf(tm) + ' so far, against ' + rmf(tp) + ' last month.', why: 'Compares this month so far with the whole of last month.', go: '/finance', k: 'goal', pri: d > 0 ? 66 : 38 }); }
+  if (tp > 0 && tm > 0 && now.getDate() >= 7) { const d = Math.round(((tm - tp) / tp) * 100); if (Math.abs(d) >= 10) add({ id: 'mom', title: 'Spending is ' + (d > 0 ? 'up ' : 'down ') + Math.abs(d) + '% on last month', sub: rmf(tm) + ' so far, against ' + rmf(tp) + ' by the same day last month.', why: 'Compares this month so far with the whole of last month.', go: '/finance', k: 'goal', pri: d > 0 ? 66 : 38 }); }
   const dm = now.getDate(); let nsd = 0; for (let o = -(dm - 1); o <= -1; o++) if (spendOn(c, o) === 0) nsd++;
   if (dm >= 7 && sm.length >= 1 && nsd >= 3) add({ id: 'nospend', title: nsd + ' no-spend days this month', sub: 'Keep it going. Small gaps in spending add up.', why: 'Counts days this month before today with nothing added in My Finance.', go: '/finance', k: 'badge', pri: 32 });
   {

@@ -26,7 +26,7 @@ export function odoEstimate(v: any): { odo: number; est: boolean; perDay: number
   let perDay = 0; let span = 0;
   for (const win of [45, 120, 100000]) {
     const c = pts.filter((q) => ln - dayN(q.d) <= win); const f = c[0]; const sp = ln - dayN(f.d);
-    if (c.length >= 2 && sp >= 7 && l.o > f.o) { perDay = (l.o - f.o) / sp; span = sp; break; }
+    if (c.length >= 2 && sp >= 7 && l.o > f.o && (l.o - f.o) / sp <= 1000) { perDay = (l.o - f.o) / sp; span = sp; break; } // over 1,000 km a day is a typing mistake, not a guess to build on
   }
   const since = todayN() - ln;
   if (!(perDay > 0) || since < 2) return { odo: real, est: false, perDay, last: real, lastDate: l.d, span };
