@@ -9,7 +9,18 @@ export async function takePhoto(camera: boolean, o: { square?: boolean } = {}): 
   if (r.canceled || !r.assets || !r.assets[0]) return null;
   const a: any = r.assets[0];
   if (Platform.OS === 'web') return a.base64 ? 'data:' + (a.mimeType || 'image/jpeg') + ';base64,' + a.base64 : a.uri;
-  return keepCopy(o.square ? await toIcon(a.uri) : a.uri);
+  if (o.square) {
+    // A logo is tiny, so it is kept inside your saved data itself. That way it can never go missing like a file can
+    // (the phone cleaning its cache, or a reinstall), and it comes back with your backup.
+    const small = await toIcon(a.uri);
+    try {
+      const FS = await import('expo-file-system/legacy');
+      const b64 = await FS.readAsStringAsync(small, { encoding: FS.EncodingType.Base64 });
+      if (b64 && b64.length < 90000) return 'data:image/jpeg;base64,' + b64;
+    } catch (e) {}
+    return keepCopy(small);
+  }
+  return keepCopy(a.uri);
 }
 // Makes a picture a small square icon. If that is not possible the picture is used as it is.
 async function toIcon(uri: string): Promise<string> {

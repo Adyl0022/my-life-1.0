@@ -38,9 +38,9 @@ const shortD = (v: any) => { const t = typeof v === 'string' ? v : v && v.getFul
 const initials = (n: string) => { const w = n.replace(/[^A-Za-z0-9+ ]/g, ' ').trim().split(/\s+/).filter(Boolean); return ((w[0] || '?')[0] + (w.length > 1 && /[A-Za-z]/.test(w[1][0]) ? w[1][0] : '')).toUpperCase(); };
 // The tile for a subscription: your own picture if you chose one, otherwise the first letters of the name in the category colour.
 function Tile({ name, cat, photo, size = 46 }: { name: string; cat: string; photo?: string; size?: number }) {
-  const c = catOf(cat);
+  const c = catOf(cat); const [bad, setBad] = React.useState(false);
   return <View style={{ width: size, height: size, borderRadius: size * 0.33, backgroundColor: c.c + '22', borderWidth: 1, borderColor: c.c + '88', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-    {photo ? <Image source={{ uri: photo }} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c.c, fontSize: size * 0.4, fontWeight: '800', letterSpacing: 0.5 }}>{initials(name)}</Text>}
+    {photo && !bad ? <Image source={{ uri: photo }} onError={() => setBad(true)} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c.c, fontSize: size * 0.4, fontWeight: '800', letterSpacing: 0.5 }}>{initials(name)}</Text>}
   </View>;
 }
 

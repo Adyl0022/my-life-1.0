@@ -63,9 +63,9 @@ function FoldBtn({ shut, c }: { shut: boolean; c: string }) {
 
 // The little picture of an account: your own image if you chose one, otherwise the first letter in the colour of its type.
 function AccTile({ a, size = 32 }: { a: { name: string; g: AccGroup; photo?: string }; size?: number }) {
-  const c = groupOf(a.g).c;
+  const c = groupOf(a.g).c; const [bad, setBad] = useState(false);
   return <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: c + '26', borderWidth: 1, borderColor: c + '88', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-    {a.photo ? <Image source={{ uri: a.photo }} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c, fontSize: size * 0.42, fontWeight: '800' }}>{(a.name.trim()[0] || '?').toUpperCase()}</Text>}
+    {a.photo && !bad ? <Image source={{ uri: a.photo }} onError={() => setBad(true)} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c, fontSize: size * 0.42, fontWeight: '800' }}>{(a.name.trim()[0] || '?').toUpperCase()}</Text>}
   </View>;
 }
 
