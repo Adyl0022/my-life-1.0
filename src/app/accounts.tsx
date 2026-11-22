@@ -338,7 +338,7 @@ export default function Accounts() {
             </Glass>
           ) : null}
 
-          {[{ title: 'MONEY YOU HAVE', liab: false, tint: ['rgba(124,156,255,.22)', 'rgba(94,231,181,.1)'] as [string, string], sum: t.assets }, { title: 'WHAT YOU OWE', liab: true, tint: ['rgba(255,143,171,.22)', 'rgba(183,148,255,.12)'] as [string, string], sum: t.liab }].map((sec) => {
+          {[{ title: 'MONEY YOU HAVE', liab: false, tint: ['rgba(124,156,255,.22)', 'rgba(94,231,181,.1)'] as [string, string], sum: availView === 1 ? t.assets - resv : t.assets }, { title: 'WHAT YOU OWE', liab: true, tint: ['rgba(255,143,171,.22)', 'rgba(183,148,255,.12)'] as [string, string], sum: t.liab }].map((sec) => {
             const sumG = (k: AccGroup) => data.accs.filter((a) => a.g === k).reduce((x, a) => x + balanceOf(a, data, spends, feeds), 0);
             const sI = sec.liab ? sortL : sortI;
             const gs0 = GROUPS.filter((g) => g.liab === sec.liab && data.accs.some((a) => a.g === g.k));
@@ -360,7 +360,7 @@ export default function Accounts() {
                   </View>
                 ) : null}
                 {gs.map((g) => {
-                  const list = data.accs.filter((a) => a.g === g.k).sort((x, y) => sI === 1 ? balanceOf(y, data, spends, feeds) - balanceOf(x, data, spends, feeds) : sI === 2 ? balanceOf(x, data, spends, feeds) - balanceOf(y, data, spends, feeds) : sI === 3 ? x.name.localeCompare(y.name) : 0); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends, feeds), 0); const shut = fold.includes(g.k);
+                  const list = data.accs.filter((a) => a.g === g.k).sort((x, y) => sI === 1 ? balanceOf(y, data, spends, feeds) - balanceOf(x, data, spends, feeds) : sI === 2 ? balanceOf(x, data, spends, feeds) - balanceOf(y, data, spends, feeds) : sI === 3 ? x.name.localeCompare(y.name) : 0); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends, feeds) - (availView === 1 && !g.liab ? keepOf(a) : 0), 0); const shut = fold.includes(g.k);
                   return (
                     <View key={g.k} style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
                       <Tap onPress={() => setFold(shut ? fold.filter((x) => x !== g.k) : [...fold, g.k])} label={(shut ? 'Open ' : 'Close ') + g.plural} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: shut ? 2 : 4 }}>
@@ -379,7 +379,7 @@ export default function Accounts() {
                           <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
                             <AccTile a={a} size={30} />
                             <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{a.name}</Text>
-                            <Text style={{ color: g.liab ? PINK : W, fontSize: 15, fontWeight: '800' }}>{cs() + money(b)}</Text>
+                            <View style={{ alignItems: 'flex-end' }}><Text style={{ color: g.liab ? PINK : W, fontSize: 15, fontWeight: '800' }}>{cs() + money(availView === 1 && !g.liab ? b - keepOf(a) : b)}</Text>{!g.liab && keepOf(a) > 0 ? <Text style={{ color: dim, fontSize: 11, marginTop: 1 }}>{availView === 1 ? 'after ' + cs() + money(keepOf(a)) + ' kept' : cs() + money(b - keepOf(a)) + ' available'}</Text> : null}</View>
                             <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>
                           </Tap>
                         );
