@@ -2,7 +2,7 @@
 // the Assistant asks for what is missing, one thing at a time (category, date, remark, account, amount), then shows a summary to confirm.
 // Anything the person already said ("makan semalam guna Maybank") is not asked again. Nothing is saved until they confirm.
 import { getItem } from './store';
-import { cs } from './region';
+import { cs, curCode } from './region';
 import { keepWarn } from './assistantKeep';
 
 export type Flow = { kind: 'spend' | 'inc' | 'mtc' | 'odo'; step: 'cat' | 'date' | 'note' | 'acc' | 'amt' | 'odo'; d: { odo?: number; cat?: string; date?: string; ydy?: boolean; note?: string; acc?: number; accName?: string; amt?: number; noAcc?: boolean; noteDone?: boolean }; tries: number };
@@ -63,13 +63,15 @@ export function wordsToNum(text: string): number | null {
 // An amount from what was said: "12", "RM 12.50", "12 ringgit 50 sen", "dua belas ringgit", "lima puluh sen". Null when there is none.
 export function parseAmount(text: string): number | null {
   const t = String(text || '').toLowerCase();
-  const rg = t.match(/(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:[.,]\d{1,2})?)\s*(?:ringgit|rm\b|dollars?|usd|sgd)?\s*(?:(?:dan|and)?\s*(\d{1,2})\s*(?:sen|cents?))?/);
+  // Rupiah and dong are written with a dot for thousands: 50.000 means fifty thousand.
+  if ((curCode() === 'IDR' || curCode() === 'VND') && /^\D*\d{1,3}(?:\.\d{3})+\D*$/.test(t)) { const v = parseFloat((t.match(/\d{1,3}(?:\.\d{3})+/) || ['0'])[0].replace(/\./g, '')); return isFinite(v) && v > 0 ? v : null; }
+  const rg = t.match(/(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:[.,]\d{1,2})?)\s*(?:ringgit|rm\b|dollars?|usd|sgd|rupiah|idr|rp\b|baht|thb|pesos?|php|pounds?|gbp|euros?|eur|yen|jpy|riyals?|dirhams?|aed|rupees?|inr|vnd|dong)?\s*(?:(?:dan|and)?\s*(\d{1,2})\s*(?:sen|cents?))?/);
   if (rg) {
     let a = parseFloat(rg[1].replace(/,(?=\d{3}\b)/g, '').replace(',', '.'));
     if (rg[2]) a += parseInt(rg[2], 10) / 100;
     return isFinite(a) ? a : null;
   }
-  const parts = t.split(/ringgit|dollars?/);
+  const parts = t.split(/ringgit|dollars?|rupiah|baht|pesos?|pounds?|euros?|riyals?|dirhams?|rupees?/);
   if (parts.length > 1) {
     const l = wordsToNum(parts[0]);
     const r = /sen|cents?/.test(parts[1]) ? wordsToNum(parts[1]) : null;
@@ -163,7 +165,7 @@ async function load(host: any, lang: string): Promise<Ctx> {
 }
 
 // Short names people say for the same bank or wallet.
-const BANKS: string[][] = [['maybank', 'mbb', 'maybank2u', 'm2u'], ['cimb', 'cimb clicks'], ['rhb'], ['public bank', 'pbe', 'pbb', 'public'], ['bank islam', 'bimb'], ['bsn'], ['bank rakyat', 'rakyat'], ['affin', 'affin bank'], ['ambank', 'am bank'], ['hong leong', 'hlb'], ['agrobank', 'agro'], ['uob'], ['ocbc'], ['hsbc'], ['standard chartered', 'scb'], ['touch n go', 'touch and go', 'tng', 'tng ewallet', 'tng e-wallet', 'touch n go ewallet'], ['grabpay', 'grab pay', 'grab'], ['shopeepay', 'shopee pay', 'spay'], ['boost'], ['mae', 'mae maybank'], ['gxbank', 'gx bank', 'gx'], ['boost bank'], ['bigpay', 'big pay'], ['setel'], ['tabung haji', 'th'], ['asb', 'asb loan', 'amanah saham bumiputera']];
+const BANKS: string[][] = [['maybank', 'mbb', 'maybank2u', 'm2u'], ['cimb', 'cimb clicks'], ['rhb'], ['public bank', 'pbe', 'pbb', 'public'], ['bank islam', 'bimb'], ['bsn'], ['bank rakyat', 'rakyat'], ['affin', 'affin bank'], ['ambank', 'am bank'], ['hong leong', 'hlb'], ['agrobank', 'agro'], ['uob'], ['ocbc'], ['hsbc'], ['standard chartered', 'scb'], ['touch n go', 'touch and go', 'tng', 'tng ewallet', 'tng e-wallet', 'touch n go ewallet'], ['grabpay', 'grab pay', 'grab'], ['shopeepay', 'shopee pay', 'spay'], ['boost'], ['mae', 'mae maybank'], ['gxbank', 'gx bank', 'gx'], ['boost bank'], ['bigpay', 'big pay'], ['setel'], ['tabung haji', 'th'], ['asb', 'asb loan', 'amanah saham bumiputera'], ['dbs', 'posb', 'dbs paylah', 'paylah'], ['paynow', 'pay now'], ['citibank', 'citi'], ['bca', 'bank central asia'], ['bni'], ['bri'], ['mandiri', 'bank mandiri'], ['cimb niaga', 'niaga'], ['gopay', 'go pay'], ['ovo'], ['dana'], ['linkaja', 'link aja'], ['paypal'], ['wise', 'transferwise'], ['revolut'], ['apple pay', 'applepay'], ['gcash', 'g cash'], ['maya', 'paymaya'], ['bdo'], ['bpi'], ['kasikorn', 'kbank'], ['scb easy', 'siam commercial'], ['bangkok bank', 'bbl'], ['promptpay', 'prompt pay'], ['chase'], ['wells fargo'], ['bank of america', 'bofa'], ['lloyds'], ['barclays'], ['monzo'], ['natwest']];
 const sameBank = (a: string, b: string) => BANKS.some((g) => g.some((x) => a.indexOf(x) >= 0) && g.some((x) => b.indexOf(x) >= 0));
 
 export function parseAcc(text: string, accs: { id: number; name: string }[]) {
