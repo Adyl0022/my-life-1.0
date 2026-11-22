@@ -17,6 +17,8 @@ const SYN: Record<string, string[]> = {
   Other: ['other', 'lain', 'lain lain', 'lainlain', 'entah', 'tak tahu', 'tidak tahu', 'miscellaneous', 'misc'],
 };
 
+// One name per line, so a long list is easy to read.
+export const bl = (xs: string[]) => '\n' + xs.map((x) => '• ' + x).join('\n');
 export const norm = (s: string) => ' ' + String(s || '').toLowerCase().replace(/[^a-z0-9À-ɏ/.:,\- ]+/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
 export const hasW = (t: string, w: string) => t.indexOf(' ' + w + ' ') >= 0 || t.indexOf(' ' + w) >= 0 && w.length >= 4 && t.indexOf(' ' + w) >= 0;
 
@@ -185,10 +187,10 @@ function fill(f: Flow, text: string, c: Ctx, only?: string[]) {
 function question(f: Flow, c: Ctx, first: boolean): string {
   const { L } = c; const s = need(f);
   const intro = first ? L('Sure, let us add your spending. ', 'Boleh, kita isikan perbelanjaan awak. ') : '';
-  if (s === 'cat') return intro + L('Which category was it? ' + c.cats.join(', ') + '.', 'Kategori apa? ' + c.cats.join(', ') + '.');
+  if (s === 'cat') return intro + L('Which category was it? ' + bl(c.cats), 'Kategori apa? ' + bl(c.cats));
   if (s === 'date') return intro + L('Which date was it? Say today, yesterday, or a date like 15/11.', 'Tarikh bila? Sebut hari ini, semalam, atau tarikh seperti 15/11.');
   if (s === 'note') return intro + L('Any remark? Say "no" to skip.', 'Ada catatan? Sebut "tiada" untuk langkau.');
-  if (s === 'acc') return intro + L('Paid from which account? ' + c.accs.map((a) => a.name).join(', ') + ', or say "none".', 'Bayar guna akaun mana? ' + c.accs.map((a) => a.name).join(', ') + ', atau sebut "tiada".');
+  if (s === 'acc') return intro + L('Paid from which account? ' + bl(c.accs.map((a) => a.name)) + '\n' + 'Or say "none".', 'Bayar guna akaun mana? ' + bl(c.accs.map((a) => a.name)) + '\n' + 'Atau sebut "tiada".');
   return intro + L('How much was it in ' + cs() + '?', 'Berapa ' + cs() + ' jumlahnya?');
 }
 
@@ -293,7 +295,7 @@ export async function flowTurn(host: any, q: string, lang: string): Promise<any 
       if (sg) {
         // Answering "Is it X?": yes keeps it, no or another category changes it.
         if (/^(ya|yes|yep|yup|betul|boleh|ok|okay|setuju|sah|haah|ha|yelah|ye|sure|correct|right)\b/.test(n)) { f.d.cat = sg; (f.d as any).sugg = undefined; }
-        else if (/^(tidak|tak|bukan|no|nope|x|salah|tak betul|tidak betul|not)\b/.test(n) && !parseCat(t, c.cats)) { (f.d as any).sugg = undefined; (f.d as any).noSugg = true; return out(L('Okay. Which category then? ' + c.cats.join(', ') + '.', 'Baik. Kategori apa pula? ' + c.cats.join(', ') + '.'), f); }
+        else if (/^(tidak|tak|bukan|no|nope|x|salah|tak betul|tidak betul|not)\b/.test(n) && !parseCat(t, c.cats)) { (f.d as any).sugg = undefined; (f.d as any).noSugg = true; return out(L('Okay. Which category then? ' + bl(c.cats), 'Baik. Kategori apa pula? ' + bl(c.cats)), f); }
         else { (f.d as any).sugg = undefined; }
       }
       if (!f.d.cat && !(f.d as any).noSugg) {
@@ -302,7 +304,7 @@ export async function flowTurn(host: any, q: string, lang: string): Promise<any 
         if (g && !own) { (f.d as any).sugg = g.cat; return out(L('"' + g.word + '" is usually under ' + g.cat + ' for you. Is that right? Say yes, or say another category.', '"' + g.word + '" biasanya awak letak bawah ' + g.cat + '. Betul? Sebut ya, atau sebut kategori lain.'), f); }
       }
       if (!f.d.cat) fill(f, t, c, ['cat', 'date', 'acc']);
-      if (!f.d.cat) { f.tries++; return out(L('I did not catch the category. Please pick one: ' + c.cats.join(', ') + '.', 'Saya tak dapat tangkap kategori itu. Sila pilih satu: ' + c.cats.join(', ') + '.'), f); }
+      if (!f.d.cat) { f.tries++; return out(L('I did not catch the category. Please pick one: ' + bl(c.cats), 'Saya tak dapat tangkap kategori itu. Sila pilih satu: ' + bl(c.cats)), f); }
     } else if (step === 'date') {
       const x = parseDate(t);
       if (!x) { f.tries++; return out(L('I did not catch the date. Say today, yesterday, or a date like 15/11.', 'Saya tak dapat tangkap tarikh itu. Sebut hari ini, semalam, atau tarikh seperti 15/11.'), f); }
@@ -312,7 +314,7 @@ export async function flowTurn(host: any, q: string, lang: string): Promise<any 
       if (!SKIP.test(n)) { const nt = t.replace(/^(catatan|remark|note|nota)\s*[:\-]?\s*/i, '').trim().slice(0, 80); if (nt) f.d.note = nt.charAt(0).toUpperCase() + nt.slice(1); }
     } else if (step === 'acc') {
       if (SKIP.test(n) || /\b(tiada akaun|no account|none)\b/.test(n)) f.d.noAcc = true;
-      else { const x = parseAcc(t, c.accs); if (!x) { f.tries++; return out(L('I did not find that account. Say one of: ' + c.accs.map((a) => a.name).join(', ') + ', or "none".', 'Saya tak jumpa akaun itu. Sebut salah satu: ' + c.accs.map((a) => a.name).join(', ') + ', atau "tiada".'), f); } f.d.acc = x.id; f.d.accName = x.name; }
+      else { const x = parseAcc(t, c.accs); if (!x) { f.tries++; return out(L('I did not find that account. Say one of: ' + bl(c.accs.map((a) => a.name)) + '\nOr "none".', 'Saya tak jumpa akaun itu. Sebut salah satu: ' + bl(c.accs.map((a) => a.name)) + '\nAtau "tiada".'), f); } f.d.acc = x.id; f.d.accName = x.name; }
     } else if (step === 'amt') {
       const a = parseAmount(t);
       if (a == null || !(a > 0) || a > 9999999) { f.tries++; return out(L('That is not a valid amount. Please say a number, for example 12 or 12.50.', 'Itu bukan jumlah yang betul. Sila sebut nombor, contohnya 12 atau 12.50.'), f); }

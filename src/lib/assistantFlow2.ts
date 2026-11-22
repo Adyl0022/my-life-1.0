@@ -2,7 +2,7 @@
 // The same idea as assistantFlow.ts: ask one thing at a time, show a summary, save only after the person says yes.
 import { getItem } from './store';
 import { cs } from './region';
-import { norm, hasW, QUESTION, START_VERB, SKIP, CANCEL, dstr, parseAmount, parseAcc, parseDate } from './assistantFlow';
+import { bl, norm, hasW, QUESTION, START_VERB, SKIP, CANCEL, dstr, parseAmount, parseAcc, parseDate } from './assistantFlow';
 
 type Kind = 'task' | 'event' | 'xfer' | 'sub' | 'loan';
 export type Flow2 = { kind: Kind; step: string; d: any };
@@ -103,7 +103,7 @@ export async function genTurn(host: any, q: string, lang: string): Promise<any |
     else if (st === 'prio') { const v = pick(t, PRIO); if (!v) return bad('Say High, Medium or Low.', 'Sebut tinggi, sederhana atau rendah.'); d.prio = v; }
     else if (st === 'remind') { const v = pick(t, REMS); if (!v) return bad('Say none, on the day, a day before or a week before.', 'Sebut tiada, pada hari itu, sehari sebelum atau seminggu sebelum.'); d.remind = v; }
     else if (st === 'from' || st === 'to') {
-      const x = parseAcc(t, accs); if (!x) return bad('I did not find that account. Say one of: ' + accs.map((a) => a.name).join(', ') + '.', 'Saya tak jumpa akaun itu. Sebut salah satu: ' + accs.map((a) => a.name).join(', ') + '.');
+      const x = parseAcc(t, accs); if (!x) return bad('I did not find that account. Say one of: ' + bl(accs.map((a) => a.name)), 'Saya tak jumpa akaun itu. Sebut salah satu: ' + bl(accs.map((a) => a.name)));
       if (st === 'to' && x.id === d.from) return bad('That is the same account. Pick a different one.', 'Itu akaun yang sama. Pilih akaun lain.');
       d[st] = x.id; d[st + 'Name'] = x.name;
     }
@@ -123,7 +123,7 @@ export async function genTurn(host: any, q: string, lang: string): Promise<any |
   const Q: Record<string, [string, string]> = {
     'task:name': ['What is the task?', 'Apa tugasannya?'], 'task:due': ['When is it due? Say for example tomorrow or Friday, or "no" for no date.', 'Bila tarikh akhirnya? Sebut contohnya esok atau Jumaat, atau "tiada" kalau tiada tarikh.'], 'task:prio': ['How important is it? High, Medium or Low.', 'Seberapa penting? Tinggi, sederhana atau rendah.'],
     'event:name': ['What is the event?', 'Apa acaranya?'], 'event:date': ['Which date? Say for example tomorrow, Friday or 15/12.', 'Tarikh bila? Sebut contohnya esok, Jumaat atau 15/12.'], 'event:remind': ['When should I remind you? None, on the day, a day before or a week before.', 'Bila nak diingatkan? Tiada, pada hari itu, sehari sebelum atau seminggu sebelum.'],
-    'xfer:from': ['Move money from which account? ' + accs.map((a) => a.name).join(', ') + '.', 'Pindah dari akaun mana? ' + accs.map((a) => a.name).join(', ') + '.'], 'xfer:to': ['To which account?', 'Ke akaun mana?'], 'xfer:amt': ['How much in ' + cs() + '?', 'Berapa ' + cs() + '?'],
+    'xfer:from': ['Move money from which account? ' + bl(accs.map((a) => a.name)), 'Pindah dari akaun mana? ' + bl(accs.map((a) => a.name))], 'xfer:to': ['To which account?', 'Ke akaun mana?'], 'xfer:amt': ['How much in ' + cs() + '?', 'Berapa ' + cs() + '?'],
     'sub:name': ['Which subscription? For example Netflix or Spotify.', 'Langganan apa? Contohnya Netflix atau Spotify.'], 'sub:price': ['How much each time in ' + cs() + '?', 'Berapa ' + cs() + ' setiap kali bayar?'], 'sub:cycle': ['How often? Weekly, monthly, every 3 months, every 6 months or yearly.', 'Berapa kerap? Mingguan, bulanan, setiap 3 bulan, setiap 6 bulan atau tahunan.'], 'sub:next': ['When is the next charge? Say a date like 15/12 or "next week".', 'Bila bayaran seterusnya? Sebut tarikh seperti 15/12 atau "minggu depan".'],
     'loan:dir': ['Did you lend it (you gave) or borrow it (you took)?', 'Awak yang pinjamkan (awak bagi) atau awak yang meminjam (awak ambil)?'], 'loan:what': ['Is it money or a thing?', 'Duit atau barang?'], 'loan:who': ['With whom?', 'Dengan siapa?'], 'loan:item': [d.what === 'money' ? 'How much in ' + cs() + '?' : 'What is the thing?', d.what === 'money' ? 'Berapa ' + cs() + '?' : 'Barang apa?'], 'loan:due': ['When should it be returned? Say a date or "no".', 'Bila patut dipulangkan? Sebut tarikh atau "tiada".'],
   };
