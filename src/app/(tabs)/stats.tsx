@@ -25,7 +25,7 @@ import { useCore, weekly, records, hasData as hasHab, dayPct, incomeOf } from '.
 import { mins as relaxMins, fmtMin } from '../../lib/relax';
 import { medAdherence } from '../../lib/medMissed';
 import { cycleInfo, statusText, SYMS, fmtD } from '../../lib/cycle';
-import { ENERGY } from '../../lib/patterns';
+import { ENERGY, energyEstimate, restSignal } from '../../lib/patterns';
 import { debtSummary, remainingAt, amountDue, yearsMonths, payoffLabel } from '../../lib/debts';
 import { TOP } from '../../lib/layout';
 import { monthRows } from '../../lib/financeStats';
@@ -103,12 +103,13 @@ export default function Stats() {
   const spendOn = (o: number) => ((fin && fin.spends) || []).filter((x: any) => x.cat !== 'Savings' && x.date === keyOfDate(dateOf(o))).reduce((a, b) => a + (b.amt || 0), 0);
   // Relax, energy and medicine join the list once there is something logged
   const rl7 = last7.map((o) => relaxMins(getDay(hd, o)));
-  const en7 = last7.map((o) => { const e = getDay(hd, o).en; return e !== undefined && e >= 0 ? 4 - e : 0; });
+  const enEst7 = last7.map((o) => { const x = getDay(hd, o); if (x.en !== undefined && x.en >= 0) return false; return !!energyEstimate(x, cg, hd.goal || 8000, restSignal(hd, keyOfDate(dateOf(o)))); });
+  const en7 = last7.map((o, i) => { const x = getDay(hd, o); if (x.en !== undefined && x.en >= 0) return 4 - x.en; if (!enEst7[i]) return 0; const e = energyEstimate(x, cg, hd.goal || 8000, restSignal(hd, keyOfDate(dateOf(o)))); return e ? 4 - e.lvl : 0; });
   const ad7 = hd.meds && hd.meds.length ? medAdherence(hd, new Date(), el) : null;
-  type Tr = { t: string; k: string; c: string; v: number[]; fmt: (n: number) => string; unit: string; sum?: boolean };
+  type Tr = { t: string; k: string; c: string; v: number[]; fmt: (n: number) => string; unit: string; sum?: boolean; est?: boolean[] };
   const extraTr: Tr[] = [];
   if (rl7.some((v) => v > 0)) extraTr.push({ t: 'Relax', k: 'relax', c: '#8fe9e2', v: rl7, fmt: (n: number) => fmtMin(n), unit: 'min a day' });
-  if (en7.some((v) => v > 0)) extraTr.push({ t: 'Energy', k: 'energy', c: '#ffc46b', v: en7, fmt: () => { const l = en7.filter((v) => v > 0); return ENERGY[Math.max(0, Math.min(3, 4 - Math.round(l.reduce((a, b) => a + b, 0) / l.length)))][0]; }, unit: 'on average' });
+  if (en7.some((v) => v > 0)) extraTr.push({ t: 'Energy', k: 'energy', c: '#ffc46b', v: en7, fmt: () => { const l = en7.filter((v) => v > 0); return ENERGY[Math.max(0, Math.min(3, 4 - Math.round(l.reduce((a, b) => a + b, 0) / l.length)))][0]; }, unit: 'on average', est: enEst7 });
   if (ad7 && ad7.due > 0) extraTr.push({ t: 'Medicine', k: 'medicine', c: '#5ee7df', v: [...ad7.daily, ...Array(7 - el).fill(0)], fmt: (n: number) => String(Math.round(n)), unit: 'of ' + ad7.due + ' doses taken', sum: true });
   const trends: Tr[] = [
     { t: 'Steps', k: 'steps', c: '#34d399', v: last7.map((o) => getDay(hd, o).steps), fmt: (n: number) => Math.round(n).toLocaleString(), unit: 'a day' },
@@ -458,7 +459,7 @@ export default function Stats() {
                       {tr.v.map((v, i) => (
                         <View key={i} style={{ flex: 1, height: 44, justifyContent: 'flex-end' }}>
                           <GrowBar h={Math.max(4, Math.round((v / mx) * 44))} delay={ti * 60 + i * 40} dep={tr.v.join()} style={{ width: '100%' }}>
-                            <View style={{ flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === el - 1 ? 1 : 0.5 }} />
+                            <View style={tr.est && tr.est[i] ? { flex: 1, borderRadius: 4, borderWidth: 1.5, borderStyle: 'dashed', borderColor: tr.c, backgroundColor: tr.c + '33' } : { flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === el - 1 ? 1 : 0.5 }} />
                           </GrowBar>
                         </View>
                       ))}
@@ -466,6 +467,7 @@ export default function Stats() {
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                       {wd.map((d, i) => <Text key={i} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{d}</Text>)}
                     </View>
+                    {tr.est && tr.est.some(Boolean) ? <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6, lineHeight: 15 }}>Dashed bars are estimates worked out from your sleep, water, steps, mood and night pulse. Rate your energy in Habit and Health and your own rating replaces the estimate.</Text> : null}
                   </View>
                 );
               })}
