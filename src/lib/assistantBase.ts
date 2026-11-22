@@ -706,7 +706,7 @@ export class AssistantBase extends React.Component<any, any> {
       const t = totals(d, sp, 0, feeds);
       const col = (await getItem('ml_collection', { items: [] })) || { items: [] }; const tv = thingsValue(col.items || []); const wt = await getItem('ml_acc_things', 1);
       const nw = totals(d, sp, commitTotal(dbt.debts || []), feeds).total + tv.total;
-      const asset = tv.total > 0 && wt !== 0 ? '\n\n' + L('Your assets (things, a guess): ~', 'Aset barang awak (anggaran): ~') + fm(tv.total) + '\n' + L('Net worth: ~', 'Net worth: ~') + fm(nw) : '';
+      const asset = tv.total > 0 && wt !== 0 ? '\n\n' + L('Physical assets (a guess): est. ', 'Physical assets (anggaran): est. ') + fm(tv.total) + '\n' + L('Net worth: est. ', 'Net worth: est. ') + fm(nw) : '';
       return { m: this.mk(lines.join('\n') + '\n\n' + L('Money you have: ', 'Wang yang awak ada: ') + fm(t.assets) + (t.liab > 0 ? '\n' + L('Cards and loans owed: ', 'Kad dan pinjaman yang terhutang: ') + fm(t.liab) : '') + '\n' + L('Net: ', 'Bersih: ') + fm(t.total) + asset), patch: {}, act: null };
     } catch (e) { return null; }
   }

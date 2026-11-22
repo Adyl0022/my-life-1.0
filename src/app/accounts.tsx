@@ -424,7 +424,7 @@ export default function Accounts() {
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{net < 0 ? 'What you owe is more than your money' + (withThings ? ' and things.' : '.') : 'Your money' + (withThings ? ' and things are' : ' is') + ' more than what you owe.'}</Text>
                 <View style={{ marginTop: 12, borderRadius: 16, padding: 14, backgroundColor: 'rgba(255,255,255,.1)' }}>
                   <Row l="Money in accounts" sub="Cash, banks and wallets" v={cs() + money(t.assets)} />
-                  <Row l="Your assets" sub={withThings ? 'A guess, from Personal Collection' : 'Left out of the total'} v={'Est. ' + cs() + money(tv.total)} col={withThings ? undefined : 'rgba(255,255,255,.55)'} />
+                  <Row l="Physical assets" sub={withThings ? 'A guess, from Personal Collection' : 'Left out of the total'} v={'Est. ' + cs() + money(tv.total)} col={withThings ? undefined : 'rgba(255,255,255,.55)'} />
                   {cats.map((r) => (
                     <View key={r[0]} style={{ marginLeft: 12, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: 'rgba(255,255,255,.18)', flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}>
                       <View style={{ flex: 1 }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5 }}>{r[0]}</Text><Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 10.5 }}>{r[2]}</Text></View>
