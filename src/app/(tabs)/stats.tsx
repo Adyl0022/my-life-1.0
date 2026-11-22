@@ -25,7 +25,7 @@ import { useCore, weekly, records, hasData as hasHab, dayPct, incomeOf } from '.
 import { mins as relaxMins, fmtMin } from '../../lib/relax';
 import { medAdherence } from '../../lib/medMissed';
 import { cycleInfo, statusText, SYMS, fmtD } from '../../lib/cycle';
-import { ENERGY, energyEstimate, restSignal } from '../../lib/patterns';
+import { ENERGY, energyEstimate, restSignal, findPatterns } from '../../lib/patterns';
 import { debtSummary, remainingAt, amountDue, yearsMonths, payoffLabel } from '../../lib/debts';
 import { TOP } from '../../lib/layout';
 import { monthRows } from '../../lib/financeStats';
@@ -327,6 +327,26 @@ export default function Stats() {
                 </Glass>
                 </Rise>
               ) : null}
+
+              {(() => {
+                const pats = findPatterns(hd).list.filter((x) => x.id.endsWith('-energy')).slice(0, 3);
+                if (!pats.length && en30 === 0) return null;
+                return (
+                  <Rise i={4}>
+                  <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HeadIcon k="energy" size={24} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>What helps your energy</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 30 days</Text></View>
+                    {pats.length ? pats.map((x) => (
+                      <View key={x.id} style={{ marginTop: 10, padding: 11, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,196,107,.35)', backgroundColor: 'rgba(255,196,107,.1)' }}>
+                        <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>{x.title}</Text>
+                        <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4, lineHeight: 17 }}>{x.detail}</Text>
+                        <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, marginTop: 4 }}>{x.range}</Text>
+                      </View>
+                    )) : <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{'Nothing clear yet. You rated your energy on ' + en30 + (en30 === 1 ? ' day' : ' days') + '. Rate it on about 10 days, together with sleep, water or steps, and this card shows what lifts it for you.'}</Text>}
+                    <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 10, lineHeight: 16 }}>Only the energy you rated yourself is counted, never the estimate. It shows what went together on your days, not what caused it.</Text>
+                  </Glass>
+                  </Rise>
+                );
+              })()}
 
 
               {ci ? (
