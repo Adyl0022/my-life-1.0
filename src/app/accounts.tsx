@@ -290,7 +290,7 @@ export default function Accounts() {
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
   const [col] = useStored<ColStore>('ml_collection', EMPTY_COL); const [withThings, setWithThings] = useStored<number>('ml_acc_things', 1); const tv = thingsValue((col && col.items) || []);
   const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
-  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [availView, setAvailView] = useStored<number>('ml_acc_avail', 0); const resv = reservedTotal(data); const shownTotal = availView === 1 && resv > 0 ? t.total - resv : t.total; const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
+  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [availView, setAvailView] = useStored<number>('ml_acc_avail', 0); const [nwOpen, setNwOpen] = useStored<number>('ml_acc_nw', 0); const resv = reservedTotal(data); const shownTotal = availView === 1 && resv > 0 ? t.total - resv : t.total; const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
   // Sort by: your own order (move groups up or down), most money first, least money first, or A to Z. It is kept on this phone.
   const SORTS = ['My order', 'Highest', 'Lowest', 'A to Z']; const [sortI, setSortI] = useStored<number>('ml_acc_sort', 0); const [sortL, setSortL] = useStored<number>('ml_acc_sort_owe', 0); const [gOrd, setGOrd] = useStored<string[]>('ml_acc_order', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
@@ -320,7 +320,7 @@ export default function Accounts() {
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Stat l="Assets" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} />
             </View>
-            {resv > 0 ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>{availView === 1 ? 'This takes off the ' + cs() + money(resv) + ' your banks need you to keep, so it is what you can really spend.' : 'This counts the ' + cs() + money(resv) + ' your banks need you to keep. It is your money, but you cannot spend it.'}</Text> : null}
+            {resv > 0 ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{(availView === 1 ? 'After ' : 'Includes ') + cs() + money(resv) + ' your banks need you to keep'}</Text> : null}
           </Glass>
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
@@ -350,7 +350,6 @@ export default function Accounts() {
                 <LinearGradient colors={sec.tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.3 }}>{sec.title}</Text>
-                  <Text style={{ color: sec.liab ? PINK : '#9fb6ff', fontSize: 15, fontWeight: '800' }}>{cs() + money(sec.sum)}</Text>
                 </View>
                 {data.accs.filter((a) => groupOf(a.g).liab === sec.liab).length + (sec.liab ? cms.length : 0) > 1 ? (
                   <View style={{ marginTop: 10 }}>
@@ -436,6 +435,8 @@ export default function Accounts() {
                   <View style={{ flex: Math.max(0.0001, owe / tot), backgroundColor: PINK }} />
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{net < 0 ? 'What you owe is more than your money' + (withThings ? ' and things.' : '.') : 'Your money' + (withThings ? ' and things are' : ' is') + ' more than what you owe.'}</Text>
+                <Tap onPress={() => setNwOpen(nwOpen ? 0 : 1)} label={nwOpen ? 'Hide details' : 'Show details'} style={{ marginTop: 10 }}><Text style={{ color: '#b9c8ff', fontSize: 13, fontWeight: '700' }}>{nwOpen ? 'Hide details ˄' : 'Show details ˅'}</Text></Tap>
+                {nwOpen ? (<>
                 <View style={{ marginTop: 12, borderRadius: 16, padding: 14, backgroundColor: 'rgba(255,255,255,.1)' }}>
                   <Row l="Money in accounts" sub={resv > 0 ? 'Cash, banks and wallets. Includes ' + cs() + money(resv) + ' your banks need you to keep' : 'Cash, banks and wallets'} v={cs() + money(t.assets)} />
                   <Row l="Physical assets" sub={withThings ? 'A guess, from Personal Collection' : 'Left out of the total'} v={'Est. ' + cs() + money(tv.total)} col={withThings ? undefined : 'rgba(255,255,255,.55)'} />
@@ -449,11 +450,12 @@ export default function Accounts() {
                 </View>
                 <View style={{ marginTop: 10 }}><EqPills tabs={['Count in total', 'Leave out']} index={withThings ? 0 : 1} onChange={(i) => setWithThings(i === 0 ? 1 : 0)} colors={['#7c9cff', '#b794ff']} /></View>
                 <Tap onPress={() => router.push('/collection')} label="Open Personal Collection" style={{ marginTop: 10 }}><Text style={{ color: '#b9c8ff', fontSize: 13, fontWeight: '700' }}>Open Personal Collection ›</Text></Tap>
-                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>Things are a guess from the prices and dates you entered. Net worth is money plus things, minus what you owe. Rent is not counted.</Text>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>Things are a guess from your prices and dates. Rent is not counted.</Text>
+                </>) : null}
               </Glass>
             );
           })() : null}
-          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone from what you enter and from the spending you link to an account. They are saved with your My Life 1.0 data and synced to your account like your other finance entries. My Life 1.0 never connects to your bank.</Text>
+          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone and synced like your other finance entries. My Life 1.0 never connects to your bank.</Text>
         </ScrollView>
       </SafeAreaView>
       {form ? <AccountForm ctx={ctx} edit={form.edit} onClose={() => setForm(null)} /> : null}
