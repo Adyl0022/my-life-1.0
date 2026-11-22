@@ -215,7 +215,7 @@ export default function Finance() {
           </Pressable>
 
           <SubChargeCard subs={sbs} setSubs={setSbs} spends={d.spends} nextId={d.nextId} addSpend={(sp) => setD({ ...d, spends: [sp, ...d.spends], nextId: d.nextId + 1 })} today={ymdNow()} accName={(id) => { const a = accD.accs.find((x) => x.id === id); return a ? a.name : ''; }} accWarn={(id, am) => { const fa = accD.accs.find((x) => x.id === id); if (!fa || !(am > 0) || keepOf(fa) <= 0) return ''; const left = balanceOf(fa, accD, d.spends as any, { debts: dbt.debts as any, incomes: incomeFeed(d.inc, d.incAcc) }) - am; return left < keepOf(fa) ? 'Careful: this leaves ' + cs() + money(Math.max(0, left)) + ' in ' + fa.name + ', below the ' + cs() + money(keepOf(fa)) + ' you keep in it. You can still continue.' : ''; }} />
-          <MoneyLeft ym={ym} income={total} spends={all} />
+          <MoneyLeft ym={ym} income={total} spends={all} canSpend={accD.accs.some((a) => !isLiab(a)) ? Math.max(0, accTot.assets - reservedTotal(accD)) : undefined} />
           <TodaySpend spends={d.spends} />
 
           <Pressable onPress={() => router.push('/savings')}>
