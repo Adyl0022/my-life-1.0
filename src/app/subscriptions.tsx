@@ -124,14 +124,15 @@ function Sheet({ f, setF, onSave, onSaveNow, onDelete, onClose }: { f: Form; set
         <Text style={{ color: W, fontSize: 14 }}>This is a free trial</Text>
       </Pressable>
       </Sec>
-      <Sec><L2 t="PAID WITH (OPTIONAL)" />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{PAYS.map((x) => { const on = f.pay === x.k; return <Pressable key={x.k} onPress={() => set({ pay: on ? '' : x.k })} accessibilityLabel={x.n}><View style={chip(on, BL)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{x.n}</Text></View></Pressable>; })}</View>
-      <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>Only the type is kept. Never type a card number here.</Text>
-      </Sec>
-      {accList.length ? (<Sec><L2 t="PAID FROM ACCOUNT (OPTIONAL)" />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{accList.map((a) => { const on = f.acc === a.id; return <Pressable key={a.id} onPress={() => set({ acc: on ? undefined : a.id })} accessibilityLabel={a.name}><View style={chip(on, groupOf(a.g).c)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{a.name}</Text></View></Pressable>; })}</View>
+      <Sec><L2 t="PAID FROM (OPTIONAL)" />
+      {accList.length ? (<>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{accList.map((a) => { const on = f.acc === a.id; return <Pressable key={a.id} onPress={() => set(on ? { acc: undefined, pay: '' } : { acc: a.id, pay: ({ card: 'credit', ewallet: 'ewallet', bank: 'bank', saving: 'bank', cash: 'other' } as any)[a.g] || 'other' })} accessibilityLabel={a.name}><View style={chip(on, groupOf(a.g).c)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{a.name}</Text></View></Pressable>; })}</View>
       <Text style={{ color: dim, fontSize: 11.5, marginTop: 6, lineHeight: 16 }}>When a charge is due, My Life 1.0 asks you first. If you say yes, the amount is taken off this account in My Accounts. Nothing is taken without you tapping. The account is saved with your subscription and synced like your other finance entries.</Text>
-      </Sec>) : null}
+      </>) : (<>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{PAYS.map((x) => { const on = f.pay === x.k; return <Pressable key={x.k} onPress={() => set({ pay: on ? '' : x.k })} accessibilityLabel={x.n}><View style={chip(on, BL)}><Text style={{ color: W, fontSize: 12.5, fontWeight: '700' }}>{x.n}</Text></View></Pressable>; })}</View>
+      <Text style={{ color: dim, fontSize: 11.5, marginTop: 6 }}>Only the type is kept. Never type a card number here. Add your accounts in My Accounts to link a real account instead.</Text>
+      </>)}
+      </Sec>
       <Sec><L2 t="CATEGORY" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 9 }}>{SUB_CATS.map((c) => { const on = f.cat === c.k; return <Pressable key={c.k} onPress={() => set({ cat: c.k })} accessibilityLabel={c.n} style={{ width: '31.5%' }}><View style={{ height: 78, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: on ? c.c : 'rgba(255,255,255,.16)', backgroundColor: on ? c.c + '33' : 'rgba(255,255,255,.07)' }}><LineIcon name={c.icon} c={on ? '#fff' : c.c} size={24} /><Text style={{ color: W, fontSize: 12.5, fontWeight: on ? '800' : '600' }}>{c.n}</Text></View></Pressable>; })}</View>
       </Sec>

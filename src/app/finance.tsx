@@ -399,7 +399,7 @@ export default function Finance() {
                 <DateField value={fDate} onChange={setFDate} />
                 <Inp style={{ marginTop: 8 }} value={fNote} onChangeText={setFNote} placeholder="Remark (optional)" />
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                  {NOTE_QUICK.map((t) => { const on = fNote.split(',').map((x) => x.trim()).includes(t); return (
+                  {NOTE_QUICK.filter((t) => !accD.accs.length || !['Cash', 'Card', 'E-wallet'].includes(t)).map((t) => { const on = fNote.split(',').map((x) => x.trim()).includes(t); return (
                     <Pressable key={t} onPress={() => quickNote(t)} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: on ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '600' }}>{t}</Text></Pressable>
                   ); })}
                 </View>
