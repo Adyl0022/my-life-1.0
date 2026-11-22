@@ -400,7 +400,7 @@ export default function Accounts() {
             <Glass radius={24} style={{ marginTop: 14, padding: 16 }}>
               <LinearGradient colors={['rgba(142,168,255,.3)', 'rgba(183,148,255,.18)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
               <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>YOUR ASSETS</Text>
-              <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{'est. ' + rmC(tv.total)}</Text>
+              <Text style={{ color: W, fontSize: 22, fontWeight: '800', marginTop: 4 }}>{'EST. ' + rmC(tv.total)}</Text>
               {[['Gadgets', tv.gadget, 'gets less valuable each year'], ['Lifestyle', tv.lifestyle, 'gets less valuable each year'], ['Vehicles', tv.vehicle, 'gets less valuable with age'], ['Property', tv.property, 'your own worth, or the price you paid']].filter((r) => (r[1] as number) > 0).map((r) => (
                 <View key={r[0] as string} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)', marginTop: 6 }}>
                   <View style={{ flex: 1 }}><Text style={{ color: W, fontSize: 14, fontWeight: '700' }}>{r[0] as string}</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>{r[2] as string}</Text></View>
@@ -426,7 +426,7 @@ export default function Accounts() {
                 return (
                   <View style={{ marginTop: 12, borderRadius: 16, padding: 14, backgroundColor: 'rgba(255,255,255,.1)' }}>
                     <Row l="Money in accounts" sub="Cash, banks and wallets" v={cs() + money(t.assets)} />
-                    <Row l="Your things" sub="A guess, from the card above" v={'est. ' + cs() + money(tv.total)} />
+                    <Row l="Your things" sub="A guess, from the card above" v={'EST. ' + cs() + money(tv.total)} />
                     <Row l="What you owe" sub="Cards, loans and commitments" v={'- ' + cs() + money(owe)} col={PINK} onPress={() => router.push('/finance')} />
                     <View style={{ flexDirection: 'row', height: 7, borderRadius: 4, overflow: 'hidden', marginTop: 8, backgroundColor: 'rgba(255,255,255,.1)' }}>
                       <View style={{ flex: Math.max(0.0001, have / tot), backgroundColor: BLUE }} />
@@ -435,7 +435,7 @@ export default function Accounts() {
                     <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{net < 0 ? 'What you owe is more than your money and things.' : 'Your money and things are more than what you owe.'}</Text>
                     <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.14)', marginVertical: 10 }} />
                     <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1 }}>NET WORTH</Text>
-                    <Text style={{ color: net < 0 ? PINK : W, fontSize: 24, fontWeight: '800', marginTop: 2 }}>{'est. ' + (net < 0 ? '- ' : '') + cs() + money(Math.abs(net))}</Text>
+                    <Text style={{ color: net < 0 ? PINK : W, fontSize: 24, fontWeight: '800', marginTop: 2 }}>{'EST. ' + (net < 0 ? '- ' : '') + cs() + money(Math.abs(net))}</Text>
                   </View>
                 );
               })() : null}
