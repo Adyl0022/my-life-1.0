@@ -437,7 +437,7 @@ export default function Accounts() {
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{net < 0 ? 'What you owe is more than your money' + (withThings ? ' and things.' : '.') : 'Your money' + (withThings ? ' and things are' : ' is') + ' more than what you owe.'}</Text>
                 <View style={{ marginTop: 12, borderRadius: 16, padding: 14, backgroundColor: 'rgba(255,255,255,.1)' }}>
-                  <Row l="Money in accounts" sub="Cash, banks and wallets" v={cs() + money(t.assets)} />
+                  <Row l="Money in accounts" sub={resv > 0 ? 'Cash, banks and wallets. Includes ' + cs() + money(resv) + ' your banks need you to keep' : 'Cash, banks and wallets'} v={cs() + money(t.assets)} />
                   <Row l="Physical assets" sub={withThings ? 'A guess, from Personal Collection' : 'Left out of the total'} v={'Est. ' + cs() + money(tv.total)} col={withThings ? undefined : 'rgba(255,255,255,.55)'} />
                   {cats.map((r) => (
                     <View key={r[0]} style={{ marginLeft: 12, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: 'rgba(255,255,255,.18)', flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}>
