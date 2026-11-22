@@ -236,7 +236,7 @@ async function otherTurn(host: any, q: string, lang: string, f: Flow | null): Pr
     const st = f.step;
     if (st === 'cat') {
       const x = pickType(t, f.kind === 'inc' ? INC_TYPES : MTC_TYPES);
-      if (!x) return out(f.kind === 'inc' ? L('I did not catch the type. Say one of: Salary, Overtime, Bonus, Claim, Income.', 'Saya tak dapat tangkap jenis itu. Sebut salah satu: Gaji, Overtime, Bonus, Claim, Income.') : L('I did not catch the work done. Say for example oil change, service, tyres, brakes, chain, battery or repair.', 'Saya tak dapat tangkap kerja itu. Sebut contohnya tukar minyak, servis, tayar, brek, rantai, bateri atau baiki.'), f);
+      if (!x) return out(f.kind === 'inc' ? L('I did not catch the type. Say one of:' + bl(['Salary', 'Overtime', 'Bonus', 'Claim', 'Income']), 'Saya tak dapat tangkap jenis itu. Sebut salah satu:' + bl(['Gaji', 'Overtime', 'Bonus', 'Claim', 'Income'])) : L('I did not catch the work done. Say one of:' + bl(['Oil change', 'Service', 'Tyres', 'Brakes', 'Chain', 'Battery', 'Repair', 'Other']), 'Saya tak dapat tangkap kerja itu. Sebut salah satu:' + bl(['Tukar minyak', 'Servis', 'Tayar', 'Brek', 'Rantai', 'Bateri', 'Baiki', 'Lain-lain'])), f);
       f.d.cat = x;
     } else if (st === 'amt') {
       const a = parseAmount(t);
@@ -257,7 +257,7 @@ async function otherTurn(host: any, q: string, lang: string, f: Flow | null): Pr
   if (nx) {
     f.step = nx;
     const intro = first ? (k === 'inc' ? L('Sure, let us add your income. ', 'Boleh, kita isikan pendapatan awak. ') : k === 'mtc' ? L('Sure, let us add your motorcycle spending. ', 'Boleh, kita isikan belanja motosikal awak. ') : L('Sure, let us add your odometer. ', 'Boleh, kita isikan odometer awak. ')) : '';
-    const qs = nx === 'cat' ? (k === 'inc' ? L('What kind of income? Salary, Overtime, Bonus, Claim or Income.', 'Pendapatan jenis apa? Gaji, Overtime, Bonus, Claim atau Income.') : L('What was done? For example oil change, service, tyres, brakes, chain, battery or repair.', 'Apa yang dibuat? Contohnya tukar minyak, servis, tayar, brek, rantai, bateri atau baiki.')) : nx === 'amt' ? L('How much was it in ' + cs() + '?', 'Berapa ' + cs() + ' jumlahnya?') : k === 'mtc' ? L('What is the odometer now, in km? Say "no" to skip.', 'Berapa odometer sekarang, dalam km? Sebut "tiada" untuk langkau.') : L('What is the odometer now, in km?' + (s.odo ? ' Your last reading was ' + Math.round(s.odo) + ' km.' : ''), 'Berapa odometer sekarang, dalam km?' + (s.odo ? ' Bacaan terakhir awak ' + Math.round(s.odo) + ' km.' : ''));
+    const qs = nx === 'cat' ? (k === 'inc' ? L('What kind of income?' + bl(['Salary', 'Overtime', 'Bonus', 'Claim', 'Income']), 'Pendapatan jenis apa?' + bl(['Gaji', 'Overtime', 'Bonus', 'Claim', 'Income'])) : L('What was done?' + bl(['Oil change', 'Service', 'Tyres', 'Brakes', 'Chain', 'Battery', 'Repair', 'Other']), 'Apa yang dibuat?' + bl(['Tukar minyak', 'Servis', 'Tayar', 'Brek', 'Rantai', 'Bateri', 'Baiki', 'Lain-lain']))) : nx === 'amt' ? L('How much was it in ' + cs() + '?', 'Berapa ' + cs() + ' jumlahnya?') : k === 'mtc' ? L('What is the odometer now, in km? Say "no" to skip.', 'Berapa odometer sekarang, dalam km? Sebut "tiada" untuk langkau.') : L('What is the odometer now, in km?' + (s.odo ? ' Your last reading was ' + Math.round(s.odo) + ' km.' : ''), 'Berapa odometer sekarang, dalam km?' + (s.odo ? ' Bacaan terakhir awak ' + Math.round(s.odo) + ' km.' : ''));
     return out(intro + qs, f);
   }
   const d = f.d; const id = (s.pid || 0) + 1;
