@@ -8,6 +8,7 @@ import { Text } from '../components/Txt';
 import { LineIcon } from '../components/LineIcon';
 import { RecordPage, Intro } from '../components/RecordHubUi';
 import { ColArt } from '../components/ColArt';
+import { CollectionCarousel } from '../components/CollectionCarousel';
 import { Tile } from '../components/ColUi';
 import { type ColIconName } from '../components/ColIcon';
 import { W } from '../components/Ui';
@@ -40,8 +41,8 @@ export default function Screen() {
   const [st] = useStored<ColStore>('ml_collection', EMPTY_COL); const items = (st && st.items) || []; const nm = useName(); const [busy, setBusy] = React.useState(false);
   const pdf = async () => { if (busy) return; Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setBusy(true); try { const ok = await itemsPdf(items, nm); if (!ok) showAlert('Could not share', 'The PDF was made, but this phone has no way to share it.'); } catch (e) { showAlert('Could not make the PDF', 'Please try again.'); } setBusy(false); };
   return (
-    <RecordPage title="Personal Collection" sub="Your things, your lessons" bg={<ColArt />}>
-      <Intro plain title="Your things, your lessons" text="Gadgets, belongings, property, what you lent or borrowed, and what you learned" colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
+    <RecordPage title="Personal Collection" sub="Know what you own and what it is worth" bg={<ColArt />}>
+      <Intro plain title="Your things" text="One home for your gadgets, lifestyle items, property and vehicles, with what each one is worth." colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
       <View style={{ gap: 12, marginTop: 14 }}>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Card icon="gadget" title={CATS.gadget.title} sub={CATS.gadget.sub} c={ACC.gadget} onPress={() => go('/collection-items?c=gadget')} />
@@ -49,11 +50,12 @@ export default function Screen() {
         </View>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Card icon="prop" title={CATS.property.title} sub={CATS.property.sub} c={ACC.property} onPress={() => go('/collection-items?c=property')} />
-          <Card icon="lent" title="Lent & Borrowed" sub="Money and things" c={ACC.loans} onPress={() => go('/loans')} />
+          <Card icon="car" title={CATS.vehicle.title} sub={CATS.vehicle.sub} c={ACC.vehicle} onPress={() => go('/collection-items?c=vehicle')} />
         </View>
         <View style={{ flexDirection: 'row' }}>
-          <Card wide icon="less" title="Life Lessons" sub="What you learned, so you do not forget" c={ACC.lessons} onPress={() => go('/lessons')} />
+          <Card wide icon="lent" title="Lent & Borrowed" sub="Money and things" c={ACC.loans} onPress={() => go('/loans')} />
         </View>
+        <CollectionCarousel />
       </View>
       {items.length ? (
         <Pressable onPress={pdf} accessibilityLabel="Export my things as PDF" style={({ pressed }) => ({ marginTop: 16, transform: [{ scale: pressed ? 0.98 : 1 }] })}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 
-export type ColIconName = 'gadget' | 'life' | 'prop' | 'lent' | 'less' | 'watch' | 'laptop' | 'cash' | 'tool' | 'audio';
+export type ColIconName = 'gadget' | 'car' | 'life' | 'prop' | 'lent' | 'less' | 'watch' | 'laptop' | 'cash' | 'tool' | 'audio';
 /** Thin line icons for Personal Collection. */
 export function ColIcon({ name, c = '#fff', size = 26 }: { name: ColIconName; c?: string; size?: number }) {
   const p = { fill: 'none', stroke: c, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -10,6 +10,7 @@ export function ColIcon({ name, c = '#fff', size = 26 }: { name: ColIconName; c?
       {name === 'gadget' ? <><Rect x={7} y={2.5} width={10} height={19} rx={2.6} {...p} /><Path d="M10.5 5.2h3" {...p} /><Circle cx={12} cy={18.6} r={0.7} fill={c} /></> : null}
       {name === 'life' ? <><Path d="M5.5 8.5h13l-1 11.2a1.5 1.5 0 0 1-1.5 1.3H8a1.5 1.5 0 0 1-1.5-1.3z" {...p} /><Path d="M9 8.5V7a3 3 0 0 1 6 0v1.5" {...p} /></> : null}
       {name === 'prop' ? <><Path d="M3.5 11 12 3.8 20.5 11" {...p} /><Path d="M5.8 9.6V20h12.4V9.6" {...p} /><Path d="M10 20v-5.2h4V20" {...p} /></> : null}
+      {name === 'car' ? <><Path d="M3 14.8v-2.6L5.3 8h9.6l3.3 4 2.8.9v1.9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" {...p} /><Path d="M3.2 12.2h15" {...p} /><Circle cx={7.4} cy={16.8} r={1.9} {...p} /><Circle cx={16.6} cy={16.8} r={1.9} {...p} /></> : null}
       {name === 'lent' ? <><Path d="M4 8h14.5" {...p} /><Path d="m15 4.5 3.7 3.5L15 11.5" {...p} /><Path d="M20 16H5.5" {...p} /><Path d="m9 12.5-3.7 3.5L9 19.5" {...p} /></> : null}
       {name === 'less' ? <><Path d="M9.2 17.2c0-1.6-2.7-2.6-2.7-6a5.5 5.5 0 0 1 11 0c0 3.4-2.7 4.4-2.7 6z" {...p} /><Path d="M9.5 20.2h5" {...p} /><Path d="M10.4 22.2h3.2" {...p} /></> : null}
       {name === 'watch' ? <><Rect x={7.5} y={6.5} width={9} height={11} rx={3} {...p} /><Path d="M9.5 6.5 10.3 2.5h3.4l.8 4M9.5 17.5l.8 4h3.4l.8-4" {...p} /><Path d="M12 10v2.3l1.6 1" {...p} /></> : null}

@@ -11,6 +11,7 @@ import { chatReply } from './assistantChat';
 import { mathReply } from './assistantMath';
 import { dataDigest } from './assistantDigest';
 import { balanceOf, totals, isLiab, groupOf, incomeFeed, commitTotal } from './accounts';
+import { thingsValue } from './collection';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
@@ -692,7 +693,7 @@ export class AssistantBase extends React.Component<any, any> {
         return { m: this.mk(text), patch: {}, act: null };
       }
       if (!modOn('finance')) return null;
-      const askBal = /\b(baki|balance|berapa|how much|total|jumlah|ada|tinggal|left)\b/.test(ql) && /\b(akaun|account|accounts|bank|e-?wallet|tunai|cash|simpanan|savings|kad kredit|credit card|net worth)\b/.test(ql) && !/\b(how|macam mana|cara|where|mana nak|add|tambah akaun|set up|buat akaun)\b/.test(ql) && !/\d/.test(ql);
+      const askBal = /\b(baki|balance|berapa|how much|total|jumlah|ada|tinggal|left)\b/.test(ql) && /\b(akaun|account|accounts|bank|e-?wallet|tunai|cash|simpanan|savings|kad kredit|credit card|net worth|aset|assets|harta|nilai barang|my things)\b/.test(ql) && !/\b(how|macam mana|cara|where|mana nak|add|tambah akaun|set up|buat akaun)\b/.test(ql) && !/\d/.test(ql);
       if (!askBal) return null;
       const d = await getItem('ml_accounts', { accs: [], moves: [], nextId: 1 }); const fin = (await getItem('ml_finance', {})) || {}; const dbt = (await getItem('ml_debts', { debts: [] })) || { debts: [] };
       const accs = (d && d.accs) || [];
@@ -703,7 +704,10 @@ export class AssistantBase extends React.Component<any, any> {
       if (named) { const b = balanceOf(named, d, sp, feeds); const lb = isLiab(named); return { m: this.mk(L(named.name + (lb ? ': you owe ' : ' has ') + fm(b) + '.', named.name + (lb ? ': awak berhutang ' : ' ada ') + fm(b) + '.'), { big: fm(b), bigLbl: named.name }), patch: {}, act: null }; }
       const lines = accs.map((a) => '• ' + a.name + ' (' + groupOf(a.g).t + '): ' + fm(balanceOf(a, d, sp, feeds)) + (isLiab(a) ? L(' owed', ' hutang') : ''));
       const t = totals(d, sp, 0, feeds);
-      return { m: this.mk(lines.join('\n') + '\n\n' + L('Money you have: ', 'Wang yang awak ada: ') + fm(t.assets) + (t.liab > 0 ? '\n' + L('Cards and loans owed: ', 'Kad dan pinjaman yang terhutang: ') + fm(t.liab) : '') + '\n' + L('Net: ', 'Bersih: ') + fm(t.total)), patch: {}, act: null };
+      const col = (await getItem('ml_collection', { items: [] })) || { items: [] }; const tv = thingsValue(col.items || []); const wt = await getItem('ml_acc_things', 1);
+      const nw = totals(d, sp, commitTotal(dbt.debts || []), feeds).total + tv.total;
+      const asset = tv.total > 0 && wt !== 0 ? '\n\n' + L('Physical assets (a guess): est. ', 'Physical assets (anggaran): est. ') + fm(tv.total) + '\n' + L('Net worth: est. ', 'Net worth: est. ') + fm(nw) : '';
+      return { m: this.mk(lines.join('\n') + '\n\n' + L('Money you have: ', 'Wang yang awak ada: ') + fm(t.assets) + (t.liab > 0 ? '\n' + L('Cards and loans owed: ', 'Kad dan pinjaman yang terhutang: ') + fm(t.liab) : '') + '\n' + L('Net: ', 'Bersih: ') + fm(t.total) + asset), patch: {}, act: null };
     } catch (e) { return null; }
   }
   async fallbackAI(q, lang, r, tt = false) {

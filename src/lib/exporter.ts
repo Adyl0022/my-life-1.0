@@ -25,7 +25,7 @@ export const MODS = [
   { k: 'finance', name: 'My Finance', sub: 'Income, spending, savings goals and commitments', keys: ['ml_finance', 'ml_debts', 'ml_savings', 'ml_subs', 'ml_accounts'] },
   { k: 'record', name: 'My Record', sub: 'Vehicle mileage, fuel and services', keys: ['ml_record'] },
   { k: 'docs', name: 'Documents', sub: 'Passport, cards, warranty and other papers', keys: ['ml_documents'] },
-  { k: 'collection', name: 'Personal Collection', sub: 'Gadgets, lifestyle, property, lent and borrowed, life lessons', keys: ['ml_collection'] },
+  { k: 'collection', name: 'Personal Collection', sub: 'Gadgets, lifestyle, property, vehicles, lent and borrowed, life lessons', keys: ['ml_collection'] },
   { k: 'habit', name: 'Habit and Health', sub: 'Mood, sleep, water and steps', keys: ['ml_habit'] },
   { k: 'usage', name: 'App usage history', sub: 'Time spent and opens from Stats', keys: ['ml_usage_v1'] },
 ];

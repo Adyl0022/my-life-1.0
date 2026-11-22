@@ -3,7 +3,9 @@ import { cs } from './region';
 
 export type Cond = 'new' | 'good' | 'worn' | 'broken';
 export const CONDS: { k: Cond; n: string; f: number }[] = [{ k: 'new', n: 'Like new', f: 1.08 }, { k: 'good', n: 'Good', f: 1 }, { k: 'worn', n: 'Worn', f: 0.8 }, { k: 'broken', n: 'Broken', f: 0.4 }];
-export type ItemCat = 'gadget' | 'lifestyle' | 'property';
+export type ItemCat = 'gadget' | 'lifestyle' | 'property' | 'vehicle';
+/** Gadgets and vehicles keep a worth-now guess and a condition. */
+export const hasWorth = (c: ItemCat) => c === 'gadget' || c === 'vehicle';
 export type Item = { id: number; cat: ItemCat; kind: string; name: string; price: string; bought: string; warranty: string; photo: string; photos?: string[]; docIds?: number[]; worth?: string; cond?: Cond; note: string };
 export type Loan = { id: number; dir: 'lent' | 'borrowed'; what: 'money' | 'thing'; who: string; title: string; amount: string; date: string; due: string; done: boolean; doneAt: string; note: string; remind?: 'off' | 'day' | '3d'; pays?: { d: string; a: number }[] };
 export type Lesson = { id: number; title: string; text: string; date: string; tag: string };
@@ -11,17 +13,18 @@ export type ColStore = { items: Item[]; loans: Loan[]; lessons: Lesson[]; next: 
 export const EMPTY_COL: ColStore = { items: [], loans: [], lessons: [], next: 1 };
 
 export const GRAD: Record<string, [string, string]> = {
-  gadget: ['#3df0ff', '#3d7bff'], lifestyle: ['#ff6ad5', '#ffa23d'], property: ['#c6ff5a', '#1fe0a5'], loans: ['#ffe84d', '#ff9a3d'], lessons: ['#b07bff', '#4de1ff'],
+  gadget: ['#3df0ff', '#3d7bff'], lifestyle: ['#ff6ad5', '#ffa23d'], property: ['#c6ff5a', '#1fe0a5'], vehicle: ['#ffb86b', '#ff6b81'], loans: ['#ffe84d', '#ff9a3d'], lessons: ['#b07bff', '#4de1ff'],
 };
 export const INK = '#0b1030';
-export const ACC: Record<string, string> = { gadget: '#7c9cff', lifestyle: '#ff8fab', property: '#8fe9e2', loans: '#ffe3c2', lessons: '#b794ff' };
+export const ACC: Record<string, string> = { gadget: '#7c9cff', lifestyle: '#ff8fab', property: '#8fe9e2', vehicle: '#ffb86b', loans: '#ffe3c2', lessons: '#b794ff' };
 export const BTN: [string, string] = ['#8ea8ff', '#b794ff'];
-export type KindIcon = 'gadget' | 'life' | 'prop' | 'laptop' | 'watch' | 'audio';
-export const kindIcon = (cat: ItemCat, kind: string): KindIcon => (cat === 'lifestyle' ? 'life' : cat === 'property' ? 'prop' : kind === 'Laptop' ? 'laptop' : kind === 'Watch' ? 'watch' : kind === 'Audio' ? 'audio' : 'gadget');
+export type KindIcon = 'gadget' | 'life' | 'prop' | 'car' | 'laptop' | 'watch' | 'audio';
+export const kindIcon = (cat: ItemCat, kind: string): KindIcon => (cat === 'lifestyle' ? 'life' : cat === 'property' ? 'prop' : cat === 'vehicle' ? 'car' : kind === 'Laptop' ? 'laptop' : kind === 'Watch' ? 'watch' : kind === 'Audio' ? 'audio' : 'gadget');
 
 export const CATS: Record<ItemCat, { title: string; one: string; e: string; sub: string; text: string; kinds: [string, string][]; warranty: boolean }> = {
   gadget: { title: 'Gadgets', one: 'gadget', e: 'phone', sub: 'Phone, laptop, watch', text: 'Your devices, with their price and warranty', warranty: true, kinds: [['Phone', 'phone'], ['Laptop', 'laptop'], ['Watch', 'watch'], ['Audio', 'audio'], ['Camera', 'camera'], ['Other', 'plug']] },
   lifestyle: { title: 'Lifestyle', one: 'item', e: 'shoes', sub: 'Shoes, bags, perfume', text: 'The nice things you own and what they cost', warranty: false, kinds: [['Shoes', 'shoes'], ['Bag', 'bag'], ['Clothes', 'shirt'], ['Perfume', 'perfume'], ['Jewellery', 'ring'], ['Other', 'gift']] },
+  vehicle: { title: 'Vehicles', one: 'vehicle', e: 'motorcycle', sub: 'Motorcycle, car, van', text: 'Your vehicles, with what you paid and what they are worth now', warranty: false, kinds: [['Motorcycle', 'motorcycle'], ['Car', 'car'], ['Van', 'van'], ['Lorry', 'lorry'], ['Bicycle', 'bicycle'], ['Other', 'other']] },
   property: { title: 'Property', one: 'property', e: 'house', sub: 'House, land, rent', text: 'Houses, land and anything you rent', warranty: false, kinds: [['House', 'house'], ['Land', 'land'], ['Rent', 'rent'], ['Shop', 'shop'], ['Other', 'building']] },
 };
 export const kindEmoji = (cat: ItemCat, kind: string) => (CATS[cat].kinds.find((k) => k[0] === kind) || CATS[cat].kinds[CATS[cat].kinds.length - 1])[1];
@@ -50,20 +53,35 @@ export const photosOf = (x: Item): string[] => (x.photos && x.photos.length ? x.
 const dayN = (s: string) => { const p = s.split('-'); return Math.round(new Date(+p[0], +p[1] - 1, +p[2], 12).getTime() / 86400000); };
 
 /** What a gadget is worth today. The person's own number wins. Otherwise a guess: a big drop in the first year, a slower drop after, kinder for brands that keep their price, and adjusted for the condition. Only a guess, not a market price. */
-const DROP1: Record<string, number> = { Phone: 0.25, Laptop: 0.2, Tablet: 0.2, Audio: 0.2, Watch: 0.08 };
-const DROPN: Record<string, number> = { Phone: 0.15, Laptop: 0.15, Tablet: 0.15, Audio: 0.15, Watch: 0.06 };
+const DROP1: Record<string, number> = { Phone: 0.25, Laptop: 0.2, Tablet: 0.2, Audio: 0.2, Watch: 0.08, Motorcycle: 0.15, Car: 0.15, Van: 0.12, Lorry: 0.1, Bicycle: 0.12 };
+const DROPN: Record<string, number> = { Phone: 0.15, Laptop: 0.15, Tablet: 0.15, Audio: 0.15, Watch: 0.06, Motorcycle: 0.1, Car: 0.1, Van: 0.08, Lorry: 0.07, Bicycle: 0.08 };
 const KEEPERS = /iphone|ipad|macbook|apple|airpods|rolex|seiko|casio|g-shock|garmin/i;
-export const worthMine = (x: Item): number => (x.cat === 'gadget' ? num(x.worth || '') : 0);
+export const worthMine = (x: Item): number => (hasWorth(x.cat) ? num(x.worth || '') : 0);
 export function worthNow(x: Item, now = new Date()): number | null {
-  if (x.cat !== 'gadget') return null;
+  if (!hasWorth(x.cat)) return null;
   const mine = worthMine(x); if (mine > 0) return Math.round(mine);
   const price = num(x.price); if (!(price > 0) || !x.bought || !validDate(x.bought)) return null;
   const yrs = Math.max(0, (dayN(ymd(now)) - dayN(x.bought)) / 365);
-  const k = KEEPERS.test(x.name) ? 0.75 : 1;
+  const k = x.cat === 'gadget' && KEEPERS.test(x.name) ? 0.75 : 1;
   const d1 = (DROP1[x.kind] != null ? DROP1[x.kind] : 0.15) * k, dn = (DROPN[x.kind] != null ? DROPN[x.kind] : 0.12) * k;
   const base = yrs <= 1 ? 1 - d1 * yrs : (1 - d1) * Math.pow(1 - dn, yrs - 1);
   const cf = (CONDS.find((c) => c.k === (x.cond || 'good')) || CONDS[1]).f;
-  return Math.round(Math.min(price, price * Math.max(0.12, base) * cf));
+  return Math.round(Math.min(price, price * Math.max(x.cat === 'vehicle' ? 0.2 : 0.12, base) * cf));
+}
+
+/** What a thing counts for in My Accounts. Gadgets use the worth-now guess. Lifestyle things lose value every year, down to 30 percent. Vehicles lose value by their kind and age, down to 20 percent. Property uses the worth you type, or what you paid, because houses and land rarely go down. Rent is not owned, so it counts for nothing. Only a guess, not a market price. */
+export function assetNow(x: Item, now = new Date()): number {
+  const price = num(x.price); if (x.cat === 'property' && num(x.worth || '') > 0 && x.kind !== 'Rent') return num(x.worth || ''); if (!(price > 0)) return 0;
+  if (hasWorth(x.cat)) { const w = worthNow(x, now); return w != null ? w : price; }
+  if (x.cat === 'property') { const w = num(x.worth || ''); return x.kind === 'Rent' ? 0 : w > 0 ? w : price; }
+  const cf = (CONDS.find((c) => c.k === (x.cond || 'good')) || CONDS[1]).f;
+  const yrs = x.bought && validDate(x.bought) ? Math.max(0, (dayN(ymd(now)) - dayN(x.bought)) / 365) : 0;
+  return Math.round(Math.min(price, price * Math.max(0.3, 1 - 0.15 * yrs) * cf));
+}
+export function thingsValue(items: Item[], now = new Date()) {
+  const sum = (c: ItemCat) => items.filter((x) => x.cat === c).reduce((t, x) => t + assetNow(x, now), 0);
+  const g = sum('gadget'), l = sum('lifestyle'), p = sum('property'), v = sum('vehicle');
+  return { gadget: g, lifestyle: l, property: p, vehicle: v, total: g + l + p + v, n: items.filter((x) => assetNow(x, now) > 0).length };
 }
 
 /** Warranty progress: days left, and how much of the time is already used (0 to 1). */

@@ -1,4 +1,4 @@
-import { LineIcon } from './LineIcon';
+import { LineIcon, type LineName } from './LineIcon';
 import { photoSyncOn } from '../lib/sync';
 import { useSession } from '../lib/auth';
 import React, { useState } from 'react';
@@ -18,7 +18,7 @@ export const Lab = ({ t }: { t: string }) => <Text style={{ color: '#8fe9e2', fo
 export const chip = (on: boolean, c = '#8ea8ff') => ({ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, alignItems: 'center' as const, backgroundColor: on ? c + '55' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? c : 'rgba(255,255,255,.14)' });
 
 /** Glowing outlined tile with a thin line icon, used in lists. */
-export const Tile = ({ icon, c, size = 54, breathe }: { icon: ColIconName; c: string; size?: number; breathe?: boolean }) => {
+export const Tile = ({ icon, c, size = 54, breathe, line }: { icon: ColIconName; c: string; size?: number; breathe?: boolean; line?: LineName }) => {
   const a = React.useRef(new Animated.Value(0)).current;
   React.useEffect(() => {
     if (!breathe) return;
@@ -33,7 +33,7 @@ export const Tile = ({ icon, c, size = 54, breathe }: { icon: ColIconName; c: st
     <View style={{ width: size, height: size, borderRadius: r, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c, backgroundColor: 'rgba(255,255,255,.08)', shadowColor: c, shadowOpacity: 0.55, shadowRadius: 9, shadowOffset: { width: 0, height: 0 } }}>
       <Animated.View pointerEvents="none" style={{ position: 'absolute', left: -5, top: -5, right: -5, bottom: -5, borderRadius: r + 5, backgroundColor: c + '30', opacity: breathe ? a.interpolate({ inputRange: [0, 1], outputRange: [0.15, 1] }) : 0.55, transform: [{ scale: breathe ? a.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1.08] }) : 1 }] }} />
       <LinearGradient colors={[c + '44', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, borderRadius: r }} />
-      <ColIcon name={icon} c={c} size={size * 0.5} />
+      {line ? <LineIcon name={line} c={c} size={size * 0.5} /> : <ColIcon name={icon} c={c} size={size * 0.5} />}
     </View>
   );
 };

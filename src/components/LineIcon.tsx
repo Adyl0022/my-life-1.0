@@ -4,7 +4,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 export type LineName =
   | 'passport' | 'mykad' | 'cidb' | 'permit' | 'idother' | 'bank' | 'member' | 'warranty' | 'insurance' | 'agreement' | 'certificate' | 'property' | 'other'
   | 'camera' | 'photo' | 'search' | 'phone' | 'laptop' | 'watch' | 'audio' | 'plug' | 'shoes' | 'bag' | 'shirt' | 'perfume' | 'ring' | 'gift' | 'house' | 'land' | 'rent' | 'shop' | 'building'
-  | 'money' | 'tool' | 'swap' | 'bulb' | 'play' | 'music' | 'spark' | 'cloud' | 'game' | 'bolt' | 'repeat' | 'scan' | 'wand' | 'bell' | 'check' | 'cal' | 'chart';
+  | 'vehicle' | 'motorcycle' | 'car' | 'van' | 'lorry' | 'bicycle' | 'money' | 'tool' | 'swap' | 'bulb' | 'play' | 'music' | 'spark' | 'cloud' | 'game' | 'bolt' | 'repeat' | 'scan' | 'wand' | 'bell' | 'check' | 'cal' | 'chart';
 
 /** One set of thin line icons for Documents and Personal Collection, so nothing there uses coloured emoji. */
 export function LineIcon({ name, c = '#fff', size = 24, w = 1.6 }: { name: string; c?: string; size?: number; w?: number }) {
@@ -45,6 +45,11 @@ export function LineIcon({ name, c = '#fff', size = 24, w = 1.6 }: { name: strin
     case 'building': g = <><Rect x={5.5} y={3.5} width={13} height={17.5} rx={1.6} {...p} />{P('M9 7.5h1.5M13.5 7.5H15M9 11h1.5M13.5 11H15M10.5 21v-3.5h3V21')}</>; break;
     case 'money': g = <><Rect x={3} y={6.5} width={18} height={11} rx={2} {...p} /><Circle cx={12} cy={12} r={2.6} {...p} /></>; break;
     case 'tool': g = <>{P('M14.5 6.5a4 4 0 0 0-5.2 5L3.8 17a1.8 1.8 0 0 0 2.6 2.6l5.5-5.5a4 4 0 0 0 5-5.2l-2.6 2.6-2.4-.6-.6-2.4z')}</>; break;
+    case 'bicycle': case 'vehicle': g = <><Circle cx={6} cy={16} r={3.2} {...p} /><Circle cx={18} cy={16} r={3.2} {...p} />{P('M6 16 9.5 9h5l3.5 7M9.5 9 12 16h6')}{P('M8.2 7H11')}{P('M14.5 9 13.8 6.5H16')}</>; break;
+    case 'motorcycle': g = <><Circle cx={5.8} cy={16.5} r={2.9} {...p} /><Circle cx={18.2} cy={16.5} r={2.9} {...p} />{P('M5.8 16.5 9.6 11.5h5.6l3 5')}{P('M15.2 11.5 14.2 8H17')}{P('M8.4 11.5 10 9.2h3.4')}</>; break;
+    case 'car': g = <><Path d="M3 14.8v-2.6L5.3 8h9.6l3.3 4 2.8.9v1.9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" {...p} /><Path d="M3.2 12.2h15" {...p} /><Circle cx={7.4} cy={16.8} r={1.9} {...p} /><Circle cx={16.6} cy={16.8} r={1.9} {...p} /></>; break;
+    case 'van': g = <><Path d="M2.5 7h11v9.4h-11z" {...p} /><Path d="M13.5 9.5h4l3.5 3.6v3.3h-7.5" {...p} /><Circle cx={7} cy={17} r={1.9} {...p} /><Circle cx={17} cy={17} r={1.9} {...p} /></>; break;
+    case 'lorry': g = <><Path d="M1.8 5.5h11.2v11H1.8z" {...p} /><Path d="M13 9h4.6l3.6 4v3.5H13" {...p} /><Circle cx={5.6} cy={17.6} r={1.9} {...p} /><Circle cx={10} cy={17.6} r={1.9} {...p} /><Circle cx={17.4} cy={17.6} r={1.9} {...p} /></>; break;
     case 'swap': g = <>{P('M4 8h14.5')}{P('m15 4.5 3.7 3.5L15 11.5')}{P('M20 16H5.5')}{P('m9 12.5-3.7 3.5L9 19.5')}</>; break;
     case 'bulb': g = <>{P('M9.2 17.2c0-1.6-2.7-2.6-2.7-6a5.5 5.5 0 0 1 11 0c0 3.4-2.7 4.4-2.7 6z')}{P('M9.5 20.2h5M10.4 22.2h3.2')}</>; break;
     case 'play': g = <><Rect x={3} y={5} width={18} height={14} rx={3.2} {...p} />{P('M10.2 9.4l4.6 2.6-4.6 2.6z')}</>; break;
