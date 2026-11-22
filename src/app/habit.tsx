@@ -15,6 +15,7 @@ import { PatternsTab } from '../components/PatternsTab';
 import { energyEstimate, restSignal } from '../lib/patterns';
 import { EnergyBig, PCT, type EnergyPoint } from '../components/EnergyUi';
 import { SleepSchedule } from '../components/SleepSchedule';
+import { SleepQuick } from '../components/SleepQuick';
 import { useStored } from '../lib/store';
 import { useHidden } from '../lib/hidden';
 import { CardArt } from '../components/CardArt';
@@ -297,6 +298,7 @@ export default function Habit() {
             <SleepSchedule h={h} />
             <Bars vals={wk.map((x) => x.d.sleep)} labels={wl} max={10} goal={7} color="#b794ff" hi={wk.findIndex((x) => x.o === 0)} />
             <View style={{ marginTop: 12, padding: 11, borderRadius: 14, backgroundColor: tip[2] }}><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{tip[0]}</Text><Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4 }}>{tip[1]}</Text></View>
+            <SleepQuick />
           </Glass>
           <Glass radius={26} style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Ttl k="rheart" t="Heart log" /><Lbl t="Your own pulse and blood pressure notes" />
