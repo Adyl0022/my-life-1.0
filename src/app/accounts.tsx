@@ -290,7 +290,7 @@ export default function Accounts() {
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
   const [col] = useStored<ColStore>('ml_collection', EMPTY_COL); const [withThings, setWithThings] = useStored<number>('ml_acc_things', 1); const tv = thingsValue((col && col.items) || []);
   const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
-  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
+  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [availView, setAvailView] = useStored<number>('ml_acc_avail', 0); const resv = reservedTotal(data); const shownTotal = availView === 1 && resv > 0 ? t.total - resv : t.total; const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
   // Sort by: your own order (move groups up or down), most money first, least money first, or A to Z. It is kept on this phone.
   const SORTS = ['My order', 'Highest', 'Lowest', 'A to Z']; const [sortI, setSortI] = useStored<number>('ml_acc_sort', 0); const [sortL, setSortL] = useStored<number>('ml_acc_sort_owe', 0); const [gOrd, setGOrd] = useStored<string[]>('ml_acc_order', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
@@ -315,11 +315,12 @@ export default function Accounts() {
           <Glass radius={24} style={{ marginTop: 14, padding: 16 }}>
             <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
             <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>TOTAL MONEY</Text>
-            <Text style={{ color: t.total < 0 ? PINK : W, fontSize: 30, fontWeight: '800', marginTop: 4 }}>{(t.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total))}</Text>
+            <Text style={{ color: shownTotal < 0 ? PINK : W, fontSize: 30, fontWeight: '800', marginTop: 4 }}>{(shownTotal < 0 ? '-' : '') + cs() + money(Math.abs(shownTotal))}</Text>
+            {resv > 0 ? <View style={{ marginTop: 10 }}><EqPills tabs={['With minimum', 'After minimum']} index={availView === 1 ? 1 : 0} onChange={(i) => setAvailView(i)} colors={['#ffc46b', '#ff8fab']} fontSize={12} /></View> : null}
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Stat l="Assets" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} />
             </View>
-            {reservedTotal(data) > 0 ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>{'Available to spend ' + cs() + money(Math.max(0, t.assets - reservedTotal(data))) + ', after ' + cs() + money(reservedTotal(data)) + ' your banks need you to keep.'}</Text> : null}
+            {resv > 0 ? <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12.5, lineHeight: 18, marginTop: 10 }}>{availView === 1 ? 'This takes off the ' + cs() + money(resv) + ' your banks need you to keep, so it is what you can really spend.' : 'This counts the ' + cs() + money(resv) + ' your banks need you to keep. It is your money, but you cannot spend it.'}</Text> : null}
           </Glass>
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
