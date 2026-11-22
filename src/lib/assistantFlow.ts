@@ -4,7 +4,7 @@
 import { getItem } from './store';
 import { cs } from './region';
 
-export type Flow = { kind: 'spend'; step: 'cat' | 'date' | 'note' | 'acc' | 'amt'; d: { cat?: string; date?: string; ydy?: boolean; note?: string; acc?: number; accName?: string; amt?: number; noAcc?: boolean; noteDone?: boolean }; tries: number };
+export type Flow = { kind: 'spend' | 'inc' | 'mtc' | 'odo'; step: 'cat' | 'date' | 'note' | 'acc' | 'amt' | 'odo'; d: { odo?: number; cat?: string; date?: string; ydy?: boolean; note?: string; acc?: number; accName?: string; amt?: number; noAcc?: boolean; noteDone?: boolean }; tries: number };
 
 const DEFAULT_CATS = ['Food', 'Petrol', 'Bills', 'Shopping', 'Health', 'Other'];
 // Words people really use, by category. A custom category is matched by its own name first.
@@ -145,10 +145,17 @@ async function load(host: any, lang: string): Promise<Ctx> {
   return { cats, accs, L };
 }
 
+// Short names people say for the same bank or wallet.
+const BANKS: string[][] = [['maybank', 'mbb', 'maybank2u', 'm2u'], ['cimb', 'cimb clicks'], ['rhb'], ['public bank', 'pbe', 'pbb', 'public'], ['bank islam', 'bimb'], ['bsn'], ['bank rakyat', 'rakyat'], ['affin', 'affin bank'], ['ambank', 'am bank'], ['hong leong', 'hlb'], ['agrobank', 'agro'], ['uob'], ['ocbc'], ['hsbc'], ['standard chartered', 'scb'], ['touch n go', 'touch and go', 'tng', 'tng ewallet', 'tng e-wallet', 'touch n go ewallet'], ['grabpay', 'grab pay', 'grab'], ['shopeepay', 'shopee pay', 'spay'], ['boost'], ['mae', 'mae maybank'], ['gxbank', 'gx bank', 'gx'], ['boost bank'], ['bigpay', 'big pay'], ['setel'], ['tabung haji', 'th'], ['asb', 'asb loan', 'amanah saham bumiputera']];
+const sameBank = (a: string, b: string) => BANKS.some((g) => g.some((x) => a.indexOf(x) >= 0) && g.some((x) => b.indexOf(x) >= 0));
+
 function parseAcc(text: string, accs: { id: number; name: string }[]) {
   const t = ' ' + String(text || '').toLowerCase() + ' ';
   const hit = accs.slice().sort((a, b) => b.name.length - a.name.length).find((a) => t.indexOf(a.name.toLowerCase()) >= 0);
   if (hit) return hit;
+  const words = (g: string[]) => g.filter((x) => t.indexOf(' ' + x + ' ') >= 0 || t.indexOf(' ' + x + ',') >= 0);
+  const alias = accs.find((a) => BANKS.some((g) => words(g).length > 0 && g.some((x) => a.name.toLowerCase().indexOf(x) >= 0)));
+  if (alias) return alias;
   if (/\b(cash|tunai|duit tunai|duit cash)\b/.test(t)) return accs.find((a) => /cash|tunai/i.test(a.name)) || null;
   return null;
 }
@@ -178,9 +185,75 @@ function dateWords(f: Flow, L: Ctx['L']) {
   return d.date || '';
 }
 
+const INC_TYPES: [string, string[]][] = [['Salary', ['gaji', 'salary', 'pay']], ['Overtime', ['overtime', 'ot', 'kerja lebih masa']], ['Bonus', ['bonus']], ['Claim', ['claim', 'tuntutan']], ['Income', ['income', 'pendapatan', 'lain', 'other', 'elaun', 'allowance', 'sampingan', 'side income']]];
+const MTC_TYPES: [string, string[]][] = [['Oil change', ['tukar minyak', 'minyak hitam', 'oil', 'minyak enjin', 'engine oil']], ['Service', ['servis', 'service']], ['Tyres', ['tayar', 'tyre', 'tire', 'tyres']], ['Brakes', ['brek', 'brake', 'brakes', 'pad']], ['Chain', ['rantai', 'chain', 'sprocket']], ['Battery', ['bateri', 'battery']], ['Repair', ['baiki', 'repair', 'rosak', 'bengkel', 'workshop']], ['Other', ['lain', 'other']]];
+const pickType = (text: string, list: [string, string[]][]) => { const t = norm(text); const x = list.find(([n, w]) => hasW(t, n.toLowerCase()) || w.some((k) => hasW(t, k))); return x ? x[0] : null; };
+const INC_START = /\b(pendapatan|gaji|income|salary|overtime|bonus|claim|tuntutan|elaun|allowance)\b/;
+const MTC_START = /\b(servis|service|penyelenggaraan|maintenance|baiki|repair|motosikal|motor|motorcycle|bengkel)\b/;
+const ODO_START = /\b(odometer|odo|mileage|milage|meter|bacaan)\b/;
+export function startsKind(q: string): Flow['kind'] | null {
+  const t = String(q || '').toLowerCase();
+  if (!t.trim() || QUESTION.test(t) || /\d/.test(t)) return null;
+  if (startsSpend(q)) return 'spend';
+  const verb = START_VERB.test(t);
+  if (verb && ODO_START.test(t)) return 'odo';
+  if (verb && MTC_START.test(t)) return 'mtc';
+  if (verb && INC_START.test(t)) return 'inc';
+  return null;
+}
+
+// Income, motorcycle spending and odometer: same idea, fewer steps.
+async function otherTurn(host: any, q: string, lang: string, f: Flow | null): Promise<any | null> {
+  const L = (en: string, ms: string) => (lang === 'ms' ? ms : en);
+  const s = host.state; const mk = (text: string, x?: any) => host.mk(text, x);
+  const out = (text: string, flow: Flow | null, x?: any) => ({ m: mk(text, x), patch: { flow }, act: null });
+  let first = false;
+  if (!f) {
+    const kind = startsKind(q); if (!kind || kind === 'spend') return null;
+    first = true; f = { kind, step: 'cat', d: {}, tries: 0 } as Flow;
+    if (kind === 'inc') { const x = pickType(q, INC_TYPES); if (x) f.d.cat = x; }
+    if (kind === 'mtc') { const x = pickType(q, MTC_TYPES); if (x) f.d.cat = x; }
+  } else {
+    const t = String(q || '').trim(); const n = norm(t).trim();
+    if (CANCEL.test(n)) return out(L('Okay, I did not save it.', 'Baik, saya tidak simpan.'), null);
+    if (QUESTION.test(t.toLowerCase()) && !/^\d/.test(n)) return null;
+    const st = f.step;
+    if (st === 'cat') {
+      const x = pickType(t, f.kind === 'inc' ? INC_TYPES : MTC_TYPES);
+      if (!x) return out(f.kind === 'inc' ? L('I did not catch the type. Say one of: Salary, Overtime, Bonus, Claim, Income.', 'Saya tak dapat tangkap jenis itu. Sebut salah satu: Gaji, Overtime, Bonus, Claim, Income.') : L('I did not catch the work done. Say for example oil change, service, tyres, brakes, chain, battery or repair.', 'Saya tak dapat tangkap kerja itu. Sebut contohnya tukar minyak, servis, tayar, brek, rantai, bateri atau baiki.'), f);
+      f.d.cat = x;
+    } else if (st === 'amt') {
+      const a = parseAmount(t);
+      if (a == null || !(a > 0) || a > 9999999) return out(L('That is not a valid amount. Please say a number, for example 12 or 12.50.', 'Itu bukan jumlah yang betul. Sila sebut nombor, contohnya 12 atau 12.50.'), f);
+      f.d.amt = Math.round(a * 100) / 100;
+    } else if (st === 'odo') {
+      if (f.kind === 'mtc' && SKIP.test(n)) f.d.noteDone = true;
+      else {
+        const a = parseAmount(t);
+        if (a == null || a < 1000 || a > 2000000) return out(L('That is not a valid odometer reading. Please say the number of kilometres, for example 24500.', 'Itu bukan bacaan odometer yang betul. Sila sebut jumlah kilometer, contohnya 24500.'), f);
+        if (f.kind === 'odo' && a <= (s.odo || 0)) return out(L('That is not higher than your last reading (' + Math.round(s.odo) + ' km). Please check the number.', 'Itu tidak lebih tinggi daripada bacaan terakhir (' + Math.round(s.odo) + ' km). Sila semak nombor itu.'), f);
+        f.d.odo = Math.round(a); f.d.noteDone = true;
+      }
+    }
+  }
+  const k = f.kind;
+  const nx = k === 'odo' ? (f.d.odo ? null : 'odo') : !f.d.cat ? 'cat' : !f.d.amt ? 'amt' : k === 'mtc' && !f.d.noteDone ? 'odo' : null;
+  if (nx) {
+    f.step = nx;
+    const intro = first ? (k === 'inc' ? L('Sure, let us add your income. ', 'Boleh, kita isikan pendapatan awak. ') : k === 'mtc' ? L('Sure, let us add your motorcycle spending. ', 'Boleh, kita isikan belanja motosikal awak. ') : L('Sure, let us add your odometer. ', 'Boleh, kita isikan odometer awak. ')) : '';
+    const qs = nx === 'cat' ? (k === 'inc' ? L('What kind of income? Salary, Overtime, Bonus, Claim or Income.', 'Pendapatan jenis apa? Gaji, Overtime, Bonus, Claim atau Income.') : L('What was done? For example oil change, service, tyres, brakes, chain, battery or repair.', 'Apa yang dibuat? Contohnya tukar minyak, servis, tayar, brek, rantai, bateri atau baiki.')) : nx === 'amt' ? L('How much was it in ' + cs() + '?', 'Berapa ' + cs() + ' jumlahnya?') : k === 'mtc' ? L('What is the odometer now, in km? Say "no" to skip.', 'Berapa odometer sekarang, dalam km? Sebut "tiada" untuk langkau.') : L('What is the odometer now, in km?' + (s.odo ? ' Your last reading was ' + Math.round(s.odo) + ' km.' : ''), 'Berapa odometer sekarang, dalam km?' + (s.odo ? ' Bacaan terakhir awak ' + Math.round(s.odo) + ' km.' : ''));
+    return out(intro + qs, f);
+  }
+  const d = f.d; const id = (s.pid || 0) + 1;
+  if (k === 'odo') return { m: mk(L('Got it. Save this odometer reading?', 'Faham. Simpan bacaan odometer ini?'), { pid: id, big: String(d.odo), bigLbl: 'km', color: '#ff8fab' }), patch: { flow: null, pending: { id, type: 'odo', val: d.odo }, pid: id }, act: null };
+  if (k === 'inc') return { m: mk(L('Got it. Save this income to this month?\n• ' + d.cat, 'Faham. Simpan pendapatan ini untuk bulan ini?\n• ' + d.cat), { pid: id, big: cs() + String(d.amt), bigLbl: d.cat, color: '#34d399' }), patch: { flow: null, pending: { id, type: 'inc', amt: d.amt, name: d.cat }, pid: id }, act: null };
+  return { m: mk(L('Got it. Save this motorcycle record?\n• ' + d.cat + (d.odo ? '\n• Odometer: ' + d.odo + ' km' : '') + '\n• Date: today', 'Faham. Simpan rekod motosikal ini?\n• ' + d.cat + (d.odo ? '\n• Odometer: ' + d.odo + ' km' : '') + '\n• Tarikh: hari ini'), { pid: id, big: cs() + String(d.amt), bigLbl: d.cat, color: '#ff8fab' }), patch: { flow: null, pending: { id, type: 'mtc', amt: d.amt, name: d.cat, odo: d.odo || null }, pid: id }, act: null };
+}
+
 // One turn. Returns the Assistant's reply, or null when this sentence is not part of the guided spending.
 export async function flowTurn(host: any, q: string, lang: string): Promise<any | null> {
   const s = host.state; let f: Flow | null = s.flow || null;
+  if ((f && f.kind !== 'spend') || (!f && startsKind(q) && startsKind(q) !== 'spend')) return otherTurn(host, q, lang, f);
   if (!f && !startsSpend(q)) return null;
   const c = await load(host, lang);
   const { L } = c;
