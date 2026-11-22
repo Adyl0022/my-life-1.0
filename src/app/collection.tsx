@@ -18,6 +18,8 @@ import { useStored } from '../lib/store';
 import { itemsPdf } from '../lib/colPdf';
 import { showAlert } from '../lib/dialog';
 import { useName } from '../lib/store';
+import { usePro } from '../lib/pro';
+import { openPaywall } from '../components/Paywall';
 
 function Card({ icon, title, sub, c, wide, onPress }: { icon: ColIconName; title: string; sub: string; c: string; wide?: boolean; onPress: () => void }) {
   return (
@@ -38,8 +40,8 @@ export default function Screen() {
   useRegion(); // follows the chosen currency
   const router = useRouter();
   const go = (p: string) => router.push(p as any);
-  const [st] = useStored<ColStore>('ml_collection', EMPTY_COL); const items = (st && st.items) || []; const nm = useName(); const [busy, setBusy] = React.useState(false);
-  const pdf = async () => { if (busy) return; Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setBusy(true); try { const ok = await itemsPdf(items, nm); if (!ok) showAlert('Could not share', 'The PDF was made, but this phone has no way to share it.'); } catch (e) { showAlert('Could not make the PDF', 'Please try again.'); } setBusy(false); };
+  const [st] = useStored<ColStore>('ml_collection', EMPTY_COL); const items = (st && st.items) || []; const nm = useName(); const [busy, setBusy] = React.useState(false); const pro = usePro();
+  const pdf = async () => { if (busy) return; if (!pro) { openPaywall(); return; } Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setBusy(true); try { const ok = await itemsPdf(items, nm); if (!ok) showAlert('Could not share', 'The PDF was made, but this phone has no way to share it.'); } catch (e) { showAlert('Could not make the PDF', 'Please try again.'); } setBusy(false); };
   return (
     <RecordPage title="Personal Collection" sub="Know what you own and what it is worth" bg={<ColArt />}>
       <Intro plain title="Your things" text="One home for your gadgets, lifestyle items, property and vehicles, with what each one is worth." colors={['rgba(142,168,255,.5)', 'rgba(183,148,255,.4)']} />
@@ -66,7 +68,7 @@ export default function Screen() {
               <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 12.5, marginTop: 4, lineHeight: 18 }}>A list of everything you own with price, date and a photo. Handy for an insurance claim. It is made on this phone and nothing is uploaded.</Text>
               <LinearGradient colors={['#8ea8ff', '#b794ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ marginTop: 14, height: 46, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                 <LineIcon name="agreement" c="#0b1030" size={22} />
-                <Text style={{ color: '#0b1030', fontSize: 15, fontWeight: '800' }}>{busy ? 'Making your PDF...' : 'Export as PDF'}</Text>
+                <Text style={{ color: '#0b1030', fontSize: 15, fontWeight: '800' }}>{busy ? 'Making your PDF...' : pro ? 'Export as PDF' : 'Export as PDF · PRO'}</Text>
               </LinearGradient>
             </View>
           </View>
