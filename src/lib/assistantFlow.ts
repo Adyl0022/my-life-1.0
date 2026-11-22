@@ -17,11 +17,11 @@ const SYN: Record<string, string[]> = {
   Other: ['other', 'lain', 'lain lain', 'lainlain', 'entah', 'tak tahu', 'tidak tahu', 'miscellaneous', 'misc'],
 };
 
-const norm = (s: string) => ' ' + String(s || '').toLowerCase().replace(/[^a-z0-9À-ɏ/.:,\- ]+/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
-const hasW = (t: string, w: string) => t.indexOf(' ' + w + ' ') >= 0 || t.indexOf(' ' + w) >= 0 && w.length >= 4 && t.indexOf(' ' + w) >= 0;
+export const norm = (s: string) => ' ' + String(s || '').toLowerCase().replace(/[^a-z0-9À-ɏ/.:,\- ]+/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
+export const hasW = (t: string, w: string) => t.indexOf(' ' + w + ' ') >= 0 || t.indexOf(' ' + w) >= 0 && w.length >= 4 && t.indexOf(' ' + w) >= 0;
 
-const QUESTION = /(\?|\b(berapa|how much|how many|what|apa|bila|when|siapa|who|adakah|macam mana|how|kenapa|why|mana)\b)/;
-const START_VERB = /\b(isi|isikan|masuk|masukkan|tambah|tambahkan|rekod|rekodkan|catat|catatkan|simpan|log|add|record|enter|key in|keyin|input|fill in|fill|save|note down)\b/;
+export const QUESTION = /(\?|\b(berapa|how much|how many|what|apa|bila|when|siapa|who|adakah|macam mana|how|kenapa|why|mana)\b)/;
+export const START_VERB = /\b(isi|isikan|masuk|masukkan|tambah|tambahkan|rekod|rekodkan|catat|catatkan|simpan|log|add|record|enter|key in|keyin|input|fill in|fill|save|note down)\b/;
 const START_NOUN = /\b(belanja|perbelanjaan|belanjawan|spend|spending|spendings|expense|expenses|kos)\b/;
 const PAST_SPEND = /\b(saya|sy|aku|i|ive|i ve)\s+((baru|dah|sudah|just|tadi|ada)\s+)*(belanja|spent|spend|beli|bought|bayar|paid|makan)\b/;
 
@@ -77,7 +77,7 @@ export function parseAmount(text: string): number | null {
   return w;
 }
 
-const dstr = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+export const dstr = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'mei|may', 'jun', 'jul', 'ogos|aug', 'sep', 'okt|oct', 'nov', 'dis|dec'];
 
 // A date from what was said: today, yesterday, "2 hari lepas", "15/11", "15 november". Never in the future. Null when there is none.
@@ -117,8 +117,8 @@ export function parseCat(text: string, cats: string[]): string | null {
   return null;
 }
 
-const SKIP = /^(tiada|takde|tak ada|tak de|xde|x de|tidak ada|tidak|tak|no|none|nope|nothing|skip|langkau|kosong|tak perlu|tak payah|tidak perlu|tiada apa|takda|nope thanks|no thanks|no remark|tiada remark|tak ada remark)$/;
-const CANCEL = /^(batal|cancel|tak jadi|tidak jadi|lupakan|forget it|never ?mind|abaikan|berhenti|stop)$/;
+export const SKIP = /^(tiada|takde|tak ada|tak de|xde|x de|tidak ada|tidak|tak|no|none|nope|nothing|skip|langkau|kosong|tak perlu|tak payah|tidak perlu|tiada apa|takda|nope thanks|no thanks|no remark|tiada remark|tak ada remark)$/;
+export const CANCEL = /^(batal|cancel|tak jadi|tidak jadi|lupakan|forget it|never ?mind|abaikan|berhenti|stop)$/;
 
 export function isFlowActive(host: any): boolean { return !!(host && host.state && host.state.flow); }
 
@@ -149,7 +149,7 @@ async function load(host: any, lang: string): Promise<Ctx> {
 const BANKS: string[][] = [['maybank', 'mbb', 'maybank2u', 'm2u'], ['cimb', 'cimb clicks'], ['rhb'], ['public bank', 'pbe', 'pbb', 'public'], ['bank islam', 'bimb'], ['bsn'], ['bank rakyat', 'rakyat'], ['affin', 'affin bank'], ['ambank', 'am bank'], ['hong leong', 'hlb'], ['agrobank', 'agro'], ['uob'], ['ocbc'], ['hsbc'], ['standard chartered', 'scb'], ['touch n go', 'touch and go', 'tng', 'tng ewallet', 'tng e-wallet', 'touch n go ewallet'], ['grabpay', 'grab pay', 'grab'], ['shopeepay', 'shopee pay', 'spay'], ['boost'], ['mae', 'mae maybank'], ['gxbank', 'gx bank', 'gx'], ['boost bank'], ['bigpay', 'big pay'], ['setel'], ['tabung haji', 'th'], ['asb', 'asb loan', 'amanah saham bumiputera']];
 const sameBank = (a: string, b: string) => BANKS.some((g) => g.some((x) => a.indexOf(x) >= 0) && g.some((x) => b.indexOf(x) >= 0));
 
-function parseAcc(text: string, accs: { id: number; name: string }[]) {
+export function parseAcc(text: string, accs: { id: number; name: string }[]) {
   const t = ' ' + String(text || '').toLowerCase() + ' ';
   const hit = accs.slice().sort((a, b) => b.name.length - a.name.length).find((a) => t.indexOf(a.name.toLowerCase()) >= 0);
   if (hit) return hit;
@@ -253,6 +253,7 @@ async function otherTurn(host: any, q: string, lang: string, f: Flow | null): Pr
 // One turn. Returns the Assistant's reply, or null when this sentence is not part of the guided spending.
 export async function flowTurn(host: any, q: string, lang: string): Promise<any | null> {
   const s = host.state; let f: Flow | null = s.flow || null;
+  if (f && ['spend', 'inc', 'mtc', 'odo'].indexOf(f.kind) < 0) return null;
   if ((f && f.kind !== 'spend') || (!f && startsKind(q) && startsKind(q) !== 'spend')) return otherTurn(host, q, lang, f);
   if (!f && !startsSpend(q)) return null;
   const c = await load(host, lang);

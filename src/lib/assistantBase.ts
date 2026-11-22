@@ -13,6 +13,7 @@ import { dataDigest } from './assistantDigest';
 import { balanceOf, totals, isLiab, groupOf, incomeFeed, commitTotal } from './accounts';
 import { thingsValue } from './collection';
 import { flowTurn } from './assistantFlow';
+import { genTurn } from './assistantFlow2';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
@@ -162,6 +163,7 @@ export class AssistantBase extends React.Component<any, any> {
       const diff = p.val - s.odo; patch.odo = p.val; patch.kmMonth = s.kmMonth + diff;
       m = this.mk(L('Odometer saved: ' + this.num(p.val) + ' km. That is ' + diff + ' km since the last reading, so this month is ' + (s.kmMonth + diff) + ' km.', 'Odometer disimpan: ' + this.num(p.val) + ' km. Itu ' + diff + ' km sejak bacaan terakhir, jadi bulan ini ' + (s.kmMonth + diff) + ' km.'), { big: this.num(p.val), bigLbl: 'km', color: '#ff8fab', label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' });
     }
+    else if (p.doneEn) m = this.mk(L(p.doneEn, p.doneMs), { label: L(p.lbl[0], p.lbl[1]), href: p.href });
     if (yes && p.type === 'spend') { m.uid = Date.now(); patch.lastUndo = { id: m.uid, askSpend: true }; }
     this.setState(Object.assign({ msgs: s.msgs.concat([m]) }, patch));
     if (yes && this.props.persist) this.props.persist(p.type === 'undoSpend' ? { type: 'undoSpend', id: p.sid } : p);
@@ -641,7 +643,7 @@ export class AssistantBase extends React.Component<any, any> {
     this.scroll();
     setTimeout(async () => {
       let r; let fr = null;
-      try { fr = await flowTurn(this, q, lang); } catch (e) { fr = null; if (this.state.flow) this.setState({ flow: null }); }
+      try { fr = (await genTurn(this, q, lang)) || (await flowTurn(this, q, lang)); } catch (e) { fr = null; if (this.state.flow) this.setState({ flow: null }); }
       if (fr) { this.setState(Object.assign({ msgs: this.state.msgs.concat([fr.m]), typing: false, live: '' }, fr.patch)); this.scroll(); return; }
       if (this.state.flow) this.setState({ flow: null });
       try { r = this.reply(q, lang); } catch (e) {
