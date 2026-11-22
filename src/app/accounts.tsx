@@ -323,7 +323,10 @@ export default function Accounts() {
             {resv > 0 ? (() => { const kl = data.accs.filter((a) => keepOf(a) > 0); const nm = kl.length === 1 ? kl[0].name : kl.length === 2 ? kl[0].name + ' and ' + kl[1].name : kl.length + ' accounts'; return (<View style={{ marginTop: 8 }}>
               <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12, lineHeight: 17 }}>{(availView === 1 ? 'Takes off ' : 'Includes ') + cs() + money(resv) + ' kept in ' + nm}</Text>
               <Tap onPress={() => setKeepOpen(!keepOpen)} label={keepOpen ? 'Hide the minimum balances' : 'Show the minimum balances'} style={{ alignSelf: 'flex-start', marginTop: 8, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 13, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.34)', backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{keepOpen ? 'Hide accounts' : 'See accounts'}</Text><Text style={{ color: W, fontSize: 10 }}>{keepOpen ? '▲' : '▼'}</Text></Tap>
-              {keepOpen ? kl.map((a) => (<View key={a.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, paddingLeft: 8 }}><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{a.name}</Text><Text style={{ color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: '700' }}>{cs() + money(keepOf(a))}</Text></View>)) : null}
+              {keepOpen ? (<View style={{ marginTop: 8, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.1)', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4 }}>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 }}>MINIMUM KEPT</Text>
+                {kl.map((a, i) => (<View key={a.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: 'rgba(255,255,255,.12)' }}><Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 13, fontWeight: '600', paddingRight: 10 }}>{a.name}</Text><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{cs() + money(keepOf(a))}</Text></View>))}
+              </View>) : null}
             </View>); })() : null}
           </Glass>
 
