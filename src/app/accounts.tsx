@@ -442,7 +442,7 @@ export default function Accounts() {
                   <View style={{ flex: Math.max(0.0001, owe / tot), backgroundColor: PINK }} />
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{net < 0 ? 'What you owe is more than your money' + (withThings ? ' and things.' : '.') : 'Your money' + (withThings ? ' and things are' : ' is') + ' more than what you owe.'}</Text>
-                <Tap onPress={() => setNwOpen(nwOpen ? 0 : 1)} label={nwOpen ? 'Hide details' : 'Show details'} style={{ marginTop: 10 }}><Text style={{ color: '#b9c8ff', fontSize: 13, fontWeight: '700' }}>{nwOpen ? 'Hide details ˄' : 'Show details ˅'}</Text></Tap>
+                <Tap onPress={() => setNwOpen(nwOpen ? 0 : 1)} label={nwOpen ? 'Hide details' : 'Show details'} style={{ alignSelf: 'flex-start', marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.34)', backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{nwOpen ? 'Hide details' : 'Show details'}</Text><Text style={{ color: W, fontSize: 10 }}>{nwOpen ? '▲' : '▼'}</Text></Tap>
                 {nwOpen ? (<>
                 <View style={{ marginTop: 12, borderRadius: 16, padding: 14, backgroundColor: 'rgba(255,255,255,.1)' }}>
                   <Row l="Money in accounts" sub={resv > 0 ? 'Cash, banks and wallets. Includes ' + cs() + money(resv) + ' your banks need you to keep' : 'Cash, banks and wallets'} v={cs() + money(t.assets)} />
