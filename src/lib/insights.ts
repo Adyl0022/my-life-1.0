@@ -13,8 +13,8 @@ import { cs } from './region';
 import { missedDoses, medAdherence } from './medMissed';
 import { cycleInfo, cyclePatterns } from './cycle';
 import { ENERGY } from './patterns';
-import { ACC_EMPTY, AccData, balanceOf, isLiab, incomeFeed } from './accounts';
-import { SUB_EMPTY, SubStore, live as subLive, dueOf, num as subNum } from './subs';
+import { ACC_EMPTY, AccData, balanceOf, isLiab, incomeFeed, keepOf, reservedTotal } from './accounts';
+import { SUB_EMPTY, SubStore, live as subLive, dueOf, num as subNum, monthlyTotal as subMonthly } from './subs';
 import { mins as relaxMins, weekMins, relaxStreak } from './relax';
 
 export type Sp = { amt: number; date: string; cat?: string; name?: string; id?: number; goal?: number };
@@ -350,7 +350,19 @@ export function tips(c: Core, week: boolean): Tip[] {
     const neg = c.acc.accs.filter((a) => !isLiab(a) && balanceOf(a, c.acc as AccData, sp, feeds) < 0);
     if (neg.length) add({ id: 'acc-neg', title: neg.length === 1 ? neg[0].name + ' is below zero' : neg.length + ' accounts are below zero', sub: neg.slice(0, 2).map((a) => a.name + ' ' + rmf(balanceOf(a, c.acc as AccData, sp, feeds))).join(', ') + '. Add money or move some in so it matches your real balance.', why: 'Worked out from the start balance and what you added in My Accounts. If it does not match your bank, set the balance in the account.', go: '/accounts', k: 'goal', pri: 66 });
   }
+  if (!week && c.acc && c.acc.accs.length) {
+    const sp2 = allSpends(c) as any[]; const feeds2 = { debts: ((c.debts && c.debts.debts) || []) as any, incomes: incomeFeed((c.fin as any).inc || {}, (c.fin as any).incAcc) };
+    const ad = c.acc as AccData;
+    const low = ad.accs.filter((a) => !isLiab(a) && keepOf(a) > 0).map((a) => ({ a, b: balanceOf(a, ad, sp2, feeds2) })).filter((x) => x.b >= 0 && x.b < keepOf(x.a));
+    if (low.length) add({ id: 'acc-keep', title: low.length === 1 ? low[0].a.name + ' is below its minimum' : low.length + ' accounts are below their minimum', sub: low.slice(0, 2).map((x) => x.a.name + ' has ' + rmf(x.b) + ', minimum ' + rmf(keepOf(x.a))).join('. ') + '. Your bank may charge a fee, so try not to spend from it.', why: 'Compares each balance in My Accounts with the minimum you set for that account.', go: '/accounts', k: 'bills', pri: 66 });
+    const assets = ad.accs.filter((a) => !isLiab(a)).reduce((t, a) => t + balanceOf(a, ad, sp2, feeds2), 0);
+    const can = Math.max(0, assets - reservedTotal(ad));
+    const mlx = calcLeft({ ym: ymOf(now), income: incomeOf(c), commit: commitFor(c.debts, ymOf(now)), spends: sp2 as any });
+    if (mlx.income > 0 && mlx.left > 0 && mlx.left > can + 0.005) add({ id: 'acc-left', title: 'Left is more than you can really spend', sub: 'Money Left says ' + rmf(mlx.left) + ', but you can spend ' + rmf(can) + ' from your accounts. Part of it may be income you have not received yet.', why: 'Compares Left in Money Left with the money in My Accounts after the minimums.', go: '/finance', k: 'bills', pri: 64 });
+  }
   if (!week && c.subs) {
+    const inc0 = incomeOf(c); const sm = subMonthly(c.subs.subs);
+    if (inc0 > 0 && sm > 0 && sm / inc0 >= 0.1) add({ id: 'sub-share', title: 'Subscriptions take ' + Math.round((sm / inc0) * 100) + '% of your income', sub: rmf(sm) + ' a month out of ' + rmf(inc0) + '. Cancel the ones you no longer use.', why: 'Your active subscriptions in a month against the income you entered for this month.', go: '/subscriptions', k: 'bills', pri: 50 });
     const soon = c.subs.subs.filter(subLive).map((s) => ({ s, d: dueOf(s, todayK) })).filter((x) => x.d.days >= 0 && x.d.days <= 3).sort((a, b) => a.d.days - b.d.days);
     if (soon.length) { const x = soon[0]; add({ id: 'sub-soon', title: x.s.name + (x.s.trial ? ' trial ends ' : ' is charged ') + (x.d.days === 0 ? 'today' : x.d.days === 1 ? 'tomorrow' : 'in ' + x.d.days + ' days'), sub: rmf(subNum(x.s.price)) + (soon.length > 1 ? '. ' + (soon.length - 1) + ' more due soon.' : '. Cancel it first if you no longer use it.'), why: 'Based on the next date in your Subscriptions list.', go: '/subscriptions', k: 'goal', pri: x.s.trial ? 72 : 58 }); }
   }

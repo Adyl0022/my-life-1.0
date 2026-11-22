@@ -467,7 +467,7 @@ export default function Stats() {
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                       {wd.map((d, i) => <Text key={i} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{d}</Text>)}
                     </View>
-                    {tr.est && tr.est.some(Boolean) ? <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6, lineHeight: 15 }}>Dashed bars are estimates worked out from your sleep, water, steps, mood and night pulse. Rate your energy in Habit and Health and your own rating replaces the estimate.</Text> : null}
+                    {tr.est && tr.est.some(Boolean) ? <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6, lineHeight: 15 }}>{'You rated ' + tr.v.filter((v, i) => v > 0 && !(tr.est as boolean[])[i]).length + ' of ' + el + (el === 1 ? ' day' : ' days') + ' yourself. '}Dashed bars are estimates worked out from your sleep, water, steps, mood and night pulse. Rate your energy in Habit and Health and your own rating replaces the estimate.</Text> : null}
                   </View>
                 );
               })}
@@ -562,6 +562,7 @@ export default function Stats() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>{rows.map((r) => <Text key={r.ym} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{r.label}</Text>)}</View>
                   </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Nothing saved in the last 6 months. Choose Savings in the Spending Tracker to start.</Text>}
+                  {(() => { const gl = ((core.sav && core.sav.goals) || []).filter((g: any) => g.target > 0); const rem = gl.reduce((a: number, g: any) => a + Math.max(0, g.target - goalSaved(g, ((fin && (fin as any).spends) || []) as any, core.debts)), 0); const act = rows.filter((r) => r.savings > 0); const av = act.length ? act.reduce((a, r) => a + r.savings, 0) / act.length : 0; if (!gl.length || av <= 0) return null; if (rem <= 0) return <Text style={{ color: '#7df0c6', fontSize: 11.5, marginTop: 8 }}>All your goals with a target are fully saved.</Text>; const mo = Math.ceil(rem / av); return <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{'Est. at about ' + cs() + Math.round(av).toLocaleString('en-MY') + ' a month (your usual of the last 6 months), ' + cs() + Math.round(rem).toLocaleString('en-MY') + ' still to save takes about ' + mo + (mo === 1 ? ' month.' : ' months.')}</Text>; })()}
                   <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{'All goals together: ' + cs() + Math.round(goalsSaved).toLocaleString('en-MY') + ' across ' + nGoals + (nGoals === 1 ? ' goal.' : ' goals.')}</Text>
                 </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Create a goal in My Finance, Savings Goals, then put money into it from the Spending Tracker or a monthly commitment.</Text>}
               </>);
@@ -569,7 +570,21 @@ export default function Stats() {
           </Glass>
           </Rise>
 
-          <Rise i={4}>
+          {accD.accs.length > 0 && (() => {
+            const ymN = keyOfDate(dateOf(0)).slice(0, 7); const sp = ((fin && (fin as any).spends) || []).filter((x: any) => x.cat !== 'Savings' && (x.date || '').slice(0, 7) === ymN);
+            const by: Record<string, number> = {}; sp.forEach((x: any) => { const a = x.acc ? accD.accs.find((q) => q.id === x.acc) : null; const k = a ? a.name : 'Not linked'; by[k] = (by[k] || 0) + (x.amt || 0); });
+            const list = Object.keys(by).map((k) => ({ k, v: by[k] })).sort((x, y) => y.v - x.v); const tot = list.reduce((q, x) => q + x.v, 0);
+            if (!list.some((x) => x.k !== 'Not linked')) return null;
+            return (<Rise i={4}><Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Spending by account</Text>
+              <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 2 }}>This month, where the money came out from.</Text>
+              <View style={{ gap: 10, marginTop: 12 }}>{list.slice(0, 6).map((x) => (<View key={x.k}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '600' }}>{x.k}</Text><Text style={{ color: '#ffc46b', fontSize: 12.5, fontWeight: '800' }}>{cs()}{Math.round(x.v).toLocaleString('en-MY')}</Text></View>
+                <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 4 }}><View style={{ height: 6, borderRadius: 3, width: Math.max(4, Math.round((x.v / (tot || 1)) * 100)) + '%', backgroundColor: x.k === 'Not linked' ? 'rgba(255,255,255,.4)' : '#7c9cff' }} /></View>
+              </View>))}</View>
+            </Glass></Rise>);
+          })()}
+          <Rise i={5}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Spending this week</Text>
             <View style={{ gap: 16, marginTop: 14 }}>
