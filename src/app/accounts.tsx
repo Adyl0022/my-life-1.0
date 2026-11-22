@@ -24,7 +24,7 @@ import { cs, useRegion } from '../lib/region';
 import { TransferDone, type TransferInfo } from '../components/TransferDone';
 import { takePhoto } from '../lib/photo';
 import { DEBT_EMPTY, DebtData, type Debt, remaining, monthsLeft, yearsMonths, payoffLabel, ymOf, dueDay } from '../lib/debts';
-import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, refOf, balanceOf, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
+import { ACC_EMPTY, type AccDebt, type Feeds, incomeFeed, commitTotal, GROUPS, groupOf, isLiab, refOf, balanceOf, keepOf, reservedTotal, linesOf, totals, type Acc, type AccData, type AccGroup, type AccSpend, type Move } from '../lib/accounts';
 
 const money = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -63,9 +63,9 @@ function FoldBtn({ shut, c }: { shut: boolean; c: string }) {
 
 // The little picture of an account: your own image if you chose one, otherwise the first letter in the colour of its type.
 function AccTile({ a, size = 32 }: { a: { name: string; g: AccGroup; photo?: string }; size?: number }) {
-  const c = groupOf(a.g).c;
+  const c = groupOf(a.g).c; const [bad, setBad] = useState(false);
   return <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: c + '26', borderWidth: 1, borderColor: c + '88', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-    {a.photo ? <Image source={{ uri: a.photo }} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c, fontSize: size * 0.42, fontWeight: '800' }}>{(a.name.trim()[0] || '?').toUpperCase()}</Text>}
+    {a.photo && !bad ? <Image source={{ uri: a.photo }} onError={() => setBad(true)} style={{ width: size, height: size }} resizeMode="cover" /> : <Text style={{ color: c, fontSize: size * 0.42, fontWeight: '800' }}>{(a.name.trim()[0] || '?').toUpperCase()}</Text>}
   </View>;
 }
 
@@ -73,12 +73,13 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
   const { data, setData } = ctx;
   const [name, setName] = useState(edit ? edit.name : ''); const [g, setG] = useState<AccGroup>(edit ? edit.g : 'bank');
   const [photo, setPhoto] = useState(edit && edit.photo ? edit.photo : ''); const [pmsg, setPmsg] = useState('');
-  const [start, setStart] = useState(edit ? String(edit.start || '') : ''); const [since, setSince] = useState(edit ? edit.since : todayStr()); const [tried, setTried] = useState(false);
+  const [keep, setKeep] = useState(edit && edit.keep ? String(edit.keep) : ''); const [start, setStart] = useState(edit ? String(edit.start || '') : ''); const [since, setSince] = useState(edit ? edit.since : todayStr()); const [tried, setTried] = useState(false);
   const liab = groupOf(g).liab; const n = start.trim() === '' ? 0 : pn(start);
   const save = () => {
     setTried(true); if (!name.trim()) return; if (start.trim() !== '' && !(n >= 0)) { tryForm('acc'); return; }
-    if (edit) setData({ ...data, accs: data.accs.map((a) => a.id === edit.id ? { ...a, name: name.trim(), g, start: n, since, photo: photo || undefined } : a) });
-    else setData({ ...data, accs: [...data.accs, { id: data.nextId, name: name.trim(), g, start: n, since, photo: photo || undefined }], nextId: data.nextId + 1 });
+    const kp = liab || keep.trim() === '' ? 0 : pn(keep); if (!liab && keep.trim() !== '' && !(kp >= 0)) { tryForm('acc'); return; }
+    if (edit) setData({ ...data, accs: data.accs.map((a) => a.id === edit.id ? { ...a, name: name.trim(), g, start: n, since, photo: photo || undefined, keep: kp > 0 ? kp : undefined } : a) });
+    else setData({ ...data, accs: [...data.accs, { id: data.nextId, name: name.trim(), g, start: n, since, photo: photo || undefined, ...(kp > 0 ? { keep: kp } : {}) }], nextId: data.nextId + 1 });
     onClose();
   };
   return (
@@ -106,6 +107,11 @@ function AccountForm({ ctx, edit, onClose }: { ctx: Ctx; edit?: Acc; onClose: ()
         <Inp form="acc" need="an amount" zeroOk value={start} onChangeText={setStart} keyboardType="decimal-pad" placeholder={liab ? 'Amount owed in ' + cs() + ' (0 if none)' : 'Balance in ' + cs() + ' (0 if empty)'} />
         <Lab t="AS OF" />
         <DateField value={since} onChange={setSince} />
+        {!liab ? (<>
+          <Lab t="MINIMUM TO KEEP (OPTIONAL)" />
+          <Inp form="acc" need="an amount" zeroOk value={keep} onChangeText={setKeep} keyboardType="decimal-pad" placeholder={'Amount your bank wants left, in ' + cs() + ' (leave empty if none)'} />
+          <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>Many banks need a small amount to stay in the account. It is kept out of the money you can spend, and you will see it as Reserved. Each bank is different, so type the amount your bank asks for. Saved with your account data and synced like your other finance entries.</Text>
+        </>) : null}
         <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{'The balance above is how much it was on this date. Spending, money in and transfers after it change the balance by themselves. Saved with your account data and synced like your other finance entries.'}</Text>
         <BigBtn t={edit ? 'Save changes' : 'Add account'} g={['#8ea8ff', '#b794ff']} onPress={save} />
       </Sections>
@@ -156,6 +162,7 @@ function MoveSheet({ ctx, mv, onClose }: { ctx: Ctx; mv: MoveMode; onClose: () =
         {pickChips(to, setTo, mv.mode === 'transfer' ? from : undefined, mv.mode === 'deposit' ? (a) => !isLiab(a) : undefined)}
         {mv.mode === 'transfer' && target && isLiab(target) ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>This lowers what you owe on {target.name}.</Text> : null}
         {mv.mode === 'transfer' && tried && from === to ? <Err t="Pick two different accounts." /> : null}
+        {mv.mode === 'transfer' && (() => { const fa = accs.find((a) => a.id === from); if (!fa || !(n > 0) || keepOf(fa) <= 0) return null; const left = balanceOf(fa, data, spends, feeds) - n; return left < keepOf(fa) ? <Text style={{ color: '#ffc46b', fontSize: 12.5, lineHeight: 18, marginTop: 8 }}>{'Careful: this leaves ' + cs() + money(Math.max(0, left)) + ' in ' + fa.name + ', below the ' + cs() + money(keepOf(fa)) + ' you keep in it. You can still continue.'}</Text> : null; })()}
         <Lab t={mv.mode === 'adjust' ? 'BALANCE NOW' : 'AMOUNT'} />
         <Inp form="mov" need="an amount" zeroOk={mv.mode === 'adjust'} value={amt} onChangeText={setAmt} keyboardType="decimal-pad" placeholder={mv.mode === 'adjust' ? 'What it should be, in ' + cs() : 'Amount in ' + cs()} />
         {mv.mode === 'adjust' && target ? <Text style={{ color: dim, fontSize: 12, marginTop: 8 }}>{'My Life 1.0 shows ' + cs() + money(cur) + ' now.' + (amt && n >= 0 ? ' This ' + (n - cur >= 0 ? 'adds ' : 'takes off ') + cs() + money(Math.abs(n - cur)) + '.' : '')}</Text> : null}
@@ -218,6 +225,11 @@ function Detail({ ctx, id, onClose, onEdit, onMove }: { ctx: Ctx; id: number; on
         <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>{liab ? 'YOU OWE' : 'BALANCE'}</Text>
         <Text style={{ color: liab ? PINK : '#fff', fontSize: 32, fontWeight: '800', marginTop: 4 }}>{cs() + money(b)}</Text>
         <View style={{ position: 'absolute', right: 16, top: 16 }}><AccTile a={a} size={46} /></View>
+        {!liab && keepOf(a) > 0 ? (<View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.14)' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}><Text style={{ color: dim, fontSize: 13.5 }}>Account Balance</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs() + money(b)}</Text></View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}><Text style={{ color: dim, fontSize: 13.5 }}>Reserved Balance</Text><Text style={{ color: W, fontSize: 14, fontWeight: '800' }}>{cs() + money(keepOf(a))}</Text></View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: W, fontSize: 14.5, fontWeight: '800' }}>Available Balance</Text><Text style={{ color: b - keepOf(a) < 0 ? PINK : '#5ee7b5', fontSize: 20, fontWeight: '800' }}>{(b - keepOf(a) < 0 ? '-' : '') + cs() + money(Math.abs(b - keepOf(a)))}</Text></View>
+        </View>) : null}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
         {liab ? <Act t="Pay off" c={PINK} onPress={() => { onClose(); onMove({ mode: 'transfer', acc: a.id }); }} /> : <Act t="Money in" c="#5ee7b5" onPress={() => { onClose(); onMove({ mode: 'deposit', acc: a.id }); }} />}
@@ -278,7 +290,7 @@ export default function Accounts() {
   const [form, setForm] = useState<null | { edit?: Acc }>(null); const [mv, setMv] = useState<null | MoveMode>(null); const [open, setOpen] = useState(0);
   const [col] = useStored<ColStore>('ml_collection', EMPTY_COL); const [withThings, setWithThings] = useStored<number>('ml_acc_things', 1); const tv = thingsValue((col && col.items) || []);
   const cms = ((dbt && dbt.debts) || []).filter((x) => !x.fixed && remaining(x) > 0);
-  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
+  const t = totals(data, spends, commitTotal((dbt && dbt.debts) || []), feeds); const [availView, setAvailView] = useStored<number>('ml_acc_avail', 0); const [nwOpen, setNwOpen] = useStored<number>('ml_acc_nw', 0); const [keepOpen, setKeepOpen] = useState(false); const resv = reservedTotal(data); const shownTotal = availView === 1 && resv > 0 ? t.assets - resv : t.assets; const [fold, setFold] = useStored<string[]>('ml_acc_fold', []); const [cmInfo, setCmInfo] = useState<Debt | null>(null);
   // Sort by: your own order (move groups up or down), most money first, least money first, or A to Z. It is kept on this phone.
   const SORTS = ['My order', 'Highest', 'Lowest', 'A to Z']; const [sortI, setSortI] = useStored<number>('ml_acc_sort', 0); const [sortL, setSortL] = useStored<number>('ml_acc_sort_owe', 0); const [gOrd, setGOrd] = useStored<string[]>('ml_acc_order', []);
   const Stat = ({ l, v, vc }: { l: string; v: string; vc?: string }) => (
@@ -303,10 +315,19 @@ export default function Accounts() {
           <Glass radius={24} style={{ marginTop: 14, padding: 16 }}>
             <LinearGradient colors={['rgba(255,196,107,.4)', 'rgba(255,143,171,.22)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
             <Text style={{ color: 'rgba(255,255,255,.78)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.2 }}>TOTAL MONEY</Text>
-            <Text style={{ color: t.total < 0 ? PINK : W, fontSize: 30, fontWeight: '800', marginTop: 4 }}>{(t.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total))}</Text>
+            <Text style={{ color: shownTotal < 0 ? PINK : W, fontSize: 30, fontWeight: '800', marginTop: 4 }}>{(shownTotal < 0 ? '-' : '') + cs() + money(Math.abs(shownTotal))}</Text>
+            {resv > 0 ? <View style={{ marginTop: 10 }}><EqPills tabs={['All my money', 'Can spend']} index={availView === 1 ? 1 : 0} onChange={(i) => setAvailView(i)} colors={['#ffc46b', '#ff8fab']} fontSize={12} /></View> : null}
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-              <Stat l="Assets" v={cs() + money(t.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} />
+              <Stat l="Liabilities" v={cs() + money(t.liab)} vc={PINK} /><Stat l="After debts" v={(t.total < 0 ? '-' : '') + cs() + money(Math.abs(t.total))} vc={t.total < 0 ? PINK : '#9fb6ff'} />
             </View>
+            {resv > 0 ? (() => { const kl = data.accs.filter((a) => keepOf(a) > 0); const nm = kl.length === 1 ? kl[0].name : kl.length === 2 ? kl[0].name + ' and ' + kl[1].name : kl.length + ' accounts'; return (<View style={{ marginTop: 8 }}>
+              <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 12, lineHeight: 17 }}>{(availView === 1 ? 'Takes off ' : 'Includes ') + cs() + money(resv) + ' kept in ' + nm}</Text>
+              <Tap onPress={() => setKeepOpen(!keepOpen)} label={keepOpen ? 'Hide the minimum balances' : 'Show the minimum balances'} style={{ alignSelf: 'flex-start', marginTop: 8, marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 13, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.34)', backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12, fontWeight: '800' }}>{keepOpen ? 'Hide accounts' : 'See accounts'}</Text><Text style={{ color: W, fontSize: 10 }}>{keepOpen ? '▲' : '▼'}</Text></Tap>
+              {keepOpen ? (<View style={{ marginTop: 8, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.1)', paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4 }}>
+                <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 }}>MINIMUM KEPT</Text>
+                {kl.map((a, i) => (<View key={a.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: 'rgba(255,255,255,.12)' }}><Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 13, fontWeight: '600', paddingRight: 10 }}>{a.name}</Text><Text style={{ color: W, fontSize: 13, fontWeight: '800' }}>{cs() + money(keepOf(a))}</Text></View>))}
+              </View>) : null}
+            </View>); })() : null}
           </Glass>
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
@@ -324,7 +345,7 @@ export default function Accounts() {
             </Glass>
           ) : null}
 
-          {[{ title: 'MONEY YOU HAVE', liab: false, tint: ['rgba(124,156,255,.22)', 'rgba(94,231,181,.1)'] as [string, string], sum: t.assets }, { title: 'WHAT YOU OWE', liab: true, tint: ['rgba(255,143,171,.22)', 'rgba(183,148,255,.12)'] as [string, string], sum: t.liab }].map((sec) => {
+          {[{ title: 'MONEY YOU HAVE', liab: false, tint: ['rgba(124,156,255,.22)', 'rgba(94,231,181,.1)'] as [string, string], sum: availView === 1 ? t.assets - resv : t.assets }, { title: 'WHAT YOU OWE', liab: true, tint: ['rgba(255,143,171,.22)', 'rgba(183,148,255,.12)'] as [string, string], sum: t.liab }].map((sec) => {
             const sumG = (k: AccGroup) => data.accs.filter((a) => a.g === k).reduce((x, a) => x + balanceOf(a, data, spends, feeds), 0);
             const sI = sec.liab ? sortL : sortI;
             const gs0 = GROUPS.filter((g) => g.liab === sec.liab && data.accs.some((a) => a.g === g.k));
@@ -336,7 +357,6 @@ export default function Accounts() {
                 <LinearGradient colors={sec.tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 11.5, fontWeight: '800', letterSpacing: 1.3 }}>{sec.title}</Text>
-                  <Text style={{ color: sec.liab ? PINK : '#9fb6ff', fontSize: 15, fontWeight: '800' }}>{cs() + money(sec.sum)}</Text>
                 </View>
                 {data.accs.filter((a) => groupOf(a.g).liab === sec.liab).length + (sec.liab ? cms.length : 0) > 1 ? (
                   <View style={{ marginTop: 10 }}>
@@ -346,7 +366,7 @@ export default function Accounts() {
                   </View>
                 ) : null}
                 {gs.map((g) => {
-                  const list = data.accs.filter((a) => a.g === g.k).sort((x, y) => sI === 1 ? balanceOf(y, data, spends, feeds) - balanceOf(x, data, spends, feeds) : sI === 2 ? balanceOf(x, data, spends, feeds) - balanceOf(y, data, spends, feeds) : sI === 3 ? x.name.localeCompare(y.name) : 0); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends, feeds), 0); const shut = fold.includes(g.k);
+                  const list = data.accs.filter((a) => a.g === g.k).sort((x, y) => sI === 1 ? balanceOf(y, data, spends, feeds) - balanceOf(x, data, spends, feeds) : sI === 2 ? balanceOf(x, data, spends, feeds) - balanceOf(y, data, spends, feeds) : sI === 3 ? x.name.localeCompare(y.name) : 0); const sub = list.reduce((x, a) => x + balanceOf(a, data, spends, feeds) - (availView === 1 && !g.liab ? keepOf(a) : 0), 0); const shut = fold.includes(g.k);
                   return (
                     <View key={g.k} style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.12)' }}>
                       <Tap onPress={() => setFold(shut ? fold.filter((x) => x !== g.k) : [...fold, g.k])} label={(shut ? 'Open ' : 'Close ') + g.plural} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: shut ? 2 : 4 }}>
@@ -365,7 +385,7 @@ export default function Accounts() {
                           <Tap key={a.id} onPress={() => setOpen(a.id)} label={'Open ' + a.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingLeft: 17 }}>
                             <AccTile a={a} size={30} />
                             <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 15, fontWeight: '600' }}>{a.name}</Text>
-                            <Text style={{ color: g.liab ? PINK : W, fontSize: 15, fontWeight: '800' }}>{cs() + money(b)}</Text>
+                            <View style={{ alignItems: 'flex-end' }}><Text style={{ color: g.liab ? PINK : W, fontSize: 15, fontWeight: '800' }}>{cs() + money(availView === 1 && !g.liab ? b - keepOf(a) : b)}</Text>{!g.liab && keepOf(a) > 0 ? <Text style={{ color: dim, fontSize: 11, marginTop: 1 }}>{availView === 1 ? 'after ' + cs() + money(keepOf(a)) + ' kept' : cs() + money(b - keepOf(a)) + ' available'}</Text> : null}</View>
                             <Text style={{ color: 'rgba(255,255,255,.4)', fontSize: 17 }}>›</Text>
                           </Tap>
                         );
@@ -422,8 +442,10 @@ export default function Accounts() {
                   <View style={{ flex: Math.max(0.0001, owe / tot), backgroundColor: PINK }} />
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>{net < 0 ? 'What you owe is more than your money' + (withThings ? ' and things.' : '.') : 'Your money' + (withThings ? ' and things are' : ' is') + ' more than what you owe.'}</Text>
+                <Tap onPress={() => setNwOpen(nwOpen ? 0 : 1)} label={nwOpen ? 'Hide details' : 'Show details'} style={{ alignSelf: 'flex-start', marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.34)', backgroundColor: 'rgba(255,255,255,.12)' }}><Text style={{ color: W, fontSize: 12.5, fontWeight: '800' }}>{nwOpen ? 'Hide details' : 'Show details'}</Text><Text style={{ color: W, fontSize: 10 }}>{nwOpen ? '▲' : '▼'}</Text></Tap>
+                {nwOpen ? (<>
                 <View style={{ marginTop: 12, borderRadius: 16, padding: 14, backgroundColor: 'rgba(255,255,255,.1)' }}>
-                  <Row l="Money in accounts" sub="Cash, banks and wallets" v={cs() + money(t.assets)} />
+                  <Row l="Money in accounts" sub={resv > 0 ? 'Cash, banks and wallets. Includes ' + cs() + money(resv) + ' your banks need you to keep' : 'Cash, banks and wallets'} v={cs() + money(t.assets)} />
                   <Row l="Physical assets" sub={withThings ? 'A guess, from Personal Collection' : 'Left out of the total'} v={'Est. ' + cs() + money(tv.total)} col={withThings ? undefined : 'rgba(255,255,255,.55)'} />
                   {cats.map((r) => (
                     <View key={r[0]} style={{ marginLeft: 12, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: 'rgba(255,255,255,.18)', flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}>
@@ -435,11 +457,12 @@ export default function Accounts() {
                 </View>
                 <View style={{ marginTop: 10 }}><EqPills tabs={['Count in total', 'Leave out']} index={withThings ? 0 : 1} onChange={(i) => setWithThings(i === 0 ? 1 : 0)} colors={['#7c9cff', '#b794ff']} /></View>
                 <Tap onPress={() => router.push('/collection')} label="Open Personal Collection" style={{ marginTop: 10 }}><Text style={{ color: '#b9c8ff', fontSize: 13, fontWeight: '700' }}>Open Personal Collection ›</Text></Tap>
-                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>Things are a guess from the prices and dates you entered. Net worth is money plus things, minus what you owe. Rent is not counted.</Text>
+                <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 16, marginTop: 8 }}>Things are a guess from your prices and dates. Rent is not counted.</Text>
+                </>) : null}
               </Glass>
             );
           })() : null}
-          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone from what you enter and from the spending you link to an account. They are saved with your My Life 1.0 data and synced to your account like your other finance entries. My Life 1.0 never connects to your bank.</Text>
+          <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11.5, lineHeight: 17, marginTop: 16 }}>Balances are worked out on your phone and synced like your other finance entries. My Life 1.0 never connects to your bank.</Text>
         </ScrollView>
       </SafeAreaView>
       {form ? <AccountForm ctx={ctx} edit={form.edit} onClose={() => setForm(null)} /> : null}

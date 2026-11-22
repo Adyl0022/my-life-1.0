@@ -42,13 +42,15 @@ export function calcLeft(o: { ym: string; income: number; commit: number; spends
   const oneOff = oneOffs.reduce((a, p) => a + p.amt, 0);
   const regular = spent - oneOff;
   const pace = dayNo > 0 ? regular / dayNo : 0;
-  const projSpent = isCur ? spent + pace * Math.max(0, daysLeft - 1) : spent;
+  // In the first days of a month there is too little to guess from (one big day would swing it), so no projection is made until day 5.
+  const enough = dayNo >= 5;
+  const projSpent = isCur && enough ? spent + pace * Math.max(0, daysLeft - 1) : spent;
   const projLeft = income - commit - savings - projSpent;
   // What you can spend per day from today on, counted from the start of today.
   const allowance = isCur && daysLeft > 0 ? Math.max(0, left + today) / daysLeft : 0;
   let runOutDay = 0;
-  if (isCur && pace > 0 && left > 0) { const d = dayNo + Math.floor(left / pace); runOutDay = d < dim ? d : 0; }
-  const state: 'none' | 'over' | 'care' | 'ok' = income <= 0 ? 'none' : over ? 'over' : (isCur && projLeft < 0) || used >= 0.85 ? 'care' : 'ok';
+  if (isCur && enough && pace > 0 && left > 0) { const d = dayNo + Math.floor(left / pace); runOutDay = d < dim ? d : 0; }
+  const state: 'none' | 'over' | 'care' | 'ok' = income <= 0 ? 'none' : over ? 'over' : (isCur && enough && projLeft < 0) || used >= 0.85 ? 'care' : 'ok';
   return { ym, y, m, dim, isCur, dayNo, daysLeft, income, commit, afterCommit, spent, savings, today, left, over, used, pace, regular, oneOff, oneOffs, projSpent, projLeft, allowance, runOutDay, state, count: inM.length };
 }
 

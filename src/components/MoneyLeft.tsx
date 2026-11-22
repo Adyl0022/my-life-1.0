@@ -20,7 +20,7 @@ const rnd = (n: number) => Math.round(n).toLocaleString('en-MY');
 const COL = { commit: '#b794ff', spent: '#ffc46b', save: '#7c9cff', left: '#5ee7b5', over: '#ff7a8a' };
 const dim = 'rgba(255,255,255,.68)';
 
-type Props = { ym: string; income: number; spends: Sp[] };
+type Props = { ym: string; income: number; spends: Sp[]; canSpend?: number };
 
 const Row = ({ c, l, v, minus, bold }: { c?: string; l: string; v: string; minus?: boolean; bold?: boolean }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 }}>
@@ -38,7 +38,7 @@ const Tile = ({ l, v, sub, c }: { l: string; v: string; sub?: string; c?: string
 );
 const Sw = ({ on, set }: { on: boolean; set: (v: boolean) => void }) => <Toggle on={on} onPress={() => set(!on)} label="Budget alerts" colors="#ffc46b" thumbOn="#2a1030" />;
 
-export function MoneyLeft({ ym, income, spends }: Props) {
+export function MoneyLeft({ ym, income, spends, canSpend }: Props) {
   const narrow = useWindowDimensions().width < 360;
   const [debts] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
   const [bc, setBc] = useStored<BudgetCfg>('ml_budget', BUDGET_EMPTY);
@@ -104,6 +104,7 @@ export function MoneyLeft({ ym, income, spends }: Props) {
             <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.16)', marginVertical: 4 }} />
             <Row c={over ? COL.over : COL.left} l={over ? 'Over budget' : 'Left'} v={money(Math.abs(left))} bold />
           </View>
+          {isCur && canSpend !== undefined && left > 0 && left > canSpend + 0.005 ? <Text style={{ color: '#ffc46b', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{'Careful: Left is ' + cs() + money(left) + ', but the money you can spend in My Accounts is ' + cs() + money(Math.max(0, canSpend)) + '. Part of it may be income you have not received yet.'}</Text> : null}
 
           {isCur ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>

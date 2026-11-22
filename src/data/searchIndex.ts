@@ -250,11 +250,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "Spending from a sentence",
-  "s": "Tell the Assistant your spending in your own words",
+  "s": "Tell the Assistant your spending in your own words, or say add my spending and it asks step by step",
   "m": "Assistant",
   "c": "#ffc46b",
   "h": "Assistant.dc.html",
-  "k": "ai spending sentence ayat makan tengah hari guna maybank account akaun paid from dibayar dari category kategori belanja assistant gemma qwen on phone confirm"
+  "k": "guided spending income odometer tugasan acara pindah duit langganan pinjam lent borrowed task event transfer servis isi pendapatan isi perbelanjaan berpandu tanya satu satu step by step ai spending sentence ayat makan tengah hari guna maybank account akaun paid from dibayar dari category kategori belanja assistant gemma qwen on phone confirm"
  },
  {
   "t": "Scan to PDF",
@@ -470,7 +470,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "System",
   "c": "#5ee7df",
   "h": "Stats.dc.html",
-  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang total money akaun subscription langganan pulse nadi heart rate"
+  "k": "stats statistik usage penggunaan spending chart graf relax energy tenaga medicine ubat cycle kitaran health kesihatan money wang total money akaun subscription langganan pulse nadi heart rate spending by account belanja ikut akaun savings pace goal berapa bulan energy estimate anggaran dashed"
  },
  {
   "t": "Settings",
@@ -558,7 +558,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Finance.dc.html",
-  "k": "money left baki tinggal duit left to spend gaji income belanja sehari per day month end projection akhir bulan"
+  "k": "money left baki tinggal duit left to spend gaji income belanja sehari per day month end projection akhir bulan careful can spend more than accounts amaran boleh belanja akaun"
  },
  {
   "t": "Subscriptions",
@@ -570,11 +570,11 @@ export const SEARCH_INDEX: SearchItem[] = [
  },
  {
   "t": "My Accounts",
-  "s": "Cash, banks, wallets and cards with balances, plus what your things are worth",
+  "s": "Cash, banks, wallets and cards with balances, the minimum to keep and what you can spend, plus what your things are worth",
   "m": "Finance",
   "c": "#7c9cff",
   "h": "Finance.dc.html",
-  "k": "accounts akaun logo icon ikon gambar gallery baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
+  "k": "minimum balance reserved available baki minimum simpan tersedia accounts akaun logo icon ikon gambar gallery baki balance bank cash tunai wallet e-wallet tng kad kredit credit card loan pinjaman hutang liabilities assets aset total net worth transfer pindah duit paid from bayar guna"
  },
  {
   "t": "Savings Goals",
@@ -582,7 +582,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Finance",
   "c": "#ffc46b",
   "h": "Savings.dc.html",
-  "k": "savings goals tabung simpanan matlamat goal kahwin wedding motor motorcycle kereta car rumah house travel emergency medical hospital hajj umrah maybank"
+  "k": "savings goals tabung simpanan matlamat goal kahwin wedding motor motorcycle kereta car rumah house travel emergency medical hospital hajj umrah maybank take off account put back akaun ambil dari akaun masukkan semula"
  },
  {
   "t": "Add money to a savings goal",
@@ -702,7 +702,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   "m": "Habit",
   "c": "#b794ff",
   "h": "Habit.dc.html",
-  "k": "sleep timer tidur going to sleep i'm awake bangun quick settings tile jam tidur bedtime sleep schedule jadual tidur 30 days last night notification"
+  "k": "sleep timer tidur going to sleep i'm awake bangun quick settings tile jam tidur bedtime sleep schedule jadual tidur 30 days last night notification habit and health sleep card bottom bawah kad tidur add to quick settings"
  },
  {
   "t": "Vehicle score and maintenance jobs",

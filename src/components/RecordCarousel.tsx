@@ -39,20 +39,22 @@ export function RecordCarousel() {
   const [dst] = useStored<DocStore>('ml_documents', EMPTY_DOCS);
   const dsoon = ((dst && dst.docs) || []).filter(d => d.expiry).map(d => ({ label: d.title, n: daysLeft(d.expiry as string) })).filter(x => x.n !== null && x.n !== undefined).sort((a, b) => (a.n as number) - (b.n as number)) as { label: string; n: number }[];
   const now = new Date(); const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-  const jobs: { name: string; text: string; lv: number; di: number }[] = [];
-  const rens: { label: string; n: number }[] = [];
-  let lastKm = 0, lastDate = '';
-  Object.values((rec && rec.data) || {}).forEach((v: any) => {
-    if (!v) return;
+  const jobs: { name: string; text: string; lv: number; di: number; veh: string }[] = [];
+  const rens: { label: string; n: number; veh: string }[] = [];
+  let lastKm = 0, lastDate = '', lastVeh = '';
+  const entries = Object.entries((rec && rec.data) || {}).filter(([, v]: any) => !!v);
+  // With more than one vehicle, every line says which vehicle it is about.
+  const multi = entries.length > 1;
+  entries.forEach(([vn, v]: any) => {
     const oe = odoEstimate(v);
-    if (oe.last > lastKm) { lastKm = oe.last; lastDate = oe.lastDate; }
+    if (oe.last > 0 && (!lastKm || (oe.lastDate || '') > lastDate || ((oe.lastDate || '') === lastDate && oe.last > lastKm))) { lastKm = oe.last; lastDate = oe.lastDate || ''; lastVeh = vn; }
     (v.tasks || []).forEach((t: any) => {
       if (!t || !t.name || (t.kind === 'part' && t.km > 0 && t.odo != null && !t.days)) return;
-      const s = taskState(t, oe.odo, oe.est); jobs.push({ name: t.name, text: s.text.split(' · ')[0], lv: s.level, di: s.dueIn });
+      const s = taskState(t, oe.odo, oe.est); jobs.push({ name: t.name, text: s.text.split(' · ')[0], lv: s.level, di: s.dueIn, veh: multi ? vn : '' });
     });
     const r = v.renew || {};
     ([['roadtax', 'Road tax'], ['insurance', 'Insurance'], ['licence', 'Driving licence']] as [string, string][]).forEach(([k, label]) => {
-      const d = r[k]; if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) rens.push({ label, n: dayN(d) - dayN(today) });
+      const d = r[k]; if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) rens.push({ label, n: dayN(d) - dayN(today), veh: multi ? vn : '' });
     });
   });
   jobs.sort((a, b) => b.lv - a.lv || a.di - b.di); rens.sort((a, b) => a.n - b.n);
@@ -87,10 +89,10 @@ export function RecordCarousel() {
   })).current;
   const hold = { onPressIn: () => setHeld(true), onPressOut: () => setHeld(false) };
   const lab = { color: '#8fe9e2', fontSize: 10.5, fontWeight: '800' as const, letterSpacing: 1.2 };
-  const Row = ({ l, r, c }: { l: string; r: string; c: string }) => (
+  const Row = ({ l, r, c, sub }: { l: string; r: string; c: string; sub?: string }) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
       <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: c, marginRight: 10 }} />
-      <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 13, fontWeight: '700' }}>{l}</Text>
+      <Text numberOfLines={1} style={{ flex: 1, color: W, fontSize: 13, fontWeight: '700' }}>{l}{sub ? <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, fontWeight: '500' }}>{'  ' + sub}</Text> : null}</Text>
       <Text numberOfLines={1} style={{ color: c, fontSize: 12.5, fontWeight: '700', marginLeft: 8 }}>{r}</Text>
     </View>
   );
@@ -107,16 +109,16 @@ export function RecordCarousel() {
         {cur === 'veh' ? (
           <Pressable {...hold} onPress={() => go('/vehicle')}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
             <Text style={lab}>MAINTENANCE TASK</Text>
-            {jobs.length ? jobs.slice(0, 3).map((j, i) => <Row key={i} l={j.name} r={j.text} c={j.lv === 2 ? '#ff6b81' : j.lv === 1 ? '#ffd593' : '#5ee7b5'} />) : (
+            {jobs.length ? jobs.slice(0, 3).map((j, i) => <Row key={i} l={j.name} sub={j.veh} r={j.text} c={j.lv === 2 ? '#ff6b81' : j.lv === 1 ? '#ffd593' : '#5ee7b5'} />) : (
               <View style={{ flex: 1, justifyContent: 'center' }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>No jobs yet</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Add oil change, chain spray or tyre checks and the app tells you when they are due.</Text></View>
             )}
             {jobs.length ? <View style={{ flex: 1 }} /> : null}
-            {jobs.length ? <Foot l={lastKm ? 'Last reading ' + lastKm.toLocaleString('en-MY') + ' km' : 'No odometer reading yet'} r="Open ›" /> : null}
+            {jobs.length ? <Foot l={lastKm ? (multi && lastVeh ? lastVeh + ' · ' : 'Last reading ') + lastKm.toLocaleString('en-MY') + ' km' : 'No odometer reading yet'} r="Open ›" /> : null}
           </Glass></Pressable>
         ) : cur === 'ren' ? (
           <Pressable {...hold} onPress={() => go('/vehicle')}><Glass radius={22} style={{ padding: 14, paddingBottom: 26, height: CH }}>
             <Text style={lab}>RENEWALS · ROAD TAX, INSURANCE, LICENCE</Text>
-            {rens.length ? rens.slice(0, 3).map((x, i) => <Row key={i} l={x.label} r={dueText(x.n)} c={tone(x.n)} />) : (
+            {rens.length ? rens.slice(0, 3).map((x, i) => <Row key={i} l={x.label} sub={x.veh} r={dueText(x.n)} c={tone(x.n)} />) : (
               <View style={{ flex: 1, justifyContent: 'center' }}><Text style={{ color: W, fontSize: 15, fontWeight: '800' }}>No dates saved</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, lineHeight: 18, marginTop: 4 }}>Add your road tax, insurance and licence dates. The app reminds you before they end.</Text></View>
             )}
             {rens.length ? <View style={{ flex: 1 }} /> : null}

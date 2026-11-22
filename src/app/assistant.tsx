@@ -178,7 +178,7 @@ class Chat extends AssistantBase {
                     {m.barD === 'block' && <View style={{ height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,.14)', overflow: 'hidden', marginTop: 8 }}><View style={{ height: 7, borderRadius: 4, width: `${Math.min(100, m.pct)}%`, backgroundColor: m.color }} /></View>}
                   </View>
                 )}
-                {me ? <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{m.text}</Text> : <RichText text={m.text} />}
+                {me ? <Text style={{ color: '#fff', fontSize: 14.5, lineHeight: 22 }}>{m.text}</Text> : <RichText text={m.text} onPick={i === v.msgs.length - 1 ? (t: string) => (this as any).ask(t) : undefined} />}
                 {m.xlD === 'flex' && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 }}>
                     <Pressable onPress={m.xlYes}><LinearGradient colors={['#34d399', '#5ee7df']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999 }}><Text style={{ color: '#04201f', fontSize: 13, fontWeight: '800' }}>{m.xlL}</Text></LinearGradient></Pressable>

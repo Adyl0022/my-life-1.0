@@ -262,7 +262,7 @@ export function TimeMachine({ h, setH }: { h: HData; setH: (v: HData) => void })
           <Text style={{ color: W, fontSize: 15, fontWeight: '800', marginTop: 12 }}>{wf.line}</Text>
           <Guess hist={wf.hist} proj={wf.proj} color="#ffc46b" />
         </>) : <Text style={{ color: DIM, fontSize: 12.5, marginTop: 14, lineHeight: 18 }}>{fm === 'weight' ? 'Log your weight at least twice, a week or more apart (Body tab), and a guess appears here.' : 'Log for about 3 weeks and a guess for the weeks ahead appears here.'}</Text>}
-        <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 12 }}>A simple straight-line guess from your own recent records. It is not a promise and not medical advice. Life changes, and so can the line.</Text>
+        <Text style={{ color: '#ffd593', fontSize: 11, lineHeight: 15, marginTop: 12 }}>An estimate from the last 28 days of your own records. Today is left out because the day is not finished. The trend fades a little each week, because habits level off. It is not a promise and not medical advice. Life changes, and so can the line.</Text>
       </>) : null}
 
       {tab === 'memories' ? (<>

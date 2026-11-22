@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { SafeImage } from '../components/SafeImage';
 import { photoSyncOn } from '../lib/sync';
 import { KbScroll } from '../components/KbScroll';
 import { View, Animated, Modal, ScrollView, Image, Platform, KeyboardAvoidingView } from 'react-native';
@@ -81,7 +82,7 @@ function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; 
           {d.photo ? (
             <Pressable onPress={() => { setBi(0); setBig(true); }} accessibilityLabel="View photo" style={{ marginTop: 20 }}>
               <View style={{ borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.06)' }}>
-                <Image source={{ uri: d.photo }} style={{ width: '100%', aspectRatio: 1.58 }} resizeMode="contain" />
+                <SafeImage source={{ uri: d.photo }} style={{ width: '100%', aspectRatio: 1.58 }} resizeMode="contain" />
               </View>
               <Text style={{ color: dim, fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>Tap the photo to see it full screen</Text>
             </Pressable>
@@ -101,7 +102,7 @@ function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; 
             <View style={{ marginTop: 14 }}>
               <Text style={{ color: '#8fe9e2', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8 }}>PAGES · {pages.length}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9 }}>
-                {pages.map((u, k) => (<Pressable key={k} onPress={() => { setBi(k); setBig(true); }} accessibilityLabel={'Page ' + (k + 1)}><Image source={{ uri: u }} style={{ width: 64, height: 84, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }} /></Pressable>))}
+                {pages.map((u, k) => (<Pressable key={k} onPress={() => { setBi(k); setBig(true); }} accessibilityLabel={'Page ' + (k + 1)}><SafeImage source={{ uri: u }} style={{ width: 64, height: 84, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }} /></Pressable>))}
               </ScrollView>
             </View>
           ) : null}
@@ -125,7 +126,7 @@ function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; 
         </ScrollView>
         {big && pages[bi] ? (
           <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setBig(false)}>
-            <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: pages[bi] }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
+            <Pressable onPress={() => setBig(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><SafeImage source={{ uri: pages[bi] }} style={{ width: '100%', height: '85%' }} resizeMode="contain" /></Pressable>
           </Modal>
         ) : null}
         {rn ? <RenewGuideSheet type={d.type} title={d.title} country={d.country} onClose={() => setRn(false)} suggestLabel={d.expiry && d.remind !== sug ? 'Set my reminder for ' + sugN : undefined} onRemind={() => { onRemind(sug as Remind); setRn(false); }} /> : null}
@@ -195,7 +196,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
             <Text style={{ color: dim, fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>The words are read on this phone. The photo is not sent anywhere and is not backed up online. Only the details are.</Text>
             {f.photo ? (
               <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Pressable onPress={() => setView(true)}><Image source={{ uri: f.photo }} style={{ width: 96, height: 64, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /></Pressable>
+                <Pressable onPress={() => setView(true)}><SafeImage source={{ uri: f.photo }} style={{ width: 96, height: 64, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" /></Pressable>
                 <Pressable onPress={() => confirmDelete('this photo', () => set({ photo: '' }), { title: 'Remove this photo?', yes: 'Remove' })} accessibilityLabel="Remove photo"><View style={{ paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.1)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '700' }}>Remove photo</Text></View></Pressable>
               </View>
             ) : null}
@@ -203,7 +204,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
               <>
                 <Lab t="MORE PAGES (OPTIONAL)" />
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 9 }}>
-                  {f.photos.map((u, k) => (<Pressable key={k} onPress={() => setPg(pg === k ? -1 : k)} accessibilityLabel={'Page ' + (k + 2)}><Image source={{ uri: u }} style={{ width: 64, height: 84, borderRadius: 10, borderWidth: 2, borderColor: pg === k ? '#8ea8ff' : 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }} /></Pressable>))}
+                  {f.photos.map((u, k) => (<Pressable key={k} onPress={() => setPg(pg === k ? -1 : k)} accessibilityLabel={'Page ' + (k + 2)}><SafeImage source={{ uri: u }} style={{ width: 64, height: 84, borderRadius: 10, borderWidth: 2, borderColor: pg === k ? '#8ea8ff' : 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)' }} /></Pressable>))}
                 </ScrollView>
                 {pg >= 0 && f.photos[pg] ? (
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
@@ -247,7 +248,7 @@ function Sheet({ f, setF, onSave, onDelete, onClose }: { f: Form; setF: (x: Form
         </KbScroll>
         {view && f.photo ? (
           <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setView(false)}>
-            <Pressable onPress={() => setView(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><Image source={{ uri: f.photo }} style={{ width: '100%', height: '80%' }} resizeMode="contain" /><Text style={{ color: dim, fontSize: 12, textAlign: 'center', marginTop: 10 }}>Tap anywhere to close</Text></Pressable>
+            <Pressable onPress={() => setView(false)} style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.94)', padding: 16, justifyContent: 'center' }}><SafeImage source={{ uri: f.photo }} style={{ width: '100%', height: '80%' }} resizeMode="contain" /><Text style={{ color: dim, fontSize: 12, textAlign: 'center', marginTop: 10 }}>Tap anywhere to close</Text></Pressable>
           </Modal>
         ) : null}
       </View>

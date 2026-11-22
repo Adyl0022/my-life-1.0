@@ -27,42 +27,65 @@ export function series(h: HData, n: number, k: Metric): { off: number; v: number
   return out;
 }
 
-const regress = (pts: { x: number; y: number }[]) => {
-  const n = pts.length; const mx = pts.reduce((a, p) => a + p.x, 0) / n, my = pts.reduce((a, p) => a + p.y, 0) / n;
-  let nu = 0, de = 0; pts.forEach((p) => { nu += (p.x - mx) * (p.y - my); de += (p.x - mx) * (p.x - mx); });
-  const slope = de === 0 ? 0 : nu / de; return { slope, icpt: my - slope * mx };
+const median = (a: number[]) => { const b = a.slice().sort((x, y) => x - y); const m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
+// Theil-Sen: the middle value of the slopes between every pair of points. One odd day (a long hike, a missed day) cannot pull the line. `agree` is how many of the slopes point the same way (0.5 = no direction at all).
+const theilSen = (pts: { x: number; y: number }[]) => {
+  const sl: number[] = [];
+  for (let a = 0; a < pts.length; a++) for (let b = a + 1; b < pts.length; b++) { const dx = pts[b].x - pts[a].x; if (dx > 0) sl.push((pts[b].y - pts[a].y) / dx); }
+  if (!sl.length) return null;
+  const up = sl.filter((v) => v > 0).length, dn = sl.filter((v) => v < 0).length;
+  return { slope: median(sl), agree: up + dn === 0 ? 1 : Math.max(up, dn) / (up + dn) };
 };
+const mean = (a: number[]) => a.reduce((t, v) => t + v, 0) / (a.length || 1);
 export type Fut = { hist: (number | null)[]; proj: number[]; now: number; in4: number; slope: number; line: string; eta: string };
-// A straight-line guess from the last 4 weeks of your own averages. It needs 3 weeks with records.
+// A careful guess from the last 28 days of your own records, worked out like this:
+// - Today is left out for steps and water, because the day is not finished and would pull the numbers down.
+// - It needs at least 14 days with records, and 3 of the 4 weeks with 3 days or more.
+// - The direction comes from the middle of all day to day slopes (Theil-Sen), so one strange day cannot swing it.
+// - Where you are now is the average of your latest 7 days. The trend then fades a little each week (damped), because habits level off and do not carry on in a straight line for ever.
+// - The guess is kept within a believable range of where you are now.
 export function future(h: HData, k: 'steps' | 'water' | 'sleep'): Fut | null {
-  const hist: (number | null)[] = [];
-  for (let j = 3; j >= 0; j--) { const w = windowAvg(h, -7 * j); hist.push(k === 'steps' ? w.steps : k === 'water' ? w.water : w.sleep); }
-  const pts = hist.map((v, i) => (v == null ? null : { x: i, y: v })).filter(Boolean) as { x: number; y: number }[];
-  if (pts.length < 3) return null;
-  const { slope, icpt } = regress(pts); const max = k === 'water' ? 16 : k === 'sleep' ? 12 : 60000;
-  const proj = [4, 5, 6, 7].map((x) => Math.max(0, Math.min(max, icpt + slope * x)));
-  const now = pts[pts.length - 1].y; const goal = k === 'steps' ? (h.goal || 8000) : k === 'water' ? cupsGoal(h) : 7;
-  const per = k === 'steps' ? 50 : k === 'water' ? 0.05 : 0.02; // a change smaller than this a week counts as steady
+  const last = k === 'sleep' ? 0 : -1; const pts: { x: number; y: number }[] = [];
+  for (let off = last - 27; off <= last; off++) { const v = valOf(getDay(h, off), k); if (v != null && !(k === 'sleep' && v > 14)) pts.push({ x: off - last, y: v }); }
+  const hist: (number | null)[] = []; let goodWeeks = 0;
+  for (let j = 3; j >= 0; j--) {
+    const vals = pts.filter((p) => p.x >= -6 - 7 * j && p.x <= -7 * j).map((p) => p.y);
+    hist.push(vals.length >= 2 ? mean(vals) : null); if (vals.length >= 3) goodWeeks++;
+  }
+  if (pts.length < 14 || goodWeeks < 3) return null;
+  const ts = theilSen(pts); if (!ts) return null;
+  const wkVals = pts.filter((p) => p.x >= -6).map((p) => p.y); const twoWk = pts.filter((p) => p.x >= -13).map((p) => p.y); const level = mean(wkVals.length >= 3 ? wkVals : twoWk.length >= 3 ? twoWk : pts.map((p) => p.y));
+  const goal = k === 'steps' ? (h.goal || 8000) : k === 'water' ? cupsGoal(h) : 7;
+  const per = k === 'steps' ? Math.max(80, level * 0.025) : k === 'water' ? Math.max(0.1, level * 0.025) : 0.1; // a change smaller than this a week counts as steady
+  const clear = ts.agree >= 0.6; const wk = clear ? ts.slope * 7 : 0;
+  const lo = k === 'sleep' ? Math.max(3, level - 1.5) : Math.max(0, level * 0.5), hi = k === 'sleep' ? Math.min(12, level + 1.5) : k === 'water' ? Math.min(16, level * 1.5) : Math.min(40000, level * 1.5);
+  const step = k === 'steps' ? 50 : 0.1; const phi = 0.85; let cum = 0;
+  const proj = [1, 2, 3, 4].map((i) => { cum += wk * Math.pow(phi, i - 1); const v = Math.max(lo, Math.min(hi, level + cum)); return Math.round(v / step) * step; });
   let eta: string;
-  if (now >= goal) eta = 'You are already at your goal. Keep it up.';
-  else if (slope > per) { const wk = Math.ceil((goal - now) / slope); eta = wk <= 26 ? 'At this pace you reach your goal in about ' + wk + (wk === 1 ? ' week.' : ' weeks.') : 'Your goal is still a long way off at this pace.'; }
-  else eta = Math.abs(slope) <= per ? 'Steady for now. A small push would get you closer to your goal.' : 'Heading away from your goal at this pace. A small change this week can turn it around.';
-  return { hist, proj, now, in4: proj[3], slope, line: slope > per ? 'Rising' : slope < -per ? 'Falling' : 'Steady', eta };
+  if (level >= goal) eta = 'You are already at your goal. Keep it up.';
+  else if (wk > per) { const wi = proj.findIndex((v) => v >= goal); eta = wi >= 0 ? 'At this pace you reach your goal in about ' + (wi + 1) + (wi === 0 ? ' week.' : ' weeks.') : 'Your goal is still a way off at this pace.'; }
+  else if (!clear) eta = 'Your days go up and down, so there is no clear direction yet. A steady routine will show a clearer line.';
+  else eta = Math.abs(wk) <= per ? 'Steady for now. A small push would get you closer to your goal.' : 'Heading away from your goal at this pace. A small change this week can turn it around.';
+  return { hist, proj, now: level, in4: proj[3], slope: wk, line: wk > per ? 'Rising' : wk < -per ? 'Falling' : 'Steady', eta };
 }
 export type WFut = { hist: number[]; proj: number[]; last: number; goal: number | null; line: string };
+// Weight: needs at least 3 weigh-ins over 7 days or more (the last 90 days). The direction is the middle slope between all pairs (so one odd weigh-in cannot swing it), where you are now is the middle of your last 3, and a change of more than 1 kg a week is not counted because it cannot go on.
 export function weightFuture(h: HData): WFut | null {
-  const l = (h.kg || []).slice().sort((a, b) => (a.d < b.d ? -1 : 1)).slice(-8);
-  if (l.length < 2) return null;
+  const cut = keyOfDate(dateOf(-90));
+  const l = (h.kg || []).filter((p) => p.d >= cut && p.v > 0).sort((a, b) => (a.d < b.d ? -1 : 1)).slice(-12);
+  if (l.length < 3) return null;
   const t0 = new Date(l[0].d + 'T12:00:00').getTime(); const day = (d: string) => (new Date(d + 'T12:00:00').getTime() - t0) / 86400000;
   const span = day(l[l.length - 1].d); if (span < 7) return null;
-  const { slope } = regress(l.map((p) => ({ x: day(p.d), y: p.v })));
-  const last = l[l.length - 1].v; const wk = slope * 7; const proj = [1, 2, 3, 4].map((i) => Math.round((last + wk * i) * 10) / 10);
-  const g = h.goalKg || 0; let line = 'Your weight is about steady.';
+  const ts = theilSen(l.map((p) => ({ x: day(p.d), y: p.v }))); if (!ts) return null;
+  const level = median(l.slice(-3).map((p) => p.v)); const clear = ts.agree >= 0.6;
+  const wk = clear ? Math.max(-1, Math.min(1, ts.slope * 7)) : 0; const slope = wk / 7;
+  const phi = 0.9; let cum = 0; const proj = [1, 2, 3, 4].map((i) => { cum += wk * Math.pow(phi, i - 1); return Math.round((level + cum) * 10) / 10; });
+  const g = h.goalKg || 0; let line = clear ? 'Your weight is about steady.' : 'Your weight goes up and down, so there is no clear direction yet.';
   if (Math.abs(wk) >= 0.1) {
     line = 'About ' + (wk > 0 ? '+' : '') + (Math.round(wk * 10) / 10) + ' kg a week.';
-    if (g > 0 && (g - last) * slope > 0) { const days = Math.round((g - last) / slope); if (days <= 365) line += ' At this pace you reach ' + g + ' kg around ' + dstr(dateOf(days), true) + '.'; }
+    if (g > 0 && (g - level) * slope > 0) { const days = Math.round((g - level) / slope); if (days <= 365) line += ' At this pace you reach ' + g + ' kg around ' + dstr(dateOf(days), true) + '.'; }
   }
-  return { hist: l.map((p) => p.v), proj, last, goal: g || null, line };
+  return { hist: l.map((p) => p.v), proj, last: level, goal: g || null, line };
 }
 
 export type Mem = { ic: string; t: string; d: string };

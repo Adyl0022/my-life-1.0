@@ -27,7 +27,7 @@ import { useCore, weekly, records, hasData as hasHab, dayPct, incomeOf } from '.
 import { mins as relaxMins, fmtMin } from '../../lib/relax';
 import { medAdherence } from '../../lib/medMissed';
 import { cycleInfo, statusText, SYMS, fmtD } from '../../lib/cycle';
-import { ENERGY } from '../../lib/patterns';
+import { ENERGY, energyEstimate, restSignal, findPatterns } from '../../lib/patterns';
 import { debtSummary, remainingAt, amountDue, yearsMonths, payoffLabel } from '../../lib/debts';
 import { TOP } from '../../lib/layout';
 import { monthRows } from '../../lib/financeStats';
@@ -35,7 +35,7 @@ import { goalSaved } from '../../lib/savings';
 import { healthMonths } from '../../components/BodyCards';
 import { sunatYear, qadhaOwed, ramadanState } from '../../lib/fasting';
 import { cs, useRegion } from '../../lib/region';
-import { ACC_EMPTY, AccData, totals, commitTotal, incomeFeed } from '../../lib/accounts';
+import { ACC_EMPTY, AccData, totals, commitTotal, incomeFeed, reservedTotal } from '../../lib/accounts';
 import { SUB_EMPTY, SubStore, monthlyTotal, live } from '../../lib/subs';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -105,12 +105,13 @@ export default function Stats() {
   const spendOn = (o: number) => ((fin && fin.spends) || []).filter((x: any) => x.cat !== 'Savings' && x.date === keyOfDate(dateOf(o))).reduce((a, b) => a + (b.amt || 0), 0);
   // Relax, energy and medicine join the list once there is something logged
   const rl7 = last7.map((o) => relaxMins(getDay(hd, o)));
-  const en7 = last7.map((o) => { const e = getDay(hd, o).en; return e !== undefined && e >= 0 ? 4 - e : 0; });
+  const enEst7 = last7.map((o) => { const x = getDay(hd, o); if (x.en !== undefined && x.en >= 0) return false; return !!energyEstimate(x, cg, hd.goal || 8000, restSignal(hd, keyOfDate(dateOf(o)))); });
+  const en7 = last7.map((o, i) => { const x = getDay(hd, o); if (x.en !== undefined && x.en >= 0) return 4 - x.en; if (!enEst7[i]) return 0; const e = energyEstimate(x, cg, hd.goal || 8000, restSignal(hd, keyOfDate(dateOf(o)))); return e ? 4 - e.lvl : 0; });
   const ad7 = hd.meds && hd.meds.length ? medAdherence(hd, new Date(), el) : null;
-  type Tr = { t: string; k: string; c: string; v: number[]; fmt: (n: number) => string; unit: string; sum?: boolean };
+  type Tr = { t: string; k: string; c: string; v: number[]; fmt: (n: number) => string; unit: string; sum?: boolean; est?: boolean[] };
   const extraTr: Tr[] = [];
   if (rl7.some((v) => v > 0)) extraTr.push({ t: 'Relax', k: 'relax', c: '#8fe9e2', v: rl7, fmt: (n: number) => fmtMin(n), unit: 'min a day' });
-  if (en7.some((v) => v > 0)) extraTr.push({ t: 'Energy', k: 'energy', c: '#ffc46b', v: en7, fmt: () => { const l = en7.filter((v) => v > 0); return ENERGY[Math.max(0, Math.min(3, 4 - Math.round(l.reduce((a, b) => a + b, 0) / l.length)))][0]; }, unit: 'on average' });
+  if (en7.some((v) => v > 0)) extraTr.push({ t: 'Energy', k: 'energy', c: '#ffc46b', v: en7, fmt: () => { const l = en7.filter((v) => v > 0); return ENERGY[Math.max(0, Math.min(3, 4 - Math.round(l.reduce((a, b) => a + b, 0) / l.length)))][0]; }, unit: 'on average', est: enEst7 });
   if (ad7 && ad7.due > 0) extraTr.push({ t: 'Medicine', k: 'medicine', c: '#5ee7df', v: [...ad7.daily, ...Array(7 - el).fill(0)], fmt: (n: number) => String(Math.round(n)), unit: 'of ' + ad7.due + ' doses taken', sum: true });
   const trends: Tr[] = [
     { t: 'Steps', k: 'steps', c: '#34d399', v: last7.map((o) => getDay(hd, o).steps), fmt: (n: number) => Math.round(n).toLocaleString(), unit: 'a day' },
@@ -329,21 +330,26 @@ export default function Stats() {
                 </Rise>
               ) : null}
 
-              {en30 > 0 ? (
-                <Rise i={4}>
-                <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HeadIcon k="energy" size={24} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>Energy</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 30 days</Text></View>
-                  <Text style={{ color: '#ffd593', fontSize: 15, fontWeight: '800', marginTop: 10 }}>{ENERGY[Math.max(0, Math.min(3, 3 - Math.round(enSum / en30)))][0]} on average</Text>
-                  {ENERGY.map((e, i) => (
-                    <View key={e[0]} style={{ marginTop: 10 }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '600' }}>{e[0]}</Text><Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{el[i]} {el[i] === 1 ? 'day' : 'days'}</Text></View>
-                      <View style={{ marginTop: 5 }}><FillBar p={Math.round((el[i] / en30) * 100)} color={e[1]} delay={i * 80} dep={el.join()} /></View>
-                    </View>
-                  ))}
-                  <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 10, lineHeight: 16 }}>Only the energy you rated yourself is counted, never the estimate.</Text>
-                </Glass>
-                </Rise>
-              ) : null}
+              {(() => {
+                const pats = findPatterns(hd).list.filter((x) => x.id.endsWith('-energy')).slice(0, 3);
+                if (!pats.length && en30 === 0) return null;
+                return (
+                  <Rise i={4}>
+                  <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HeadIcon k="energy" size={24} /><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>What helps your energy</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 30 days</Text></View>
+                    {pats.length ? pats.map((x) => (
+                      <View key={x.id} style={{ marginTop: 10, padding: 11, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,196,107,.35)', backgroundColor: 'rgba(255,196,107,.1)' }}>
+                        <Text style={{ color: '#ffd593', fontSize: 13, fontWeight: '800' }}>{x.title}</Text>
+                        <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, marginTop: 4, lineHeight: 17 }}>{x.detail}</Text>
+                        <Text style={{ color: 'rgba(255,255,255,.5)', fontSize: 10.5, marginTop: 4 }}>{x.range}</Text>
+                      </View>
+                    )) : <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 12.5, marginTop: 10, lineHeight: 18 }}>{'Nothing clear yet. You rated your energy on ' + en30 + (en30 === 1 ? ' day' : ' days') + '. Rate it on about 10 days, together with sleep, water or steps, and this card shows what lifts it for you.'}</Text>}
+                    <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 10, lineHeight: 16 }}>Only the energy you rated yourself is counted, never the estimate. It shows what went together on your days, not what caused it.</Text>
+                  </Glass>
+                  </Rise>
+                );
+              })()}
+
 
               {ci ? (
                 <Rise i={4}>
@@ -460,7 +466,7 @@ export default function Stats() {
                       {tr.v.map((v, i) => (
                         <View key={i} style={{ flex: 1, height: 44, justifyContent: 'flex-end' }}>
                           <GrowBar h={Math.max(4, Math.round((v / mx) * 44))} delay={ti * 60 + i * 40} dep={tr.v.join()} style={{ width: '100%' }}>
-                            <View style={{ flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === el - 1 ? 1 : 0.5 }} />
+                            <View style={tr.est && tr.est[i] ? { flex: 1, borderRadius: 4, borderWidth: 1.5, borderStyle: 'dashed', borderColor: tr.c, backgroundColor: tr.c + '33' } : { flex: 1, borderRadius: 4, backgroundColor: tr.c, opacity: i === el - 1 ? 1 : 0.5 }} />
                           </GrowBar>
                         </View>
                       ))}
@@ -468,6 +474,7 @@ export default function Stats() {
                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                       {wd.map((d, i) => <Text key={i} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{d}</Text>)}
                     </View>
+                    {tr.est && tr.est.some(Boolean) ? <Text style={{ color: 'rgba(255,255,255,.55)', fontSize: 11, marginTop: 6, lineHeight: 15 }}>{'You rated ' + tr.v.filter((v, i) => v > 0 && !(tr.est as boolean[])[i]).length + ' of ' + el + (el === 1 ? ' day' : ' days') + ' yourself. '}Dashed bars are estimates worked out from your sleep, water, steps, mood and night pulse. Rate your energy in Habit and Health and your own rating replaces the estimate.</Text> : null}
                   </View>
                 );
               })}
@@ -485,12 +492,13 @@ export default function Stats() {
               const act = subS.subs.filter(live); const mt = monthlyTotal(subS.subs);
               return (<>
                 {accD.accs.length > 0 && (<>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Money now</Text>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Money now, after debts</Text>
                   <Text style={{ color: at.total < 0 ? '#ff9aa9' : '#7df0c6', fontSize: 22, fontWeight: '800', marginTop: 6 }}>{at.total < 0 ? '-' : ''}{fm(at.total)}</Text>
                   <Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11.5, marginTop: 2 }}>What you have, minus what you owe, across {accD.accs.length} {accD.accs.length === 1 ? 'account' : 'accounts'}.</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Assets</Text><Text style={{ color: '#9fb6ff', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.assets)}</Text></View>
+                    <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>All my money</Text><Text style={{ color: '#9fb6ff', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.assets)}</Text></View>
                     <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Liabilities</Text><Text style={{ color: '#ff8fab', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(at.liab)}</Text></View>
+                    {reservedTotal(accD) > 0 ? <View style={{ flex: 1, borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 11 }}>Can spend</Text><Text style={{ color: '#7df0c6', fontSize: 15, fontWeight: '800', marginTop: 2 }}>{fm(Math.max(0, at.assets - reservedTotal(accD)))}</Text></View> : null}
                   </View>
                 </>)}
                 {act.length > 0 && (<>
@@ -561,6 +569,7 @@ export default function Stats() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>{rows.map((r) => <Text key={r.ym} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{r.label}</Text>)}</View>
                   </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Nothing saved in the last 6 months. Choose Savings in the Spending Tracker to start.</Text>}
+                  {(() => { const gl = ((core.sav && core.sav.goals) || []).filter((g: any) => g.target > 0); const rem = gl.reduce((a: number, g: any) => a + Math.max(0, g.target - goalSaved(g, ((fin && (fin as any).spends) || []) as any, core.debts)), 0); const act = rows.filter((r) => r.savings > 0); const av = act.length ? act.reduce((a, r) => a + r.savings, 0) / act.length : 0; if (!gl.length || av <= 0) return null; if (rem <= 0) return <Text style={{ color: '#7df0c6', fontSize: 11.5, marginTop: 8 }}>All your goals with a target are fully saved.</Text>; const mo = Math.ceil(rem / av); return <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 8, lineHeight: 16 }}>{'Est. at about ' + cs() + Math.round(av).toLocaleString('en-MY') + ' a month (your usual of the last 6 months), ' + cs() + Math.round(rem).toLocaleString('en-MY') + ' still to save takes about ' + mo + (mo === 1 ? ' month.' : ' months.')}</Text>; })()}
                   <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{'All goals together: ' + cs() + Math.round(goalsSaved).toLocaleString('en-MY') + ' across ' + nGoals + (nGoals === 1 ? ' goal.' : ' goals.')}</Text>
                 </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Create a goal in My Finance, Savings Goals, then put money into it from the Spending Tracker or a monthly commitment.</Text>}
               </>);
@@ -568,7 +577,21 @@ export default function Stats() {
           </Glass>
           </Rise>
 
-          <Rise i={4}>
+          {accD.accs.length > 0 && (() => {
+            const ymN = keyOfDate(dateOf(0)).slice(0, 7); const sp = ((fin && (fin as any).spends) || []).filter((x: any) => x.cat !== 'Savings' && (x.date || '').slice(0, 7) === ymN);
+            const by: Record<string, number> = {}; sp.forEach((x: any) => { const a = x.acc ? accD.accs.find((q) => q.id === x.acc) : null; const k = a ? a.name : 'Not linked'; by[k] = (by[k] || 0) + (x.amt || 0); });
+            const list = Object.keys(by).map((k) => ({ k, v: by[k] })).sort((x, y) => y.v - x.v); const tot = list.reduce((q, x) => q + x.v, 0);
+            if (!list.some((x) => x.k !== 'Not linked')) return null;
+            return (<Rise i={4}><Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Spending by account</Text>
+              <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 2 }}>This month, where the money came out from.</Text>
+              <View style={{ gap: 10, marginTop: 12 }}>{list.slice(0, 6).map((x) => (<View key={x.k}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '600' }}>{x.k}</Text><Text style={{ color: '#ffc46b', fontSize: 12.5, fontWeight: '800' }}>{cs()}{Math.round(x.v).toLocaleString('en-MY')}</Text></View>
+                <View style={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 4 }}><View style={{ height: 6, borderRadius: 3, width: Math.max(4, Math.round((x.v / (tot || 1)) * 100)) + '%', backgroundColor: x.k === 'Not linked' ? 'rgba(255,255,255,.4)' : '#7c9cff' }} /></View>
+              </View>))}</View>
+            </Glass></Rise>);
+          })()}
+          <Rise i={5}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Spending this week</Text>
             <View style={{ gap: 16, marginTop: 14 }}>

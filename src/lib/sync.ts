@@ -51,7 +51,7 @@ async function mapPhotos(v: any, fn: (u: string) => Promise<string>): Promise<an
 }
 // Phone to cloud: uploads a picture once and returns its cloud name. A picture that cannot be read is left out.
 async function upPhoto(uid: string, uri: string): Promise<string> {
-  if (uri.startsWith('sb:')) return uri;
+  if (uri.startsWith('sb:') || uri.startsWith('data:image/')) return uri;
   if (!/^(file:|\/)/.test(uri)) return '';
   const name = uid + '/' + ((uri.split('/').pop() || 'x.jpg').split('?')[0]);
   const set = await loadUp();
@@ -77,6 +77,26 @@ async function downPhoto(ref: string): Promise<string> {
     const r = await FS.downloadAsync(data.signedUrl, to);
     return r.status === 200 ? to : ref;
   } catch (e) { return ref; }
+}
+// Looks for pictures that show nothing: a cloud name that was never downloaded, or a file that is gone but was uploaded before.
+async function repairPhotos(uid: string) {
+  const FS = await import('expo-file-system/legacy'); const set = await loadUp();
+  for (const k of NO_PHOTO_KEYS) {
+    const t = await getText(k); if (!t) continue; let v: any; try { v = JSON.parse(t); } catch (e) { continue; }
+    let changed = false;
+    const fix = async (u: string): Promise<string> => {
+      if (u.startsWith('sb:')) { const r = await downPhoto(u); if (r !== u) changed = true; return r; }
+      if (/^(file:|\/)/.test(u)) {
+        const info = await FS.getInfoAsync(u).catch(() => null as any);
+        if (info && info.exists) return u;
+        const cand = uid + '/' + ((u.split('/').pop() || '').split('?')[0]);
+        if (set.has(cand)) { const r = await downPhoto('sb:' + cand); if (r !== 'sb:' + cand) { changed = true; return r; } }
+      }
+      return u;
+    };
+    const nv = await mapPhotos(v, fix);
+    if (changed) await applyRemote(k, nv);
+  }
 }
 const META = 'ml_sync_meta', UID = 'ml_sync_uid';
 type Meta = Record<string, number>;
@@ -159,6 +179,8 @@ export async function syncNow(): Promise<boolean> {
     // Photo sync just turned on for this account: send the pictures already on this phone once.
     const ph = photoSyncOn();
     if (ph && !m.__ph) NO_PHOTO_KEYS.forEach((k) => { if (!toPush.includes(k) && remote.has(k)) toPush.push(k); });
+    // Pictures that did not arrive (no signal at that moment) or whose file went missing: bring them back from the cloud copy.
+    if (ph) { try { await repairPhotos(uid); } catch (e) {} }
     m.__init = 1; fresh = false;
     await saveMeta();
     if (toPush.length) { await pushKeys(uid, toPush); toPush.forEach((k) => dirty.delete(k)); }

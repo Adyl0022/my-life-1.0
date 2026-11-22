@@ -34,6 +34,7 @@ export type Real = {
   incomeLast: number; commit: number; limits: Record<string, number>; goals: { id: number; name: string; target: number; place: string; due: string; saved: number }[];
 };
 
+import { SERVICES } from './subs';
 const td = () => keyOfDate(new Date());
 function incomeLastMonth(fin: any): number { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); const row = (fin && fin.inc && fin.inc[k]) || {}; return Object.keys(row).reduce((a, n) => a + (Number(row[n]) || 0), 0); }
 const num = (x: any) => (typeof x === 'number' && isFinite(x) ? x : 0);
@@ -116,7 +117,7 @@ export async function persist(a: any): Promise<void> {
   if (a.type === 'spend') {
     const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const nid = f.nextId || 1;
-    await setItem('ml_finance', { ...f, spends: [{ id: nid, name: a.name, cat: a.cat, amt: a.amt, date: a.date || today, ...(a.acc ? { acc: a.acc } : {}) }, ...(f.spends || [])], nextId: nid + 1 });
+    await setItem('ml_finance', { ...f, spends: [{ id: nid, name: a.name, cat: a.cat, amt: a.amt, date: a.date || today, ...(a.note ? { note: a.note } : {}), ...(a.acc ? { acc: a.acc } : {}) }, ...(f.spends || [])], nextId: nid + 1 });
   } else if (a.type === 'inc') {
     const f: any = await getItemStrict('ml_finance', { inc: {}, cnt: {}, spends: [], nextId: 1 }); if (f === null) return;
     const ym = ymOf(new Date()); const inc = { ...(f.inc || {}) }; const row = { ...(inc[ym] || {}) };
@@ -143,6 +144,18 @@ export async function persist(a: any): Promise<void> {
     const n = new Date(); const at = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
     const r: any = { id: String(id), d: today, at }; if (a.bpm != null) r.bpm = a.bpm; if (a.sys != null && a.dia != null) { r.sys = a.sys; r.dia = a.dia; }
     await setItem('ml_habit', { ...h, heart: [...(h.heart || []), r].slice(-400) });
+  } else if (a.type === 'xfer') {
+    const d: any = await getItemStrict('ml_accounts', { accs: [], moves: [], nextId: 1 }); if (d === null) return;
+    const nid = d.nextId || 1;
+    await setItem('ml_accounts', { ...d, moves: [...(d.moves || []), { id: nid, date: today, kind: 'transfer', from: a.from, to: a.to, amt: a.amt }], nextId: nid + 1 });
+  } else if (a.type === 'sub') {
+    const sb: any = await getItemStrict('ml_subs', { subs: [], next: 1, no: [] }); if (sb === null) return;
+    const nid = sb.next || 1; const sv = SERVICES.find((x) => x.re.test(a.name));
+    await setItem('ml_subs', { ...sb, subs: [...(sb.subs || []), { id: nid, name: a.name, cat: sv ? sv.cat : 'other', price: String(a.price), cycle: a.cycle, next: a.next, remind: 3, trial: false, note: '', status: 'active', pay: '' }], next: nid + 1 });
+  } else if (a.type === 'loan') {
+    const c: any = await getItemStrict('ml_collection', { items: [], loans: [], lessons: [], next: 1 }); if (c === null) return;
+    const nid = c.next || 1;
+    await setItem('ml_collection', { ...c, loans: [...(c.loans || []), { id: nid, dir: a.dir, what: a.what, who: a.who, title: a.title || '', amount: a.amount || '', date: today, due: a.due || '', done: false, doneAt: '', note: '' }], next: nid + 1 });
   } else if (a.type === 'task') {
     const p: any = await getItemStrict('ml_planner', { events: [], tasks: [], cats: ['Tasks'], nextId: 1 }); if (p === null) return;
     const nid = p.nextId || 1;

@@ -3,7 +3,7 @@ import { LineIcon } from '../components/LineIcon';
 import { SubChargeCard } from '../components/SubChargeCard';
 import { SAV_EMPTY, SavData, goalSaved, kindOf } from '../lib/savings';
 import { DEBT_EMPTY, DebtData } from '../lib/debts';
-import { ACC_EMPTY, AccData, commitTotal, groupOf, incomeFeed, isLiab, totals } from '../lib/accounts';
+import { ACC_EMPTY, AccData, balanceOf, commitTotal, groupOf, incomeFeed, isLiab, keepOf, reservedTotal, totals } from '../lib/accounts';
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Pressable } from '../components/Press';
@@ -205,18 +205,19 @@ export default function Finance() {
                 <Text style={{ color: '#8fe9e2', fontSize: 12.5, fontWeight: '800' }}>{accD.accs.length ? 'Manage ›' : 'Add ›'}</Text>
               </View>
               {accD.accs.length ? (<>
-                <Text style={{ color: accTot.total < 0 ? '#ff8fab' : W, fontSize: 28, fontWeight: '800', marginTop: 4 }}>{(accTot.total < 0 ? '-' : '') + cs()}{money(Math.abs(accTot.total))}</Text>
+                <Text style={{ color: accTot.assets < 0 ? '#ff8fab' : W, fontSize: 28, fontWeight: '800', marginTop: 4 }}>{(accTot.assets < 0 ? '-' : '') + cs()}{money(Math.abs(accTot.assets))}</Text>
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                  <Stat l="Assets" v={cs() + money(accTot.assets)} vc="#9fb6ff" /><Stat l="Liabilities" v={cs() + money(accTot.liab)} vc="#ff8fab" />
+                  <Stat l="Liabilities" v={cs() + money(accTot.liab)} vc="#ff8fab" /><Stat l="After debts" v={(accTot.total < 0 ? '-' : '') + cs() + money(Math.abs(accTot.total))} vc={accTot.total < 0 ? '#ff8fab' : '#9fb6ff'} />
                 </View>
+                {reservedTotal(accD) > 0 ? <Text style={{ color: 'rgba(255,255,255,.8)', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{'Available to spend ' + cs() + money(Math.max(0, accTot.assets - reservedTotal(accD)))}</Text> : null}
               </>) : (
                 <Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, lineHeight: 19, marginTop: 6 }}>Add your cash, bank, wallet and cards to see your total money. Balances go up and down when you log spending.</Text>
               )}
             </View>
           </Pressable>
 
-          <SubChargeCard subs={sbs} setSubs={setSbs} spends={d.spends} nextId={d.nextId} addSpend={(sp) => setD({ ...d, spends: [sp, ...d.spends], nextId: d.nextId + 1 })} today={ymdNow()} />
-          <MoneyLeft ym={ym} income={total} spends={all} />
+          <SubChargeCard subs={sbs} setSubs={setSbs} spends={d.spends} nextId={d.nextId} addSpend={(sp) => setD({ ...d, spends: [sp, ...d.spends], nextId: d.nextId + 1 })} today={ymdNow()} accName={(id) => { const a = accD.accs.find((x) => x.id === id); return a ? a.name : ''; }} accWarn={(id, am) => { const fa = accD.accs.find((x) => x.id === id); if (!fa || !(am > 0) || keepOf(fa) <= 0) return ''; const left = balanceOf(fa, accD, d.spends as any, { debts: dbt.debts as any, incomes: incomeFeed(d.inc, d.incAcc) }) - am; return left < keepOf(fa) ? 'Careful: this leaves ' + cs() + money(Math.max(0, left)) + ' in ' + fa.name + ', below the ' + cs() + money(keepOf(fa)) + ' you keep in it. You can still continue.' : ''; }} />
+          <MoneyLeft ym={ym} income={total} spends={all} canSpend={accD.accs.some((a) => !isLiab(a)) ? Math.max(0, accTot.assets - reservedTotal(accD)) : undefined} />
           <TodaySpend spends={d.spends} />
 
           <Pressable onPress={() => router.push('/savings')}>
@@ -400,7 +401,7 @@ export default function Finance() {
                 <DateField value={fDate} onChange={setFDate} />
                 <Inp style={{ marginTop: 8 }} value={fNote} onChangeText={setFNote} placeholder="Remark (optional)" />
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                  {NOTE_QUICK.map((t) => { const on = fNote.split(',').map((x) => x.trim()).includes(t); return (
+                  {NOTE_QUICK.filter((t) => !accD.accs.length || !['Cash', 'Card', 'E-wallet'].includes(t)).map((t) => { const on = fNote.split(',').map((x) => x.trim()).includes(t); return (
                     <Pressable key={t} onPress={() => quickNote(t)} style={{ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, backgroundColor: on ? 'rgba(255,196,107,.35)' : 'rgba(255,255,255,.08)', borderWidth: 1, borderColor: on ? '#ffc46b' : 'rgba(255,255,255,.2)' }}><Text style={{ color: W, fontSize: 11.5, fontWeight: '600' }}>{t}</Text></Pressable>
                   ); })}
                 </View>
@@ -412,6 +413,7 @@ export default function Finance() {
                     <Chip t="Not linked" on={!fAcc} onPress={() => setFAcc(0)} />
                     {accD.accs.filter((a) => a.g !== 'loan').map((a) => <Chip key={a.id} t={a.name} on={fAcc === a.id} c={groupOf(a.g).c} onPress={() => setFAcc(fAcc === a.id ? 0 : a.id)} />)}
                   </View>
+                  {(() => { const fa = accD.accs.find((a) => a.id === fAcc); const am = parseFloat(String(fAmt).replace(',', '.')); if (!fa || !(am > 0) || keepOf(fa) <= 0) return null; const left = balanceOf(fa, accD, d.spends as any, { debts: dbt.debts as any, incomes: incomeFeed(d.inc, d.incAcc) }) - am; return left < keepOf(fa) ? <Text style={{ color: '#ffc46b', fontSize: 12, lineHeight: 17, marginTop: 8 }}>{'Careful: this leaves ' + cs() + money(Math.max(0, left)) + ' in ' + fa.name + ', below the ' + cs() + money(keepOf(fa)) + ' you keep in it. You can still add it.'}</Text> : null; })()}
                 </View>
               ) : null}
               <Pressable onPress={addSpend} style={{ marginTop: 12 }}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#2a1030', fontSize: 14, fontWeight: '800' }}>+ Add spending</Text></LinearGradient></Pressable>

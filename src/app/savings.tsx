@@ -15,6 +15,7 @@ import { DEBT_EMPTY, DebtData } from '../lib/debts';
 import { SAV_EMPTY, SavData, Goal, KINDS, kindOf, goalLines, goalSaved, perMonth, monthsUntil } from '../lib/savings';
 import { cs, cu, useRegion } from '../lib/region';
 import { ACC_EMPTY, AccData, groupOf } from '../lib/accounts';
+import { EqPills } from '../components/TabSlide';
 
 import { confirmDelete } from '../lib/dialog';
 import { pn, tryForm } from '../lib/num';
@@ -47,7 +48,7 @@ export default function Savings() {
   const [debts, setDebts] = useStored<DebtData>('ml_debts', DEBT_EMPTY);
   const spends = (fin && fin.spends) || [];
   const goals = sv.goals || [];
-  const [accD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const accs = (accD && accD.accs) || [];
+  const [accD, setAccD] = useStored<AccData>('ml_accounts', ACC_EMPTY); const [useAcc, setUseAcc] = useState(0); const accs = (accD && accD.accs) || [];
   const [acc, setAcc] = useState(0); const [eAcc, setEAcc] = useState(0);
   const accName = (g: Goal) => { const a = g.acc ? accs.find((x) => x.id === g.acc) : null; return a ? a.name : ''; };
   const AccPick = (p: { v: number; set: (n: number) => void }) => accs.length ? (
@@ -58,7 +59,7 @@ export default function Savings() {
           <Pressable key={o.id} onPress={() => p.set(o.id)} accessibilityLabel={o.name} style={({ pressed }) => ({ paddingVertical: 5, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, borderColor: p.v === o.id ? (o.c || '#5ee7b5') : 'rgba(255,255,255,.2)', backgroundColor: p.v === o.id ? (o.c || '#5ee7b5') + '40' : 'rgba(255,255,255,.08)', transform: [{ scale: pressed ? 0.95 : 1 }] })}><Text style={{ color: W, fontSize: 11.5, fontWeight: '700' }}>{o.name}</Text></Pressable>
         ))}
       </View>
-      <Text style={{ color: dimC, fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>Only a label so you can see where this money is kept. It does not change the account balance.</Text>
+      <Text style={{ color: dimC, fontSize: 11.5, lineHeight: 16, marginTop: 6 }}>Where this money is kept. When you add money to this goal you can choose to take it off this account, and when you take money out you can put it back. You choose each time, and nothing changes in the account unless you pick it.</Text>
     </View>
   ) : null;
 
@@ -89,14 +90,17 @@ export default function Savings() {
   const addMoney = (g: Goal) => {
     const n = num(amt); if (!(n > 0)) { tryForm('goalMoney'); return; }
     const id = (fin && fin.nextId) || 1;
-    setFin({ ...fin, spends: [{ id, name: note.trim() || g.name, cat: 'Savings', amt: n, date: dt || todayStr(), goal: g.id }, ...spends], nextId: id + 1 });
-    setAmt(''); setNote(''); setMode(''); setOk(cs() + money(n) + ' added to ' + g.name + '. It is also in your Spending Tracker and Money Left.');
+    const tk = useAcc === 0 && !!g.acc && accs.some((x) => x.id === g.acc);
+    setFin({ ...fin, spends: [{ id, name: note.trim() || g.name, cat: 'Savings', amt: n, date: dt || todayStr(), goal: g.id, ...(tk ? { acc: g.acc } : {}) }, ...spends], nextId: id + 1 });
+    setAmt(''); setNote(''); setMode(''); setOk(cs() + money(n) + ' added to ' + g.name + (tk ? ' and taken off ' + accName(g) : '') + '. It is also in your Spending Tracker and Money Left.');
   };
   const withdraw = (g: Goal) => {
     const n = num(amt); if (!(n > 0)) { tryForm('goalMoney'); return; } const s = saved(g);
     const take = Math.min(n, s);
     setSv({ ...sv, goals: goals.map((x) => (x.id === g.id ? { ...x, out: [...(x.out || []), { id: Date.now(), amt: take, date: dt || todayStr(), note: note.trim() }] } : x)) });
-    setAmt(''); setNote(''); setMode(''); setOk('Took ' + cs() + money(take) + ' out of ' + g.name + '.');
+    const bk = useAcc === 0 && !!g.acc && accs.some((x) => x.id === g.acc) && take > 0;
+    if (bk) setAccD({ ...accD, moves: [...(accD.moves || []), { id: accD.nextId || 1, date: dt || todayStr(), kind: 'deposit', to: g.acc as number, amt: take, note: 'From ' + g.name }], nextId: (accD.nextId || 1) + 1 });
+    setAmt(''); setNote(''); setMode(''); setOk('Took ' + cs() + money(take) + ' out of ' + g.name + (bk ? ' and put it back into ' + accName(g) : '') + '.');
   };
   const saveEdit = (g: Goal) => {
     const t = num(eTarget); if (!eName.trim() || !(t > 0)) { tryForm('goalEdit'); return; }
@@ -199,6 +203,7 @@ export default function Savings() {
                     <Inp form="goalMoney" need="an amount" onFocus={reveal} autoFocus keyboardType="decimal-pad" value={amt} onChangeText={setAmt} placeholder={'Amount (' + cu() + ')'} onSubmitEditing={() => (mode === 'add' ? addMoney(g) : withdraw(g))} />
                     <Inp onFocus={reveal} value={note} onChangeText={setNote} placeholder={mode === 'add' ? 'Note (optional), e.g. March saving' : 'Why? (optional)'} />
                     <DateField value={dt} onChange={setDt} />
+                    {g.acc && accs.some((x) => x.id === g.acc) ? <View style={{ marginTop: 2 }}><EqPills tabs={[mode === 'add' ? 'Take off ' + accName(g) : 'Put back into ' + accName(g), 'Do not change the account']} index={useAcc} onChange={setUseAcc} colors={['#5ee7b5', '#7c9cff']} fontSize={12} /></View> : null}
                     <Lbl t={mode === 'add' ? 'This is saved in your Spending Tracker under Savings, so Money Left counts it too.' : 'This lowers the goal only. Add the money back to your spending or income if you need to track it.'} />
                     <Pressable onPress={() => (mode === 'add' ? addMoney(g) : withdraw(g))}><LinearGradient colors={WARM} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 42, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#0c2a28', fontSize: 13, fontWeight: '800' }}>{mode === 'add' ? 'Add' : 'Take out'}</Text></LinearGradient></Pressable>
                   </View>

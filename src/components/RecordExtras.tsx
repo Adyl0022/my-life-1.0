@@ -1,4 +1,5 @@
 import { fileStamp } from '../lib/exporter';
+import { SafeImage } from './SafeImage';
 import React, { useState } from 'react';
 import { View, Image, Modal, Platform } from 'react-native';
 import { Pressable } from './Press';
@@ -250,7 +251,7 @@ export function DocsCard({ d, upd }: P<Ext>) {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
         {list.map((x) => (
           <Pressable key={x.id} onPress={() => setView(x)} style={{ width: '47%', flexGrow: 1 }}>
-            <Image source={{ uri: x.uri }} style={{ width: '100%', height: 110, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" />
+            <SafeImage source={{ uri: x.uri }} style={{ width: '100%', height: 110, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)' }} resizeMode="cover" />
             <Text style={{ color: W, fontSize: 12.5, fontWeight: '700', marginTop: 4 }} numberOfLines={1}>{x.title}</Text>
             <Text style={{ color: dim, fontSize: 11 }}>{fd(x.date)}</Text>
           </Pressable>
@@ -259,7 +260,7 @@ export function DocsCard({ d, upd }: P<Ext>) {
       {view ? (
         <Modal transparent statusBarTranslucent animationType="fade" onRequestClose={() => setView(null)}>
           <View style={{ flex: 1, backgroundColor: 'rgba(5,8,25,.92)', padding: 16, justifyContent: 'center' }}>
-            <Image source={{ uri: view.uri }} style={{ width: '100%', height: '72%' }} resizeMode="contain" />
+            <SafeImage source={{ uri: view.uri }} style={{ width: '100%', height: '72%' }} resizeMode="contain" />
             <Text style={{ color: W, fontSize: 15, fontWeight: '800', textAlign: 'center', marginTop: 10 }}>{view.title}</Text>
             <Text style={{ color: dim, fontSize: 12, textAlign: 'center' }}>{fd(view.date)}</Text>
             <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', marginTop: 14 }}>

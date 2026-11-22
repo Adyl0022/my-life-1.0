@@ -10,8 +10,11 @@ import { getItem, setItem } from './store';
 import { chatReply } from './assistantChat';
 import { mathReply } from './assistantMath';
 import { dataDigest } from './assistantDigest';
-import { balanceOf, totals, isLiab, groupOf, incomeFeed, commitTotal } from './accounts';
+import { balanceOf, totals, isLiab, groupOf, incomeFeed, commitTotal, keepOf, reservedTotal } from './accounts';
 import { thingsValue } from './collection';
+import { flowTurn } from './assistantFlow';
+import { genTurn } from './assistantFlow2';
+import { keepWarn } from './assistantKeep';
 import { onlineOn, onlineAsk, onlineNote } from './onlineAi';
 import { parseTranslate, runTranslate } from './translateCmd';
 import { smartOk, gemmaOk, smartReady, smartModelName, smartAsk, sensitiveReply, currentReply } from './llm';
@@ -146,7 +149,8 @@ export class AssistantBase extends React.Component<any, any> {
       m = this.mk(L('Saved to your Heart log. I only keep the numbers you type and cannot say whether a reading is good or bad. Please ask a doctor or nurse about your readings.', 'Disimpan dalam Heart log. Saya hanya simpan nombor yang awak taip dan tidak boleh kata sama ada bacaan itu baik atau tidak. Sila tanya doktor atau jururawat tentang bacaan awak.'), { label: L('Open Habit & Health', 'Buka Habit & Health'), href: 'Habit.dc.html' });
     } else if (p.type === 'spend') {
       const tdy = D.spendToday + (p.date === this.todayStr() ? p.amt : 0);
-      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + (p.accName ? ' from ' + p.accName : '') + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + (p.accName ? ' dari ' + p.accName : '') + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
+      const mon = D.spendMonth + (String(p.date || '').slice(0, 7) === this.todayStr().slice(0, 7) ? p.amt : 0);
+      m = this.mk(L('Saved ' + cs() + this.rm(p.amt) + ' under ' + p.cat + (p.accName ? ' from ' + p.accName : '') + ' in My Finance. You have spent ' + cs() + this.rm(tdy) + ' today and ' + cs() + this.rm(mon) + ' this month.', 'Dah disimpan ' + cs() + this.rm(p.amt) + ' di bawah ' + p.cat + (p.accName ? ' dari ' + p.accName : '') + ' dalam My Finance. Awak dah belanja ' + cs() + this.rm(tdy) + ' hari ini dan ' + cs() + this.rm(mon) + ' bulan ini.'), { big: cs() + this.rm(tdy), bigLbl: L('spent today', 'belanja hari ini'), color: '#ffc46b', label: L('Open Spending Tracker', 'Buka Spending Tracker'), href: 'Finance.dc.html' });
     } else if (p.type === 'mtc') {
       patch.mtcMonth = s.mtcMonth + p.amt;
       let extra = '';
@@ -160,6 +164,7 @@ export class AssistantBase extends React.Component<any, any> {
       const diff = p.val - s.odo; patch.odo = p.val; patch.kmMonth = s.kmMonth + diff;
       m = this.mk(L('Odometer saved: ' + this.num(p.val) + ' km. That is ' + diff + ' km since the last reading, so this month is ' + (s.kmMonth + diff) + ' km.', 'Odometer disimpan: ' + this.num(p.val) + ' km. Itu ' + diff + ' km sejak bacaan terakhir, jadi bulan ini ' + (s.kmMonth + diff) + ' km.'), { big: this.num(p.val), bigLbl: 'km', color: '#ff8fab', label: L('Open My Record', 'Buka My Record'), href: 'Record.dc.html' });
     }
+    else if (p.doneEn) m = this.mk(L(p.doneEn, p.doneMs), { label: L(p.lbl[0], p.lbl[1]), href: p.href });
     if (yes && p.type === 'spend') { m.uid = Date.now(); patch.lastUndo = { id: m.uid, askSpend: true }; }
     this.setState(Object.assign({ msgs: s.msgs.concat([m]) }, patch));
     if (yes && this.props.persist) this.props.persist(p.type === 'undoSpend' ? { type: 'undoSpend', id: p.sid } : p);
@@ -638,7 +643,10 @@ export class AssistantBase extends React.Component<any, any> {
     this.setState({ msgs: this.state.msgs.concat([{ me: true, text: shown, time: this.hm(), big: '', bigLbl: '', pct: -1, color: '', label: '', href: '' }]), draft: '', typing: true, lang: lang });
     this.scroll();
     setTimeout(async () => {
-      let r;
+      let r; let fr = null;
+      try { fr = (await genTurn(this, q, lang)) || (await flowTurn(this, q, lang)); } catch (e) { fr = null; if (this.state.flow) this.setState({ flow: null }); }
+      if (fr) { this.setState(Object.assign({ msgs: this.state.msgs.concat([fr.m]), typing: false, live: '' }, fr.patch)); this.scroll(); return; }
+      if (this.state.flow) this.setState({ flow: null });
       try { r = this.reply(q, lang); } catch (e) {
         r = { m: { me: false, text: lang === 'ms' ? 'Maaf, saya tak dapat jawab itu sekarang. Cuba tanya dengan cara lain.' : 'Sorry, I could not answer that right now. Try asking it another way.', time: this.hm(), big: '', bigLbl: '', pct: -1, color: '#8fe9e2', label: '', href: '' }, patch: {}, act: null };
       }
@@ -663,7 +671,7 @@ export class AssistantBase extends React.Component<any, any> {
       const hit = ((d && d.accs) || []).filter((a) => a.name && ql.indexOf(String(a.name).toLowerCase()) >= 0).sort((a, b) => String(b.name).length - String(a.name).length)[0];
       if (!hit) return r;
       r.patch = Object.assign({}, r.patch, { pending: Object.assign({}, p, { acc: hit.id, accName: hit.name }) });
-      r.m = Object.assign({}, r.m, { text: r.m.text.replace(/\n• (Date|Tarikh):/, (_x, w) => '\n• ' + (lang === 'ms' ? 'Dibayar dari: ' : 'Paid from: ') + hit.name + '\n• ' + w + ':') });
+      r.m = Object.assign({}, r.m, { text: r.m.text.replace(/\n• (Date|Tarikh):/, (_x, w) => '\n• ' + (lang === 'ms' ? 'Dibayar dari: ' : 'Paid from: ') + hit.name + '\n• ' + w + ':') + (await keepWarn(hit.id, p.amt, lang)) });
     } catch (e) { /* keep it as it was */ }
     return r;
   }
@@ -676,7 +684,8 @@ export class AssistantBase extends React.Component<any, any> {
       const L = (en, ms) => (lang === 'ms' ? ms : en);
       const id = this.state.pid + 1; const d = new Date(); if (a.ydy) d.setDate(d.getDate() - 1);
       const act = { type: 'spend', amt: a.amt, cat: a.cat, name: a.name, date: this.todayStr(d), ydy: a.ydy, acc: a.acc, accName: a.accName };
-      const m = this.mk(L('Got it. Save this spending?\n• ' + a.name + '\n• Category: ' + a.cat + (a.accName ? '\n• Paid from: ' + a.accName : '') + '\n• Date: ' + (a.ydy ? 'yesterday' : 'today') + '\n(Read by the AI on your phone. Please check it.)', 'Faham. Simpan perbelanjaan ini?\n• ' + a.name + '\n• Kategori: ' + a.cat + (a.accName ? '\n• Dibayar dari: ' + a.accName : '') + '\n• Tarikh: ' + (a.ydy ? 'semalam' : 'hari ini') + '\n(Dibaca oleh AI dalam telefon awak. Sila semak.)'), { pid: id, big: cs() + this.rm(a.amt), bigLbl: a.cat, color: '#ffc46b' });
+      const kw = await keepWarn(a.acc, a.amt, lang);
+      const m = this.mk(L('Got it. Save this spending?\n• ' + a.name + '\n• Category: ' + a.cat + (a.accName ? '\n• Paid from: ' + a.accName : '') + '\n• Date: ' + (a.ydy ? 'yesterday' : 'today') + kw + '\n(Read by the AI on your phone. Please check it.)', 'Faham. Simpan perbelanjaan ini?\n• ' + a.name + '\n• Kategori: ' + a.cat + (a.accName ? '\n• Dibayar dari: ' + a.accName : '') + '\n• Tarikh: ' + (a.ydy ? 'semalam' : 'hari ini') + '\n(Dibaca oleh AI dalam telefon awak. Sila semak.)'), { pid: id, big: cs() + this.rm(a.amt), bigLbl: a.cat, color: '#ffc46b' });
       return { m, patch: { pending: Object.assign({ id }, act), pid: id }, act: null };
     } catch (e) { return null; }
   }
@@ -701,13 +710,13 @@ export class AssistantBase extends React.Component<any, any> {
       const feeds = { debts: dbt.debts || [], incomes: incomeFeed(fin.inc || {}, fin.incAcc) }; const sp = fin.spends || [];
       const named = accs.filter((a) => a.name && ql.indexOf(String(a.name).toLowerCase()) >= 0).sort((a, b) => String(b.name).length - String(a.name).length)[0];
       const fm = (n) => cs() + this.rm(Math.abs(n)) + (n < 0 ? ' (minus)' : '');
-      if (named) { const b = balanceOf(named, d, sp, feeds); const lb = isLiab(named); return { m: this.mk(L(named.name + (lb ? ': you owe ' : ' has ') + fm(b) + '.', named.name + (lb ? ': awak berhutang ' : ' ada ') + fm(b) + '.'), { big: fm(b), bigLbl: named.name }), patch: {}, act: null }; }
-      const lines = accs.map((a) => '• ' + a.name + ' (' + groupOf(a.g).t + '): ' + fm(balanceOf(a, d, sp, feeds)) + (isLiab(a) ? L(' owed', ' hutang') : ''));
+      if (named) { const b = balanceOf(named, d, sp, feeds); const lb = isLiab(named); const kp = keepOf(named); return { m: this.mk(L(named.name + (lb ? ': you owe ' : ' has ') + fm(b) + '.' + (kp > 0 ? ' Reserved ' + fm(kp) + ', so you can spend ' + fm(b - kp) + '.' : ''), named.name + (lb ? ': awak berhutang ' : ' ada ') + fm(b) + '.' + (kp > 0 ? ' Terpelihara ' + fm(kp) + ', jadi boleh dibelanjakan ' + fm(b - kp) + '.' : '')), { big: fm(kp > 0 ? b - kp : b), bigLbl: kp > 0 ? named.name + L(' available', ' tersedia') : named.name }), patch: {}, act: null }; }
+      const lines = accs.map((a) => '• ' + a.name + ' (' + groupOf(a.g).t + '): ' + fm(balanceOf(a, d, sp, feeds)) + (isLiab(a) ? L(' owed', ' hutang') : '') + (keepOf(a) > 0 ? L(' · available ', ' · tersedia ') + fm(balanceOf(a, d, sp, feeds) - keepOf(a)) : ''));
       const t = totals(d, sp, 0, feeds);
       const col = (await getItem('ml_collection', { items: [] })) || { items: [] }; const tv = thingsValue(col.items || []); const wt = await getItem('ml_acc_things', 1);
       const nw = totals(d, sp, commitTotal(dbt.debts || []), feeds).total + tv.total;
       const asset = tv.total > 0 && wt !== 0 ? '\n\n' + L('Physical assets (a guess): est. ', 'Physical assets (anggaran): est. ') + fm(tv.total) + '\n' + L('Net worth: est. ', 'Net worth: est. ') + fm(nw) : '';
-      return { m: this.mk(lines.join('\n') + '\n\n' + L('Money you have: ', 'Wang yang awak ada: ') + fm(t.assets) + (t.liab > 0 ? '\n' + L('Cards and loans owed: ', 'Kad dan pinjaman yang terhutang: ') + fm(t.liab) : '') + '\n' + L('Net: ', 'Bersih: ') + fm(t.total) + asset), patch: {}, act: null };
+      return { m: this.mk(lines.join('\n') + '\n\n' + L('Money you have: ', 'Wang yang awak ada: ') + fm(t.assets) + (reservedTotal(d) > 0 ? '\n' + L('Available to spend: ', 'Boleh dibelanjakan: ') + fm(Math.max(0, t.assets - reservedTotal(d))) + L(' (after ' + fm(reservedTotal(d)) + ' reserved)', ' (selepas ' + fm(reservedTotal(d)) + ' terpelihara)') : '') + (t.liab > 0 ? '\n' + L('Cards and loans owed: ', 'Kad dan pinjaman yang terhutang: ') + fm(t.liab) : '') + '\n' + L('Net: ', 'Bersih: ') + fm(t.total) + asset), patch: {}, act: null };
     } catch (e) { return null; }
   }
   async fallbackAI(q, lang, r, tt = false) {
