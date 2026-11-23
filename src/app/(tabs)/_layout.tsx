@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Animated, Easing, Platform } from 'react-native';
+import { View, Animated, Easing, Platform, Keyboard } from 'react-native';
 import { Pressable } from '../../components/Press';
 import * as Haptics from '../../lib/haptics';
 import RA, { useSharedValue, useAnimatedStyle, withTiming, interpolate, Easing as REasing } from 'react-native-reanimated';
-import { subscribeNav, setNavCollapsed } from '../../lib/navbar';
+import { subscribeNav, setNavCollapsed, resetNav } from '../../lib/navbar';
 import { Text } from '../../components/Txt';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter, usePathname } from 'expo-router';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { THEMES, periodOf } from '../../lib/theme';
@@ -80,8 +80,16 @@ function Bar({ state }: any) {
     ia[idx].setValue(0);
     Animated.timing(ia[idx], { toValue: 1, duration: 900, easing: Easing.linear, useNativeDriver: true }).start();
     pops.forEach((v, i) => Animated.spring(v, { toValue: i === idx ? 1 : 0, friction: 5, tension: 160, useNativeDriver: true }).start());
-    setNavCollapsed(false);
+    resetNav();
   }, [idx]);
+  // Coming back from another screen (the Assistant, Family Planner...) or closing the keyboard: always show the full bar.
+  const path = usePathname();
+  useEffect(() => { resetNav(); const t = setTimeout(resetNav, 350); return () => clearTimeout(t); }, [path]);
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const s = Keyboard.addListener('keyboardDidHide', () => { resetNav(); setTimeout(resetNav, 300); });
+    return () => s.remove();
+  }, []);
   useEffect(() => {
     const loop = Animated.loop(Animated.sequence([
       Animated.timing(sheen, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
@@ -101,10 +109,21 @@ function Bar({ state }: any) {
   const barSt = useAnimatedStyle(() => ({ transform: [{ translateY: interpolate(col.value, [0, 1], [0, 8]) }, { scale: interpolate(col.value, [0, 1], [1, 0.88]) }] }));
   const lblSt = useAnimatedStyle(() => ({ height: interpolate(col.value, [0, 1], [13, 0]), opacity: interpolate(col.value, [0, 0.7], [1, 0], 'clamp') }));
   const gc = PGLOW[period];
+  // If Android briefly resizes the window (keyboard from the Assistant), the bar must not ride up with it: remember the
+  // tallest layout seen and push the bar back down by however much shorter the window currently is.
+  const maxH = useRef({ w: 0, h: 0 }).current;
+  const [lift, setLift] = useState(0);
+  const onBox = (e: any) => {
+    const { width, height } = e.nativeEvent.layout;
+    if (Math.abs(width - maxH.w) > 1) { maxH.w = width; maxH.h = height; } else if (height > maxH.h) maxH.h = height;
+    const l = Math.max(0, Math.round(maxH.h - height));
+    setLift((o) => (o === l ? o : l));
+  };
   return (
     <>
-    <LinearGradient pointerEvents="none" colors={home ? ['rgba(10,15,44,0)', tint(.35), tint(.6)] : ['rgba(10,15,44,0)', 'rgba(10,15,44,.92)', 'rgba(10,15,44,.98)']} locations={[0, 0.55, 1]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 104 }} />
-    <RA.View style={[{ position: 'absolute', left: 20, right: 20, bottom: 18, transformOrigin: '50% 100%' } as any, barSt]}>
+    <View pointerEvents="none" onLayout={onBox} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+    <LinearGradient pointerEvents="none" colors={home ? ['rgba(10,15,44,0)', tint(.35), tint(.6)] : ['rgba(10,15,44,0)', 'rgba(10,15,44,.92)', 'rgba(10,15,44,.98)']} locations={[0, 0.55, 1]} style={{ position: 'absolute', left: 0, right: 0, bottom: -lift, height: 104 }} />
+    <RA.View style={[{ position: 'absolute', left: 20, right: 20, bottom: 18 - lift, transformOrigin: '50% 100%' } as any, barSt]}>
       <Glass radius={28} style={{ padding: 8, backgroundColor: home ? 'rgba(255,255,255,.2)' : 'rgba(24,28,72,.78)' }}>
         <View style={{ flexDirection: 'row' }} onLayout={(e) => { const w = Math.round(e.nativeEvent.layout.width); setW((o) => (Math.abs(o - w) > 1 ? w : o)); }}>
           {W > 0 && (

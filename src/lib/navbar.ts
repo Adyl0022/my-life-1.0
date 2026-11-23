@@ -4,6 +4,8 @@ let last = 0;
 let col = false;
 export function subscribeNav(f: L) { ls.add(f); return () => { ls.delete(f); }; }
 export function setNavCollapsed(c: boolean) { if (c !== col) { col = c; ls.forEach((f) => f(c)); } }
+// Always bring the bar back to full size, even if the stored state already says expanded (the animation can be left half-way).
+export function resetNav() { col = false; acc = 0; last = 0; ls.forEach((f) => f(false)); }
 // Collapse after a real downward push and expand after a real upward one, so small wobbles never flip it.
 let acc = 0;
 export function navScroll(e: any) {
