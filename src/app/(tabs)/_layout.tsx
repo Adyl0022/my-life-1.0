@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Animated, Easing, Platform } from 'react-native';
+import { View, Animated, Easing, Platform, Keyboard } from 'react-native';
 import { Pressable } from '../../components/Press';
 import * as Haptics from '../../lib/haptics';
 import RA, { useSharedValue, useAnimatedStyle, withTiming, interpolate, Easing as REasing } from 'react-native-reanimated';
-import { subscribeNav, setNavCollapsed } from '../../lib/navbar';
+import { subscribeNav, setNavCollapsed, resetNav } from '../../lib/navbar';
 import { Text } from '../../components/Txt';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter, usePathname } from 'expo-router';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { THEMES, periodOf } from '../../lib/theme';
@@ -80,8 +80,16 @@ function Bar({ state }: any) {
     ia[idx].setValue(0);
     Animated.timing(ia[idx], { toValue: 1, duration: 900, easing: Easing.linear, useNativeDriver: true }).start();
     pops.forEach((v, i) => Animated.spring(v, { toValue: i === idx ? 1 : 0, friction: 5, tension: 160, useNativeDriver: true }).start());
-    setNavCollapsed(false);
+    resetNav();
   }, [idx]);
+  // Coming back from another screen (the Assistant, Family Planner...) or closing the keyboard: always show the full bar.
+  const path = usePathname();
+  useEffect(() => { resetNav(); const t = setTimeout(resetNav, 350); return () => clearTimeout(t); }, [path]);
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const s = Keyboard.addListener('keyboardDidHide', () => { resetNav(); setTimeout(resetNav, 300); });
+    return () => s.remove();
+  }, []);
   useEffect(() => {
     const loop = Animated.loop(Animated.sequence([
       Animated.timing(sheen, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
