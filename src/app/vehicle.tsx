@@ -252,7 +252,7 @@ export default function Record() {
                   : <View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: W, fontSize: 13, fontWeight: '600' }}>{n}</Text></View>}
               </Pressable>
             ))}
-            {!addingCat ? <Pressable onPress={() => { if (!pro) { openPaywall(); return; } setAddingCat(true); setCatIn(''); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: 'rgba(255,255,255,.08)' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '600' }}>+ New category</Text></Pressable> : null}
+            {!addingCat ? <Pressable onPress={() => { if (!pro) { openPaywall(); return; } setAddingCat(true); setCatIn(''); }} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: pro ? 'rgba(255,255,255,.2)' : 'rgba(94,231,223,.55)', backgroundColor: pro ? 'rgba(255,255,255,.08)' : 'rgba(94,231,223,.12)' }}><Text style={{ color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: '600' }}>{pro ? '+ New category' : '+ New category · PRO'}</Text></Pressable> : null}
           </View>
           {addingCat ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' }}>
@@ -422,7 +422,7 @@ export default function Record() {
             })()}
           </Glass>
           <DocsCard d={d} upd={(fn) => upd(fn)} />
-          <Locked on={!pro} title="Export Report (PDF)"><ExportCard name={catName} d={d} latest={latest} /></Locked>
+          <Locked on={!pro} mt={12} title="Export Report (PDF)"><ExportCard name={catName} d={d} latest={latest} /></Locked>
         </ScrollView>
 
         {quick ? (

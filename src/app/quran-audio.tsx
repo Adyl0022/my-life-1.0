@@ -157,7 +157,7 @@ export default function QuranAudio() {
               <Pressable onPress={clearDlError} style={{ marginTop: 10, alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.14)' }}><Text style={{ color: W, fontWeight: '700', fontSize: 13 }}>OK</Text></Pressable>
             </Glass>
           ) : null}
-          <SlidePills tabs={['Juz (1 to 30)', 'Surah (1 to 114)'].concat(dlSupported ? [pro ? 'Downloads' : 'Downloads · PRO'] : [])} index={tab} onChange={(i) => { setTab(i); setFind(''); }} colors={['rgba(94,231,181,.55)', 'rgba(94,231,223,.45)']} padX={16} padY={8} fontSize={12.5} style={{ marginTop: 6 }} />
+          <SlidePills tabs={['Juz 1 to 30', 'Surah 1 to 114'].concat(dlSupported ? [pro ? 'Downloads' : 'Downloads · PRO'] : [])} index={tab} onChange={(i) => { setTab(i); setFind(''); }} colors={['rgba(94,231,181,.55)', 'rgba(94,231,223,.45)']} padX={12} padY={8} fontSize={12.5} style={{ marginTop: 6 }} />
 
           {tab < 2 ? (
             <GlowField focused={sf}>
