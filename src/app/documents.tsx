@@ -24,8 +24,6 @@ import { RenewGuideSheet } from '../components/RenewGuideSheet';
 import { DocScans } from '../components/DocScans';
 import { useDocLock, setDocLock, askUnlock } from '../lib/docLock';
 import * as Haptics from '../lib/haptics';
-import { usePro } from '../lib/pro';
-import { openPaywall } from '../components/Paywall';
 import { DOC_TYPES, TABS, REMINDS, EMPTY_DOCS, typeOf, statusOf, bySoon, validDate, readText, guessType, scanPhoto, ymd, type Doc, type DocStore, type DocTab, type Remind, type Read } from '../lib/documents';
 
 const dim = 'rgba(255,255,255,.62)';
@@ -63,7 +61,6 @@ function Row({ d, onPress }: { d: Doc; onPress: () => void }) {
 }
 
 function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; onClose: () => void; onRemind: (r: Remind) => void }) {
-  const pro = usePro();
   const t = typeOf(d.type), s = statusOf(d); const [big, setBig] = useState(false); const [bi, setBi] = useState(0); const [rn, setRn] = useState(false); const [sh, setSh] = useState(false); const [pm, setPm] = useState('');
   const pages = [d.photo, ...(d.photos || [])].filter(Boolean) as string[];
   const sug = d.type === 'passport' ? '6m' : d.type === 'bank' || d.type === 'warranty' || d.type === 'insurance' ? '1m' : '3m'; const sugN = (REMINDS.find((x) => x.k === sug) as any).n;
@@ -120,7 +117,7 @@ function Detail({ d, onEdit, onClose, onRemind }: { d: Doc; onEdit: () => void; 
           {pages.length ? (
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Pressable onPress={() => setSh(true)} accessibilityLabel="Share with a note" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}><View style={{ height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Share with a note</Text></View></Pressable>
-              {pages.length > 1 ? <Pressable onPress={async () => { if (!pro) { openPaywall(); return; } Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setPm('Making the PDF…'); const r = await exportPdf(pages, d.title, undefined, undefined, () => setPm('')); setPm(r === 'ok' ? '' : r === 'web' ? 'Making a PDF works in the Android app.' : 'Could not make the PDF. Please try again.'); }} accessibilityLabel="Export as one PDF" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}><View style={{ height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>{pro ? 'Export as one PDF' : 'One PDF · PRO'}</Text></View></Pressable> : null}
+              {pages.length > 1 ? <Pressable onPress={async () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setPm('Making the PDF…'); const r = await exportPdf(pages, d.title, undefined, undefined, () => setPm('')); setPm(r === 'ok' ? '' : r === 'web' ? 'Making a PDF works in the Android app.' : 'Could not make the PDF. Please try again.'); }} accessibilityLabel="Export as one PDF" style={({ pressed }) => ({ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}><View style={{ height: 46, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', backgroundColor: 'rgba(255,255,255,.08)', alignItems: 'center', justifyContent: 'center' }}><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: W, fontSize: 13.5, fontWeight: '800' }}>Export as one PDF</Text></View></Pressable> : null}
             </View>
           ) : null}
           {pm ? <Text style={{ color: '#ffd593', fontSize: 12.5, fontWeight: '700', marginTop: 10 }}>{pm}</Text> : null}
