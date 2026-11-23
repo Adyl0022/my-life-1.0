@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { FREEMIUM } from './edition';
 import { useSession } from './auth';
+import { refreshLicense } from './license';
 
 // The yearly subscription that opens every feature. It renews each year until the person cancels in Google Play.
 // Google Play handles the payment. RevenueCat only keeps track of who has an active subscription.
@@ -45,7 +46,9 @@ function sdk(): any {
   return mod;
 }
 const hasPro = (info: any) => !!info?.entitlements?.active?.[ENTITLEMENT];
-function setActive(v: boolean) { if (active !== v) { active = v; emit(); } }
+// After a purchase the server licence (Family Planner) is written a few seconds later, so ask again a few times.
+function askServerLicense() { [0, 4000, 10000, 20000].forEach((t) => setTimeout(() => { refreshLicense(); }, t)); }
+function setActive(v: boolean) { if (active !== v) { active = v; emit(); if (v) askServerLicense(); } }
 
 // Ties the purchase to the signed-in account, so the subscription follows the person to a new phone.
 async function bind(uid: string) {
