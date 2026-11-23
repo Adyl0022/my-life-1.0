@@ -155,7 +155,11 @@ export default function Settings() {
   const [nameMsg, setNameMsg] = useState('');
   const [hd, setHd] = useStored<any>('ml_habit', { goal: 8000, days: {}, kg: [] });
   const [tg, setTg] = useStored<Record<string, boolean>>('ml_toggles', { ev: true, pr: true, zk: true, qh: true });
-  const kb = useKb(); const sref = React.useRef<any>(null);
+  const kbRaw = useKb(); const sref = React.useRef<any>(null);
+  // The tabs stay mounted while another screen (Assistant, Family Planner) is on top, so only react to the keyboard while Settings is the screen being used.
+  const [foc, setFoc] = React.useState(true);
+  useFocusEffect(React.useCallback(() => { setFoc(true); return () => setFoc(false); }, []));
+  const kb = foc ? kbRaw : 0;
   const dlgR = React.useRef(''); 
   React.useEffect(() => { if (kb > 0 && !dlgR.current) setTimeout(() => sref.current?.scrollToEnd({ animated: true }), 80); }, [kb]);
   const [upd, setUpd] = useState<'' | 'busy' | 'latest' | 'new' | 'web' | 'err'>('');
