@@ -515,7 +515,6 @@ export default function Stats() {
           </Rise>
           )}
           <Rise i={4}>
-          <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
             {(() => {
               const rows = monthRows(core, 6); const cur = rows[rows.length - 1]; const any = rows.some((r) => r.has);
               const fm = (n: number) => cs() + Math.round(Math.abs(n)).toLocaleString('en-MY');
@@ -524,6 +523,7 @@ export default function Stats() {
               const best = rows.filter((r) => r.income > 0).sort((a, b) => b.left - a.left)[0];
               const goalsSaved = ((core.sav && core.sav.goals) || []).reduce((a, g) => a + goalSaved(g, ((fin && (fin as any).spends) || []) as any, core.debts), 0);
               return (<>
+                <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}><Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Money left each month</Text><Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11 }}>Last 6 months</Text></View>
                 {any ? (<>
                   <Text style={{ color: cur.left < 0 ? '#ff9aa9' : '#7df0c6', fontSize: 20, fontWeight: '800', marginTop: 8 }}>{cur.left < 0 ? '-' : ''}{fm(cur.left)}<Text style={{ color: 'rgba(255,255,255,.65)', fontSize: 12, fontWeight: '500' }}>{'  ' + (cur.left < 0 ? 'over budget' : 'left') + ' this month'}</Text></Text>
@@ -533,7 +533,8 @@ export default function Stats() {
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>{rows.map((r) => <Text key={r.ym} style={{ flex: 1, textAlign: 'center', color: 'rgba(255,255,255,.55)', fontSize: 9.5 }}>{r.label}</Text>)}</View>
                   <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{best && best.ym !== cur.ym ? 'Your best month was ' + best.label + ' with ' + fm(best.left) + ' left. ' : ''}Red bars are months you went over budget. Months without income are grey.</Text>
                 </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Add your income and spending in My Finance to see how much you keep each month.</Text>}
-                {any && cur.income > 0 ? (<Locked on={!pro} title="Where this month's income goes"><View style={{ marginTop: 18, paddingTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.1)' }}>
+                </Glass>
+                {any && cur.income > 0 ? (<Locked on={!pro} title="Where this month's income goes" mt={12}><Glass style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
                   <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 14 }}>Where this month's income goes</Text>
                   <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', marginBottom: 6, backgroundColor: 'rgba(255,255,255,.12)' }}>
                     {[[cur.commit, '#b794ff'], [cur.spent, '#ffc46b'], [cur.savings, '#7c9cff'], [Math.max(0, cur.left), '#5ee7b5']].map(([v, col], i) => <View key={i} style={{ flex: Math.max(0, v as number) / Math.max(cur.income, cur.commit + cur.spent + cur.savings), backgroundColor: col as string }} />)}
@@ -546,10 +547,9 @@ export default function Stats() {
                       <Text style={{ width: 42, textAlign: 'right', color: 'rgba(255,255,255,.6)', fontSize: 12.5 }}>{Math.round(((v as number) / cur.income) * 100)}%</Text>
                     </View>
                   ))}
-                </View></Locked>) : null}
+                </Glass></Locked>) : null}
               </>);
             })()}
-          </Glass>
           </Rise>
 
           <Rise i={4}>
