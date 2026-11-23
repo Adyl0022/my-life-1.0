@@ -534,23 +534,32 @@ export default function Stats() {
                   <Text style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5, marginTop: 8 }}>{best && best.ym !== cur.ym ? 'Your best month was ' + best.label + ' with ' + fm(best.left) + ' left. ' : ''}Red bars are months you went over budget. Months without income are grey.</Text>
                 </>) : <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 12.5, marginTop: 8 }}>Add your income and spending in My Finance to see how much you keep each month.</Text>}
                 </Glass>
-                {any && cur.income > 0 ? (<Locked on={!pro} title="Where this month's income goes" mt={12}><Glass style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 14 }}>Where this month's income goes</Text>
-                  <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', marginBottom: 6, backgroundColor: 'rgba(255,255,255,.12)' }}>
-                    {[[cur.commit, '#b794ff'], [cur.spent, '#ffc46b'], [cur.savings, '#7c9cff'], [Math.max(0, cur.left), '#5ee7b5']].map(([v, col], i) => <View key={i} style={{ flex: Math.max(0, v as number) / Math.max(cur.income, cur.commit + cur.spent + cur.savings), backgroundColor: col as string }} />)}
-                  </View>
-                  {[['Commitments and debts', cur.commit, '#b794ff'], ['Spending', cur.spent, '#ffc46b'], ['Savings goals', cur.savings, '#7c9cff'], ['Left', Math.max(0, cur.left), '#5ee7b5']].map(([l, v, col]) => (
-                    <View key={l as string} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 }}>
-                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: col as string }} />
-                      <Text style={{ flex: 1, color: 'rgba(255,255,255,.88)', fontSize: 13.5 }}>{l as string}</Text>
-                      <Text style={{ width: 84, textAlign: 'right', color: '#fff', fontSize: 13.5, fontWeight: '700' }}>{fm(v as number)}</Text>
-                      <Text style={{ width: 42, textAlign: 'right', color: 'rgba(255,255,255,.6)', fontSize: 12.5 }}>{Math.round(((v as number) / cur.income) * 100)}%</Text>
-                    </View>
-                  ))}
-                </Glass></Locked>) : null}
               </>);
             })()}
           </Rise>
+          {ds.commit + ds.food > 0 ? (
+            <Rise i={4}>
+            <Locked on={!pro} title="Where your income goes" mt={12}><Glass style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Where your income goes</Text>
+              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{incNow > 0 ? 'This month, out of ' + cs() + Math.round(incNow).toLocaleString() : 'Add this month\'s income in My Finance to see the full split.'}</Text>
+              <View style={{ flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', marginTop: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
+                {segs.map((g) => <View key={g.n} style={{ width: (g.v / base) * 100 + '%', backgroundColor: g.c }} />)}
+                {freeAmt > 0 ? <View style={{ width: (freeAmt / base) * 100 + '%', backgroundColor: '#34d399' }} /> : null}
+              </View>
+              <View style={{ marginTop: 10, gap: 6 }}>
+                {segs.concat(incNow > 0 ? [{ n: freeAmt > 0 ? 'Free' : 'Short', v: freeAmt > 0 ? freeAmt : used - incNow, c: freeAmt > 0 ? '#34d399' : '#ff8fab' }] : []).map((g) => (
+                  <View key={g.n} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
+                    <Text style={{ flex: 1, color: '#fff', fontSize: 12.5 }}>{g.n}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{Math.round((g.v / base) * 100)}%</Text>
+                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', minWidth: 78, textAlign: 'right' }}>{cs()}{Math.round(g.v).toLocaleString()}</Text>
+                  </View>
+                ))}
+              </View>
+            </Glass></Locked>
+            </Rise>
+          ) : null}
+
 
           <Rise i={4}>
           <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
@@ -624,29 +633,6 @@ export default function Stats() {
             </View>
           </Glass>
           </Rise>
-          {ds.commit + ds.food > 0 ? (
-            <Rise i={4}>
-            <Locked on={!pro} title="Where your income goes" mt={12}><Glass style={{ paddingVertical: 14, paddingHorizontal: 16 }}>
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Where your income goes</Text>
-              <Text style={{ color: 'rgba(255,255,255,.62)', fontSize: 11.5, marginTop: 2 }}>{incNow > 0 ? 'This month, out of ' + cs() + Math.round(incNow).toLocaleString() : 'Add this month\'s income in My Finance to see the full split.'}</Text>
-              <View style={{ flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', marginTop: 12, backgroundColor: 'rgba(255,255,255,.1)' }}>
-                {segs.map((g) => <View key={g.n} style={{ width: (g.v / base) * 100 + '%', backgroundColor: g.c }} />)}
-                {freeAmt > 0 ? <View style={{ width: (freeAmt / base) * 100 + '%', backgroundColor: '#34d399' }} /> : null}
-              </View>
-              <View style={{ marginTop: 10, gap: 6 }}>
-                {segs.concat(incNow > 0 ? [{ n: freeAmt > 0 ? 'Free' : 'Short', v: freeAmt > 0 ? freeAmt : used - incNow, c: freeAmt > 0 ? '#34d399' : '#ff8fab' }] : []).map((g) => (
-                  <View key={g.n} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: g.c }} />
-                    <Text style={{ flex: 1, color: '#fff', fontSize: 12.5 }}>{g.n}</Text>
-                    <Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 11.5 }}>{Math.round((g.v / base) * 100)}%</Text>
-                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700', minWidth: 78, textAlign: 'right' }}>{cs()}{Math.round(g.v).toLocaleString()}</Text>
-                  </View>
-                ))}
-              </View>
-            </Glass></Locked>
-            </Rise>
-          ) : null}
-
           {ds.debts.length > 0 ? (
             <Rise i={4}>
             <Glass style={{ marginTop: 12, paddingVertical: 14, paddingHorizontal: 16 }}>
