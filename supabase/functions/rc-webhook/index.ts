@@ -3,7 +3,7 @@
 // Set up once:
 //   1. Supabase > Edge Functions > rc-webhook. Turn OFF "Verify JWT" (RevenueCat has no Supabase login).
 //   2. Supabase > Edge Functions > Secrets: RC_WEBHOOK_SECRET = any long random text you choose.
-//   3. RevenueCat > Integrations > Webhooks > New: URL = this function's URL, Authorization header value = the same text.
+//   3. RevenueCat > Integrations > Webhooks > New: URL = this function's URL, leave the Authorization header empty and end the URL with ?key=<the same text>.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are filled in by Supabase itself.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -17,8 +17,9 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return out({ ok: false, why: 'method' }, 405);
   const secret = Deno.env.get('RC_WEBHOOK_SECRET');
   if (!secret) return out({ ok: false, why: 'config' }, 500);
-  const got = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
-  if (got !== secret.replace(/^Bearer\s+/i, '')) return out({ ok: false, why: 'auth' }, 401);
+  // The secret travels in the URL (?key=...), because Supabase checks any Authorization header as a Supabase login token.
+  const got = new URL(req.url).searchParams.get('key') || '';
+  if (got !== secret) return out({ ok: false, why: 'auth' }, 401);
 
   const body = await req.json().catch(() => ({}));
   const ev = body && body.event ? body.event : {};
