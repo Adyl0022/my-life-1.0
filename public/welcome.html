@@ -1,6 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My Life 1.0 · Your life, all in one place</title><link rel="icon" href="icon.png">
 <meta name="description" content="My Life 1.0 is one private app for your day: planner, money, vehicle records, habits and family. Your data stays yours.">
+<link rel="preload" as="image" href="welcome/home.jpg"><link rel="preload" as="image" href="welcome/hologram.jpg">
 <meta name="theme-color" content="#0a0f2c">
 <style>
 :root{--bg:#070b24;--tx:#f3f4ff;--dim:#a7aed6;--mute:#7f87b8;--line:rgba(255,255,255,.1);--glass:rgba(255,255,255,.06);--v:#8b7bff;--b:#5b8cff;--t:#34d3b0;--o:#ffb45e;--p:#ff7fb0}
@@ -105,7 +106,7 @@ footer b{display:block;color:#dfe2ff;margin-bottom:8px;font-size:14px}footer a{d
 .mq.b{-webkit-text-stroke:0;background:linear-gradient(100deg,#9fb6ff,#cdb6ff 40%,#ffc48a 75%,#34d3b0);-webkit-background-clip:text;background-clip:text}
 .mq .in{display:flex}
 .hero{position:relative}main{overflow-x:clip}.f.x{grid-column:1/-1}
-.shots figure{transition:opacity .25s}
+
 @media(prefers-reduced-motion:no-preference){
 @keyframes up{from{opacity:0;transform:translateY(34px);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
 @keyframes shine{to{background-position:200% center}}
@@ -134,7 +135,7 @@ nav{transition:background .3s,box-shadow .3s}nav div{transition:padding .3s}nav.
 .f.w.rv:nth-child(odd){transform:translateX(-40px) scale(.96)}.f.w.rv.in{transform:none}
 .mq.a .in{animation:slideL 46s linear infinite}.mq.b .in{animation:slideR 54s linear infinite}
 .mq.a,.mq.b{will-change:translate}
-.shots figure{animation:bob 5s ease-in-out infinite}.shots figure:nth-child(2n){animation-delay:-1.7s}.shots figure:nth-child(3n){animation-delay:-3.2s}
+.shots{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.shots img{transform:translateZ(0)}
 .f:after,.how div:after,.st:after,.pl>div:after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:0;transition:opacity .3s;background:radial-gradient(280px circle at var(--cx,50%) var(--cy,-100%),rgba(255,255,255,.16),transparent 62%)}
 .how div,.st,.pl>div{position:relative;overflow:hidden}
 .f:hover:after,.how div:hover:after,.st:hover:after,.pl>div:hover:after{opacity:1}
@@ -152,11 +153,16 @@ nav{transition:background .3s,box-shadow .3s}nav div{transition:padding .3s}nav.
 .orb{animation:none}
 .mq{font-size:clamp(46px,13vw,90px);-webkit-text-stroke:0;color:rgba(255,255,255,.2)}.mq.b{background:none;color:#c9bcff}.bar{box-shadow:none}
 .phones{transition:none}
+nav,.f,.btn.s,.band div,.tag,.chips span{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+nav{background:rgba(7,11,36,.93)}
+.grain{display:none}
+.f:before{filter:blur(26px)}
+.hero>div:first-child,.phones,.p1,.p2{translate:none!important;scale:none!important;opacity:1!important}
 }
 @media(pointer:coarse){.cursor{display:none}}
 @media(prefers-reduced-motion:reduce){.bar,.cursor,.pt,.mqw{display:none}}
 </style></head><body><div class="grain"></div><div class="orb o1"></div><div class="orb o2"></div><div class="bar"></div><div class="cursor"></div>
-<nav><div><b><img src="icon.png" alt="">My Life 1.0</b><a class="h" href="#features">Features</a><a class="h" href="#privacy">Privacy</a><a class="h" href="#faq">FAQ</a><a class="h" href="#install">Install</a><a class="dl" href="https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest">Download</a></div></nav>
+<nav><div><b><img src="data:image/webp;base64,UklGRlwFAABXRUJQVlA4IFAFAACwHwCdASpgAGAAPjEWiUOiISETKk40IAMEsYBcMZfD6k0XB/TcO8fe+q61B6EH7Aemf7OH+qcAyaXzan/h+bD6I/3nuE/yr+n+jN6yfQU/WsPWGC2eUASRgNvLWWVjaZO5t8TixpR0x0lY/erhdwwpPVyW7kVtXfjg95ciT5NqhTH8jU3vAgLC0oA2Tgz/fKtOuy+9VDJcQ5hWeScryn3oL4oppapZ6+mPrs/5uM4p7PhfDLc0TIPKpwIrIe432Vzi4gW4nXvd+fBa6uvFw4a7MKc6E4HMrVTKW1IwNRBqn2vObK6VLd/Q3iNQ/6Mp2lvudmxYAVSAPL5UzCrFHouiM+Jbk6cAAP7+J5kkCyxpnun/+hrPf9JWv/kSvq/L/SuOtn0vr6M3uC+27WFSg6TIA5cxuZI8jRIrsUgcQVS8IFpsbAVQvqEgq+kFm4x1vNAfpQtZFESYa32VHjSZ60mJdGOsIX3SKMG2mtEpuyRfm6Yw5hafkvdSxJLM2J7v5m1wsflsHINtuYQqOkHb06mEjPdvzd6RuPLkbMTe9bYfF1NABhNyMK2lsOOhk/KWce8ZDjORYlZ53Q0XBeVyk1X3F+c6+mJP9RXBVmZjibYa2Y+8dlLTpEoJA3T97vrhddnvuDD58L5J2xx5yTYFwaea1LkGYAELCb46GbcBaol9Oc3gKC51hTJwF9zjqqi1x5SZ5NNXZOR+EioibUg3T33T7blzQD87ZK8FUOxI8z630i4WTP7kSUlXi89P6X8YP/lmcf+k6ghI3tCUFPStpttCC426LQL1zYW5KoNdTBwUt7qCfutmhenwsRnY8viH4MOKhw+wDY1E42xKTBX4D5n6kT6h7sUbp1B0cfxoIV3+b4T7zG/LPzY+pUrXfI1hdJ5HMSSsf/1u/9/X2rOW6F22A4CBidr9t0htCdWSOwIPurWYnsOAd+VZmpKu/hPy+sGqo2gyXJOvrLODOfbwOSh/9DbyvzLz3C9X/ucwFIuQL/N5apXvOqmzGhZdc9x+fgpjkkO4clq+Mb/dY8BXKTcvpHupi9dEQjGinn7PbQ8F09YIdCnkv/lZ/uH+BxuWf6Ey+XwzvpbuqY//S8xDNVbA18HtaJfpnd3OJ2lzRE7uf/xpk9zP/uvoKEMWEQZRlY1g8tU5KeHoUCB+w9gTTzRkyzimKoLJ4pwQKOr3sHiuJr595v2e1xE00jNiuTQNJ16T8Q4BrtXrnVmtG3XNReU77bLkS8bcO2ucndXe/rQZCRmbwFRdtdp8qD4FKu1OPLTOXVNw7NvyHrzCQ4TvVCzi0ysgCR3C5+xpxXMEOJOyCpnFpQwbEi1h7J/i2TSOP80Q0BwkEdJ29Yz/zRpbNOghntzISE2EcAXGhxkLg8ghqgIXMv42RauL1cAsPSvOPncfvtV2kEltWb96p9TX2r24gkP4y0uD+fUWaZFyXgZB9UawM6EOqGX/Db9XzO8Kyly2LvMD7Tq74asxnDV7xhQW56tFrGAt0Gdm7Z2EFpMMRVgGCM2var4jJlFAVj1TkNit69uRrlVUt0l4CzlnF0K+2iEMj8CwX9c8CjU6liBgmJA7VAoErYTn06J3NKjrescL1sgKBNVG+7DMJmaypop8jluH/Ihi3u94sEebKPke53x/rzq8jJQ5r665VV9PdMqifOpIWxw3ULfkHiFM+jLJ/JivWP4/HYb1GftZhQxyJ01NxyM4+T/fWiFdMg8Vskcs4WM0vTPCjSGTTBq9UUk0nXh30hDgVxNeNwNOdxEdoJ36uokYGQDzZoQsmjp3oKiMJEIUkBkYJuL6iGp7POgA" width="30" height="30" alt="" decoding="sync">My Life 1.0</b><a class="h" href="#features">Features</a><a class="h" href="#privacy">Privacy</a><a class="h" href="#faq">FAQ</a><a class="h" href="#install">Install</a><a class="dl" href="https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest">Download</a></div></nav>
 <main>
 
 <section class="hero">
@@ -332,18 +338,18 @@ var t=e.target,m=(t.dataset.n||'').match(/^(\d+)(.*)$/);if(!m)return;var n=+m[1]
 (function st(now){var k=Math.min(1,(now-t0)/1500),v=Math.round(n*(1-Math.pow(1-k,3)));t.textContent=v+suf;if(k<1)requestAnimationFrame(st)})(t0)})},{threshold:.6});
 cs.forEach(function(c){c.dataset.n=c.textContent;c.textContent=c.textContent.replace(/^\d+/,'0');co.observe(c)});
 /* restore real numbers if observer never fires */}
+var lite=matchMedia('(max-width:860px),(pointer:coarse)').matches;
 var ticking=false,navOn=false,lastHp=-1,mqw=d.querySelector('.mqw'),mqa=d.querySelector('.mq.a'),mqb=d.querySelector('.mq.b'),vis={mq:false,sh:false,hero:true};
 if('IntersectionObserver' in window){var vo=new IntersectionObserver(function(es){es.forEach(function(e){var k=e.target===mqw?'mq':e.target===shots?'sh':'hero';vis[k]=e.isIntersecting});req()},{rootMargin:'120px'});
 [mqw,shots,hero].forEach(function(e){if(e)vo.observe(e)})}else{vis.mq=vis.sh=vis.hero=true}
 function frame(){ticking=false;var y=window.pageYOffset,h=Math.max(1,root.scrollHeight-innerHeight);
 if(bar)bar.style.transform='scaleX('+(y/h).toFixed(4)+')';
 var on=y>20;if(nav&&on!==navOn){navOn=on;nav.classList.toggle('sc',on)}
-if(hero&&vis.hero){var hp=+Math.min(1,Math.max(0,y/Math.max(1,hero.offsetHeight))).toFixed(2);if(hp!==lastHp){lastHp=hp;hero.style.setProperty('--hp',hp)}}
-if(vis.mq&&mqw){var t=mqw.getBoundingClientRect().top*.45;mqa.style.translate=t.toFixed(0)+'px 0';mqb.style.translate=(-t).toFixed(0)+'px 0'}
-if(vis.sh&&shots){var r=shots.getBoundingClientRect(),c=r.left+r.width/2;figs.forEach(function(f){var q=f.getBoundingClientRect(),k=Math.min(1,Math.abs(q.left+q.width/2-c)/(r.width/2));f.style.scale=(1-.13*k).toFixed(2);f.style.opacity=(1-.5*k).toFixed(2)})}}
+if(hero&&vis.hero&&!lite){var hp=+Math.min(1,Math.max(0,y/Math.max(1,hero.offsetHeight))).toFixed(2);if(hp!==lastHp){lastHp=hp;hero.style.setProperty('--hp',hp)}}
+if(vis.mq&&mqw&&!lite){var t=mqw.getBoundingClientRect().top*.45;mqa.style.translate=t.toFixed(0)+'px 0';mqb.style.translate=(-t).toFixed(0)+'px 0'}
+}
 function req(){if(!ticking){ticking=true;requestAnimationFrame(frame)}}
 addEventListener('scroll',req,{passive:true});addEventListener('resize',req);
-if(shots)shots.addEventListener('scroll',req,{passive:true});
 frame();
 if(fine){
 /* hero tilt */
