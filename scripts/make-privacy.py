@@ -30,6 +30,41 @@ ICON = {
  'hand': '<path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M8.5 12.5l2.4 2.4 4.6-5"/>',
 }
 def ic(k): return f'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{ICON[k]}</svg>'
+MOTION_CSS = r'''
+.rv{opacity:0;transform:translateY(26px)}
+.rv.in{opacity:1;transform:none;transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+@media(prefers-reduced-motion:no-preference){
+.b1{animation:dr1 16s ease-in-out infinite alternate}.b2{animation:dr2 19s ease-in-out infinite alternate}
+@keyframes dr1{to{transform:translate(-60px,70px) scale(1.15)}}@keyframes dr2{to{transform:translate(70px,-60px) scale(1.12)}}
+nav{animation:nv .7s cubic-bezier(.2,.7,.2,1) both}@keyframes nv{from{transform:translateY(-100%)}}
+.logo{animation:lg .9s cubic-bezier(.2,.8,.2,1) both,fl 6s ease-in-out .9s infinite}
+@keyframes lg{from{opacity:0;transform:scale(.6) translateY(14px)}}@keyframes fl{50%{transform:translateY(-7px)}}
+.hero h1{animation:up .8s .15s cubic-bezier(.2,.7,.2,1) both;background:linear-gradient(90deg,#fff,#b8f5e6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{animation:up .8s .3s cubic-bezier(.2,.7,.2,1) both}.hero .meta{animation:up .8s .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes up{from{opacity:0;transform:translateY(22px)}}
+.hl div{transition:transform .35s,border-color .35s}.hl div:hover{transform:translateY(-4px);border-color:rgba(45,212,167,.5)}
+.hl i{animation:bp 3.6s ease-in-out infinite}.hl .c2 i{animation-delay:.5s}.hl .c3 i{animation-delay:1s}
+@keyframes bp{50%{transform:scale(1.1) rotate(-4deg)}}
+.card{transition:transform .35s,border-color .35s,background .35s}.card:hover{transform:translateY(-3px);border-color:rgba(45,212,167,.4);background:rgba(255,255,255,.1)}
+.card.in .num{animation:pop .6s .15s cubic-bezier(.3,1.6,.5,1) both}@keyframes pop{from{transform:scale(0) rotate(-40deg)}}
+.toc a{transition:transform .25s,background .25s}.toc a:active{transform:scale(.94)}
+.btn{position:relative;overflow:hidden;transition:transform .25s}.btn:active{transform:scale(.95)}
+.btn:after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:sh 3.8s ease-in-out infinite}
+@keyframes sh{0%,55%{left:-60%}100%{left:130%}}
+.contact{animation:cg 5s ease-in-out infinite alternate}@keyframes cg{to{box-shadow:0 0 50px rgba(45,212,167,.25)}}
+}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}}
+@media(max-width:860px),(pointer:coarse){.card,.hl div{backdrop-filter:none;-webkit-backdrop-filter:none}nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(6,18,28,.94)}.blob{filter:none;opacity:.35}.b1,.b2{animation:none}}
+'''
+MOTION_JS = r'''
+(function(){
+var els=document.querySelectorAll('.hl div,.card,.contact,h2,.toc');
+els.forEach(function(e,i){e.classList.add('rv');e.style.setProperty('--d',(i%3)*.07+'s')});
+if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return}
+var io=new IntersectionObserver(function(a){a.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}})},{rootMargin:'0px 0px -8% 0px',threshold:.08});
+els.forEach(function(e){io.observe(e)});
+})();
+'''
 page = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My Life 1.0 · Privacy Policy and Terms</title><link rel="icon" href="icon.png"><meta name="description" content="How My Life 1.0 handles your data. Everything stays on your phone.">
 <style>
@@ -59,15 +94,15 @@ h2{{margin:46px 0 6px;font-size:26px;letter-spacing:-.5px}}h2+p{{margin:0 0 16px
 .contact h2{{margin:0 0 6px}}.contact p{{margin:0 0 16px;color:#d9f3ee}}.btn{{display:inline-block;padding:12px 24px;border-radius:999px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#04201c;font-weight:800;text-decoration:none;box-shadow:0 8px 24px rgba(45,212,167,.3)}}
 footer{{text-align:center;color:#7f9aa6;font-size:12.5px;margin-top:34px}}
 @media(max-width:620px){{.hl{{grid-template-columns:1fr}}.card{{padding:16px}}nav a.h{{display:none}}}}
-</style></head><body><div class="blob b1"></div><div class="blob b2"></div>
+</style><style>{MOTION_CSS}</style></head><body><div class="blob b1"></div><div class="blob b2"></div>
 <nav><div><b>My Life 1.0</b><a href="#privacy">Privacy</a><a href="#terms">Terms</a><a href="#contact" class="h">Contact</a></div></nav>
 <main>
-<header class="hero"><img class="logo" src="icon.png" alt="My Life 1.0 app icon" width="84" height="84"><h1>Your data stays on your phone</h1><p class="sub">This page explains what My Life 1.0 stores, where it lives, and the control you have over it. No account is needed, and nothing is sent to a server.</p><div class="meta"><span class="chip">Developer: Adli Syahmi</span><span class="chip">Last updated {today}</span></div></header>
-<section class="hl"><div class="c1"><i>{ic('phone')}</i><b>On your phone</b><span>Stored and encrypted on your device only.</span></div><div class="c2"><i>{ic('shield')}</i><b>No ads, no tracking</b><span>Never sold and never shared.</span></div><div class="c3"><i>{ic('hand')}</i><b>You are in control</b><span>Export or erase everything at any time.</span></div></section>
+<header class="hero"><img class="logo" src="icon.png" alt="My Life 1.0 app icon" width="84" height="84"><h1>Your data stays yours</h1><p class="sub">What My Life 1.0 stores, where it lives, and how you control it.</p><div class="meta"><span class="chip">Developer: Adli Syahmi</span><span class="chip">Last updated {today}</span></div></header>
+<section class="hl"><div class="c1"><i>{ic('phone')}</i><b>Phone first</b><span>Saved and encrypted on your phone.</span></div><div class="c2"><i>{ic('shield')}</i><b>No ads, no tracking</b><span>Your data is never sold.</span></div><div class="c3"><i>{ic('hand')}</i><b>You are in control</b><span>Export or erase everything at any time.</span></div></section>
 <section id="privacy"><h2>Privacy Policy</h2><p>What we store and why.</p><div class="toc">{toc('p', P)}</div>{sec('p', P)}</section>
 <section id="terms"><h2>Terms of Use</h2><p>The simple rules for using the app.</p><div class="toc">{toc('t', T)}</div>{sec('t', T)}</section>
 <section class="contact" id="contact"><h2>Questions?</h2><p>Write to the developer about privacy, a problem or an idea.</p><a class="btn" href="mailto:{email}">{email}</a></section>
 <footer>© 2026 Adli Syahmi. All rights reserved.</footer>
-</main></body></html>'''
+</main><script>{MOTION_JS}</script></body></html>'''
 open('public/privacy.html', 'w').write(page)
 print(len(page))

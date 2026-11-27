@@ -91,12 +91,12 @@ export const PRIVACY: Sec[] = [
   { h: 'Contact', p: 'Questions about privacy go to the developer, Adli Syahmi. Email adlisyahmi324@gmail.com or mylifeapp.support@gmail.com.' },
 ];
 export const TERMS: Sec[] = [
-  { h: 'Using My Life 1.0', p: 'My Life 1.0 is a personal organiser for your own use. Keep your phone and your PIN private. You are responsible for what is done on your device.' },
+  { h: 'Using My Life 1.0', p: 'A personal organiser for your own use. Keep your phone and PIN private. You are responsible for what is done on your device.' },
   { h: 'Your content', p: 'Everything you add belongs to you. We only store and show it back to you.' },
-  { h: 'Religious content', p: 'Quran text, zikir and prayer times are provided as a convenience. Prayer times follow JAKIM and are only accurate in Malaysia. Please confirm with your local authority where it matters. Quran recitations are streamed from alquran.cloud (Islamic Network) and remain the work of their reciters.' },
-  { h: 'Assistant', p: 'My Life Assistant answers from your own data and is not a financial, medical or religious adviser. If you turn on AI, its answers can be wrong or out of date, so please check important facts with an official source.' },
+  { h: 'Religious content', p: 'Quran text, zikir and prayer times are a convenience. Prayer times follow JAKIM, so confirm with your local authority where it matters. Recitations stream from alquran.cloud (Islamic Network) and remain the work of their reciters.' },
+  { h: 'Assistant', p: 'My Life Assistant answers from your own data and is not a financial, medical or religious adviser. AI answers can be wrong or out of date, so check important facts.' },
   { h: 'No warranty', p: 'The app is provided as is. Keep a backup using Export. We are not liable for loss of data.' },
-  { h: 'Changes', p: 'These terms may change as the app grows. The latest version is always in Settings, under About.' },
+  { h: 'Changes', p: 'These terms may change. The latest is in Settings, About.' },
 ];
 export const LICENCES: Sec[] = [
   { h: 'Open-source software', p: 'My Life 1.0 is built with React Native, Expo (including expo-router, expo-notifications, expo-location, SheetJS (xlsx), expo-secure-store, expo-local-authentication and expo-crypto), react-native-svg, react-native-reanimated, AsyncStorage, aes-js and noble-hashes. They are released under the MIT licence.' },
