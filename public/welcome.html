@@ -104,7 +104,7 @@ footer b{display:block;color:#dfe2ff;margin-bottom:8px;font-size:14px}footer a{d
 .mq span{display:block;padding-right:.35em}
 .mq.b{-webkit-text-stroke:0;background:linear-gradient(100deg,#9fb6ff,#cdb6ff 40%,#ffc48a 75%,#34d3b0);-webkit-background-clip:text;background-clip:text}
 .mq .in{display:flex}
-.hero{position:relative}main{overflow-x:clip}
+.hero{position:relative}main{overflow-x:clip}.f.x{grid-column:1/-1}
 .shots figure{transition:opacity .25s}
 @media(prefers-reduced-motion:no-preference){
 @keyframes up{from{opacity:0;transform:translateY(34px);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
@@ -184,8 +184,9 @@ nav{transition:background .3s,box-shadow .3s}nav div{transition:padding .3s}nav.
 <section id="features">
   <span class="eyebrow rv">FEATURES</span><h2 class="rv">Everything you need, together</h2><p class="sub rv">Stop switching between five apps. Everything for your day is here, and it all talks to each other.</p>
   <div class="bento">
+    <div class="f x rv" style="--c:linear-gradient(135deg,#34d3b0,#8b7bff)"><i>🎛️</i><b>Make it yours</b><span>Pick your country and currency, show only the modules you use, and chat with the Assistant in your own language.</span><ul><li>Country and currency</li><li>Holidays for your country</li><li>Choose your modules</li><li>Assistant in your language</li></ul></div>
     <div class="f w rv" style="--c:linear-gradient(135deg,#b794ff,#ffb45e)"><i>📖</i><b>Your Memories</b><span>A memory book built only from what you save, with a timeline, badges and a year in review. Hide anything you like.</span><ul><li>Timeline</li><li>On This Day</li><li>Badges</li><li>Year in review</li></ul></div>
-    <div class="f w rv" style="--c:linear-gradient(135deg,#ffb45e,#ff7a5c)"><i>🗓</i><b>Daily Planner</b><span>Tasks, events with reminders, and notes with checklists. Malaysian holidays appear by themselves.</span><ul><li>Tasks</li><li>Events</li><li>Notes</li><li>Overdue alerts</li><li>Malaysia holidays</li></ul></div>
+    <div class="f w rv" style="--c:linear-gradient(135deg,#ffb45e,#ff7a5c)"><i>🗓</i><b>Daily Planner</b><span>Tasks, events with reminders, and notes with checklists. Public holidays for your country appear by themselves.</span><ul><li>Tasks</li><li>Events</li><li>Notes</li><li>Overdue alerts</li><li>Holidays for your country</li></ul></div>
     <div class="f w rv" style="--c:linear-gradient(135deg,#34d399,#22b8d8)"><i>🕌</i><b>Islamic Hub</b><span>Prayer times by JAKIM zone (Malaysia), qibla, the Quran with audio, Hafazan Check, zikir and a fasting log.</span><ul><li>Prayer times</li><li>Qibla</li><li>Quran</li><li>Quran Audio</li><li>Hafazan Check</li><li>Islamic events</li><li>Zikir</li><li>Fasting</li></ul></div>
     <div class="f rv" style="--c:linear-gradient(135deg,#7c9cff,#5b7cff)"><i>💰</i><b>My Finance</b><span>Keep track of your accounts, spending and subscriptions, and see how much money is left this month and each day.</span></div>
     <div class="f rv" style="--c:linear-gradient(135deg,#3df0ff,#ff6ad5)"><i>🗂️</i><b>Personal Collection</b><span>Daily life lessons, gadget warranties, lent and borrowed items, and vehicle and property records. Photos stay on your phone.</span></div>
@@ -194,7 +195,7 @@ nav{transition:background .3s,box-shadow .3s}nav div{transition:padding .3s}nav.
     <div class="f rv" style="--c:linear-gradient(135deg,#b794ff,#7c5cff)"><i>🌿</i><b>Habit and Health</b><span>Steps, sleep, mood, water and fasting in one daily score, plus medicine reminders and a Time Machine.</span></div>
     <div class="f w rv" style="--c:linear-gradient(135deg,#6d7bd8,#5ee7df)"><i>🏠</i><b>Family Planner</b><span>A shared space for tasks, chores, shopping, a weekly menu and a calendar. Children without a phone can have profiles.</span><ul><li>Shared tasks</li><li>Shopping list</li><li>Menu</li><li>Calendar</li><li>Rewards</li></ul></div>
     <div class="f w rv" style="--c:linear-gradient(135deg,#5ee7df,#34d399)"><i>📊</i><b>Stats and Insights</b><span>See how your week compares with last week and get gentle tips based on your own data.</span></div>
-    <div class="f w rv" style="--c:linear-gradient(135deg,#ffd27d,#ffb45e)"><i>✨</i><b>Assistant and Search</b><span>Type “I spent RM10 on lunch” and it saves after you confirm. Ask about your week, or turn on AI for other questions.</span></div>
+    <div class="f w rv" style="--c:linear-gradient(135deg,#ffd27d,#ffb45e)"><i>✨</i><b>Assistant and Search</b><span>Type “I spent 10 on lunch” and it saves after you confirm. Chat in your own language, ask about your week, or turn on AI for other questions.</span><ul><li>Your language</li><li>Quick logging</li><li>Search</li></ul></div>
   </div>
 </section>
 
@@ -269,6 +270,7 @@ nav{transition:background .3s,box-shadow .3s}nav div{transition:padding .3s}nav.
     <details class="rv"><summary>Does My Life 1.0 have ads?</summary><p>No. There are no ads and we do not sell your data.</p></details>
     <details class="rv"><summary>Do I need an account?</summary><p>Yes. Register once with your name, email and a password so your data follows you to a new phone. Then unlock the app with an activation code from the developer.</p></details>
     <details class="rv"><summary>Can my family use it together?</summary><p>Yes. Family Planner shares tasks, chores, a shopping list, a menu and a calendar. The owner shares an invite code and each person needs their own account. Children without a phone can be added as profiles.</p></details>
+    <details class="rv"><summary>Can I use it outside Malaysia?</summary><p>Yes. Pick your country and currency in Settings, and your public holidays and money symbol follow it. Prayer times follow JAKIM zones, so they are accurate in Malaysia only.</p></details>
     <details class="rv"><summary>Does it work without internet?</summary><p>Yes, almost everything. Changes are saved on your phone first and synced when you are online. Internet is used for things like your prayer zone and the holiday list.</p></details>
     <details class="rv"><summary>What if I change or lose my phone?</summary><p>Install My Life 1.0 on the new phone and sign in with the same email and password, and your data comes back. Photos (receipts, Documents, Personal Collection) stay on your phone, so keep a Backup (JSON) from Settings, Export to move them.</p></details>
     <details class="rv"><summary>Why does Android say it is an unknown app?</summary><p>The app is installed from a file instead of the Play Store, so Android asks you to allow it once. Download only from the official link on this page.</p></details>
