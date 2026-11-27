@@ -6,7 +6,11 @@ import { Platform, PermissionsAndroid } from 'react-native';
 // Model: Tarteel "whisper-base-ar-quran" (Apache-2.0), a Quran fine-tune of OpenAI Whisper base, converted for whisper.cpp
 // (ggml, q5_1, about 60 MB). It is kept in this project's own GitHub repository (branch quran-model); see NOTICE.txt there.
 // On 40 real recitations it made 11% word mistakes, against 35% for the smaller tiny model used before.
-const MODEL_URL = 'https://raw.githubusercontent.com/Adyl0022/my-life-1.0/quran-model/ggml-quran-base-q5_1.bin';
+// Two places hold the same file: the backup repo first, then the original branch. If one cannot be reached the other is tried.
+const MODEL_URLS = [
+  'https://raw.githubusercontent.com/Adyl0022/my-life-1.0-backupfiles/main/ggml-quran-base-q5_1.bin',
+  'https://raw.githubusercontent.com/Adyl0022/my-life-1.0/quran-model/ggml-quran-base-q5_1.bin',
+];
 const MODEL_BYTES = 59707625;
 export const MODEL_MB = Math.round(MODEL_BYTES / 1048576);
 export const asrSupported = Platform.OS === 'android';
@@ -35,11 +39,19 @@ export async function downloadModel(): Promise<void> {
     const { m, path } = await FS();
     await m.makeDirectoryAsync(path.replace(/[^/]+$/, ''), { intermediates: true }).catch(() => {});
     const tmp = path + '.part';
-    const dl = m.createDownloadResumable(MODEL_URL, tmp, {}, (p: any) => set({ pct: p.totalBytesExpectedToWrite > 0 ? p.totalBytesWritten / p.totalBytesExpectedToWrite : p.totalBytesWritten / MODEL_BYTES }));
-    const r = await dl.downloadAsync();
-    if (!r || (r.status && r.status >= 400)) throw new Error('The download failed. Check your internet and try again.');
-    const i = await m.getInfoAsync(tmp);
-    if (!i.exists || i.size !== MODEL_BYTES) { await m.deleteAsync(tmp, { idempotent: true }); throw new Error('The downloaded file looks incomplete. Please try again.'); }
+    let ok = false;
+    for (const url of MODEL_URLS) {
+      try {
+        set({ pct: 0 });
+        await m.deleteAsync(tmp, { idempotent: true }).catch(() => {});
+        const dl = m.createDownloadResumable(url, tmp, {}, (p: any) => set({ pct: p.totalBytesExpectedToWrite > 0 ? p.totalBytesWritten / p.totalBytesExpectedToWrite : p.totalBytesWritten / MODEL_BYTES }));
+        const r = await dl.downloadAsync();
+        if (!r || (r.status && r.status >= 400)) continue;
+        const i = await m.getInfoAsync(tmp);
+        if (i.exists && i.size === MODEL_BYTES) { ok = true; break; }
+      } catch (e) { /* try the next place */ }
+    }
+    if (!ok) { await m.deleteAsync(tmp, { idempotent: true }).catch(() => {}); throw new Error('The download failed. Check your internet and try again.'); }
     await m.moveAsync({ from: tmp, to: path });
     // the smaller model from the first version is not needed any more
     try { await m.deleteAsync(path.replace(/[^/]+$/, '') + 'quran-tiny-q8.bin', { idempotent: true }); } catch (e) { /* ignore */ }
