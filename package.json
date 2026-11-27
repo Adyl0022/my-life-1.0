@@ -1,6 +1,7 @@
 {
   "name": "app",
   "version": "1.0.1",
+  "license": "UNLICENSED",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/metro-runtime": "~58.0.17",
