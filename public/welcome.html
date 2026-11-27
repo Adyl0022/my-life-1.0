@@ -95,14 +95,68 @@ footer b{display:block;color:#dfe2ff;margin-bottom:8px;font-size:14px}footer a{d
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.ph,.orb{animation:none}}
 @media(max-width:860px){.hero{grid-template-columns:1fr;padding-top:36px}.phones{height:470px;margin:0 auto;width:100%;max-width:420px}.ph{width:190px}.band{grid-template-columns:1fr 1fr}.bento{grid-template-columns:1fr 1fr}.f,.f.w{grid-column:span 1}.how,.sec,.docs,.tips{grid-template-columns:1fr}footer{grid-template-columns:1fr 1fr}footer>div:first-child{grid-column:1/-1}nav a.h{display:none}}
 @media(max-width:560px){.bento{grid-template-columns:1fr}.pl{grid-template-columns:1fr}.perm td:first-child{white-space:normal}.perm th:nth-child(2),.perm td:nth-child(2){display:none}h1{letter-spacing:-1.4px}}
-</style></head><body><div class="grain"></div><div class="orb o1"></div><div class="orb o2"></div>
+/* ===== Motion layer ===== */
+.bar{position:fixed;left:0;top:0;height:3px;width:100%;z-index:50;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#34d3b0,#5b8cff,#ff7fb0);box-shadow:0 0 14px rgba(91,140,255,.8)}
+.cursor{position:fixed;left:0;top:0;width:460px;height:460px;margin:-230px 0 0 -230px;border-radius:50%;pointer-events:none;z-index:-1;opacity:0;background:radial-gradient(circle,rgba(139,123,255,.22),rgba(52,211,176,.08) 45%,transparent 68%);transition:opacity .4s}
+.pt{position:absolute;bottom:-10px;border-radius:50%;background:#fff;opacity:0;pointer-events:none;box-shadow:0 0 10px rgba(180,170,255,.9)}
+.mqw{margin:46px -20px 6px;overflow:hidden;display:flex;flex-direction:column;gap:6px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.mq{display:flex;width:max-content;white-space:nowrap;font-weight:800;letter-spacing:-3px;line-height:1.02;font-size:clamp(54px,11vw,128px);color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.34)}
+.mq span{display:block;padding-right:.35em}
+.mq.b{-webkit-text-stroke:0;background:linear-gradient(100deg,#9fb6ff,#cdb6ff 40%,#ffc48a 75%,#34d3b0);-webkit-background-clip:text;background-clip:text}
+.mq .in{display:flex}
+.hero{position:relative}main{overflow-x:clip}
+.shots figure{transition:opacity .25s}
+@media(prefers-reduced-motion:no-preference){
+@keyframes up{from{opacity:0;transform:translateY(34px);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
+@keyframes shine{to{background-position:200% center}}
+@keyframes phin{from{opacity:0;translate:0 90px}to{opacity:1;translate:0 0}}
+@keyframes slideL{to{transform:translateX(-50%)}}
+@keyframes slideR{from{transform:translateX(-50%)}to{transform:none}}
+@keyframes rise{0%{opacity:0;translate:0 0}15%{opacity:.9}100%{opacity:0;translate:var(--dx) -640px}}
+@keyframes bob{50%{translate:0 -9px}}
+@keyframes ring{0%{box-shadow:0 14px 34px rgba(52,211,153,.32),0 0 0 0 rgba(52,211,153,.55)}100%{box-shadow:0 14px 34px rgba(52,211,153,.32),0 0 0 22px rgba(52,211,153,0)}}
+@keyframes glowmove{50%{background-position:100% 60%}}
+.hero .tag,.hero .ln,.hero .lead,.hero .cta,.hero .chips{animation:up .9s cubic-bezier(.2,.8,.2,1) both}
+.hero .tag{animation-delay:.05s}.hero .ln{animation-delay:.18s}.hero .lead{animation-delay:.5s}.hero .cta{animation-delay:.64s}.hero .chips{animation-delay:.78s}
+.ln,.grad{display:inline-block}
+.hero .grad{background-size:200% auto;animation:up .9s cubic-bezier(.2,.8,.2,1) .34s both,shine 7s linear 1.2s infinite}
+.hero{--hp:0;--mx:0;--my:0}
+.hero>div:first-child{translate:0 calc(var(--hp)*-46px);opacity:calc(1 - var(--hp)*.55)}
+.phones{animation:phin 1.3s cubic-bezier(.2,.8,.2,1) .25s both;transform:perspective(1100px) rotateY(calc(var(--mx)*9deg)) rotateX(calc(var(--my)*-6deg));scale:calc(1 + var(--hp)*.12);transition:transform .25s ease-out}
+.p1{translate:calc(var(--hp)*-44px + var(--mx)*-16px) calc(var(--hp)*-70px + var(--my)*-8px)}
+.p2{translate:calc(var(--hp)*42px + var(--mx)*22px) calc(var(--hp)*34px + var(--my)*12px)}
+.orb{filter:blur(90px) hue-rotate(calc(var(--sp,0)*150deg))}
+.o1{translate:0 calc(var(--sy,0)*-.18px)}.o2{translate:0 calc(var(--sy,0)*-.1px)}
+.grain{translate:0 calc(var(--sy,0)*-.04px)}
+.pt{animation:rise var(--du) linear var(--de) infinite}
+nav{transition:background .3s,box-shadow .3s}nav div{transition:padding .3s}nav.sc{background:rgba(7,11,36,.86);box-shadow:0 10px 40px rgba(0,0,0,.35)}nav.sc div{padding-top:7px;padding-bottom:7px}
+.rv{transform:translateY(46px) scale(.96);filter:blur(8px);transition:opacity .8s ease,transform .9s cubic-bezier(.2,.8,.2,1),filter .8s ease}
+.rv.in{opacity:1;transform:none;filter:none}
+.st.rv{transform:translateX(-46px) scale(.97)}.st.rv:nth-child(even){transform:translateX(46px) scale(.97)}.st.rv.in{transform:none}
+.f.w.rv:nth-child(odd){transform:translateX(-40px) scale(.96)}.f.w.rv.in{transform:none}
+.mq.a .in{animation:slideL 46s linear infinite}.mq.b .in{animation:slideR 54s linear infinite}
+.mq.a{translate:calc(var(--sy,0)*-.32px) 0}.mq.b{translate:calc(var(--sy,0)*.32px) 0}
+.shots figure{animation:bob 5s ease-in-out infinite}.shots figure:nth-child(2n){animation-delay:-1.7s}.shots figure:nth-child(3n){animation-delay:-3.2s}
+.f:after,.how div:after,.st:after,.pl>div:after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:0;transition:opacity .3s;background:radial-gradient(280px circle at var(--cx,50%) var(--cy,-100%),rgba(255,255,255,.16),transparent 62%)}
+.how div,.st,.pl>div{position:relative;overflow:hidden}
+.f:hover:after,.how div:hover:after,.st:hover:after,.pl>div:hover:after{opacity:1}
+.how div:hover,.st:hover,.pl>div:hover{border-color:rgba(255,255,255,.24)}
+.btn{translate:var(--bx,0) var(--by,0)}
+.cta .btn.p,.end .btn.p{animation:ring 2.4s ease-out infinite}
+.end{background-size:140% 140%;animation:glowmove 9s ease-in-out infinite}
+.band b{font-variant-numeric:tabular-nums}
+.cursor{opacity:1}
+}
+@media(pointer:coarse){.cursor{display:none}}
+@media(prefers-reduced-motion:reduce){.bar,.cursor,.pt,.mqw{display:none}}
+</style></head><body><div class="grain"></div><div class="orb o1"></div><div class="orb o2"></div><div class="bar"></div><div class="cursor"></div>
 <nav><div><b><img src="icon.png" alt="">My Life 1.0</b><a class="h" href="#features">Features</a><a class="h" href="#privacy">Privacy</a><a class="h" href="#faq">FAQ</a><a class="h" href="#install">Install</a><a class="dl" href="https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest">Download</a></div></nav>
 <main>
 
 <section class="hero">
   <div>
     <span class="tag"><i></i>YOUR LIFE, ALL IN ONE PLACE</span>
-    <h1>One app for<br><span class="grad">your whole day</span></h1>
+    <h1><span class="ln">One app for</span><br><span class="grad">your whole day</span></h1>
     <p class="lead">Plan your tasks, track your money, keep your vehicle records, build healthy habits and plan together with your family. One calm, private app that lives on your phone.</p>
     <div class="cta">
       <a class="btn p" href="https://github.com/Adyl0022/my-life-1.0/releases/tag/apk-latest">Download for Android</a>
@@ -119,6 +173,7 @@ footer b{display:block;color:#dfe2ff;margin-bottom:8px;font-size:14px}footer a{d
   <div><b>0</b><span>ads, ever</span></div>
   <div><b>100%</b><span>private to your account</span></div>
 </div>
+<div class="mqw" aria-hidden="true"><div class="mq a"><div class="in"><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span></div></div><div class="mq b"><div class="in"><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span></div></div></div>
 
 <section id="features">
   <span class="eyebrow rv">FEATURES</span><h2 class="rv">Everything you need, together</h2><p class="sub rv">Stop switching between five apps. Everything for your day is here, and it all talks to each other.</p>
@@ -252,5 +307,46 @@ footer b{display:block;color:#dfe2ff;margin-bottom:8px;font-size:14px}footer a{d
 if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return}
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
 els.forEach(function(e,i){e.style.transitionDelay=(i%3)*70+'ms';io.observe(e)})})();
+</script>
+<script>
+(function(){
+if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+var d=document,root=d.documentElement,fine=matchMedia('(pointer:fine)').matches;
+var bar=d.querySelector('.bar'),nav=d.querySelector('nav'),hero=d.querySelector('.hero'),shots=d.querySelector('.shots'),
+    figs=[].slice.call(d.querySelectorAll('.shots figure')),cur=d.querySelector('.cursor');
+/* floating particles in hero */
+if(hero){for(var i=0;i<16;i++){var p=d.createElement('i');p.className='pt';var s=2+Math.random()*4;
+p.style.cssText='left:'+(Math.random()*100)+'%;width:'+s+'px;height:'+s+'px;--dx:'+((Math.random()-.5)*160)+'px;--du:'+(9+Math.random()*10)+'s;--de:'+(-Math.random()*14)+'s';hero.appendChild(p)}}
+/* count-up numbers */
+var cs=[].slice.call(d.querySelectorAll('.band b'));
+if('IntersectionObserver' in window){var co=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;co.unobserve(e.target);
+var t=e.target,m=(t.dataset.n||'').match(/^(\d+)(.*)$/);if(!m)return;var n=+m[1],suf=m[2],t0=performance.now();
+(function st(now){var k=Math.min(1,(now-t0)/1500),v=Math.round(n*(1-Math.pow(1-k,3)));t.textContent=v+suf;if(k<1)requestAnimationFrame(st)})(t0)})},{threshold:.6});
+cs.forEach(function(c){c.dataset.n=c.textContent;c.textContent=c.textContent.replace(/^\d+/,'0');co.observe(c)});
+/* restore real numbers if observer never fires */}
+var ticking=false;
+function frame(){ticking=false;var y=window.pageYOffset,h=Math.max(1,root.scrollHeight-innerHeight);
+root.style.setProperty('--sy',y.toFixed(1));root.style.setProperty('--sp',(y/h).toFixed(3));
+if(bar)bar.style.transform='scaleX('+(y/h).toFixed(4)+')';
+if(nav)nav.classList.toggle('sc',y>20);
+if(hero){hero.style.setProperty('--hp',Math.min(1,Math.max(0,y/Math.max(1,hero.offsetHeight))).toFixed(3))}
+if(shots){var r=shots.getBoundingClientRect(),c=r.left+r.width/2;figs.forEach(function(f){var q=f.getBoundingClientRect(),k=Math.min(1,Math.abs(q.left+q.width/2-c)/(r.width/2));f.style.scale=(1-.13*k).toFixed(3);f.style.opacity=(1-.5*k).toFixed(3)})}}
+function req(){if(!ticking){ticking=true;requestAnimationFrame(frame)}}
+addEventListener('scroll',req,{passive:true});addEventListener('resize',req);
+if(shots)shots.addEventListener('scroll',req,{passive:true});
+frame();
+if(fine){
+/* hero tilt */
+if(hero){hero.addEventListener('pointermove',function(e){var r=hero.getBoundingClientRect();hero.style.setProperty('--mx',(((e.clientX-r.left)/r.width-.5)*2).toFixed(3));hero.style.setProperty('--my',(((e.clientY-r.top)/r.height-.5)*2).toFixed(3))});
+hero.addEventListener('pointerleave',function(){hero.style.setProperty('--mx',0);hero.style.setProperty('--my',0)})}
+/* cursor glow */
+if(cur){var tx=innerWidth/2,ty=innerHeight/3,x=tx,y=ty;addEventListener('pointermove',function(e){tx=e.clientX;ty=e.clientY},{passive:true});
+(function mv(){x+=(tx-x)*.12;y+=(ty-y)*.12;cur.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';requestAnimationFrame(mv)})()}
+/* card spotlight */
+d.addEventListener('pointermove',function(e){var el=e.target.closest&&e.target.closest('.f,.how div,.st,.pl>div');if(!el)return;var r=el.getBoundingClientRect();el.style.setProperty('--cx',(e.clientX-r.left)+'px');el.style.setProperty('--cy',(e.clientY-r.top)+'px')},{passive:true});
+/* magnetic buttons */
+[].forEach.call(d.querySelectorAll('.btn'),function(b){b.addEventListener('pointermove',function(e){var r=b.getBoundingClientRect();b.style.setProperty('--bx',((e.clientX-r.left-r.width/2)*.22).toFixed(1)+'px');b.style.setProperty('--by',((e.clientY-r.top-r.height/2)*.32).toFixed(1)+'px')});
+b.addEventListener('pointerleave',function(){b.style.setProperty('--bx','0px');b.style.setProperty('--by','0px')})})}
+})();
 </script>
 </body></html>
