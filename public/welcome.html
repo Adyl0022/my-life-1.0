@@ -5,10 +5,10 @@
 <meta name="theme-color" content="#0a0f2c">
 <style>
 :root{--bg:#070b24;--tx:#f3f4ff;--dim:#a7aed6;--mute:#7f87b8;--line:rgba(255,255,255,.1);--glass:rgba(255,255,255,.06);--v:#8b7bff;--b:#5b8cff;--t:#34d3b0;--o:#ffb45e;--p:#ff7fb0}
-*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:76px}
+html{background:#0a0f2c}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:76px}
 body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--tx);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased}
-body:before{content:"";position:fixed;inset:0;z-index:-3;background:radial-gradient(1200px 700px at 85% -10%,rgba(139,123,255,.28),transparent 60%),radial-gradient(900px 600px at -10% 30%,rgba(91,140,255,.2),transparent 60%),radial-gradient(900px 700px at 60% 110%,rgba(52,211,176,.14),transparent 60%),linear-gradient(180deg,#0a0f2c,#070b24)}
-.grain{position:fixed;inset:0;z-index:-2;opacity:.5;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:26px 26px;mask-image:linear-gradient(180deg,#000,transparent 70%);-webkit-mask-image:linear-gradient(180deg,#000,transparent 70%)}
+body:before{content:"";position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;z-index:-3;background:radial-gradient(1200px 700px at 85% -10%,rgba(139,123,255,.28),transparent 60%),radial-gradient(900px 600px at -10% 30%,rgba(91,140,255,.2),transparent 60%),radial-gradient(900px 700px at 60% 110%,rgba(52,211,176,.14),transparent 60%),linear-gradient(180deg,#0a0f2c,#070b24)}
+.grain{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;z-index:-2;opacity:.5;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:26px 26px;mask-image:linear-gradient(180deg,#000,transparent 70%);-webkit-mask-image:linear-gradient(180deg,#000,transparent 70%)}
 .orb{position:fixed;z-index:-1;border-radius:50%;filter:blur(90px);opacity:.4;animation:drift 18s ease-in-out infinite alternate}
 .o1{width:360px;height:360px;right:-120px;top:80px;background:#ff9a5c}.o2{width:420px;height:420px;left:-180px;top:640px;background:#5b6cff;animation-delay:-6s}
 @keyframes drift{to{transform:translate(40px,60px) scale(1.12)}}
@@ -53,7 +53,7 @@ h2{margin:0 0 10px;font-size:clamp(28px,4.4vw,42px);letter-spacing:-1.2px;line-h
 .f ul{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}.f li{font-size:12px;color:#d6dafa;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.08)}
 .shots{display:flex;gap:18px;overflow-x:auto;padding:10px 6px 26px;scroll-snap-type:x mandatory;scrollbar-width:none}.shots::-webkit-scrollbar{display:none}
 .shots figure{margin:0;flex:0 0 218px;scroll-snap-align:center}
-.shots img{width:218px;border-radius:30px;border:6px solid #0e1338;box-shadow:0 22px 50px rgba(0,0,0,.5);display:block}
+.shots img{width:218px;height:auto;border-radius:30px;border:6px solid #0e1338;box-shadow:0 22px 50px rgba(0,0,0,.5);display:block}
 .shots figcaption{text-align:center;font-size:13px;color:var(--dim);margin-top:12px}
 .how{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;counter-reset:s}
 .how div{counter-increment:s;background:var(--glass);border:1px solid var(--line);border-radius:26px;padding:26px}
@@ -190,9 +190,9 @@ nav{background:rgba(7,11,36,.93)}
 <section id="features">
   <span class="eyebrow rv">FEATURES</span><h2 class="rv">Everything you need, together</h2><p class="sub rv">Stop switching between five apps. Everything for your day is here, and it all talks to each other.</p>
   <div class="bento">
-    <div class="f x rv" style="--c:linear-gradient(135deg,#34d3b0,#8b7bff)"><i>🎛️</i><b>Make it yours</b><span>Pick your country and currency, show only the modules you use, and chat with the Assistant in your own language.</span><ul><li>Country and currency</li><li>Holidays for your country</li><li>Choose your modules</li><li>Assistant in your language</li></ul></div>
+    <div class="f x rv" style="--c:linear-gradient(135deg,#34d3b0,#8b7bff)"><i>🌍</i><b>Make it yours</b><span>Pick your country and currency, show only the modules you use, and chat with the Assistant in your own language.</span><ul><li>Country</li><li>Currency</li><li>Holidays</li><li>Modules</li><li>Language</li></ul></div>
     <div class="f w rv" style="--c:linear-gradient(135deg,#b794ff,#ffb45e)"><i>📖</i><b>Your Memories</b><span>A memory book built only from what you save, with a timeline, badges and a year in review. Hide anything you like.</span><ul><li>Timeline</li><li>On This Day</li><li>Badges</li><li>Year in review</li></ul></div>
-    <div class="f w rv" style="--c:linear-gradient(135deg,#ffb45e,#ff7a5c)"><i>🗓</i><b>Daily Planner</b><span>Tasks, events with reminders, and notes with checklists. Public holidays for your country appear by themselves.</span><ul><li>Tasks</li><li>Events</li><li>Notes</li><li>Overdue alerts</li><li>Holidays for your country</li></ul></div>
+    <div class="f w rv" style="--c:linear-gradient(135deg,#ffb45e,#ff7a5c)"><i>🗓</i><b>Daily Planner</b><span>Tasks, events with reminders, and notes with checklists. Public holidays for your country appear by themselves.</span><ul><li>Tasks</li><li>Events</li><li>Notes</li><li>Overdue alerts</li><li>Holidays</li></ul></div>
     <div class="f w rv" style="--c:linear-gradient(135deg,#34d399,#22b8d8)"><i>🕌</i><b>Islamic Hub</b><span>Prayer times by JAKIM zone (Malaysia), qibla, the Quran with audio, Hafazan Check, zikir and a fasting log.</span><ul><li>Prayer times</li><li>Qibla</li><li>Quran</li><li>Quran Audio</li><li>Hafazan Check</li><li>Islamic events</li><li>Zikir</li><li>Fasting</li></ul></div>
     <div class="f w rv" style="--c:linear-gradient(135deg,#7c9cff,#5b7cff)"><i>💰</i><b>My Finance</b><span>Keep track of your accounts, spending and subscriptions, and see how much money is left this month and each day.</span></div>
     <div class="f rv" style="--c:linear-gradient(135deg,#3df0ff,#ff6ad5)"><i>🗂️</i><b>Personal Collection</b><span>Daily life lessons, gadget warranties, lent and borrowed items, and vehicle and property records. Photos stay on your phone.</span></div>
@@ -208,18 +208,18 @@ nav{background:rgba(7,11,36,.93)}
 <section>
   <span class="eyebrow rv">A LOOK INSIDE</span><h2 class="rv">Calm, glassy and made for your phone</h2><p class="sub rv">The look changes softly with the time of day. Pick your country and currency. Swipe to see more.</p>
   <div class="shots rv">
-    <figure><img src="welcome/home.jpg" alt="" loading="lazy"><figcaption>Home</figcaption></figure>
-    <figure><img src="welcome/planner.jpg" alt="" loading="lazy"><figcaption>Planner</figcaption></figure>
-    <figure><img src="welcome/islamic.jpg" alt="" loading="lazy"><figcaption>Islamic Hub</figcaption></figure>
-    <figure><img src="welcome/finance.jpg" alt="" loading="lazy"><figcaption>My Finance</figcaption></figure>
-    <figure><img src="welcome/accounts.jpg" alt="" loading="lazy"><figcaption>My Accounts</figcaption></figure>
-    <figure><img src="welcome/region.jpg" alt="" loading="lazy"><figcaption>Your country and currency</figcaption></figure>
-    <figure><img src="welcome/habit.jpg" alt="" loading="lazy"><figcaption>Habit and Health</figcaption></figure>
-    <figure><img src="welcome/energy.jpg" alt="" loading="lazy"><figcaption>Energy</figcaption></figure>
-    <figure><img src="welcome/hologram.jpg" alt="" loading="lazy"><figcaption>Body hologram</figcaption></figure>
-    <figure><img src="welcome/heart.jpg" alt="" loading="lazy"><figcaption>Heart log</figcaption></figure>
-    <figure><img src="welcome/family.jpg" alt="" loading="lazy"><figcaption>Family Planner</figcaption></figure>
-    <figure><img src="welcome/assistant.jpg" alt="" loading="lazy"><figcaption>Assistant</figcaption></figure>
+    <figure><img src="welcome/home.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Home</figcaption></figure>
+    <figure><img src="welcome/planner.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Planner</figcaption></figure>
+    <figure><img src="welcome/islamic.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Islamic Hub</figcaption></figure>
+    <figure><img src="welcome/finance.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>My Finance</figcaption></figure>
+    <figure><img src="welcome/accounts.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>My Accounts</figcaption></figure>
+    <figure><img src="welcome/region.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Your country and currency</figcaption></figure>
+    <figure><img src="welcome/habit.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Habit and Health</figcaption></figure>
+    <figure><img src="welcome/energy.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Energy</figcaption></figure>
+    <figure><img src="welcome/hologram.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Body hologram</figcaption></figure>
+    <figure><img src="welcome/heart.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Heart log</figcaption></figure>
+    <figure><img src="welcome/family.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Family Planner</figcaption></figure>
+    <figure><img src="welcome/assistant.jpg" alt="" width="780" height="1600" loading="lazy"><figcaption>Assistant</figcaption></figure>
   </div>
 </section>
 
@@ -364,5 +364,8 @@ d.addEventListener('pointermove',function(e){var el=e.target.closest&&e.target.c
 [].forEach.call(d.querySelectorAll('.btn'),function(b){b.addEventListener('pointermove',function(e){var r=b.getBoundingClientRect();b.style.setProperty('--bx',((e.clientX-r.left-r.width/2)*.22).toFixed(1)+'px');b.style.setProperty('--by',((e.clientY-r.top-r.height/2)*.32).toFixed(1)+'px')});
 b.addEventListener('pointerleave',function(){b.style.setProperty('--bx','0px');b.style.setProperty('--by','0px')})})}
 })();
+/* warm the gallery after the page is ready so the first swipe is smooth */
+(function(){function go(){[].forEach.call(document.querySelectorAll('.shots img'),function(i,n){setTimeout(function(){i.loading='eager';if(i.decode)i.decode().catch(function(){})},n*140)})}
+if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',function(){setTimeout(go,300)})})();
 </script>
 </body></html>
