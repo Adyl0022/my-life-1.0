@@ -38,8 +38,13 @@ h1{margin:18px 0 14px;font-size:clamp(38px,6.4vw,66px);letter-spacing:-2px;line-
 .ph img{display:block;width:100%}
 .p1{left:0;top:48px;transform:rotate(-7deg);animation:fl1 7s ease-in-out infinite}.p2{right:0;top:0;transform:rotate(6deg);animation:fl2 8s ease-in-out infinite}
 @keyframes fl1{50%{transform:rotate(-7deg) translateY(-12px)}}@keyframes fl2{50%{transform:rotate(6deg) translateY(12px)}}
-.band{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:34px 0 0;border-radius:24px;overflow:hidden;border:1px solid var(--line);background:var(--line)}
-.band div{background:rgba(10,15,44,.8);padding:20px;text-align:center}.band b{display:block;font-size:24px;letter-spacing:-.6px}.band span{font-size:12.5px;color:var(--mute)}
+.band{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:34px 0 0}
+.band div{position:relative;overflow:hidden;background:var(--glass);border:1px solid var(--line);border-radius:24px;padding:20px 18px 18px;text-align:left;transition:transform .3s,border-color .3s}
+.band div:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.26)}
+.band div:before{content:"";position:absolute;width:130px;height:130px;right:-44px;top:-44px;border-radius:50%;background:var(--c);opacity:.32;filter:blur(30px)}
+.band i{position:relative;display:grid;place-items:center;width:44px;height:44px;border-radius:15px;margin-bottom:16px;font-style:normal;font-size:22px;background:var(--c);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+.band b{position:relative;display:block;font-size:36px;font-weight:800;letter-spacing:-1.2px;line-height:1.05;background:var(--c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.band span{position:relative;display:block;margin-top:4px;font-size:13.5px;color:var(--dim);line-height:1.4}
 .eyebrow{display:block;text-align:center;margin:84px 0 8px;font-size:12px;letter-spacing:2.2px;font-weight:800;color:var(--v)}
 h2{margin:0 0 10px;font-size:clamp(28px,4.4vw,42px);letter-spacing:-1.2px;line-height:1.1;text-align:center}
 .sub{margin:0 auto 34px;text-align:center;color:var(--dim);max-width:560px}
@@ -180,10 +185,10 @@ nav{background:rgba(7,11,36,.93)}
 </section>
 
 <div class="band rv">
-  <div><b>6</b><span>tools in one app</span></div>
-  <div><b>114</b><span>Quran surahs inside</span></div>
-  <div><b>0</b><span>ads, ever</span></div>
-  <div><b>100%</b><span>private to your account</span></div>
+  <div style="--c:linear-gradient(135deg,#34d3b0,#5b8cff)"><i>🌍</i><b>30+</b><span>countries and currencies</span></div>
+  <div style="--c:linear-gradient(135deg,#b794ff,#ff8fb1)"><i>💬</i><b>20+</b><span>languages for your Assistant</span></div>
+  <div style="--c:linear-gradient(135deg,#ffb45e,#ff7a5c)"><i>🚫</i><b>0</b><span>ads, ever</span></div>
+  <div style="--c:linear-gradient(135deg,#7c9cff,#34d3b0)"><i>🔒</i><b>100%</b><span>private to your account</span></div>
 </div>
 <div class="mqw" aria-hidden="true"><div class="mq a"><div class="in"><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span><span>PLAN · SAVE · TRACK · GROW · TOGETHER ·</span></div></div><div class="mq b"><div class="in"><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span><span>REMEMBER · BUILD · BALANCE · RELAX · REPEAT ·</span></div></div></div>
 
