@@ -1,72 +1,62 @@
 import React from 'react';
 import { View, Animated, useWindowDimensions } from 'react-native';
-import Svg, { Circle, G, Line, Polygon } from 'react-native-svg';
+import Svg, { Circle, Polygon, Polyline } from 'react-native-svg';
 import { useSpin, useSway } from './artMotion';
 
-// Fine geometric art for the My Record page, in the same colours as Documents. Lines only, so text stays easy to read.
-// Top right: a hexagon tunnel that turns slowly. Bottom left: a lattice of overlapping circles that drifts. Bottom right: a small compass star.
-// The middle of the page stays empty.
-const T = '#8fe9e2', L = '#b9a6ff', Gd = '#ffd9a8';
-const poly = (cx: number, cy: number, r: number, n: number, rot: number) => {
-  const p: string[] = [];
-  for (let i = 0; i < n; i++) { const a = rot + (2 * Math.PI * i) / n; p.push((cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1)); }
-  return p.join(' ');
-};
-// Each ring is a hexagon a little smaller and a little more turned than the one outside it, so together they curl into a tunnel.
-function Tunnel({ R, n, col, op }: { R: number; n: number; col: string; op: number }) {
-  return (
-    <G>
-      {Array.from({ length: n }, (_, i) => {
-        const f = 1 - (i / n) * 0.86;
-        return <Polygon key={i} points={poly(R, R, R * f, 6, (i * Math.PI) / 18)} fill="none" stroke={col} strokeWidth={0.7} strokeOpacity={op * (0.5 + 0.5 * f)} />;
-      })}
-    </G>
-  );
-}
-// Rings of the same size on a six-fold grid: each circle passes through the centre of its neighbours.
-function Lattice({ r, rings, col, op }: { r: number; rings: number; col: string; op: number }) {
-  const pts: [number, number][] = [[0, 0]];
-  for (let k = 1; k <= rings; k++) for (let i = 0; i < 6 * k; i++) {
-    const side = Math.floor(i / k), step = i % k;
-    const a0 = (Math.PI / 3) * side, a1 = (Math.PI / 3) * (side + 1);
-    const x0 = k * r * Math.cos(a0), y0 = k * r * Math.sin(a0), x1 = k * r * Math.cos(a1), y1 = k * r * Math.sin(a1);
-    pts.push([x0 + ((x1 - x0) * step) / k, y0 + ((y1 - y0) * step) / k]);
+// Fine hexagon-swirl art for the My Record page, in the same family as Subscriptions: a stack of hairline hexagons, each turned a little more than
+// the one outside it, so they curl into a swirl that slowly turns. Circuit traces run out from the swirls and end in small nodes that blink.
+// Lines only, in the same colours as Documents, so the text stays easy to read.
+const T = '#8fe9e2', L = '#c3b0ff', Gd = '#ffd9a8';
+function rng(seed: number) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+type Spot = { cx: number; cy: number; R: number; col: string; op: number; n: number; ntr: number; L: number; seed: number; turn: number; step: number; dir: 1 | -1 };
+type Tr = { pts: string; x: number; y: number; col: string; op: number };
+function traces(s: Spot): Tr[] {
+  const out: Tr[] = [];
+  for (let i = 0; i < s.ntr; i++) {
+    const r = rng(s.seed + i * 7), a = (i * 2 * Math.PI) / s.ntr;
+    let x = s.cx + s.R * 0.8 * Math.cos(a), y = s.cy + s.R * 0.8 * Math.sin(a);
+    const d = [[x, y]];
+    const l1 = s.L * (0.3 + r() * 0.3); x += l1 * Math.cos(a); y += l1 * Math.sin(a); d.push([x, y]);
+    const a2 = a + ((r() < 0.5 ? -1 : 1) * Math.PI) / 4, l2 = 20 + r() * 40; x += l2 * Math.cos(a2); y += l2 * Math.sin(a2); d.push([x, y]);
+    const l3 = s.L * (0.3 + r() * 0.4); x += l3 * Math.cos(a); y += l3 * Math.sin(a); d.push([x, y]);
+    out.push({ pts: d.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '), x, y, col: s.col, op: s.op * 0.6 });
   }
-  return <G>{pts.map((p, i) => <Circle key={i} cx={p[0]} cy={p[1]} r={r} fill="none" stroke={col} strokeWidth={0.6} strokeOpacity={op} />)}</G>;
+  return out;
 }
-function Compass({ R, col, op }: { R: number; col: string; op: number }) {
-  const spikes: React.ReactNode[] = [];
-  for (let i = 0; i < 16; i++) {
-    const a = (Math.PI * i) / 8, long = i % 2 === 0;
-    spikes.push(<Line key={i} x1={R + R * 0.3 * Math.cos(a)} y1={R + R * 0.3 * Math.sin(a)} x2={R + R * (long ? 0.96 : 0.66) * Math.cos(a)} y2={R + R * (long ? 0.96 : 0.66) * Math.sin(a)} stroke={col} strokeWidth={long ? 0.9 : 0.6} strokeOpacity={op} />);
-  }
-  return <G><Circle cx={R} cy={R} r={R * 0.3} fill="none" stroke={col} strokeWidth={0.7} strokeOpacity={op} /><Circle cx={R} cy={R} r={R * 0.98} fill="none" stroke={col} strokeWidth={0.6} strokeOpacity={op * 0.7} strokeDasharray="1.5 5" />{spikes}</G>;
-}
+const hex = (c: number, r: number, rot: number) => Array.from({ length: 6 }, (_, i) => { const a = rot + (Math.PI * 2 * i) / 6; return (c + r * Math.cos(a)).toFixed(1) + ',' + (c + r * Math.sin(a)).toFixed(1); }).join(' ');
 export function RecordArt() {
   const { width: W, height: H } = useWindowDimensions();
   const s = Math.max(W / 390, 1);
-  const a1 = useSpin(90, 1), a2 = useSpin(60, -1), a3 = useSpin(110, 1), a4 = useSpin(70, -1);
-  const dr = useSway(16), br = useSway(8), br2 = useSway(10, 2);
-  const dx = dr.interpolate({ inputRange: [0, 1], outputRange: [-14, 14] }), dy = dr.interpolate({ inputRange: [0, 1], outputRange: [8, -8] });
-  const sc = br.interpolate({ inputRange: [0, 1], outputRange: [0.97, 1.05] });
-  const tw = br2.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
-  const R1 = 104 * s, R2 = 66 * s, R3 = 150 * s, R4 = 54 * s;
+  const spots: Spot[] = React.useMemo(() => [
+    { cx: W - 52 * s, cy: 96 * s, R: 92 * s, col: L, op: 0.3, n: 40, ntr: 18, L: 170 * s, seed: 1, turn: 90, step: 3.2, dir: 1 },
+    { cx: 40 * s, cy: H - 118 * s, R: 130 * s, col: T, op: 0.26, n: 46, ntr: 24, L: 230 * s, seed: 40, turn: 110, step: 2.6, dir: -1 },
+    { cx: W - 72 * s, cy: H - 118 * s, R: 62 * s, col: Gd, op: 0.28, n: 34, ntr: 12, L: 110 * s, seed: 90, turn: 75, step: 3.8, dir: 1 },
+  ], [W, H]);
+  const trs = React.useMemo(() => spots.map(traces), [spots]);
+  const r0 = useSpin(spots[0].turn, spots[0].dir), r1 = useSpin(spots[1].turn, spots[1].dir), r2 = useSpin(spots[2].turn, spots[2].dir);
+  const rots = [r0, r1, r2];
+  const tw = useSway(5), tw2 = useSway(7, 2);
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
-      <Animated.View style={{ position: 'absolute', right: -R1 * 0.38, top: -R1 * 0.28, width: R1 * 2, height: R1 * 2, transform: [{ rotate: a1 }] }}>
-        <Svg width={R1 * 2} height={R1 * 2} viewBox={`0 0 ${R1 * 2} ${R1 * 2}`}><Tunnel R={R1} n={22} col={L} op={0.34} /></Svg>
+      <Svg width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }}>
+        {trs.map((g) => g.map((t, i) => <Polyline key={i} points={t.pts} fill="none" stroke={t.col} strokeWidth={0.55} strokeOpacity={t.op} />))}
+      </Svg>
+      {spots.map((sp, k) => (
+        <Animated.View key={k} style={{ position: 'absolute', left: sp.cx - sp.R, top: sp.cy - sp.R, width: sp.R * 2, height: sp.R * 2, transform: [{ rotate: rots[k] }] }}>
+          <Svg width={sp.R * 2} height={sp.R * 2} viewBox={`0 0 ${sp.R * 2} ${sp.R * 2}`}>
+            {Array.from({ length: sp.n }, (_, i) => { const f = 1 - (i / sp.n) * 0.82; return <Polygon key={i} points={hex(sp.R, sp.R * f, (i * sp.step * Math.PI) / 180)} fill="none" stroke={sp.col} strokeWidth={0.55} strokeOpacity={sp.op} />; })}
+          </Svg>
+        </Animated.View>
+      ))}
+      <Animated.View style={{ position: 'absolute', left: 0, top: 0, width: W, height: H, opacity: tw.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] }) }}>
+        <Svg width={W} height={H}>
+          {trs.map((g, k) => g.map((t, i) => (i % 2 === 0 ? <React.Fragment key={k + '-' + i}><Circle cx={t.x} cy={t.y} r={2.3} fill="none" stroke={t.col} strokeOpacity={0.6} strokeWidth={0.7} /><Circle cx={t.x} cy={t.y} r={0.9} fill={t.col} opacity={0.85} /></React.Fragment> : null)))}
+        </Svg>
       </Animated.View>
-      <Animated.View style={{ position: 'absolute', right: -R1 * 0.38 + (R1 - R2), top: -R1 * 0.28 + (R1 - R2), width: R2 * 2, height: R2 * 2, transform: [{ rotate: a2 }] }}>
-        <Svg width={R2 * 2} height={R2 * 2} viewBox={`0 0 ${R2 * 2} ${R2 * 2}`}><Tunnel R={R2} n={14} col={Gd} op={0.3} /></Svg>
-      </Animated.View>
-      <Animated.View style={{ position: 'absolute', left: -R3 * 0.62, bottom: -R3 * 0.5, width: R3 * 2, height: R3 * 2, transform: [{ translateX: dx }, { translateY: dy }] }}>
-        <Svg width={R3 * 2} height={R3 * 2} viewBox={`${-R3} ${-R3} ${R3 * 2} ${R3 * 2}`}><Lattice r={36 * s} rings={3} col={T} op={0.22} /></Svg>
-      </Animated.View>
-      <Animated.View style={{ position: 'absolute', right: 26 * s, bottom: 76 * s, width: R4 * 2, height: R4 * 2, opacity: tw, transform: [{ rotate: a3 }, { scale: sc }] }}>
-        <Svg width={R4 * 2} height={R4 * 2} viewBox={`0 0 ${R4 * 2} ${R4 * 2}`}><Compass R={R4} col={Gd} op={0.42} /></Svg>
-      </Animated.View>
-      <Animated.View style={{ position: 'absolute', right: 26 * s + R4 * 0.45, bottom: 76 * s + R4 * 0.45, width: R4 * 1.1, height: R4 * 1.1, opacity: tw, transform: [{ rotate: a4 }] }}>
-        <Svg width={R4 * 1.1} height={R4 * 1.1} viewBox="0 0 100 100"><Polygon points={poly(50, 50, 46, 6, 0)} fill="none" stroke={L} strokeWidth={1.2} strokeOpacity={0.5} /></Svg>
+      <Animated.View style={{ position: 'absolute', left: 0, top: 0, width: W, height: H, opacity: tw2.interpolate({ inputRange: [0, 1], outputRange: [1, 0.45] }) }}>
+        <Svg width={W} height={H}>
+          {trs.map((g, k) => g.map((t, i) => (i % 2 === 1 ? <React.Fragment key={k + '-' + i}><Circle cx={t.x} cy={t.y} r={2.3} fill="none" stroke={t.col} strokeOpacity={0.6} strokeWidth={0.7} /><Circle cx={t.x} cy={t.y} r={0.9} fill={t.col} opacity={0.85} /></React.Fragment> : null)))}
+        </Svg>
       </Animated.View>
     </View>
   );
