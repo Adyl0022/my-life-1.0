@@ -3,7 +3,7 @@ import { lessonOfDay } from '../lib/lessonOfDay';
 import { EMPTY_COL, type ColStore } from '../lib/collection';
 import { View, Animated, ScrollView, Platform } from 'react-native';
 import { Pressable } from './Press';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient as SvgGrad, Stop, Rect, Polyline, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from './Txt';
@@ -53,18 +53,38 @@ const pillOf = (k: string, val?: string) => {
   if (k === 'score') return val + ' / 100';
   return val.toUpperCase();
 };
+// Small flat picture for the "Your month" page, drawn instead of an emoji: three rising bars and a trend line.
+const MonthArt = () => (
+  <View pointerEvents="none" style={{ position: 'absolute', right: 4, bottom: -8, opacity: 0.5, transform: [{ rotate: '-8deg' }] }}>
+    <Svg width={96} height={90} viewBox="0 0 96 90">
+      <Defs><SvgGrad id="mb" x1="0" y1="1" x2="0" y2="0"><Stop offset="0" stopColor="#8fe9e2" stopOpacity="0.55" /><Stop offset="1" stopColor="#7c9cff" stopOpacity="0.95" /></SvgGrad></Defs>
+      <Rect x={10} y={50} width={17} height={32} rx={6} fill="url(#mb)" />
+      <Rect x={34} y={36} width={17} height={46} rx={6} fill="url(#mb)" />
+      <Rect x={58} y={20} width={17} height={62} rx={6} fill="url(#mb)" />
+      <Polyline points="6,44 30,28 52,34 82,6" fill="none" stroke="#ffffff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.95} />
+      <Circle cx={82} cy={6} r={4} fill="#ffffff" />
+    </Svg>
+  </View>
+);
+// The tag for something new: a soft gold-to-pink fill and a small sparkle.
+const NewTag = () => (
+  <LinearGradient colors={['#ffe3a8', '#ffb4cb']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', right: 14, top: 12, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.55)' }}>
+    <Svg width={9} height={9} viewBox="0 0 10 10"><Path d="M5 0 L6.2 3.8 L10 5 L6.2 6.2 L5 10 L3.8 6.2 L0 5 L3.8 3.8 Z" fill="#5a2a00" /></Svg>
+    <Text style={{ color: '#4a2200', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }}>NEW</Text>
+  </LinearGradient>
+);
 // every page uses this one layout so the sizes match: label 9.5, title 16 (one line), sub 12.5 (two lines), status pill top right, a big faded emoji as a watermark
 function Premium({ k, label, title, sub, tone, val }: { k: string; label: string; title: string; sub: string; tone?: string; val?: string }) {
   const g0 = PG[k] || { e: '✨', c: TEAL }; const hot = toneOf(tone); const c = hot || g0.c; const pill = pillOf(k, val);
   const sh = { textShadowColor: 'rgba(10,10,50,.35)', textShadowRadius: 5, textShadowOffset: { width: 0, height: 1 } } as const;
   return (<>
-    <Text pointerEvents="none" style={{ position: 'absolute', right: -6, bottom: -20, fontSize: 90, lineHeight: 104, opacity: 0.3, transform: [{ rotate: '-12deg' }] }}>{g0.e}</Text>
+    {k === 'month' ? <MonthArt /> : <Text pointerEvents="none" style={{ position: 'absolute', right: -6, bottom: -20, fontSize: 90, lineHeight: 104, opacity: 0.3, transform: [{ rotate: '-12deg' }] }}>{g0.e}</Text>}
     <View style={{ flex: 1, minWidth: 0, paddingRight: pill ? 78 : 56 }}>
       <Text numberOfLines={1} style={{ color: hot === RED ? '#ffd5db' : hot || '#d6faf3', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>{label}</Text>
       <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3, ...sh }}>{title}</Text>
       <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2, ...sh }}>{sub}</Text>
     </View>
-    {pill ? <View style={{ position: 'absolute', right: 14, top: 12, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: c + 'b3', backgroundColor: hot === RED ? 'rgba(255,107,129,.92)' : c + '40' }}><Text numberOfLines={1} style={{ color: hot === RED ? '#fff' : c, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>{pill}</Text></View> : null}
+    {k === 'month' ? <NewTag /> : pill ? <View style={{ position: 'absolute', right: 14, top: 12, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: c + 'b3', backgroundColor: hot === RED ? 'rgba(255,107,129,.92)' : c + '40' }}><Text numberOfLines={1} style={{ color: hot === RED ? '#fff' : c, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>{pill}</Text></View> : null}
   </>);
 }
 
