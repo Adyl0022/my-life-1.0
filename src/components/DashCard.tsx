@@ -3,7 +3,7 @@ import { lessonOfDay } from '../lib/lessonOfDay';
 import { EMPTY_COL, type ColStore } from '../lib/collection';
 import { View, Animated, ScrollView, Platform } from 'react-native';
 import { Pressable } from './Press';
-import Svg, { Circle, Rect, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from './Txt';
@@ -24,7 +24,6 @@ import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepN
 const UNWELL = ['Headache', 'Tired', 'Fever'];
 const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
-import { weekBack } from '../lib/region';
 import { useMonthsFrom, useMonthSeen, showOnDash } from '../lib/useMonth';
 import { HeadIcon, Face } from './HabitIcons';
 import { energyEstimate, restSignal } from '../lib/patterns';
@@ -242,29 +241,9 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.34)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>Talk</Text></View>
     </>);
   } else if (kind === 'month') {
-    // From the 1st for a week: last month's summary, with the score in a ring. It goes away once the summary has been opened.
-    const ms = mon.last; const sc = ms.score; const dly = ms.daily;
-    // A fine line calendar of the month being summarised sits behind the text. Days you logged are a little brighter.
-    const my = +ms.ym.slice(0, 4), mm = +ms.ym.slice(5, 7) - 1; const wkStart = (new Date().getDay() - weekBack() + 7) % 7;
-    const lead = (new Date(my, mm, 1).getDay() - wkStart + 7) % 7; const rowsN = Math.ceil((lead + ms.daysIn) / 7);
-    body = (<>
-      <Svg pointerEvents="none" width={108} height={66} viewBox="0 0 108 66" style={{ position: 'absolute', right: 12, bottom: 20 }}>
-        <Rect x={0.5} y={0.5} width={107} height={65} rx={9} fill="none" stroke="#ffffff" strokeOpacity={0.22} strokeWidth={1} />
-        <Line x1={0.5} y1={12.5} x2={107.5} y2={12.5} stroke="#ffffff" strokeOpacity={0.22} strokeWidth={1} />
-        <SvgText x={54} y={9} fontSize={6.5} fontWeight="700" fill="#ffffff" fillOpacity={0.4} textAnchor="middle">{ms.name.toUpperCase() + ' ' + my}</SvgText>
-        {Array.from({ length: ms.daysIn }, (_, i2) => { const c2 = (lead + i2) % 7, r2 = Math.floor((lead + i2) / 7); const on2 = dly[i2] !== undefined && dly[i2] >= 0;
-          return <SvgText key={i2} x={8.5 + c2 * 15.2} y={22 + r2 * (43 / rowsN) + 2} fontSize={6.2} fontWeight={on2 ? '700' : '500'} fill="#ffffff" fillOpacity={on2 ? 0.55 : 0.22} textAnchor="middle">{i2 + 1}</SvgText>; })}
-      </Svg>
-      <LinearGradient colors={['rgba(143,233,226,.38)', 'rgba(124,156,255,.38)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 62, height: 62, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#fff', fontSize: sc !== null ? 24 : 20, lineHeight: 28, fontWeight: '800' }}>{sc !== null ? sc : '–'}</Text>
-        <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 9.5, fontWeight: '700', marginTop: 1 }}>out of 100</Text>
-      </LinearGradient>
-      <View style={{ flex: 1, minWidth: 0, paddingRight: 108 }}>
-        <Text numberOfLines={1} style={{ color: '#cfe0ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>YOUR MONTH<Text style={{ color: '#ffd593' }}>{' · NEW'}</Text></Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>{ms.name + ' summary'}</Text>
-        <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>{ms.headline + '. Tap to see more.'}</Text>
-      </View>
-    </>);
+    // Same layout as every other page: small label, title, two lines, a status tag and the page's faded picture. It goes away once the summary has been opened.
+    const ms = mon.last;
+    body = <Premium k="month" label={'YOUR MONTH · ' + ms.name.toUpperCase()} title={'Your ' + ms.name + ' summary'} sub={ms.headline + (ms.score !== null ? ' · ' + ms.score + ' out of 100' : '') + '. Tap to see how it went.'} val="NEW" />;
   } else if (kind === 'memories') {
     body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life 1.0' : 'Your Memories'} sub="Every moment matters" />;
   } else if (kind === 'score') {
