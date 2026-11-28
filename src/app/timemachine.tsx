@@ -34,18 +34,15 @@ const Chip = ({ on, t, onPress, c }: { on: boolean; t: string; onPress: () => vo
 );
 
 
-// Compact on/off button with a small drawn icon, shares the row with the Past/Future capsule. Full colour when on, glass when off.
-const Tg = ({ on, t, onPress, c, k }: { on: boolean; t: string; onPress: () => void; c: string; k: 'cube' | 'cmp' }) => {
-  const ink = on ? '#06222a' : c;
-  return (
-    <Pressable onPress={onPress} accessibilityLabel={t} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 38, paddingHorizontal: 6, borderRadius: 999, backgroundColor: on ? c : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: on ? 'transparent' : 'rgba(255,255,255,.22)' }}>
-      {k === 'cube'
-        ? <View style={{ width: 11, height: 11, borderWidth: 1.5, borderColor: ink, borderRadius: 2.5, transform: [{ rotate: '45deg' }] }} />
-        : <View style={{ flexDirection: 'row', width: 14 }}><View style={{ width: 8, height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: ink }} /><View style={{ width: 8, height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: ink, marginLeft: -2 }} /></View>}
-      <Text numberOfLines={1} style={{ color: on ? '#06222a' : W, fontSize: 12.5, fontWeight: '800' }}>{t}</Text>
-    </Pressable>
-  );
-};
+// Compact on/off pill that shares the row with the Past/Future capsule and stretches to the same height. No icon: when on it is filled with a soft gradient, when off it is glass with a fine border. The text sits in the exact centre, across and up-down.
+const Tg = ({ on, t, onPress, c }: { on: boolean; t: string; onPress: () => void; c: string }) => (
+  <Pressable onPress={onPress} accessibilityLabel={t} style={{ flex: 1, borderRadius: 999, overflow: 'hidden', borderWidth: 1, borderColor: on ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.2)', backgroundColor: on ? 'transparent' : 'rgba(255,255,255,.08)' }}>
+    {on ? <LinearGradient colors={[c, c + 'bb']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} /> : null}
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
+      <Text numberOfLines={1} style={{ color: on ? '#06222a' : W, fontSize: 12.5, lineHeight: 16, fontWeight: '800', textAlign: 'center', includeFontPadding: false, letterSpacing: 0.2 }}>{t}</Text>
+    </View>
+  </Pressable>
+);
 
 // Small readouts around the 3D body. Only real records; a missing record shows a dash.
 const Hud = ({ rows, goal }: { rows: Row[]; goal: number }) => {
@@ -195,10 +192,10 @@ export default function TimeMachinePage() {
               </View>
             )}
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 }}>
-            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={12} padY={8} style={{ flexShrink: 0 }} />
-            <Tg k="cube" on={use3d && !failed} t="3D view" c="#7c9cff" onPress={() => { buzz(); mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} />
-            {mode === 'past' ? <Tg k="cmp" on={cmp} t="Compare" c="#ffc46b" onPress={() => { buzz(); setCmp(!cmp); setB(null); }} /> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 8, marginTop: 14 }}>
+            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={12} padY={8} style={{ flexShrink: 0, alignSelf: 'stretch' }} />
+            <Tg on={use3d && !failed} t="3D view" c="#7c9cff" onPress={() => { buzz(); mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} />
+            {mode === 'past' ? <Tg on={cmp} t="Compare" c="#ffc46b" onPress={() => { buzz(); setCmp(!cmp); setB(null); }} /> : null}
           </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
