@@ -1,4 +1,4 @@
-import { SlidePills } from '../components/TabSlide';
+import { EqPills } from '../components/TabSlide';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, AccessibilityInfo, Animated, Easing, useWindowDimensions } from 'react-native';
 import { Pressable } from '../components/Press';
@@ -33,6 +33,14 @@ const Chip = ({ on, t, onPress, c }: { on: boolean; t: string; onPress: () => vo
   <Pressable onPress={onPress} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? (c || T) : 'rgba(255,255,255,.12)' }}><Text style={{ color: on ? '#06222a' : W, fontSize: 12.5, fontWeight: '800' }}>{t}</Text></Pressable>
 );
 
+
+// Equal-width on/off button under the Past/Future capsule; the dot fills when it is on.
+const Tg = ({ on, t, onPress, c }: { on: boolean; t: string; onPress: () => void; c: string }) => (
+  <Pressable onPress={onPress} accessibilityLabel={t} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, borderRadius: 999, backgroundColor: on ? c : 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: on ? 'transparent' : 'rgba(255,255,255,.22)' }}>
+    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: on ? '#06222a' : 'transparent', borderWidth: 1.5, borderColor: on ? '#06222a' : c }} />
+    <Text numberOfLines={1} style={{ color: on ? '#06222a' : W, fontSize: 13, fontWeight: '800' }}>{t}</Text>
+  </Pressable>
+);
 
 // Small readouts around the 3D body. Only real records; a missing record shows a dash.
 const Hud = ({ rows, goal }: { rows: Row[]; goal: number }) => {
@@ -182,10 +190,12 @@ export default function TimeMachinePage() {
               </View>
             )}
           </View>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={13} padX={16} />
-            <Chip on={use3d && !failed} t="3D view" onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
-            {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
+          <View style={{ marginTop: 14 }}>
+            <EqPills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={13.5} />
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+            <Tg on={use3d && !failed} t="3D view" c="#7c9cff" onPress={() => { buzz(); mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} />
+            {mode === 'past' ? <Tg on={cmp} t={cmp ? 'Comparing' : 'Compare'} c="#ffc46b" onPress={() => { buzz(); setCmp(!cmp); setB(null); }} /> : null}
           </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
