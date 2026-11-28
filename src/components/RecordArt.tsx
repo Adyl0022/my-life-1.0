@@ -4,8 +4,8 @@ import Svg, { Circle, Polygon, Polyline } from 'react-native-svg';
 import { useSpin, useSway } from './artMotion';
 
 // Fine hexagon-swirl art for the My Record page, in the same family as Subscriptions: a stack of hairline hexagons, each turned a little more than
-// the one outside it, so they curl into a swirl that slowly turns. Circuit traces run out from the swirls and end in small nodes that blink.
-// Lines only, in the same colours as Documents, so the text stays easy to read.
+// the one outside it, so they curl into a swirl that turns very slowly (one round takes several minutes) while it gently breathes in and out. Circuit traces run out from the swirls and end in small nodes that blink.
+// The traces glow up one group after another and the nodes blink, so the page feels alive without ever being busy. Lines only, in the same colours as Documents, so the text stays easy to read.
 const T = '#8fe9e2', L = '#c3b0ff', Gd = '#ffd9a8';
 function rng(seed: number) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 type Spot = { cx: number; cy: number; R: number; col: string; op: number; n: number; ntr: number; L: number; seed: number; turn: number; step: number; dir: 1 | -1 };
@@ -28,21 +28,29 @@ export function RecordArt() {
   const { width: W, height: H } = useWindowDimensions();
   const s = Math.max(W / 390, 1);
   const spots: Spot[] = React.useMemo(() => [
-    { cx: W - 52 * s, cy: 96 * s, R: 92 * s, col: L, op: 0.3, n: 40, ntr: 18, L: 170 * s, seed: 1, turn: 90, step: 3.2, dir: 1 },
-    { cx: 40 * s, cy: H - 118 * s, R: 130 * s, col: T, op: 0.26, n: 46, ntr: 24, L: 230 * s, seed: 40, turn: 110, step: 2.6, dir: -1 },
-    { cx: W - 72 * s, cy: H - 118 * s, R: 62 * s, col: Gd, op: 0.28, n: 34, ntr: 12, L: 110 * s, seed: 90, turn: 75, step: 3.8, dir: 1 },
+    { cx: W - 52 * s, cy: 96 * s, R: 92 * s, col: L, op: 0.3, n: 40, ntr: 18, L: 170 * s, seed: 1, turn: 260, step: 3.2, dir: 1 },
+    { cx: 40 * s, cy: H - 118 * s, R: 130 * s, col: T, op: 0.26, n: 46, ntr: 24, L: 230 * s, seed: 40, turn: 320, step: 2.6, dir: -1 },
+    { cx: W - 72 * s, cy: H - 118 * s, R: 62 * s, col: Gd, op: 0.28, n: 34, ntr: 12, L: 110 * s, seed: 90, turn: 220, step: 3.8, dir: 1 },
   ], [W, H]);
   const trs = React.useMemo(() => spots.map(traces), [spots]);
   const r0 = useSpin(spots[0].turn, spots[0].dir), r1 = useSpin(spots[1].turn, spots[1].dir), r2 = useSpin(spots[2].turn, spots[2].dir);
   const rots = [r0, r1, r2];
   const tw = useSway(5), tw2 = useSway(7, 2);
+  const b0 = useSway(11), b1 = useSway(13, 3), b2 = useSway(9, 6);
+  const bs = [b0, b1, b2].map((b) => b.interpolate({ inputRange: [0, 1], outputRange: [0.965, 1.035] }));
+  const g0 = useSway(7), g1 = useSway(9, 2.5), g2 = useSway(11, 5);
+  const gs = [g0, g1, g2].map((g) => g.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }));
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
-      <Svg width={W} height={H} style={{ position: 'absolute', left: 0, top: 0 }}>
-        {trs.map((g) => g.map((t, i) => <Polyline key={i} points={t.pts} fill="none" stroke={t.col} strokeWidth={0.55} strokeOpacity={t.op} />))}
-      </Svg>
+      {[0, 1, 2].map((m) => (
+        <Animated.View key={m} style={{ position: 'absolute', left: 0, top: 0, width: W, height: H, opacity: gs[m] }}>
+          <Svg width={W} height={H}>
+            {trs.map((g) => g.map((t, i) => (i % 3 === m ? <Polyline key={i} points={t.pts} fill="none" stroke={t.col} strokeWidth={0.55} strokeOpacity={t.op} /> : null)))}
+          </Svg>
+        </Animated.View>
+      ))}
       {spots.map((sp, k) => (
-        <Animated.View key={k} style={{ position: 'absolute', left: sp.cx - sp.R, top: sp.cy - sp.R, width: sp.R * 2, height: sp.R * 2, transform: [{ rotate: rots[k] }] }}>
+        <Animated.View key={k} style={{ position: 'absolute', left: sp.cx - sp.R, top: sp.cy - sp.R, width: sp.R * 2, height: sp.R * 2, transform: [{ rotate: rots[k] }, { scale: bs[k] }] }}>
           <Svg width={sp.R * 2} height={sp.R * 2} viewBox={`0 0 ${sp.R * 2} ${sp.R * 2}`}>
             {Array.from({ length: sp.n }, (_, i) => { const f = 1 - (i / sp.n) * 0.82; return <Polygon key={i} points={hex(sp.R, sp.R * f, (i * sp.step * Math.PI) / 180)} fill="none" stroke={sp.col} strokeWidth={0.55} strokeOpacity={sp.op} />; })}
           </Svg>
