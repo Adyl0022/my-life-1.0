@@ -17,6 +17,8 @@ export type MSec = { k: 'health' | 'money' | 'tasks' | 'faith' | 'vehicle'; titl
 export type MSum = {
   ym: string; label: string; name: string; partial: boolean; daysIn: number; upto: number; logged: number;
   hasData: boolean; score: number | null; headline: string; story: string;
+  /** One value per day of the month: 0-100 for a day with something logged, -1 for an empty day. Used for the small picture on the Dashboard card. */
+  daily: number[];
   stats: { l: string; v: string }[]; sections: MSec[];
   wins: string[]; improve: string[]; advice: string[]; focus: string[];
 };
@@ -44,16 +46,20 @@ function calc(i: MIn, y: number, m0: number) {
   const day = (d: number): HDay => ({ ...BLANK, ...((i.hd.days || {})[keyOf(y, m0, d)] || {}) });
 
   // Health habits
+  const daily: number[] = [];
+  const spendDay: Record<string, boolean> = {};
+  ((i.fin && i.fin.spends) || []).forEach((x) => { if (typeof x.date === 'string' && x.date.slice(0, 7) === ymKey(y, m0)) spendDay[x.date] = true; });
   const stepsL: number[] = [], waterL: number[] = [], sleepL: number[] = [], moodL: number[] = [], pcts: number[] = [];
   let stepDays = 0, waterDays = 0, sleepOk = 0, logged = 0, run = 0, streak = 0, relax = 0, goodMood = 0, lowMood = 0;
   let best = { d: 0, p: -1 }, worst = { d: 0, p: 101 };
   for (let d = 1; d <= upto; d++) {
     const x = day(d);
     const any = x.cups > 0 || x.sleep > 0 || x.steps > 0;
+    if (!any) daily.push(spendDay[keyOf(y, m0, d)] ? 45 : -1);
     if (any) {
       logged++;
       const p = Math.round(((Math.min(x.cups / i.cg, 1)) + Math.min(x.sleep / 7, 1) + Math.min(x.steps / i.goal, 1)) / 3 * 100);
-      pcts.push(p); if (p > best.p) best = { d, p }; if (p < worst.p) worst = { d, p };
+      daily.push(p); pcts.push(p); if (p > best.p) best = { d, p }; if (p < worst.p) worst = { d, p };
       if (p >= 70) { run++; streak = Math.max(streak, run); } else run = 0;
     } else run = 0;
     if (x.steps > 0) { stepsL.push(x.steps); if (x.steps >= i.goal) stepDays++; }
@@ -106,7 +112,7 @@ function calc(i: MIn, y: number, m0: number) {
   });
 
   return {
-    ym, y, m0, daysIn, upto, partial, logged,
+    ym, y, m0, daysIn, upto, partial, logged, daily,
     steps: { avg: avg(stepsL), days: stepDays, n: stepsL.length }, water: { avg: avg(waterL), days: waterDays, n: waterL.length },
     sleep: { avg: avg(sleepL), ok: sleepOk, n: sleepL.length }, mood: { avg: avg(moodL), n: moodL.length, good: goodMood, low: lowMood },
     healthPct: Math.round(avg(pcts)), streak, relax: Math.round(relax), best, worst,
@@ -261,7 +267,7 @@ export function buildMonth(i: MIn, y: number, m0: number): MSum {
   if (hasData && !c.partial) focus.push('Look at this page again on the 1st and see what changed.');
 
   return {
-    ym: ymKey(y, m0), label: MON_OF(y, m0), name, partial: c.partial, daysIn: c.daysIn, upto: c.upto, logged: c.logged, hasData, score, headline, story,
+    ym: ymKey(y, m0), label: MON_OF(y, m0), name, partial: c.partial, daysIn: c.daysIn, upto: c.upto, logged: c.logged, hasData, score, headline, story, daily: c.daily,
     stats: stats.slice(0, 3), sections, wins: wins.slice(0, 5), improve: improve.slice(0, 5), advice: advice.slice(0, 5), focus: focus.slice(0, 5),
   };
 }
