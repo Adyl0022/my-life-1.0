@@ -193,7 +193,7 @@ export default function TimeMachinePage() {
             )}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 8, marginTop: 14 }}>
-            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={12} padY={8} style={{ flexShrink: 0, alignSelf: 'stretch' }} />
+            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={4} tabW={64} padY={8} style={{ flexShrink: 0, alignSelf: 'stretch' }} />
             <Tg on={use3d && !failed} t="3D view" c="#7c9cff" onPress={() => { buzz(); mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} />
             {mode === 'past' ? <Tg on={cmp} t="Compare" c="#ffc46b" onPress={() => { buzz(); setCmp(!cmp); setB(null); }} /> : null}
           </View>

@@ -29,8 +29,8 @@ export function useTabPill(index: number, count: number, colors: [string, string
 }
 
 /** Tabs of different widths with one coloured pill that glides to the tab you press, with a light vibration. */
-export function SlidePills({ tabs, index, onChange, colors, textOn = '#fff', textOff = 'rgba(255,255,255,.8)', pad = 3, gap = 0, fontSize = 13, padX = 16, padY = 7, bar, style }: {
-  tabs: string[]; index: number; onChange: (i: number) => void; colors: [string, string]; textOn?: string; textOff?: string; pad?: number; gap?: number; fontSize?: number; padX?: number; padY?: number; bar?: any; style?: any;
+export function SlidePills({ tabs, index, onChange, colors, textOn = '#fff', textOff = 'rgba(255,255,255,.8)', pad = 3, gap = 0, fontSize = 13, padX = 16, padY = 7, bar, style, tabW }: {
+  tabs: string[]; index: number; onChange: (i: number) => void; colors: [string, string]; textOn?: string; textOff?: string; pad?: number; gap?: number; fontSize?: number; padX?: number; padY?: number; bar?: any; style?: any; tabW?: number;
 }) {
   const lay = useRef<{ x: number; w: number }[]>([]); const [, bump] = useState(0);
   const left = useRef(new Animated.Value(0)).current; const wid = useRef(new Animated.Value(0)).current; const ready = useRef(false);
@@ -53,7 +53,7 @@ export function SlidePills({ tabs, index, onChange, colors, textOn = '#fff', tex
           onLayout={(e) => { const { x, width } = e.nativeEvent.layout; const first = !lay.current[i]; lay.current[i] = { x, w: width }; if (i === index) { go(i, !ready.current); ready.current = true; } if (first) bump((n) => n + 1); }}
           onPress={() => { if (i !== index) { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } onChange(i); }}
           style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] })}>
-          <View style={{ paddingVertical: padY, paddingHorizontal: padX }}><Text style={{ color: i === index ? textOn : textOff, fontSize, fontWeight: i === index ? '800' : '600' }}>{t}</Text></View>
+          <View style={{ paddingVertical: padY, paddingHorizontal: padX, width: tabW, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: i === index ? textOn : textOff, fontSize, fontWeight: i === index ? '800' : '600', textAlign: 'center' }}>{t}</Text></View>
         </Pressable>
       ))}
     </View>
