@@ -15,6 +15,7 @@ import { SkyArt } from '../../components/SkyArt';
 import { Orb, OrbSvg } from '../../components/Orb';
 import { useUsage } from '../../lib/usage';
 import { DashCard } from '../../components/DashCard';
+import { MonthDashCard } from '../../components/MonthCard';
 import { QuickRemind, SearchMenu, Bell } from '../../components/QuickRemind';
 import { Toast } from '../../components/Ui';
 import { useName, useStored } from '../../lib/store';
@@ -140,6 +141,7 @@ export default function Home() {
             ))}
             {!mord.habitTop ? habitBanner : null}
           </View>
+          <MonthDashCard />
           <DashCard mins={mins} opens={usage.today.opens} series={usage.series} />
         </View>
       </SafeAreaView>
