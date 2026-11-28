@@ -34,6 +34,21 @@ const Chip = ({ on, t, onPress, c }: { on: boolean; t: string; onPress: () => vo
 );
 
 
+// Compact on/off pill that shares the row with the Past/Future capsule and stretches to the same height. No icon and no glow: when on it has a fine two-colour gradient ring around a soft tinted fill, when off it is plain glass. The text sits in the exact centre, across and up-down.
+const Tg = ({ on, t, onPress, g, tint, ink }: { on: boolean; t: string; onPress: () => void; g: [string, string]; tint: string; ink: string }) => (
+  <Pressable onPress={onPress} accessibilityLabel={t} style={{ flex: 1, borderRadius: 999, overflow: 'hidden', borderWidth: on ? 0 : 1, borderColor: 'rgba(255,255,255,.2)', backgroundColor: on ? 'transparent' : 'rgba(255,255,255,.07)' }}>
+    {on ? <LinearGradient colors={g} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, padding: 1.6, borderRadius: 999 }}>
+      <View style={{ flex: 1, borderRadius: 999, backgroundColor: tint, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
+        <Text numberOfLines={1} style={{ color: ink, fontSize: 12.5, lineHeight: 16, fontWeight: '800', textAlign: 'center', includeFontPadding: false, letterSpacing: 0.2 }}>{t}</Text>
+      </View>
+    </LinearGradient> : (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
+        <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.88)', fontSize: 12.5, lineHeight: 16, fontWeight: '800', textAlign: 'center', includeFontPadding: false, letterSpacing: 0.2 }}>{t}</Text>
+      </View>
+    )}
+  </Pressable>
+);
+
 // Small readouts around the 3D body. Only real records; a missing record shows a dash.
 const Hud = ({ rows, goal }: { rows: Row[]; goal: number }) => {
   const g = (l: string) => rows.find((r) => r.l === l);
@@ -182,10 +197,10 @@ export default function TimeMachinePage() {
               </View>
             )}
           </View>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={13} padX={16} />
-            <Chip on={use3d && !failed} t="3D view" onPress={() => { mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} c="#7c9cff" />
-            {mode === 'past' ? <Chip on={cmp} t={cmp ? 'Comparing' : 'Compare'} onPress={() => { setCmp(!cmp); setB(null); }} c="#ffc46b" /> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 8, marginTop: 14 }}>
+            <SlidePills tabs={['Past', 'Future']} index={mode === 'past' ? 0 : 1} onChange={(i) => setMode(i === 0 ? 'past' : 'future')} colors={['#7c9cff', '#b794ff']} fontSize={12.5} padX={4} tabW={64} padY={8} style={{ flexShrink: 0, alignSelf: 'stretch' }} />
+            <Tg on={use3d && !failed} t="3D view" g={['#7c9cff', '#b794ff']} tint="#232c58" ink="#c9d6ff" onPress={() => { buzz(); mark(use3d ? 'tapped 2D' : 'tapped 3D'); setTimeout(() => mark('ok'), 3000); setNote(null); setFailed(false); setUse3d(!use3d); }} />
+            {mode === 'past' ? <Tg on={cmp} t="Compare" g={['#ffc46b', '#ff9ab0']} tint="#3b3048" ink="#ffe2b8" onPress={() => { buzz(); setCmp(!cmp); setB(null); }} /> : null}
           </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
