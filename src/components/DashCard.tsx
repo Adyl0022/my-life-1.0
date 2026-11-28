@@ -254,8 +254,8 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       </View>
       <View style={{ flex: 1, minWidth: 0, paddingRight: 62 }}>
         <Text numberOfLines={1} style={{ color: '#cfe0ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>{'YOUR MONTH · ' + ms.name.toUpperCase()}</Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>{'Your ' + ms.name + ' summary is ready'}</Text>
-        <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>{ms.headline + '. Tap to see how your month went'}</Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>{'Your ' + ms.name + ' summary'}</Text>
+        <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>{ms.headline + '. Tap to see how your month went.'}</Text>
       </View>
       <View style={{ position: 'absolute', right: 14, top: 12, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: '#ffc46bb3', backgroundColor: '#ffc46b40' }}><Text style={{ color: '#ffe2b8', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }}>NEW</Text></View>
     </>);
