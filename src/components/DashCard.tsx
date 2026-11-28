@@ -262,7 +262,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
       <View style={{ flex: 1, minWidth: 0, paddingRight: 108 }}>
         <Text numberOfLines={1} style={{ color: '#cfe0ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>YOUR MONTH<Text style={{ color: '#ffd593' }}>{' · NEW'}</Text></Text>
         <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>{'Your ' + ms.name + ' summary'}</Text>
-        <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>{ms.headline + '. Tap to see how your month went.'}</Text>
+        <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>{ms.headline + '. Tap to see more.'}</Text>
       </View>
     </>);
   } else if (kind === 'memories') {
