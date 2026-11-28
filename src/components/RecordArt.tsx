@@ -28,9 +28,9 @@ export function RecordArt() {
   const { width: W, height: H } = useWindowDimensions();
   const s = Math.max(W / 390, 1);
   const spots: Spot[] = React.useMemo(() => [
-    { cx: W - 52 * s, cy: 96 * s, R: 92 * s, col: L, op: 0.3, n: 40, ntr: 18, L: 170 * s, seed: 1, turn: 260, step: 3.2, dir: 1 },
-    { cx: 40 * s, cy: H - 118 * s, R: 130 * s, col: T, op: 0.26, n: 46, ntr: 24, L: 230 * s, seed: 40, turn: 320, step: 2.6, dir: -1 },
-    { cx: W - 72 * s, cy: H - 118 * s, R: 62 * s, col: Gd, op: 0.28, n: 34, ntr: 12, L: 110 * s, seed: 90, turn: 220, step: 3.8, dir: 1 },
+    { cx: W - 44 * s, cy: 70 * s, R: 84 * s, col: L, op: 0.28, n: 40, ntr: 14, L: 120 * s, seed: 1, turn: 260, step: 3.2, dir: 1 },
+    { cx: 22 * s, cy: H - 58 * s, R: 96 * s, col: T, op: 0.2, n: 42, ntr: 12, L: 130 * s, seed: 40, turn: 320, step: 2.6, dir: -1 },
+    { cx: W - 56 * s, cy: H - 46 * s, R: 50 * s, col: Gd, op: 0.24, n: 34, ntr: 8, L: 80 * s, seed: 90, turn: 220, step: 3.8, dir: 1 },
   ], [W, H]);
   const trs = React.useMemo(() => spots.map(traces), [spots]);
   const r0 = useSpin(spots[0].turn, spots[0].dir), r1 = useSpin(spots[1].turn, spots[1].dir), r2 = useSpin(spots[2].turn, spots[2].dir);
