@@ -55,8 +55,8 @@ const pillOf = (k: string, val?: string) => {
 };
 // Small flat picture for the "Your month" page, drawn instead of an emoji: three rising bars and a trend line.
 const MonthArt = () => (
-  <View pointerEvents="none" style={{ position: 'absolute', right: 4, bottom: -8, opacity: 0.5, transform: [{ rotate: '-8deg' }] }}>
-    <Svg width={96} height={90} viewBox="0 0 96 90">
+  <View pointerEvents="none" style={{ position: 'absolute', right: 6, bottom: -14, opacity: 0.5, transform: [{ rotate: '-8deg' }] }}>
+    <Svg width={80} height={75} viewBox="0 0 96 90">
       <Defs><SvgGrad id="mb" x1="0" y1="1" x2="0" y2="0"><Stop offset="0" stopColor="#8fe9e2" stopOpacity="0.55" /><Stop offset="1" stopColor="#7c9cff" stopOpacity="0.95" /></SvgGrad></Defs>
       <Rect x={10} y={50} width={17} height={32} rx={6} fill="url(#mb)" />
       <Rect x={34} y={36} width={17} height={46} rx={6} fill="url(#mb)" />
