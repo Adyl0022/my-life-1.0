@@ -3,7 +3,7 @@ import { lessonOfDay } from '../lib/lessonOfDay';
 import { EMPTY_COL, type ColStore } from '../lib/collection';
 import { View, Animated, ScrollView, Platform } from 'react-native';
 import { Pressable } from './Press';
-import Svg, { Circle, Rect } from 'react-native-svg';
+import Svg, { Circle, Rect, Line, Text as SvgText } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from './Txt';
@@ -24,6 +24,7 @@ import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepN
 const UNWELL = ['Headache', 'Tired', 'Fever'];
 const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
+import { weekBack } from '../lib/region';
 import { useMonthsFrom, useMonthSeen, showOnDash } from '../lib/useMonth';
 import { HeadIcon, Face } from './HabitIcons';
 import { energyEstimate, restSignal } from '../lib/patterns';
@@ -243,16 +244,21 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   } else if (kind === 'month') {
     // From the 1st for a week: last month's summary, with the score in a ring. It goes away once the summary has been opened.
     const ms = mon.last; const sc = ms.score; const dly = ms.daily;
+    // A fine line calendar of the month being summarised sits behind the text. Days you logged are a little brighter.
+    const my = +ms.ym.slice(0, 4), mm = +ms.ym.slice(5, 7) - 1; const wkStart = (new Date().getDay() - weekBack() + 7) % 7;
+    const lead = (new Date(my, mm, 1).getDay() - wkStart + 7) % 7; const rowsN = Math.ceil((lead + ms.daysIn) / 7);
     body = (<>
-      <Svg pointerEvents="none" width={176} height={46} viewBox="0 0 176 46" style={{ position: 'absolute', right: 8, bottom: 14 }}>
-        {dly.map((p2, i2) => { const h = p2 < 0 ? 3 : Math.max(5, Math.round(p2 * 0.44)); return <Rect key={i2} x={i2 * 5.6} y={46 - h} width={3} height={h} rx={1.5} fill="#ffffff" opacity={p2 < 0 ? 0.07 : 0.14} />; })}
+      <Svg pointerEvents="none" width={150} height={88} viewBox="0 0 150 88" style={{ position: 'absolute', right: 10, bottom: 14 }}>
+        <Rect x={0.5} y={0.5} width={149} height={87} rx={10} fill="none" stroke="#ffffff" strokeOpacity={0.2} strokeWidth={1} />
+        <Line x1={0.5} y1={15.5} x2={149.5} y2={15.5} stroke="#ffffff" strokeOpacity={0.2} strokeWidth={1} />
+        <SvgText x={75} y={11} fontSize={7.5} fontWeight="700" fill="#ffffff" fillOpacity={0.3} textAnchor="middle">{ms.name.toUpperCase() + ' ' + my}</SvgText>
+        {Array.from({ length: ms.daysIn }, (_, i2) => { const c2 = (lead + i2) % 7, r2 = Math.floor((lead + i2) / 7); const on2 = dly[i2] !== undefined && dly[i2] >= 0;
+          return <SvgText key={i2} x={10.5 + c2 * 21.5} y={27 + r2 * (66 / rowsN) + 2} fontSize={7.5} fontWeight={on2 ? '700' : '500'} fill="#ffffff" fillOpacity={on2 ? 0.42 : 0.17} textAnchor="middle">{i2 + 1}</SvgText>; })}
       </Svg>
-      <View style={{ width: 62, alignItems: 'center' }}>
-        <Svg width={57} height={40} viewBox="0 0 57 40">
-          {dly.map((p2, i2) => <Rect key={i2} x={(i2 % 7) * 8.5} y={Math.floor(i2 / 7) * 8.5} width={6} height={6} rx={2} fill={p2 < 0 ? '#ffffff' : '#8fe9e2'} opacity={p2 < 0 ? 0.14 : 0.3 + (0.7 * p2) / 100} />)}
-        </Svg>
-        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', marginTop: 5 }}>{sc !== null ? sc : '–'}<Text style={{ color: 'rgba(255,255,255,.7)', fontSize: 9.5, fontWeight: '700' }}> / 100</Text></Text>
-      </View>
+      <LinearGradient colors={['rgba(143,233,226,.38)', 'rgba(124,156,255,.38)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 62, height: 62, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,.3)', alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: '#fff', fontSize: sc !== null ? 24 : 20, lineHeight: 28, fontWeight: '800' }}>{sc !== null ? sc : '–'}</Text>
+        <Text style={{ color: 'rgba(255,255,255,.72)', fontSize: 9.5, fontWeight: '700', marginTop: 1 }}>out of 100</Text>
+      </LinearGradient>
       <View style={{ flex: 1, minWidth: 0, paddingRight: 62 }}>
         <Text numberOfLines={1} style={{ color: '#cfe0ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>{'YOUR MONTH · ' + ms.name.toUpperCase()}</Text>
         <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>{'Your ' + ms.name + ' summary'}</Text>
