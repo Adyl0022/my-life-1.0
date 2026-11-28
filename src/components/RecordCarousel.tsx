@@ -39,7 +39,7 @@ const TIPS = [
   'Keep one list of every policy: car, health, life and home.',
   'Note the expiry date of your driving licence and renew before the last month.',
   'Back up your records in Settings now and then, so a lost phone is not a lost life.',
-  'Give each document a clear name, like "Passport - Adli", so you find it in seconds.',
+  'Give each document a clear name, like "Passport - front page", so you find it in seconds.',
   'Keep a note of your vehicle chassis and engine numbers for insurance claims.',
   'Record every service, even small ones. A full history raises the resale value.',
   'Check the dates on your children’s and parents’ papers too, not only your own.',
