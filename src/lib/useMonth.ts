@@ -4,8 +4,9 @@ import { useHidden } from './hidden';
 import { cupsGoal } from './habit';
 import { cs, useRegion } from './region';
 import { useStored } from './store';
-import { buildMonth, lastMonthOf, MIn, MSum, DASH_DAYS } from './monthSummary';
+import { buildMonth, ymKey, lastMonthOf, MIn, MSum, DASH_DAYS } from './monthSummary';
 
+const EMPTY = (y: number, m0: number): MSum => ({ ym: ymKey(y, m0), label: '', name: '', partial: false, daysIn: 30, upto: 0, logged: 0, hasData: false, score: null, headline: '', story: '', daily: [], stats: [], sections: [], wins: [], improve: [], advice: [], focus: [] });
 const rm = (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** "Your month": last month's summary and the month so far, worked out on this phone. Modules the person turned off are left out. */
@@ -23,7 +24,9 @@ export function useMonthsFrom(c: Core): { last: MSum; cur: MSum; day: number } {
       on: { habit: hid.on('habit'), finance: hid.on('finance'), planner: hid.on('planner'), islamic: hid.on('islamic'), record: hid.on('record') },
     };
     const [ly, lm] = lastMonthOf(t);
-    return { last: buildMonth(i, ly, lm), cur: buildMonth(i, t.getFullYear(), t.getMonth()), day: t.getDate() };
+    // The summary is a bonus: if odd saved data ever makes it fail, it stays empty and the rest of the app still opens.
+    const safe = (y: number, m0: number): MSum => { try { return buildMonth(i, y, m0); } catch { return EMPTY(y, m0); } };
+    return { last: safe(ly, lm), cur: safe(t.getFullYear(), t.getMonth()), day: t.getDate() };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c.hd, c.fin, c.pl, c.rec, c.debts, c.puasa, c.sav, off, dk]);
 }
