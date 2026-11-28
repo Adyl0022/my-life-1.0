@@ -3,13 +3,12 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { RecordPage, Intro, HalfCard, VehicleCard } from '../components/RecordHubUi';
 import { RecordCarousel } from '../components/RecordCarousel';
-import { RecordArt } from '../components/RecordArt';
 
 // My Record is the door. Each kind of record has its own screen.
 export default function RecordHub() {
   const router = useRouter();
   return (
-    <RecordPage title="My Record" sub="Everything you keep, in one place" bg={<RecordArt />}>
+    <RecordPage title="My Record" sub="Everything you keep, in one place" art>
       <Intro title="Keep what matters" text="Papers, vehicle and belongings, all saved" />
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
         <HalfCard e="📄" title="Documents" sub="Passport and cards" colors={['rgba(142,168,255,.62)', 'rgba(90,100,220,.4)']} pat="dots" sheen={0} onPress={() => router.push('/documents' as any)} />

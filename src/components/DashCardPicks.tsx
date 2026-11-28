@@ -10,7 +10,6 @@ import { MemSave, MEM_EMPTY } from '../lib/memories';
 // Which pages may turn by themselves in the card at the bottom of Home. Quick log is always there.
 export const DASH_PAGES: { k: string; t: string; s: string; e: string; c: string }[] = [
   { k: 'live', t: 'My Life Assistant', s: 'A glowing orb that opens the talking Assistant straight away', e: '🎙️', c: '#b794ff' },
-  { k: 'month', t: 'Your month', s: 'On the 1st, a summary of last month for 7 days, until you open it', e: '📊', c: '#7c9cff' },
   { k: 'prayer', t: 'Next prayer', s: 'The next prayer time and how long is left', e: '🕌', c: '#5ee7b5' },
   { k: 'tasks', t: 'Tasks today', s: 'Tasks due today and any that are late', e: '✅', c: '#5ee7b5' },
   { k: 'event', t: 'Next event', s: 'The nearest event with days left', e: '📅', c: '#8ea8ff' },

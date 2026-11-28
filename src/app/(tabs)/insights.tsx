@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { InsightsBg } from '../../components/PageBg';
 import { PageIn } from '../../components/PageIn';
-// import { MonthCard } from '../../components/MonthCard';
 import { Rise, FillBar, GrowBar, useReplay } from '../../components/Anim';
 import { HeadIcon } from '../../components/HabitIcons';
 import { navScroll } from '../../lib/navbar';
@@ -182,7 +181,6 @@ export default function Insights() {
             )}
           </View>
 
-          {/* bisect: <MonthCard /> */}
 
           {parts.length > 1 && (
             <Rise i={4}>
