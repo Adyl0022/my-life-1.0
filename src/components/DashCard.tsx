@@ -3,7 +3,7 @@ import { lessonOfDay } from '../lib/lessonOfDay';
 import { EMPTY_COL, type ColStore } from '../lib/collection';
 import { View, Animated, ScrollView, Platform } from 'react-native';
 import { Pressable } from './Press';
-import Svg, { Circle, Defs, LinearGradient as SvgGrad, Stop, Rect, Polyline, Path } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient as SvgGrad, Stop, Rect, Polyline } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from './Txt';
@@ -66,13 +66,6 @@ const MonthArt = () => (
     </Svg>
   </View>
 );
-// The tag for something new: a soft gold-to-pink fill and a small sparkle.
-const NewTag = () => (
-  <LinearGradient colors={['#ffe3a8', '#ffb4cb']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: 'absolute', right: 14, top: 12, flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,.55)' }}>
-    <Svg width={9} height={9} viewBox="0 0 10 10"><Path d="M5 0 L6.2 3.8 L10 5 L6.2 6.2 L5 10 L3.8 6.2 L0 5 L3.8 3.8 Z" fill="#5a2a00" /></Svg>
-    <Text style={{ color: '#4a2200', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }}>NEW</Text>
-  </LinearGradient>
-);
 // every page uses this one layout so the sizes match: label 9.5, title 16 (one line), sub 12.5 (two lines), status pill top right, a big faded emoji as a watermark
 function Premium({ k, label, title, sub, tone, val }: { k: string; label: string; title: string; sub: string; tone?: string; val?: string }) {
   const g0 = PG[k] || { e: '✨', c: TEAL }; const hot = toneOf(tone); const c = hot || g0.c; const pill = pillOf(k, val);
@@ -84,7 +77,7 @@ function Premium({ k, label, title, sub, tone, val }: { k: string; label: string
       <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3, ...sh }}>{title}</Text>
       <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2, ...sh }}>{sub}</Text>
     </View>
-    {k === 'month' ? <NewTag /> : pill ? <View style={{ position: 'absolute', right: 14, top: 12, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: c + 'b3', backgroundColor: hot === RED ? 'rgba(255,107,129,.92)' : c + '40' }}><Text numberOfLines={1} style={{ color: hot === RED ? '#fff' : c, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>{pill}</Text></View> : null}
+    {pill ? <View style={{ position: 'absolute', right: 14, top: 12, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: c + 'b3', backgroundColor: hot === RED ? 'rgba(255,107,129,.92)' : c + '40' }}><Text numberOfLines={1} style={{ color: hot === RED ? '#fff' : c, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>{pill}</Text></View> : null}
   </>);
 }
 
@@ -262,8 +255,8 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     </>);
   } else if (kind === 'month') {
     // Same layout as every other page: small label, title, two lines, a status tag and the page's faded picture. It goes away once the summary has been opened.
-    const ms = mon.last;
-    body = <Premium k="month" label={'YOUR MONTH · ' + ms.name.toUpperCase()} title={'Your ' + ms.name + ' summary'} sub={ms.headline + (ms.score !== null ? ' · ' + ms.score + ' out of 100' : '') + '. Tap to see how it went.'} val="NEW" />;
+    const ms = mon.last; hotC = YEL; // yellow, like a page that is close to due, so the new summary stands out
+    body = <Premium k="month" tone={YEL} label={'YOUR MONTH · ' + ms.name.toUpperCase()} title={'Your ' + ms.name + ' summary'} sub={ms.headline + (ms.score !== null ? ' · ' + ms.score + ' out of 100' : '') + '. Tap to see how it went.'} val="NEW" />;
   } else if (kind === 'memories') {
     body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life 1.0' : 'Your Memories'} sub="Every moment matters" />;
   } else if (kind === 'score') {
