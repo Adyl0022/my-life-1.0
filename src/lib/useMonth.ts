@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useCore } from './insights';
+import { useCore, Core } from './insights';
 import { useHidden } from './hidden';
 import { cupsGoal } from './habit';
 import { cs, useRegion } from './region';
@@ -9,9 +9,11 @@ import { buildMonth, lastMonthOf, MIn, MSum, DASH_DAYS } from './monthSummary';
 const rm = (n: number) => cs() + (Math.round(n * 100) / 100).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** "Your month": last month's summary and the month so far, worked out on this phone. Modules the person turned off are left out. */
-export function useMonths(): { last: MSum; cur: MSum; day: number } {
+export function useMonths() { return useMonthsFrom(useCore()); }
+/** Same, for a screen that already has the core data (the Dashboard card), so it is not read twice. */
+export function useMonthsFrom(c: Core): { last: MSum; cur: MSum; day: number } {
   useRegion();
-  const c = useCore(); const hid = useHidden();
+  const hid = useHidden();
   const today = new Date(); const dk = today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
   const off = hid.off.join();
   return useMemo(() => {

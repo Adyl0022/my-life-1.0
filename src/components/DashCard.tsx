@@ -24,6 +24,7 @@ import { SLEEP_KEY, SleepNow, startSleep, endSleep, fmtDur } from '../lib/sleepN
 const UNWELL = ['Headache', 'Tired', 'Fever'];
 const fm = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { useCore, scoreParts, lifeScore, tips } from '../lib/insights';
+import { useMonthsFrom, useMonthSeen, showOnDash } from '../lib/useMonth';
 import { HeadIcon, Face } from './HabitIcons';
 import { energyEstimate, restSignal } from '../lib/patterns';
 import { EnergyRow } from './EnergyUi';
@@ -31,8 +32,8 @@ import { weekOffs, curStreak, bestStreakAll, goalPctOf, getDay, cupsGoal, dateOf
 
 // The card at the bottom of the Dashboard. Tap opens the page, tap a bar segment to jump, long-press for the next one. Quick log keeps its own buttons.
 let liveShown = false;
-type Kind = 'log' | 'live' | 'usage' | 'streak' | 'score' | 'tip' | 'lesson' | 'memories' | 'prayer' | 'event' | 'calmix' | 'calgen' | 'subs' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
-const ORDER: Kind[] = ['log', 'live', 'prayer', 'tasks', 'event', 'calmix', 'calgen', 'subs', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'lesson', 'memories'];
+type Kind = 'log' | 'live' | 'month' | 'usage' | 'streak' | 'score' | 'tip' | 'lesson' | 'memories' | 'prayer' | 'event' | 'calmix' | 'calgen' | 'subs' | 'job' | 'money' | 'tasks' | 'renew' | 'debt';
+const ORDER: Kind[] = ['log', 'live', 'month', 'prayer', 'tasks', 'event', 'calmix', 'calgen', 'subs', 'job', 'renew', 'money', 'debt', 'streak', 'score', 'tip', 'lesson', 'memories'];
 const EXK = ['prayer', 'event', 'calmix', 'calgen', 'subs', 'job', 'money', 'tasks', 'renew', 'debt'];
 const dim = 'rgba(255,255,255,.7)';
 const LET = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -71,6 +72,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const router = useRouter();
   const hid = useHidden();
   const core = useCore();
+  const mon = useMonthsFrom(core); const [monSeen] = useMonthSeen();
   const [sel, setSel] = useStored<string>('ml_dcard2', 'log');
   const [colS] = useStored<ColStore>('ml_collection', EMPTY_COL);
   const [hd, setHd] = useStored<HData>('ml_habit', HEMPTY);
@@ -95,7 +97,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
   const parts = scoreParts(core, false);
   const tp = tips(core, false);
   const ex = useDashExtras(core, { islamic: hid.on('islamic'), planner: hid.on('planner'), record: hid.on('record'), finance: hid.on('finance') });
-  const ok: Record<Kind, boolean> = { live: voiceOk, prayer: !!ex.prayer, event: !!ex.event, calmix: !!ex.calmix, calgen: !!ex.calgen, subs: !!ex.subs, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
+  const ok: Record<Kind, boolean> = { month: showOnDash(mon, monSeen), live: voiceOk, prayer: !!ex.prayer, event: !!ex.event, calmix: !!ex.calmix, calgen: !!ex.calgen, subs: !!ex.subs, job: !!ex.job, money: !!ex.money, tasks: !!ex.tasks, renew: !!ex.renew, debt: !!ex.debt, log: hid.on('habit'), usage: false, streak: hid.on('habit'), score: parts.length > 0, tip: tp.length > 0, lesson: true, memories: !!sess && !(mem && mem.dash === false) };
   const dp = useDashPages(); ORDER.forEach((k) => { if (k !== 'log' && !dp.isOn(k)) ok[k] = false; });
   const avail = ORDER.filter((k) => ok[k]);
   // Each time the app is opened, the card starts on My Life Assistant (if it is on) and stays there for 6 seconds, then turns as usual.
@@ -117,7 +119,7 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
     });
   };
   const next = () => goTo(avail[(idx + 1) % avail.length]);
-  const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'live' ? '/assistant?live=1' : kind === 'memories' ? '/memories' : kind === 'lesson' ? '/lessons' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
+  const open = () => router.push((EXK.indexOf(kind) >= 0 ? ((ex as any)[kind] as any).go : kind === 'live' ? '/assistant?live=1' : kind === 'month' ? '/monthly' : kind === 'memories' ? '/memories' : kind === 'lesson' ? '/lessons' : kind === 'usage' ? '/stats' : kind === 'streak' || kind === 'log' ? '/habit' : kind === 'tip' && tp[0] ? (tp[0].go || '/insights') : '/insights') as any);
 
   nextRef.current = next;
   // Coming back from another page: the card must keep turning, and must never be left half faded.
@@ -237,6 +239,25 @@ export function DashCard({ mins, opens, series }: { mins: number; opens: number;
         <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.92)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>Tap, then just ask or tell it what to do</Text>
       </View>
       <View style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,.34)' }}><Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>Talk</Text></View>
+    </>);
+  } else if (kind === 'month') {
+    // From the 1st for a week: last month's summary, with the score in a ring. It goes away once the summary has been opened.
+    const ms = mon.last; const sc = ms.score; const R = 24, C = 2 * Math.PI * R;
+    body = (<>
+      <Text pointerEvents="none" style={{ position: 'absolute', right: -6, bottom: -20, fontSize: 90, lineHeight: 104, opacity: 0.3, transform: [{ rotate: '-12deg' }] }}>📅</Text>
+      <View style={{ width: 58, height: 58, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={58} height={58} viewBox="0 0 58 58">
+          <Circle cx={29} cy={29} r={R} stroke="rgba(255,255,255,.2)" strokeWidth={5} fill="none" />
+          {sc !== null ? <Circle cx={29} cy={29} r={R} stroke="#8fe9e2" strokeWidth={5} fill="none" strokeLinecap="round" strokeDasharray={(C * sc) / 100 + ' ' + C} rotation={-90} origin="29, 29" /> : null}
+        </Svg>
+        <Text style={{ position: 'absolute', color: '#fff', fontSize: sc !== null ? 16 : 22, fontWeight: '800' }}>{sc !== null ? sc : '📅'}</Text>
+      </View>
+      <View style={{ flex: 1, minWidth: 0, paddingRight: 62 }}>
+        <Text numberOfLines={1} style={{ color: '#cfe0ff', fontSize: 9.5, fontWeight: '800', letterSpacing: 1.5 }}>{'YOUR MONTH · ' + ms.name.toUpperCase()}</Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78} style={{ color: '#fff', fontSize: 16, lineHeight: 21, fontWeight: '800', marginTop: 3 }}>{'Your ' + ms.name + ' summary is ready'}</Text>
+        <Text numberOfLines={2} style={{ color: 'rgba(255,255,255,.94)', fontSize: 12.5, lineHeight: 17, fontWeight: '600', marginTop: 2 }}>{ms.headline + '. Tap to see how your month went'}</Text>
+      </View>
+      <View style={{ position: 'absolute', right: 14, top: 12, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: '#ffc46bb3', backgroundColor: '#ffc46b40' }}><Text style={{ color: '#ffe2b8', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 }}>NEW</Text></View>
     </>);
   } else if (kind === 'memories') {
     body = <Premium k="memories" label="YOUR MEMORIES" title={mdays ? 'Day ' + mdays + ' with My Life 1.0' : 'Your Memories'} sub="Every moment matters" />;

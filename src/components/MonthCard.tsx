@@ -4,7 +4,7 @@ import { Pressable } from './Press';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from './Txt';
-import { useMonths, useMonthSeen, showOnDash } from '../lib/useMonth';
+import { useMonths } from '../lib/useMonth';
 
 // Entry card under the suggestions in Insights: opens the full "Your month" summary. Shows last month when there is one, otherwise the month so far.
 export function MonthCard() {
@@ -23,26 +23,6 @@ export function MonthCard() {
           <Text style={{ color: 'rgba(255,255,255,.75)', fontSize: 11.5, marginTop: 3 }}>Your life, wins, what to improve and next goals</Text>
         </View>
         <Text style={{ color: '#fff', fontSize: 22 }}>›</Text>
-      </LinearGradient>
-    </Pressable>
-  );
-}
-
-// Slim card on the Dashboard from the 1st of the month. It goes away once the summary has been opened.
-export function MonthDashCard() {
-  const router = useRouter(); const m = useMonths(); const [seen, setSeen] = useMonthSeen();
-  if (!showOnDash(m, seen)) return null;
-  return (
-    <Pressable onPress={() => { setSeen(m.last.ym); router.push('/monthly' as any); }} accessibilityLabel={'Open your ' + m.last.name + ' summary'} style={({ pressed }) => ({ marginBottom: 8, transform: [{ scale: pressed ? 0.97 : 1 }], borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,.3)' })}>
-      <LinearGradient colors={['rgba(124,156,255,.55)', 'rgba(183,148,255,.42)', 'rgba(94,231,223,.3)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 11 }}>
-        <View style={{ width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.2)', borderWidth: 1, borderColor: 'rgba(255,255,255,.34)' }}>
-          <Text style={{ color: '#fff', fontSize: m.last.score !== null ? 14 : 17, fontWeight: '800' }}>{m.last.score !== null ? m.last.score : '📅'}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text numberOfLines={1} style={{ color: '#fff', fontSize: 13.5, fontWeight: '800' }}>Your {m.last.name} summary is ready</Text>
-          <Text numberOfLines={1} style={{ color: 'rgba(255,255,255,.85)', fontSize: 11.5, marginTop: 1 }}>Tap to see how your month went</Text>
-        </View>
-        <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, backgroundColor: '#ffc46b' }}><Text style={{ color: '#3a2500', fontSize: 10.5, fontWeight: '800' }}>New</Text></View>
       </LinearGradient>
     </Pressable>
   );
