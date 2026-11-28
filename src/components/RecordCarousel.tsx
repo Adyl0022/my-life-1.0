@@ -29,6 +29,40 @@ const TIPS = [
   'Keep warranty slips together so a repair never costs more than it should.',
   'Note the odometer once a month. Service reminders get more accurate.',
   'A passport should have at least six months left before you travel.',
+  'Save the serial number of every gadget you own. It helps with warranty and repairs.',
+  'Photograph the front and back of each card, then keep the photos away from your gallery.',
+  'Set a renewal reminder one month early, so there is time to book an appointment.',
+  'A warranty only helps if you can find the receipt. Add it the day you buy.',
+  'Write down what each item cost. Later you will know what it is worth today.',
+  'Check your tyre pressure every two weeks. It saves fuel and keeps the ride safe.',
+  'Spray the chain after a wet ride, not only on a schedule.',
+  'Keep one list of every policy: car, health, life and home.',
+  'Note the expiry date of your driving licence and renew before the last month.',
+  'Back up your records in Settings now and then, so a lost phone is not a lost life.',
+  'Give each document a clear name, like "Passport - Adli", so you find it in seconds.',
+  'Keep a note of your vehicle chassis and engine numbers for insurance claims.',
+  'Record every service, even small ones. A full history raises the resale value.',
+  'Check the dates on your children’s and parents’ papers too, not only your own.',
+  'Take a photo of your belongings once a year. It makes any claim much easier.',
+  'Store visa and travel insurance dates before every trip.',
+  'Keep gadget manuals and invoices in one place, so nothing gets thrown away by mistake.',
+  'Review your records on the first day of every month. Five minutes is enough.',
+  'Mark items you lent out, so you remember who has them.',
+  'Fuel up and note the odometer together. It builds a true picture of your mileage.',
+  'A cracked tyre or a worn brake pad is cheaper to fix early.',
+  'Keep your emergency contacts and policy numbers where you can reach them fast.',
+  'Add a custom category for anything special, such as hobby gear or collections.',
+  'When you sell or give away an item, mark it so your list stays honest.',
+  'Keep scanned copies of your ID separate from your daily documents.',
+  'Wash your vehicle regularly. It is the easiest time to spot rust, leaks and wear.',
+  'Renew your road tax early if you plan to travel. Avoid last-minute queues.',
+  'Keep a record of oil type and grade, so you never buy the wrong one.',
+  'Note the battery age of your vehicle. Most need changing every two to four years.',
+  'Photograph any damage right after it happens, with the date visible.',
+  'Keep your warranty cards for electronics until the warranty period ends.',
+  'Check expiry dates on your medical cards and insurance together.',
+  'A short note beside each record, such as where the original is kept, saves a long search.',
+  'Once a year, remove records you no longer need. A tidy list is easier to trust.',
 ];
 const dueText = (n: number) => (n < 0 ? 'Expired ' + -n + (n === -1 ? ' day ago' : ' days ago') : n === 0 ? 'Today' : n + (n === 1 ? ' day left' : ' days left'));
 const tone = (n: number) => (n <= 7 ? '#ff6b81' : n <= 30 ? '#ffd593' : '#5ee7b5');
@@ -58,11 +92,14 @@ export function RecordCarousel() {
     });
   });
   jobs.sort((a, b) => b.lv - a.lv || a.di - b.di); rens.sort((a, b) => a.n - b.n);
-  const tip = TIPS[Math.floor(dayN(today) % TIPS.length)];
+  // A different tip every time the tip card comes round. Stepping by 7 through 40 tips never repeats until all have been shown.
+  const [tipI, setTipI] = useState(() => Math.floor(Math.random() * TIPS.length));
+  const tip = TIPS[tipI % TIPS.length];
 
   const kinds = ['veh', 'ren', 'doc', 'tip'];
   const [slide, setSlide] = useState(0);
   const cur = kinds[Math.min(slide, kinds.length - 1)];
+  useEffect(() => { if (cur === 'tip') setTipI((i) => (i + 7) % TIPS.length); }, [cur]);
   const fade = useRef(new Animated.Value(1)).current;
   const tx = useRef(new Animated.Value(0)).current;
   const prog = useRef(new Animated.Value(0)).current;
